@@ -1,4 +1,4 @@
-baseURL: "https://addcommitpush.io/"
+baseURL: "https://emilwareus.github.io/addcommitpush.io/"
 title: addcommitpush.io
 paginate: 5
 theme: PaperMod
@@ -83,7 +83,7 @@ params:
     hiddenInSingle: true # hide on single page
 
   editPost:
-    URL: "https://github.com/emilwareus/addcommitpush.io/content"
+    URL: "https://github.com/emilwareus/addcommitpush.io"
     Text: "Suggest Changes" # edit text
     appendFilePath: true # to append file path to Edit link
 
