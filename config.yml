@@ -1,0 +1,137 @@
+baseURL: "https://addcommitpush.io/"
+title: addcommitpush.io
+paginate: 5
+theme: PaperMod
+
+enableRobotsTXT: true
+buildDrafts: false
+buildFuture: false
+buildExpired: false
+hideFooter: true
+
+# googleAnalytics: UA-123-45
+
+minify:
+  disableXML: true
+  minifyOutput: true
+
+params:
+  env: production # to enable google analytics, opengraph, twitter-cards and schema.
+  title: [add commit push]
+  description: "[add commit push] is a blog about tech, data, and startups"
+  keywords: [Data, Startup, Technology]
+  author: Emil Wåreus
+  # images: ["<link or path of image for opengraph, twitter-cards>"]
+  DateFormat: "January 2, 2006"
+  defaultTheme: auto # dark, light
+  disableThemeToggle: false
+
+  ShowReadingTime: true
+  ShowShareButtons: true
+  ShowPostNavLinks: true
+  ShowBreadCrumbs: true
+  ShowCodeCopyButtons: false
+  ShowWordCount: true
+  ShowRssButtonInSectionTermList: true
+  UseHugoToc: true
+  disableSpecial1stPost: false
+  disableScrollToTop: false
+  comments: false
+  hidemeta: false
+  hideSummary: false
+  showtoc: false
+  tocopen: false
+
+  assets:
+    # disableHLJS: true # to disable highlight.js
+    # disableFingerprinting: true
+    favicon: "<link / abs url>"
+    favicon16x16: "<link / abs url>"
+    favicon32x32: "<link / abs url>"
+    apple_touch_icon: "<link / abs url>"
+    safari_pinned_tab: "<link / abs url>"
+
+  label:
+    text: "[add commit push]"
+    # icon: /apple-touch-icon.png
+    iconHeight: 35
+
+
+  # home-info mode
+  homeInfoParams:
+    Title: "Welcome/Välkommen to [add commit push]"
+    Content: __\[add commit push\]__ is a blog about tech, data, leadership, and startups. It is maintained by me [Emil], and if you have any suggestions for improvements or blog topics.. write an issue in [the repository](https://www.github.com/emilwareus/addcommitpush.io)! 
+
+  socialIcons:
+    - name: linkedin
+      url: "https://www.linkedin.com/in/emilwareus/"
+    - name: github
+      url: "https://github.com/emilwareus"  
+    - name: twitter
+      url: "https://twitter.com/emil_wareus"
+  # analytics:
+  #   google:
+  #     SiteVerificationTag: "XYZabc"
+  #   bing:
+  #     SiteVerificationTag: "XYZabc"
+  #   yandex:
+  #     SiteVerificationTag: "XYZabc"
+
+  cover:
+    hidden: true # hide everywhere but not in structured data
+    hiddenInList: true # hide on list pages and home
+    hiddenInSingle: true # hide on single page
+
+  editPost:
+    URL: "https://github.com/emilwareus/addcommitpush.io/content"
+    Text: "Suggest Changes" # edit text
+    appendFilePath: true # to append file path to Edit link
+
+  # for search
+  # https://fusejs.io/api/options.html
+  fuseOpts:
+    isCaseSensitive: false
+    shouldSort: true
+    location: 0
+    distance: 1000
+    threshold: 0.4
+    minMatchCharLength: 0
+    keys: ["title", "permalink", "summary", "content"]
+menu:
+  main:
+    - name: search
+      url: search/
+      weight: 5
+    - identifier: categories
+      name: categories
+      url: /categories/
+      weight: 10
+    - identifier: tags
+      name: tags
+      url: /tags/
+      weight: 20
+    - name: archive
+      url: archives
+      weight: 25
+    - identifier: about_me
+      name: about_me
+      url: /about/
+      weight: 30
+
+      
+# Read: https://github.com/adityatelange/hugo-PaperMod/wiki/FAQs#using-hugos-syntax-highlighter-chroma
+pygmentsUseClasses: true
+markup:
+  highlight:
+    noClasses: false
+    # anchorLineNos: true
+    # codeFences: true
+    # guessSyntax: true
+    # lineNos: true
+    # style: monokai
+    
+outputs:
+    home:
+        - HTML
+        - RSS
+        - JSON # is necessary
