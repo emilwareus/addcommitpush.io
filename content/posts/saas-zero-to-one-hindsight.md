@@ -16,6 +16,10 @@ About a year later I was recognized as a Co-Founder, and have continously thrown
 
 As we started out we were naive to the challenge we tried to solve. We didn't do enough research on the space, the competetive landscape, substitutes, and the direction of the market. In some ways, that was fine. We started out doing a lot of things right for the wrong reasons, simply talking to potential customers and building product. Not because we knew that would be a good strategy, rather because none of us had ever really worked at a large enterprise. It turned out that the culture to "just build things" and listening to customers was a good fit for building a deep-tech SaaS offering. 
 
+![Just build it](/mw2.jpg) 
+<!-- TODO: Input reference -->
+
+
 In the first few months of our journey, we realized that a lot of our assumptions we continously made were wrong. It was not that we made illogical assumtions, but rather that it is very hard to predict what customers will love. Rather than keeping making bad predictions, we embraced that we need to accuratly figure out the unknowns by talking to customers. 
 
 Roughly we needed to know if an \[idea, feature, pivot, etc.\] was good by figuring out if: 
