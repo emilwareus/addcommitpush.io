@@ -28,11 +28,27 @@ Roughly we needed to know if an \[idea, feature, pivot, etc.\] was good by figur
 5. Customers are taling to us about this feature before we pitch (20%)
 5. Customers pay largly due to this feature (50%)
 
-The percentage is indicating the weight of importance to each point of validation.
+The percentage is indicating the weight of importance to each point of validation. This very approximate framework gave me some guidance in how to think about features and ideas in a way to always focuses on the customer.
 
 
 ## Capability to deliver vs. delivering 
 
+In the boxing match of **execution** vs. **process**, I'm deeply rooted in the execution corner. It is my belief that since we do not know what we don't know, it is not necessary to build proccess around things thay may as well be left in the dust. This doesn't mean that we shouln't have sprint plannings, demos, post mortems, etc. but rather that process usually takes a lot of time from the most porductive single contributors in your company. It is important not to overload theses people with meetings and syncs that is a waist of time in most cases. 
+
+Instead of implementing proccess, hire people that thrive and feel passionat about solving problems for your customer. This does absolutly not only apply to your customer success personnel, but developers and tech-people as well! An established process for Quality Assurance (QA) should not be needed in your startup development team, since you have hired developers that focus on customer outcomes and rigorously write code until the customers problem is solved. If you get customer feedback that your newly developed API-endpoint times-out in production, the developer did not have the diligance to actually assure that \[she/he\] solved the customers problem when the issue was closed.   
+
+Capability to deliver is not only about making time to deliver or highering accountable people, but also creating the right environment for it. 
+> As a startup you are throwing spaghetti at lightning speed.
+
+Therfore, you should strive to create a development environment where it is safe to miss from time to time. At Debricked, we created logical layers in our architecture where we tried to keep some of those layers off the critical path. This ment that those parts of our service that was not in the critical path, but rather had caching logic in critical-path layers, could tolerate higher change-faliure rates, lower uptime, and therefore higher development speed.
+
+In this triangle, you can see what I believe are the tradeoffs as a startup. 
+
+![Triangle of Development for startups](/triang.png)
+
+If you've ever tried [Open Source Select](https://debricked.com/select/), you should know that it is just a large cache.. where all the actual logic is run in a microservice that acts as a backend to the backend, enabeling that microservice to have 20% downtime and no one would notice.. That enables iteration on that service to be incredibly fast! 
+
+So, my point is that delivering and capability to deliver is tightly coupeled, and corporate processes that are masked as capability may just slow you down. If you have the urge to remove a process, it is probably the right call to make. 
 
 ## Measurs, Talk, Build, Repeat
 
