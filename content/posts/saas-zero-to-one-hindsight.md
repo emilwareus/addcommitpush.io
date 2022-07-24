@@ -57,24 +57,48 @@ So, my point is that delivering and capability to deliver is tightly coupled, an
 
 ## Measure, Talk, Build, Repeat
 
-- Measure with https://mixpanel.com/ and https://segment.com/
-- Monitor usage of specific features
-- Talk to customers that use those
-- Build things that customers want
+At the begning, we did not do this right. We built product with conviction, listened to very few potential customers with low willingess to pay and needs that was very specific. Today, we have a healthier approach where we measure with [Mixpanel](https://mixpanel.com/), pipe data through [Segment](https://segment.com/), and store data in GCP BigQuery. These data platforms really enabeled deeper customer knowledge, roadmap prioritzation, ability to be data driven, and became rooted in our culture, this was night and day in how we operate at the core. 
 
-- Also, talk to customers about the future.. Where are you going?  
+>Beeing datadriven is a culture, and it's fun when it works!
+
+To make data a part of our culture, we implemnted a few things: 
+
+1. Tracking (sending events to Segment) is part of the acceptance criteria of any new feature. 
+2. We have a dedecated person who's only responsebility is customer analytics. The person is a developer who continously improves the tracking data and adds tracking to old features. This is especially important to be able to communicate, the person will be working cross departmental to make everyone happy with the data quality. 
+3. For every major "event" (Signup, specific feature usage, upgrade, churn, ..) we have a separate slack channel with a slack-bot, posting out EVERY event of that type. Idealy, this slack-bot also indicate if that was pleasant for the customer to use that feature or not. 
+4. We created dashboards indicating the success of each feature, and pin those in the respective slack channel.
+5. We try to connect our company/team goals to things that are measurable in these tools. 
+6. Leaders in the company are to encurage employees with these datapoints.. "It seemed like the feature you developed is getting used, well done!"
 
 
-## When to build with conviction
+Dashboards are great, but it only surfaces the problems and doesn't tell you what the solutions are. To find solutions, one has to talk to customers! This is something that we are still struggeling with, as it's hard to ask for (and get) time from someone that had a bad experience in your tool. What we try to do is to identify ether our "super users" that continously use our tool and seem to like it, or to talk to customers that used a specific feature we want to research more. There are multiple other resources on how to talk to users, such as [XX, XX]. I'll update this blogpost when I have more to give in this area! :) 
 
+<!-- TODO: Add more on talking to users -->
 
-- Build measure learning is great for incremental innovation. What if your innovation is not incremental?
-- Try to make it incremental
-- Find champions that have important problems to be solved
-- Talk to many candidate champions to get their opinion and digest market openings (We talked to a lot of OSPOs)
-- Know that you are building with conviction
+## Building with conviction
+
+Build measure learning is great for incremental innovation. What if your innovation is not incremental? Maybe you are buildning something that is more binary, ether it's there or it's not and it takes a significant amount of time to build? There may be some situations where you need to build with conviction, and we felt that a few times as well. 
+
+To start with, when I look in hindsight on all our "conviction plays" there are multiple ways we could have made it way more incremental and data-driven. Just because you are building something innovative that __needs to be large__ there is no need to not be data-driven. Also, chances are that if you try to break it down into increments infront of a whiteboard with some smart people, you can. Try to do that first..  
+
+If that's not possible, you should talk to potential customers. Who is feeling the pain you would like to solve? Is it important to them? Is it big, small, frequent or infrequent? What are the substitutes? When we built Open Source Select, there was a fair bit of conviction involved that this was the right way ahead. Our approach to reduce the uncertanty and more closly connect our ideas to actual customer problems we started talking to a lot of people. Mainly, we focused on developers and Open Source Program Office (OSPO) leads and tried to discover their "war stories" on the cost of choosing the wrong open source project. It became clear that these two users had vastly different agendas, needs, and priorities, but both wanted to aviod the pitfalls of technical debt and security issues of unmaintained open source. These realizatons became great input to our product teams! 
+
+<!-- Open Source Select was big because to needed a lot of data, and we didn't find a good way to get around that. Altough, we could take "short cuts" on other things, such as UI development, search, etc.. to still get a large portion of the value out to customers.  -->
+
+My point beeing, that building with conviction can usually be replaced with user research and incremental innovation. 
 
 ## Focusing was painful
+
+When we started out in 2018/19, we thought we could do everything. Time and time again this put us in a situation where we felt like we were pushing the Great Wall. With the hindsight hat on, we should have focused more on more nische segments and feature-sets in our tool. We persued too many  __dimensions__ in our product. The dimensions we tried to develop for simultaneously were:
+
+- Platform & Buildsystems [GitHub, GitLab, Bitbucket, Azure devops, Jenkins, Circleci]. This was easy to scale for some features, but time consuming for others. 
+- Language [JavaScript, Java, Kotlin, Go, C#, PHP, Python, Objective-C, Swift, Rust, Ruby, Linux]. Very significat amount of work for each language. 
+- Use cases [Security, License & Compliance, Quality of OSS, Selection of OSS]. MAJOR investments was needed in each one to make it good or great. 
+- Feature sets [remediation, prevention, deep analysis, guidance, enterprize user managment, and much more...] 
+
+We really only learned to focus as a company after the acquisition, choosing only one or a very few parts in each dimension. If I got to re-live the begining of our endevour, I would have pruned these dimensions A LOT from the start. 
+
+Today, we leverage OKR's (Objectives & Key Results) [LINK]. It helps us propegate company goals through the organization, and aligne everyone to the same underlying objevtives.  
 
 - We didn't focus in the beginning
 - We learned to focus
