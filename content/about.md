@@ -37,7 +37,7 @@ This paper was nominated for best paper for the conference, but lost to other fa
 
 ## Patents 
 
-TODO: Link and descriptions of patents here.
+<!-- TODO: Link and descriptions of patents here. -->
 
 ## Selected Podcast visits
 
@@ -48,7 +48,7 @@ TODO: Link and descriptions of patents here.
 #### [Cybersäkerhet och maskininlärning med Emil Wåreus från Debricked](https://open.spotify.com/episode/1huwuWIEYpfsW2aUKulZDE)
 
 ## Interesting OSS-projects 
-TODO: Add projects I endourse/maintain/contribute to.
+<!-- TODO: Add projects I endourse/maintain/contribute to. -->
 
 #### [I Hate Group Chats](https://github.com/emilwareus/i-hate-group-chats)
 Very early stage open source project to automate myselfe away from group chats with NLP.. Or did the NLP write this blog? 
