@@ -2,6 +2,8 @@
 title: "About Me"
 ---
 
+![About me](/images/emil_1.jpg)
+
 Hi! 
 
 
@@ -28,6 +30,7 @@ This paper was nominated for best paper for the conference, but lost to other fa
 
 ## Publications where I supervised the authors 
 
+#### [Detecting Security Patches in Java Projects Using NLP Technology](https://re.public.polimi.it/handle/11311/1223328)
 #### [Automating vulnerability remediation in Maven](https://www.lunduniversity.lu.se/lup/publication/9067251)
 #### [Exploring Subjectivity in ad hoc Assessment of Open Source Software](https://www.lunduniversity.lu.se/lup/publication/9075536)
 #### [Security Issue Classification for Vulnerability Management with Semi-supervised Learning](https://www.lunduniversity.lu.se/lup/publication/93a45265-e5cb-4d38-a440-dcd41a07552a)
@@ -35,8 +38,19 @@ This paper was nominated for best paper for the conference, but lost to other fa
 #### [Exploring the Business Value and User Experience of Open Source Health](https://www.lunduniversity.lu.se/lup/publication/9066782)
 
 
+## Confernce Presentations
+WIP
+<!-- TODO: Link and descriptions of conference presentations here. -->
+
+#### ØreDev 2022
+#### GOTO Copenhagen 2022
+#### Open Source Summit NA 2022 - Austin
+#### Foo Café
+
+
 ## Patents 
 
+WIP
 <!-- TODO: Link and descriptions of patents here. -->
 
 ## Selected Podcast visits
