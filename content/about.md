@@ -2,12 +2,12 @@
 title: "About Me"
 ---
 
-![About me](/images/emil_1.jpg)
+![About me](/images/emil_2_opt.jpeg)
 
 Hi! 
 
 
-I'm Emil Wåreus, a business savy data-nerd that spends way to much time in front of a screen. During business hours I work as the head of R&D/Data Science at [Debricked](https://www.debricked.com), the startup I founded in 2018 and sold to [Micro Focus](https://www.microfocus.com) in 2022. There I lead a small team of researchers in creating application security solutions to analyze open source. I'm also quite good at writing spaghetti code & drinking wine. 
+I'm Emil Wåreus, a business savy data-nerd that spends way to much time in front of a screen. During business hours I work as the head of R&D/Data Science at [Debricked](https://www.debricked.com), the startup I founded in 2018 and sold to [Micro Focus](https://www.microfocus.com) in 2022. There I lead a team of ~6 researchers in creating application security solutions to analyze open source, mostly with ML, graph algorithms, and static analysis. I also enjoy writing spaghetti code while drinking wine. 
 
 
 ## External blogposts 
@@ -39,13 +39,46 @@ This paper was nominated for best paper for the conference, but lost to other fa
 
 
 ## Confernce Presentations
-WIP
 <!-- TODO: Link and descriptions of conference presentations here. -->
 
-#### ØreDev 2022
-#### GOTO Copenhagen 2022
-#### Open Source Summit NA 2022 - Austin
-#### Foo Café
+### The Cry Wolf Vulnerability Paradox: The Problem of FALSE Alerts in Vulnerability Scanners
+
+I gave this talk at [ØreDev 2022](https://oredev.org/sessions/the-cry-wolf-vulnerability-paradox-the-problem-of-false-alerts-in-vulnerability-scanners) [(video)](https://www.youtube.com/watch?v=FvOoLU4Oy9I) and [The Linux Foundation - Open Source Summit NA 2022](https://events.linuxfoundation.org/archive/2022/open-source-summit-north-america/program/schedule/)
+
+Key takeaways:
+
+- How security alert fatigue affects companies and organizations today
+- How open source security is affected
+- How to reason around false security alters in open source security
+- Guidance on what questions to ask as a company when evaluating security solutions 
+
+“VULNERABILITY!” Cries the CI-pipeline for the 124th time this week. How fast do developers learn to ignore this notification? Security alerts are constantly increasing, but how many are actually warnings about real threats? If we don’t respond to them, are they really making us more secure? We’ve all heard the story of the boy who cried wolf, and we know that the worst possible scenario for a tool is to become that boy - a never ending stream of alerts that no one cares about. Why is this such a complex issue in open source security, and what are some innovative ways to solve it? How do we make sure that we only alert you when the wolf is really there? In this talk, we look closely at the different levels of true positives and dive deep into the cry wolf paradox in the world of open source security.
+
+
+### [Using Graph Database Technology to Resolve Transitive Vulnerabilities at Scale - GOTO Copenhagen 2022](https://gotocph.com/2022/sessions/2203/using-graph-database-technology-to-resolve-transitive-vulnerabilities-at-scale)
+
+Fixing vulnerabilities in your open source dependencies may seem easy enough at a glance, just update right? Wait! The vulnerability was introduced from an indirect dependency, how can I update that? Updating transitive dependencies can be a tricky challenge, as you don’t want to break your dependency tree and still find a suitable update that doesn’t bring about too many breaking changes. It turns out that this is a stellar challenge for Neo4j and its Graph Database and Alogrithms.
+
+In this talk, the speaker will go into detail about how a full graph of all open source interdependence was created, and how it can be used to accurately resolve vulnerabilities in the complex tree-structures that is the reality of modern software development. No more dependency confusion!
+
+
+### [Predicting the rise and fall of Open Source - Foo Café Malmö 2022](https://foocafe.org/event/predicting-rise-and-fall-open-source-project)
+
+[Video](https://www.youtube.com/watch?v=u9jU4xJ03ek)
+
+Open source software and its rich and vast ecosystem is one of the largest enablers of modern digitalization, but is all open source equal? In this talk, we explore the rise and fall of open source projects by looking at community health from a quantitative perspective. Join us for a deep dive into the world of data to explore early indicators that may help us predict the success, or failure, of an open source project. Is it possible to determine whether or not a project will be successful, i.e, a good choice? 
+
+### [Semantic Code Discovery - AI-powered code recommendations (Part of State of AI series) - Foo Café Malmö 2022](https://www.foocafe.org/event/state-ai)
+
+[Video](https://youtu.be/swZAIirxdik?t=1881)
+
+One of the greatest benefits of open source is that developers doesn’t have to reinvent the wheel for every piece of software they need. But how can developers find the right wheel to use, is reading a 6 year old forum thread really the best way? Code and functionality search is a challenging topic with a ton of new research in recent years. In this talk, Emil will give an introduction to semantic code search and how to find code using words.
+
+### Various other presentations and educations
+
+* Zero to One AI education for managers, various occations.
+* Tech-talks for specific companies in the intersection of AI, Open Source, and Security. 
+* Hackathons and Machin Learning events.
 
 
 ## Patents 
