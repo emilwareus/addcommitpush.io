@@ -83,7 +83,7 @@ params:
     hiddenInSingle: false # hide on single page
 
   editPost:
-    URL: "https://github.com/emilwareus/addcommitpush.io/blob/main"
+    URL: "https://github.com/emilwareus/addcommitpush.io/blob/main/content/"
     Text: "Suggest Changes" # edit text
     appendFilePath: true # to append file path to Edit link
 
