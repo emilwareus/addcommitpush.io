@@ -2,7 +2,6 @@
 title: "About Me"
 ---
 
-![About me](/images/emil_2_opt.jpeg)
 
 Hi! 
 
