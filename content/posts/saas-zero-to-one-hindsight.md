@@ -109,5 +109,5 @@ We really only learned to focus as a company after the acquisition, choosing onl
 Today, we leverage OKR's [Objectives & Key Results](https://en.wikipedia.org/wiki/OKR). It helps us propagate company goals throughout the organization and align everyone to the same underlying objectives. Clear focus and objectives also helped to align and lead the company. It became clear to me when I went on vacation this summer. I did not need to keep a perfect backlog prioritized, as my team members just evaluated each task themselves towards our goal and picked what I would have picked 9 times out of 10. 
 
 
-## I feel like Emil 2.0 .. 
-.. as I'm finishing up this blog post. If you got this far in my post, I'm inclined to believe that you want to start your own company someday.. do it! To me, it was the most thrilling experience in my professional life so far and I truly feel like I just leveled up. It also feels like I'm level 2 out of 100, I wonder what the next thing could be ;) 
+## I feel like Emil 2.0 ... 
+... as I'm finishing up this blog post. If you got this far in my post, I'm inclined to believe that you want to start your own company someday... do it! To me, it was the most thrilling experience in my professional life so far and I truly feel like I just leveled up. It also feels like I'm level 2 out of 100, I wonder what the next thing could be ;) 
