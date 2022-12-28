@@ -17,7 +17,7 @@ A study of papers and some of my own research on why some open source projects b
 ### [How Neo4j’s Graph database can remediate vulnerabilities](https://www.linkedin.com/pulse/how-neo4js-graph-database-can-remediate-vulnerabilities-debricked/){:target="_blank"}
 How we used the Neo4j Graph database to understand how all open source uses all other open source. We then write our own graph algorithms to triverse this graph for find dependency trees safe from vulnerabilties. 
 
-## [Last Years Open Source - Tomorrow's Vulnerabilities](https://thehackernews.com/2022/11/last-years-open-source-tomorrows.html)
+### [Last Years Open Source - Tomorrow's Vulnerabilities](https://thehackernews.com/2022/11/last-years-open-source-tomorrows.html)
 Some data and insights around how long it takes to discover vulnerable code in open-source projects. 
 
 ## Papers
