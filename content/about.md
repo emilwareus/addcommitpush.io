@@ -14,8 +14,11 @@ I'm Emil Wåreus, a business savy data-nerd that spends way to much time in fron
 ### [Predicting the rise and fall of an open source project](https://www.linkedin.com/pulse/predicting-rise-fall-open-source-project-debricked/?trackingId=f7Gpg43aQbi33TYhprtNqg%3D%3D){:target="_blank"}
 A study of papers and some of my own research on why some open source projects becomes unmaintained. You can view the talk [here](https://www.youtube.com/watch?v=u9jU4xJ03ek).
 
-### [ How Neo4j’s Graph database can remediate vulnerabilities](https://www.linkedin.com/pulse/how-neo4js-graph-database-can-remediate-vulnerabilities-debricked/){:target="_blank"}
+### [How Neo4j’s Graph database can remediate vulnerabilities](https://www.linkedin.com/pulse/how-neo4js-graph-database-can-remediate-vulnerabilities-debricked/){:target="_blank"}
 How we used the Neo4j Graph database to understand how all open source uses all other open source. We then write our own graph algorithms to triverse this graph for find dependency trees safe from vulnerabilties. 
+
+### [Last Years Open Source - Tomorrow's Vulnerabilities](https://thehackernews.com/2022/11/last-years-open-source-tomorrows.html)
+Some data and insights around how long it takes to discover vulnerable code in open-source projects. 
 
 ## Papers
 
