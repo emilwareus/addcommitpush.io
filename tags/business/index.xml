@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>business on addcommitpush.io</title>
+    <link>https://www.addcommitpush.io/tags/business/</link>
+    <description>Recent content in business on addcommitpush.io</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Tue, 27 Dec 2022 00:00:00 +0200</lastBuildDate><atom:link href="https://www.addcommitpush.io/tags/business/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Building a SaaS Business, Zero to One in Hindsight</title>
+      <link>https://www.addcommitpush.io/posts/saas-zero-to-one-hindsight/</link>
+      <pubDate>Tue, 27 Dec 2022 00:00:00 +0200</pubDate>
+      
+      <guid>https://www.addcommitpush.io/posts/saas-zero-to-one-hindsight/</guid>
+      <description>In September 2018 I joined Debricked as the very interesting combination of a Machine Learning Engineer and Sales with the perception that the SaaS product was &amp;ldquo;done&amp;rdquo; and ready to take on the world. We just needed to add some more ML-enabled capabilities and off we go! We were wrong.. so so wrong.
+About a year later I was recognized as a Co-Founder, and have continually thrown spaghetti [and my head] against the wall to see what sticks with customers.</description>
+    </item>
+    
+  </channel>
+</rss>
