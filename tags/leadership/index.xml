@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>startup on addcommitpush.io</title>
-    <link>https://www.addcommitpush.io/tags/startup/</link>
-    <description>Recent content in startup on addcommitpush.io</description>
+    <title>leadership on addcommitpush.io</title>
+    <link>https://www.addcommitpush.io/tags/leadership/</link>
+    <description>Recent content in leadership on addcommitpush.io</description>
     <generator>Hugo -- gohugo.io</generator>
-    <lastBuildDate>Sat, 25 Mar 2023 00:00:00 +0200</lastBuildDate><atom:link href="https://www.addcommitpush.io/tags/startup/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Sat, 25 Mar 2023 00:00:00 +0200</lastBuildDate><atom:link href="https://www.addcommitpush.io/tags/leadership/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Recruiting engineers as a startup</title>
       <link>https://www.addcommitpush.io/posts/recruiting-engineers-as-a-startup/</link>
@@ -14,16 +14,6 @@
       <guid>https://www.addcommitpush.io/posts/recruiting-engineers-as-a-startup/</guid>
       <description>Intro As someone who&amp;rsquo;s worked as a data lead or head of engineering for the past years, I&amp;rsquo;ve learned a lot about finding and hiring great engineers. In this post, I want to share my insights, tips and tricks, and tactics to succeed in recruiting software developers, data engineers/scientists, and other related software roles in the context of a tech startup.
 What will you get to read Recruitment process How I evaluate candidates How to find good candidates This blogpost is written from the perspective of a head/VP of engineering, CTO, or similar at a small startup.</description>
-    </item>
-    
-    <item>
-      <title>Building a SaaS Business, Zero to One in Hindsight</title>
-      <link>https://www.addcommitpush.io/posts/saas-zero-to-one-hindsight/</link>
-      <pubDate>Tue, 27 Dec 2022 00:00:00 +0200</pubDate>
-      
-      <guid>https://www.addcommitpush.io/posts/saas-zero-to-one-hindsight/</guid>
-      <description>In September 2018 I joined Debricked as the very interesting combination of a Machine Learning Engineer and Sales with the perception that the SaaS product was &amp;ldquo;done&amp;rdquo; and ready to take on the world. We just needed to add some more ML-enabled capabilities and off we go! We were wrong.. so so wrong.
-About a year later I was recognized as a Co-Founder, and have continually thrown spaghetti [and my head] against the wall to see what sticks with customers.</description>
     </item>
     
   </channel>
