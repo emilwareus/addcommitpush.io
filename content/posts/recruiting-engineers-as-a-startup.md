@@ -1,13 +1,13 @@
 ---
 title: "Recruiting engineers as a startup"
-date: 2023-04-01T00:00:00+02:00
+date: 2023-03-25T00:00:00+02:00
 draft: false
 tags: ["startup", "leadership", "software"]
 categories: ["startup"]
 cover:
   image: "images/great_engineer.png"
   alt: "Synthwave hacker, engineering recruitment"
-  caption: "Great engineer to recruite"
+  caption: "Great engineer to recruit"
   relative: false
 ---
 
@@ -23,11 +23,12 @@ As someone who's worked as a data lead or head of engineering for the past years
 * How I evaluate candidates
 * How to find good candidates
 
+This blogpost is written from the perspective of a head/VP of engineering, CTO, or similar at a small startup. 
 
 # The process 
 
 
-## Interview with you (Engineering/Data-lead)
+## Interview with you
 The first meeting with you is crucial: it's 50% about you evaluating the candidate and 50% about trying to get them excited to work for you. I look for three things in my candidates during the first interview:
 
 - Passion for our field, technology, or anything, really. If a candidate has a sense of wonder and curiosity, and uses that to explore, it's awesome to work with them as a manager. If you can direct passion into a productive path, you'll have a fantastic team member in this candidate!
@@ -63,7 +64,7 @@ The selection of the interviewer for the second round depends on the role being 
 I don't have any particular insights here, other than that if the candidate is excited to work for you, this should be easy! 
 Just be clear and direct with the responsibilities of the role, and work swiftly in answering questions for the candidate. Speed is always of the essence in recruiting. 
 
-# How I find good candidates
+# How do I find good candidates
 
 ### Collaboration with my local Uni
 
