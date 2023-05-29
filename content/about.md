@@ -6,7 +6,7 @@ title: "About Me"
 Hi! 
 
 
-I'm Emil Wåreus, a business savy data-nerd that spends way to much time in front of a screen. During business hours I work as the head of R&D/Data Science at [Debricked](https://www.debricked.com), the startup I founded in 2018 and sold to [Micro Focus](https://www.microfocus.com) in 2022. There I lead a team of ~6 researchers in creating application security solutions to analyze open source, mostly with ML, graph algorithms, and static analysis. I also enjoy writing spaghetti code while drinking wine. 
+I'm Emil Wåreus, a business savy data-nerd that spends way too much time in front of a screen. During business hours I work as the head of R&D/Data Science at [Debricked](https://www.debricked.com), the startup I founded in 2018 and sold to [Micro Focus](https://www.microfocus.com) in 2022. There I lead a team of ~6 researchers in creating application security solutions to analyze open source, mostly with ML, graph algorithms, and static analysis. I also enjoy writing spaghetti code while drinking wine. 
 
 
 ## External blogposts 
