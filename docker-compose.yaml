@@ -3,7 +3,7 @@ version: "3"
 services:
 
   server:
-    image: klakegg/hugo:0.101.0
+    image: klakegg/hugo:0.111.3
     command: server -D
     volumes:
       - ".:/src"
