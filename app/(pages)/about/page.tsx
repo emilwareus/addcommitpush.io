@@ -119,6 +119,21 @@ export default function AboutPage() {
                     </a>
                     <p className="text-sm text-muted-foreground">Spotify (Swedish)</p>
                   </li>
+                  <li className="border-l-2 border-secondary/30 pl-4">
+                    <a
+                      href="https://www.linkedin.com/events/7381592382435172352/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-foreground font-medium hover:text-secondary transition-colors inline-flex items-center gap-2"
+                    >
+                      Neo4j Live: Valkompass.ai - Mapping Political Insight with Graphs & AI
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                    <p className="text-sm text-muted-foreground">Neo4j</p>
+                    <p className="text-foreground/80 mt-2">
+                      Exploring how knowledge graphs and AI bring transparency to politics through Valkompass.ai, an open-source project using Neo4j and Gemini to analyze Swedish political data.
+                    </p>
+                  </li>
                 </ul>
               </CardContent>
             </Card>
