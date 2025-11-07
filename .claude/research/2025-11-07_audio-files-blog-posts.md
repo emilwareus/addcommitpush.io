@@ -6,9 +6,10 @@ branch: main
 repository: addcommitpush.io
 topic: "Serving Audio Files for Blog Posts via public/ Directory"
 tags: [research, codebase, audio, blog, static-assets, nextjs]
-status: complete
+status: implemented
 last_updated: 2025-11-07
 last_updated_by: Claude Code
+implementation_plan: .claude/plans/audio-blog-posts-implementation.md
 ---
 
 # Research: Serving Audio Files for Blog Posts via public/ Directory
@@ -731,3 +732,22 @@ The `public/` directory approach is the **perfect fit** for this blog because:
 **Total development time**: ~5 minutes per post (mostly audio file preparation).
 
 The only potential improvement would be creating an automated audio optimization script similar to the existing image optimizer, but this is optional and can be added later if the volume of audio content increases.
+
+---
+
+## Implementation
+
+**Status**: ✅ Implemented
+
+**Implementation Plan**: [.claude/plans/audio-blog-posts-implementation.md](../plans/audio-blog-posts-implementation.md)
+
+**First Post with Audio**: "Recruiting engineers as a startup"
+
+**Changes Made**:
+1. Enhanced AudioPlayer with playback speed controls (1x, 1.25x, 1.5x, 2x)
+2. Added audio file to `public/posts/recruiting-engineers-as-a-startup/audio.mp3`
+3. Updated post metadata in `lib/posts.ts` with audioUrl
+4. Integrated AudioPlayer into post content component
+5. Documented audio workflow in CLAUDE.md
+
+**Result**: Blog posts can now include audio versions with full playback controls, following the same pattern as images.

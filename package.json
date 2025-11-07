@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint .",
     "check-links": "tsx scripts/check-about-links.ts",
-    "optimize-images": "tsx scripts/optimize-images.ts"
+    "optimize-images": "tsx scripts/optimize-images.ts",
+    "extract-text": "tsx scripts/extract-post-text.ts",
+    "generate-audio": "tsx scripts/generate-audio.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -68,6 +70,7 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.2.3",
     "eslint": "^9.39.1",
     "eslint-config-next": "^16.0.1",
     "p-limit": "^7.2.0",

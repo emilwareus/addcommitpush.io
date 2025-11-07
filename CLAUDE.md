@@ -206,6 +206,30 @@ export default async function PostPage({ params }) {
 - Target: <200KB per image (WebP typically achieves 85-95% size reduction)
 - The script uses Sharp for optimization and skips files already containing "-optimized"
 
+#### Audio file workflow
+- Source audio: Place MP3 files in `public/posts/<slug>/audio.mp3`
+- Format: MP3 at 128-192 kbps for spoken word (podcast/narration style)
+- Target size: <20 MB per file (10-minute audio at 192 kbps ≈ 14.4 MB)
+- Optimization: Use ffmpeg to optimize before committing:
+  ```bash
+  # Optimize audio for web (spoken word)
+  ffmpeg -i input.wav -codec:a libmp3lame -b:a 192k -ar 44100 output.mp3
+  ```
+- Post metadata: Add `audioUrl: "/posts/<slug>/audio.mp3"` to post object in `lib/posts.ts`
+- Integration: Import and render `<AudioPlayer>` component in post content:
+  ```tsx
+  import { AudioPlayer } from "@/components/audio-player"
+
+  <AudioPlayer
+    audioUrl="/posts/<slug>/audio.mp3"
+    title="Post Title - Audio Version"
+  />
+  ```
+- Features: Automatic playback controls (play/pause, seek, volume, speed: 1x/1.25x/1.5x/2x)
+- Indicator: Blog listing automatically shows Headphones icon for posts with audio
+- Preload: Audio uses `preload="metadata"` to load duration without full download
+- Serving: Files automatically served via Next.js static serving with CDN caching on Vercel
+
 ---
 
 ### How Claude should operate here

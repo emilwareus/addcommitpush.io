@@ -21,7 +21,7 @@ const posts: Post[] = [
     tags: ["startup", "leadership", "software"],
     cover: "/posts/recruiting-engineers-as-a-startup/cover-optimized.webp",
     readTime: "8 min read",
-    // audioUrl: "/audio/recruiting-engineers.mp3",
+    audioUrl: "/posts/recruiting-engineers-as-a-startup/audio.mp3",
   },
   {
     title: "Building a SaaS Business, Zero to One in Hindsight",

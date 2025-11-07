@@ -17,6 +17,7 @@ export function AudioPlayer({ audioUrl }: AudioPlayerProps) {
   const [duration, setDuration] = useState(0)
   const [volume, setVolume] = useState(1)
   const [isMuted, setIsMuted] = useState(false)
+  const [playbackRate, setPlaybackRate] = useState(1)
   const audioRef = useRef<HTMLAudioElement>(null)
 
   useEffect(() => {
@@ -74,6 +75,12 @@ export function AudioPlayer({ audioUrl }: AudioPlayerProps) {
     }
   }
 
+  const handlePlaybackRateChange = (rate: number) => {
+    if (!audioRef.current) return
+    audioRef.current.playbackRate = rate
+    setPlaybackRate(rate)
+  }
+
   const formatTime = (time: number) => {
     const minutes = Math.floor(time / 60)
     const seconds = Math.floor(time % 60)
@@ -103,6 +110,22 @@ export function AudioPlayer({ audioUrl }: AudioPlayerProps) {
             <span>{formatTime(currentTime)}</span>
             <span>{formatTime(duration)}</span>
           </div>
+        </div>
+
+        {/* Playback Speed Controls */}
+        <div className="flex items-center justify-center gap-2">
+          <span className="text-xs text-muted-foreground mr-2">Speed:</span>
+          {[1, 1.25, 1.5, 2].map((rate) => (
+            <Button
+              key={rate}
+              onClick={() => handlePlaybackRateChange(rate)}
+              variant={playbackRate === rate ? "default" : "ghost"}
+              size="sm"
+              className="text-xs px-3 py-1 h-7"
+            >
+              {rate}x
+            </Button>
+          ))}
         </div>
 
         {/* Controls */}

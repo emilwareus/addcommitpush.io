@@ -1,4 +1,5 @@
 import { BlogHeading, BlogList, BlogListItem, Figure } from "@/components/custom"
+import { AudioPlayer } from "@/components/audio-player"
 
 export function RecruitingEngineersContent() {
   return (
@@ -11,6 +12,11 @@ export function RecruitingEngineersContent() {
         caption="Great engineer to recruit"
         priority
         className="mb-12"
+      />
+
+      <AudioPlayer
+        audioUrl="/posts/recruiting-engineers-as-a-startup/audio.mp3"
+        title="Recruiting engineers as a startup - Audio Version"
       />
 
       <div

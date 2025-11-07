@@ -41,3 +41,6 @@ yarn-error.log*
 next-env.d.ts
 .playwright-mcp/
 TODO.md
+
+# temporary audio generation files
+.tmp-audio/
