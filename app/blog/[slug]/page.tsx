@@ -82,17 +82,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
           <article>
             <header className="mb-12 md:mb-16">
-              <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-                <Link href="/" className="hover:text-foreground">
-                  Home
-                </Link>
-                <span>»</span>
-                <Link href="/blog" className="hover:text-foreground">
-                  Posts
-                </Link>
-              </nav>
-
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 text-balance leading-tight">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 md:mb-8 text-balance leading-tight">
                 {post.title}
               </h1>
 

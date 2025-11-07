@@ -1,6 +1,59 @@
 import { BlogCard } from "@/components/blog-card"
 import { getAllPosts } from "@/lib/posts"
 
+export const dynamic = "error"
+export const revalidate = false
+
+export const metadata = {
+  title: "addcommitpush.io | Tech, Data, Leadership & Startups",
+  description:
+    "Emil Wåreus' blog on tech, data, leadership, and startups. Software engineer, founder, researcher, and investor sharing insights on building products, scaling teams, and navigating the startup ecosystem. Every post includes audio narration.",
+  keywords: [
+    "software engineering",
+    "tech blog",
+    "startup advice",
+    "data engineering",
+    "engineering leadership",
+    "founder stories",
+    "SaaS",
+    "recruiting engineers",
+    "Emil Wåreus",
+  ],
+  authors: [{ name: "Emil Wåreus" }],
+  creator: "Emil Wåreus",
+  publisher: "Emil Wåreus",
+  alternates: {
+    canonical: "https://addcommitpush.io",
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://addcommitpush.io",
+    siteName: "addcommitpush.io",
+    title: "addcommitpush.io | Tech, Data, Leadership & Startups",
+    description:
+      "Emil Wåreus' blog on tech, data, leadership, and startups. Software engineer, founder, researcher, and investor sharing insights on building products, scaling teams, and navigating the startup ecosystem.",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "addcommitpush.io | Tech, Data, Leadership & Startups",
+    description:
+      "Emil Wåreus' blog on tech, data, leadership, and startups. Insights on building products, scaling teams, and navigating the startup ecosystem.",
+    creator: "@emilwareus",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+}
+
 export default function HomePage() {
   const blogPosts = getAllPosts()
   return (
@@ -12,8 +65,10 @@ export default function HomePage() {
               <span className="text-primary neon-glow">[add commit push]</span>
             </h1>
             <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl text-pretty leading-relaxed">
-              A blog about tech, data, leadership, and startups. Maintained by Emil Wåreus. Every post comes with
-              audio—because reading is so 2020.
+              Welcome to my trash yard of a blog! My name is Emil, and I'm a sphagetti coder, founder, research, and investor. Here I share my thoughts on tech, data, leadership, and startups (and maybe even some politics in the future..).
+              <br />
+
+              Enjoy!
             </p>
           </div>
 

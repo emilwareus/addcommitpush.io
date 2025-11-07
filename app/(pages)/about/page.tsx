@@ -1,4 +1,5 @@
 import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { ExternalLink, FileText, BookOpen, Mic, Code2, FlaskConical } from "lucide-react"
 import Image from "next/image"
 import { patents } from "@/lib/patents"
@@ -21,31 +22,54 @@ export default function AboutPage() {
             </h1>
             <div className="prose prose-lg max-w-none text-foreground/90">
               <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto text-pretty leading-relaxed">
-                I&apos;m a business-savvy data nerd who spends way too much time in front of a screen. I serve as head of
-                Engineering and Research at{" "}
-                <a
-                  href="https://www.debricked.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  Debricked
-                </a>
-                , a startup I co-founded in 2018. Following Debricked&apos;s 2022 acquisition, we joined{" "}
-                <a
-                  href="https://www.microfocus.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  Micro Focus
-                </a>
-                . I lead teams developing application security solutions using machine learning, graph algorithms, and
-                static analysis techniques.
+                I&apos;m a business-savvy data nerd who spends way too much time in front of a screen. I run a few different companies, invest, advise, and hack. My most notable achievement was founding, scaling, and exiting Debricked, a startup I co-founded in 2018. Following Debricked&apos;s 2022 acquisition, we joined Micro Focus. I lead teams developing application security solutions using machine learning, graph algorithms, and static analysis techniques.
               </p>
-              <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto text-pretty leading-relaxed mt-4">
-                I also enjoy writing spaghetti code while drinking wine.
-              </p>
+              <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto text-pretty leading-relaxed mt-4">I also enjoy writing spaghetti code while drinking wine. 🍷</p>
+              <p className="text-base sm:text-lg md:text-xl text-foreground max-w-3xl mx-auto text-balance leading-relaxed mt-6 font-medium">Current projects</p>
+              <div className="mt-3 grid grid-cols-1 gap-3 text-left sm:text-center">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center gap-1 sm:gap-2">
+                  <Badge asChild variant="outline">
+                    <a
+                      href="https://oaiz.io"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1"
+                    >
+                      Oaiz
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">AI that builds AI agents</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center gap-1 sm:gap-2">
+                  <Badge asChild variant="outline">
+                    <a
+                      href="https://valkompass.ai"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1"
+                    >
+                      Valkompass.ai
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">Neo4j + Gemini for Swedish political data</span>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center gap-1 sm:gap-2">
+                  <Badge asChild variant="outline">
+                    <a
+                      href="https://podidex.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1"
+                    >
+                      Podidex
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">AI podcast transcript analysis and recommendations</span>
+                </div>
+              </div>
             </div>
           </div>
 
