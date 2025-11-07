@@ -1,6 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Space_Grotesk } from "next/font/google"
+import { Suspense } from "react"
 import "./globals.css"
 import { Navigation } from "@/components/navigation"
 import { PHProvider } from "./providers"
@@ -43,7 +44,9 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={`${spaceGrotesk.className} font-sans antialiased`}>
         <PHProvider>
-          <PostHogPageView />
+          <Suspense fallback={null}>
+            <PostHogPageView />
+          </Suspense>
           <div className="min-h-screen grid-bg">
             <Navigation />
             {children}
