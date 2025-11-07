@@ -64,6 +64,7 @@ const prsSearchQuery = `
       nodes {
         ... on PullRequest {
           createdAt
+          mergedAt
         }
       }
     }
@@ -159,6 +160,7 @@ async function fetchGraphQL(
 
 interface PRNode {
   createdAt: string
+  mergedAt: string | null
 }
 
 interface SearchResponse {
@@ -178,14 +180,14 @@ async function fetchAllPRs(
   username: string,
   fromDate: Date,
   toDate: Date
-): Promise<{ createdAt: string }[]> {
+): Promise<{ createdAt: string; mergedAt: string | null }[]> {
   const fromStr = fromDate.toISOString().split('T')[0]
   const toStr = toDate.toISOString().split('T')[0]
   const searchString = `author:${username} is:pr created:${fromStr}..${toStr}`
 
   let hasNextPage = true
   let cursor: string | null = null
-  const allPRs: { createdAt: string }[] = []
+  const allPRs: { createdAt: string; mergedAt: string | null }[] = []
 
   while (hasNextPage && allPRs.length < 5000) {
     const variables: Record<string, unknown> = { searchQuery: searchString }
@@ -339,7 +341,7 @@ interface CommitResponse {
 }
 
 interface AccountData {
-  prs: { createdAt: string }[]
+  prs: { createdAt: string; mergedAt: string | null }[]
   issues: { createdAt: string }[]
   reviews: { createdAt: string }[]
   languages: LanguageResponse
@@ -375,7 +377,7 @@ async function fetchAccountData(
   const results = await Promise.all(promises)
 
   return {
-    prs: results[0] as { createdAt: string }[],
+    prs: results[0] as { createdAt: string; mergedAt: string | null }[],
     issues: results[1] as { createdAt: string }[],
     reviews: results[2] as { createdAt: string }[],
     languages: results[3] as LanguageResponse,
@@ -427,12 +429,19 @@ async function fetchGitHubDataInternal(): Promise<GitHubStatusData> {
     }
   })
 
-  // Aggregate PRs by day
+  // Aggregate PRs by day (both opened and merged)
   const prsByDayMap = new Map<string, number>()
   accountsData.forEach((account) => {
     account.prs.forEach((pr) => {
-      const date = pr.createdAt.split('T')[0]
-      prsByDayMap.set(date, (prsByDayMap.get(date) || 0) + 1)
+      // Count opened PR (+1)
+      const openedDate = pr.createdAt.split('T')[0]
+      prsByDayMap.set(openedDate, (prsByDayMap.get(openedDate) || 0) + 1)
+      
+      // Count merged PR (+1) if it was merged
+      if (pr.mergedAt) {
+        const mergedDate = pr.mergedAt.split('T')[0]
+        prsByDayMap.set(mergedDate, (prsByDayMap.get(mergedDate) || 0) + 1)
+      }
     })
   })
 

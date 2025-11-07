@@ -34,7 +34,7 @@ function getReviewColor(count: number): string {
 }
 
 function getTooltip(date: string, count: number, type: string): string {
-  const formattedDate = new Date(date).toLocaleDateString('en', { month: 'short', day: 'numeric' })
+  const formattedDate = new Date(date).toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })
   const suffix = count === 1 ? '' : 's'
   return `${formattedDate}: ${count} ${type}${suffix}`
 }
@@ -66,7 +66,7 @@ export function StatusGrid({ data }: StatusGridProps) {
             <p className="text-sm font-mono text-muted-foreground">{commitUptime}% active</p>
           </div>
           <div className="flex gap-1 overflow-x-auto pb-2">
-            {data.commitsByDay.map((day, i) => (
+            {[...data.commitsByDay].reverse().map((day, i) => (
               <div
                 key={i}
                 className={`w-3 h-10 rounded flex-shrink-0 ${getCommitColor(day.count)} transition-all`}
@@ -83,7 +83,7 @@ export function StatusGrid({ data }: StatusGridProps) {
             <p className="text-sm font-mono text-muted-foreground">{prUptime}% active</p>
           </div>
           <div className="flex gap-1 overflow-x-auto pb-2">
-            {data.prsByDay.map((day, i) => (
+            {[...data.prsByDay].reverse().map((day, i) => (
               <div
                 key={i}
                 className={`w-3 h-10 rounded flex-shrink-0 ${getPRColor(day.count)} transition-all`}
@@ -100,7 +100,7 @@ export function StatusGrid({ data }: StatusGridProps) {
             <p className="text-sm font-mono text-muted-foreground">{issueUptime}% active</p>
           </div>
           <div className="flex gap-1 overflow-x-auto pb-2">
-            {data.issuesByDay.map((day, i) => (
+            {[...data.issuesByDay].reverse().map((day, i) => (
               <div
                 key={i}
                 className={`w-3 h-10 rounded flex-shrink-0 ${getIssueColor(day.count)} transition-all`}
@@ -117,7 +117,7 @@ export function StatusGrid({ data }: StatusGridProps) {
             <p className="text-sm font-mono text-muted-foreground">{reviewUptime}% active</p>
           </div>
           <div className="flex gap-1 overflow-x-auto pb-2">
-            {data.reviewsByDay.map((day, i) => (
+            {[...data.reviewsByDay].reverse().map((day, i) => (
               <div
                 key={i}
                 className={`w-3 h-10 rounded flex-shrink-0 ${getReviewColor(day.count)} transition-all`}
