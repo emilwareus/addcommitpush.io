@@ -570,21 +570,76 @@ export default function AboutPage() {
                   <h2 className="text-2xl md:text-3xl font-bold text-accent">Open Source Projects</h2>
                 </div>
 
-                <div className="border-l-2 border-accent/30 pl-4">
-                  <a
-                    href="https://github.com/emilwareus/i-hate-group-chats"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-lg font-medium text-foreground hover:text-accent transition-colors inline-flex items-center gap-2"
-                  >
-                    I Hate Group Chats
-                    <ExternalLink className="w-4 h-4" />
-                  </a>
-                  <p className="text-sm text-muted-foreground mt-1">GitHub</p>
-                  <p className="text-foreground/80 mt-2">
-                    Early-stage project automating group chat management using NLP. Self-described as potentially &quot;very
-                    early stage&quot;.
-                  </p>
+                <div className="space-y-6">
+                  <div className="border-l-2 border-accent/30 pl-4">
+                    <a
+                      href="https://github.com/emilwareus/addcommitpush.io"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-lg font-medium text-foreground hover:text-accent transition-colors inline-flex items-center gap-2"
+                    >
+                      addcommitpush.io
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                    <p className="text-sm text-muted-foreground mt-1">Next.js • TypeScript</p>
+                    <p className="text-foreground/80 mt-2">
+                      This blog platform itself, built with Next.js 16. Features SSG, MDX content, and audio narration for
+                      posts. Open-sourced so you can see how it&apos;s built - warts and all.
+                    </p>
+                  </div>
+
+                  <div className="border-l-2 border-accent/30 pl-4">
+                    <a
+                      href="https://github.com/debricked/cli"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-lg font-medium text-foreground hover:text-accent transition-colors inline-flex items-center gap-2"
+                    >
+                      Debricked CLI
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                    <p className="text-sm text-muted-foreground mt-1">Go • Docker</p>
+                    <p className="text-foreground/80 mt-2">
+                      Command-line interface for open source security scanning and software composition analysis.
+                      Delivers vulnerability detection, compliance checking, and health metrics directly to the command
+                      prompt. Integrates seamlessly into CI/CD pipelines with multi-platform support.
+                    </p>
+                  </div>
+
+                  <div className="border-l-2 border-accent/30 pl-4">
+                    <a
+                      href="https://github.com/valkompass-ai/valkompass-ai"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-lg font-medium text-foreground hover:text-accent transition-colors inline-flex items-center gap-2"
+                    >
+                      Valkompass.ai
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                    <p className="text-sm text-muted-foreground mt-1">Next.js • Neo4j • Gemini</p>
+                    <p className="text-foreground/80 mt-2">
+                      Open source platform for exploring Swedish political party positions using AI-powered analysis.
+                      Combines knowledge graphs (Neo4j) with Google Gemini to analyze party programs, manifestos, and
+                      voting records. Provides transparent, data-driven insights for voters, journalists, and citizens.
+                    </p>
+                  </div>
+
+                  <div className="border-l-2 border-accent/30 pl-4">
+                    <a
+                      href="https://github.com/emilwareus/i-hate-group-chats"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-lg font-medium text-foreground hover:text-accent transition-colors inline-flex items-center gap-2"
+                    >
+                      I Hate Group Chats
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                    <p className="text-sm text-muted-foreground mt-1">NLP</p>
+                    <p className="text-foreground/80 mt-2">
+                      Early-stage project automating group chat management using NLP. Self-described as &quot;very very
+                      early stage&quot;.
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
