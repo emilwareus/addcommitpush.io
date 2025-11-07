@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { User, Home, Menu, X } from "lucide-react"
+import { Cpu, Earth, Menu, X } from "lucide-react"
 import { useState } from "react"
 import Image from "next/image"
 
@@ -12,8 +12,8 @@ export function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const links = [
-    { href: "/", label: "Blog", icon: Home },
-    { href: "/about", label: "About", icon: User },
+    { href: "/", label: "Blog", icon: Earth },
+    { href: "/about", label: "About", icon: Cpu },
   ]
 
   return (
