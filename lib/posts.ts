@@ -34,6 +34,15 @@ const posts: Post[] = [
     cover: "/posts/saas-zero-to-one-hindsight/cover-optimized.avif",
     readTime: "10 min read",
   },
+  {
+    title: "Advanced Context Engineering with Claude Code",
+    slug: "context-engineering-claude-code",
+    description:
+      "How to structure, compact, and orchestrate information with commands, agents, and scripts.",
+    publishedAt: "2025-11-07",
+    tags: ["ai", "agents", "workflows", "research"],
+    readTime: "15 min read",
+  },
 ]
 
 export function getAllPosts(): Post[] {

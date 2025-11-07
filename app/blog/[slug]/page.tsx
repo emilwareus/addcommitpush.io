@@ -63,6 +63,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         )
         return <SaasZeroToOneHindsightContent />
       }
+      case "context-engineering-claude-code": {
+        const { ContextEngineeringClaudeCodeContent } = await import(
+          "@/components/blog-posts/context-engineering-claude-code"
+        )
+        return <ContextEngineeringClaudeCodeContent />
+      }
       default:
         notFound()
     }
