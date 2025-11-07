@@ -52,7 +52,7 @@ async function checkLink(url: string): Promise<LinkResult> {
       status: response.status,
       ok: response.ok,
     }
-  } catch (error) {
+  } catch {
     // If HEAD fails, try GET (some servers don't support HEAD)
     try {
       const controller = new AbortController()
@@ -74,12 +74,12 @@ async function checkLink(url: string): Promise<LinkResult> {
         status: response.status,
         ok: response.ok,
       }
-    } catch (getError) {
+    } catch {
       return {
         url,
         status: 0,
         ok: false,
-        error: getError instanceof Error ? getError.message : String(getError),
+        error: "Failed to fetch",
       }
     }
   }

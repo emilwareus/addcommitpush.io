@@ -1,12 +1,11 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Space_Grotesk, Geist_Mono } from "next/font/google"
+import { Space_Grotesk } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { Navigation } from "@/components/navigation"
 
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"] })
-const _geistMono = Geist_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: {

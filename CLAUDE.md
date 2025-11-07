@@ -25,11 +25,14 @@ Follow this playbook precisely. Be bold: prefer single, clean solutions. Remove 
 Key scripts:
 
 ```bash
-pnpm dev      # start dev server
-pnpm build    # production build (SSG)
-pnpm start    # start production server
-pnpm lint     # run eslint
+pnpm dev              # start dev server (ONLY run by humans - Claude should NEVER run this)
+pnpm build            # production build (SSG)
+pnpm start            # start production server
+pnpm lint             # run eslint
+pnpm optimize-images  # optimize images for web (generates AVIF, WebP, optimized originals)
 ```
+
+**IMPORTANT**: Claude is **NOT ALLOWED** to run `pnpm dev`. Only humans start the dev server. If you need the dev server running for verification, ask the user: "Please start the dev server."
 
 ---
 
@@ -173,6 +176,8 @@ export default async function PostPage({ params }) {
 5) Assets & images
 - Store per-post media under `public/posts/<slug>/`
 - Use `next/image` for responsive, optimized images with explicit `alt`
+- Run `pnpm optimize-images` to generate modern formats (AVIF, WebP) from source images
+- Reference optimized images in frontmatter: `cover: "/posts/<slug>/cover-optimized.webp"`
 
 6) Quality gates
 - `pnpm lint` must pass
@@ -187,10 +192,19 @@ export default async function PostPage({ params }) {
   - `content/posts/` — MDX sources
   - `lib/` — shared utilities (no React code here)
   - `public/` — static assets
+  - `scripts/` — build-time automation scripts (TypeScript, executed via tsx)
 - Code style:
   - Server Components by default; colocate minimal Client Components
   - Descriptive naming, short functions, early exits
   - No dead code; remove unused exports; keep modules focused
+
+#### Image optimization workflow
+- Source images: Place originals in `public/posts/<slug>/` (e.g., `cover.png`)
+- Run: `pnpm optimize-images` to generate optimized variants
+- Outputs: `<name>-optimized.avif`, `<name>-optimized.webp`, `<name>-optimized.<ext>`
+- Use WebP in frontmatter for best balance: `cover: "/posts/<slug>/cover-optimized.webp"`
+- Target: <200KB per image (WebP typically achieves 85-95% size reduction)
+- The script uses Sharp for optimization and skips files already containing "-optimized"
 
 ---
 
@@ -199,6 +213,8 @@ export default async function PostPage({ params }) {
 - When asked to add a post:
   - Propose a `slug`, create `content/posts/<slug>.mdx` with required frontmatter
   - Create a `public/posts/<slug>/` folder for media and reference them with absolute `/posts/<slug>/…` paths
+  - If images are added, run `pnpm optimize-images` to generate optimized variants
+  - Use optimized image paths in frontmatter (e.g., `cover: "/posts/<slug>/cover-optimized.webp"`)
   - Ensure the new post is picked up by the static params generator
 - When asked to add features:
   - Implement the single chosen approach end-to-end; do not keep legacy pathways

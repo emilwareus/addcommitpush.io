@@ -16,12 +16,12 @@ export default function AboutPage() {
               </div>
             </div>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 text-balance">
-              <span className="text-primary neon-glow">Hey, I'm</span>{" "}
+              <span className="text-primary neon-glow">Hey, I&apos;m</span>{" "}
               <span className="text-secondary neon-glow">Emil</span>
             </h1>
             <div className="prose prose-lg max-w-none text-foreground/90">
               <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto text-pretty leading-relaxed">
-                I'm a business-savvy data nerd who spends way too much time in front of a screen. I serve as head of
+                I&apos;m a business-savvy data nerd who spends way too much time in front of a screen. I serve as head of
                 Engineering and Research at{" "}
                 <a
                   href="https://www.debricked.com"
@@ -31,7 +31,7 @@ export default function AboutPage() {
                 >
                   Debricked
                 </a>
-                , a startup I co-founded in 2018. Following Debricked's 2022 acquisition, we joined{" "}
+                , a startup I co-founded in 2018. Following Debricked&apos;s 2022 acquisition, we joined{" "}
                 <a
                   href="https://www.microfocus.com"
                   target="_blank"
@@ -306,7 +306,7 @@ export default function AboutPage() {
                       rel="noopener noreferrer"
                       className="text-lg font-medium text-foreground hover:text-accent transition-colors inline-flex items-center gap-2"
                     >
-                      How Neo4j's Graph database can remediate vulnerabilities
+                      How Neo4j&apos;s Graph database can remediate vulnerabilities
                       <ExternalLink className="w-4 h-4" />
                     </a>
                     <p className="text-sm text-muted-foreground mt-1">LinkedIn</p>
@@ -322,7 +322,7 @@ export default function AboutPage() {
                       rel="noopener noreferrer"
                       className="text-lg font-medium text-foreground hover:text-accent transition-colors inline-flex items-center gap-2"
                     >
-                      Last Years Open Source - Tomorrow's Vulnerabilities
+                      Last Years Open Source - Tomorrow&apos;s Vulnerabilities
                       <ExternalLink className="w-4 h-4" />
                     </a>
                     <p className="text-sm text-muted-foreground mt-1">The Hacker News</p>
@@ -558,8 +558,8 @@ export default function AboutPage() {
                   </a>
                   <p className="text-sm text-muted-foreground mt-1">GitHub</p>
                   <p className="text-foreground/80 mt-2">
-                    Early-stage project automating group chat management using NLP. Self-described as potentially "very
-                    early stage".
+                    Early-stage project automating group chat management using NLP. Self-described as potentially &quot;very
+                    early stage&quot;.
                   </p>
                 </div>
               </CardContent>
