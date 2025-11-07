@@ -59,16 +59,6 @@ function getReviewColor(count: number): string {
   return 'bg-violet-500'
 }
 
-function getTooltip(date: string, count: number, type: string): string {
-  const formattedDate = new Date(date).toLocaleDateString('en', { 
-    month: 'short', 
-    day: 'numeric', 
-    year: 'numeric' 
-  })
-  const suffix = count === 1 ? '' : 's'
-  return `${formattedDate}: ${count} ${type}${suffix}`
-}
-
 function formatDate(date: string): string {
   return new Date(date).toLocaleDateString('en', { 
     month: 'short', 

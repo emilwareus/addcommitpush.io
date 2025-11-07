@@ -131,7 +131,6 @@ export async function fetchLinearDataInternal(): Promise<LinearStatusData> {
   if (!LINEAR_API_KEY) {
     // Return empty data if API key is not configured
     const now = new Date()
-    const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
     const allDates: string[] = []
     const currentDate = new Date(now)
     for (let i = 0; i < 365; i++) {
@@ -164,7 +163,6 @@ export async function fetchLinearDataInternal(): Promise<LinearStatusData> {
 
   // Get all unique dates from the last year
   const now = new Date()
-  const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000)
   const allDates: string[] = []
   const currentDate = new Date(now)
   for (let i = 0; i < 365; i++) {
