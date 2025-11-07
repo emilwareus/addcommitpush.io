@@ -1,0 +1,45 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Build outputs
+.next
+out
+dist
+build
+
+# Cache
+.cache
+*.tsbuildinfo
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+.env*.local
+
+# Misc
+.DS_Store
+*.pem
+
+# Testing
+coverage
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+
+# Lock files
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# Claude AI files
+.claude
+
+

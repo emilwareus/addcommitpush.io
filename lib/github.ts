@@ -29,7 +29,9 @@ export interface GitHubStatusData {
   totalIssues: number
   totalReviews: number
   commitsByDay: DayActivity[]
-  prsByDay: DayActivity[]
+  openedPRsByDay: DayActivity[]
+  mergedPRsByDay: DayActivity[]
+  prsByDay: DayActivity[] // Combined for visualization
   issuesByDay: DayActivity[]
   reviewsByDay: DayActivity[]
   topLanguages: Language[]
@@ -64,6 +66,7 @@ const prsSearchQuery = `
       nodes {
         ... on PullRequest {
           createdAt
+          mergedAt
         }
       }
     }
@@ -159,6 +162,7 @@ async function fetchGraphQL(
 
 interface PRNode {
   createdAt: string
+  mergedAt: string | null
 }
 
 interface SearchResponse {
@@ -178,14 +182,14 @@ async function fetchAllPRs(
   username: string,
   fromDate: Date,
   toDate: Date
-): Promise<{ createdAt: string }[]> {
+): Promise<{ createdAt: string; mergedAt: string | null }[]> {
   const fromStr = fromDate.toISOString().split('T')[0]
   const toStr = toDate.toISOString().split('T')[0]
   const searchString = `author:${username} is:pr created:${fromStr}..${toStr}`
 
   let hasNextPage = true
   let cursor: string | null = null
-  const allPRs: { createdAt: string }[] = []
+  const allPRs: { createdAt: string; mergedAt: string | null }[] = []
 
   while (hasNextPage && allPRs.length < 5000) {
     const variables: Record<string, unknown> = { searchQuery: searchString }
@@ -339,7 +343,7 @@ interface CommitResponse {
 }
 
 interface AccountData {
-  prs: { createdAt: string }[]
+  prs: { createdAt: string; mergedAt: string | null }[]
   issues: { createdAt: string }[]
   reviews: { createdAt: string }[]
   languages: LanguageResponse
@@ -375,7 +379,7 @@ async function fetchAccountData(
   const results = await Promise.all(promises)
 
   return {
-    prs: results[0] as { createdAt: string }[],
+    prs: results[0] as { createdAt: string; mergedAt: string | null }[],
     issues: results[1] as { createdAt: string }[],
     reviews: results[2] as { createdAt: string }[],
     languages: results[3] as LanguageResponse,
@@ -427,12 +431,22 @@ async function fetchGitHubDataInternal(): Promise<GitHubStatusData> {
     }
   })
 
-  // Aggregate PRs by day
-  const prsByDayMap = new Map<string, number>()
+  // Aggregate opened PRs by day
+  const openedPRsByDayMap = new Map<string, number>()
+  // Aggregate merged PRs by day
+  const mergedPRsByDayMap = new Map<string, number>()
+  
   accountsData.forEach((account) => {
     account.prs.forEach((pr) => {
-      const date = pr.createdAt.split('T')[0]
-      prsByDayMap.set(date, (prsByDayMap.get(date) || 0) + 1)
+      // Count opened PR (+1)
+      const openedDate = pr.createdAt.split('T')[0]
+      openedPRsByDayMap.set(openedDate, (openedPRsByDayMap.get(openedDate) || 0) + 1)
+      
+      // Count merged PR (+1) if it was merged
+      if (pr.mergedAt) {
+        const mergedDate = pr.mergedAt.split('T')[0]
+        mergedPRsByDayMap.set(mergedDate, (mergedPRsByDayMap.get(mergedDate) || 0) + 1)
+      }
     })
   })
 
@@ -490,9 +504,18 @@ async function fetchGitHubDataInternal(): Promise<GitHubStatusData> {
     allDates = dates
   }
 
+  // Combine opened and merged PRs for visualization
+  const prsByDayMap = new Map<string, number>()
+  allDates.forEach((date) => {
+    const opened = openedPRsByDayMap.get(date) || 0
+    const merged = mergedPRsByDayMap.get(date) || 0
+    prsByDayMap.set(date, opened + merged)
+  })
+
   // Calculate totals
   const totalCommits = Array.from(commitsByDayMap.values()).reduce((sum, count) => sum + count, 0)
-  const totalPRs = Array.from(prsByDayMap.values()).reduce((sum, count) => sum + count, 0)
+  // Total PRs should only count unique opened PRs, not merged
+  const totalPRs = Array.from(openedPRsByDayMap.values()).reduce((sum, count) => sum + count, 0)
   const totalIssues = Array.from(issuesByDayMap.values()).reduce((sum, count) => sum + count, 0)
   const totalReviews = Array.from(reviewsByDayMap.values()).reduce((sum, count) => sum + count, 0)
 
@@ -518,6 +541,14 @@ async function fetchGitHubDataInternal(): Promise<GitHubStatusData> {
     commitsByDay: allDates.map((date) => ({
       date,
       count: commitsByDayMap.get(date) || 0,
+    })),
+    openedPRsByDay: allDates.map((date) => ({
+      date,
+      count: openedPRsByDayMap.get(date) || 0,
+    })),
+    mergedPRsByDay: allDates.map((date) => ({
+      date,
+      count: mergedPRsByDayMap.get(date) || 0,
     })),
     prsByDay: allDates.map((date) => ({
       date,

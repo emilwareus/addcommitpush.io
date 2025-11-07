@@ -1,5 +1,7 @@
 import { Suspense } from 'react'
 import { getGitHubStatusData } from '@/lib/github'
+import { getLinearStatusData } from '@/lib/linear'
+import type { DayActivity } from '@/lib/github'
 import { StatusGrid } from './components/status-grid'
 import { StatusDashboard } from './status-dashboard'
 
@@ -31,7 +33,28 @@ export const metadata = {
 }
 
 export default async function StatusPage() {
-  const githubData = await getGitHubStatusData()
+  const [githubData, linearData] = await Promise.all([
+    getGitHubStatusData(),
+    getLinearStatusData(),
+  ])
+
+  // Combine Linear issues with GitHub issues
+  const combinedIssuesByDay: DayActivity[] = githubData.issuesByDay.map((githubDay, index) => {
+    const linearDay = linearData.issuesByDay[index]
+    return {
+      date: githubDay.date,
+      count: githubDay.count + (linearDay?.count || 0),
+    }
+  })
+
+  const combinedTotalIssues = githubData.totalIssues + linearData.totalIssues
+
+  // Create combined data
+  const combinedData = {
+    ...githubData,
+    issuesByDay: combinedIssuesByDay,
+    totalIssues: combinedTotalIssues,
+  }
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-7xl">
@@ -45,12 +68,12 @@ export default async function StatusPage() {
       </div>
 
       <Suspense fallback={<div>Loading activity...</div>}>
-        <StatusGrid data={githubData} />
+        <StatusGrid data={combinedData} />
       </Suspense>
 
       <div className="mt-12">
         <h2 className="text-2xl font-bold mb-6">Current Activity</h2>
-        <StatusDashboard githubData={githubData} />
+        <StatusDashboard githubData={combinedData} />
       </div>
 
       <p className="text-sm text-muted-foreground mt-8">

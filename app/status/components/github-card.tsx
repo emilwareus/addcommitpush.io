@@ -11,7 +11,6 @@ export function GitHubCard({ data }: GitHubCardProps) {
     <Card className="h-full flex flex-col hover:border-primary/40 transition-all duration-300">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <span className="text-2xl">💻</span>
           <div className="flex flex-col">
             <span>GitHub Activity</span>
             <span className="text-xs font-normal text-muted-foreground">Past year</span>
@@ -35,8 +34,8 @@ export function GitHubCard({ data }: GitHubCardProps) {
           </div>
         </div>
 
-        {/* Chart - Client Component */}
-        <div className="hidden lg:flex flex-1 min-h-[120px]">
+        {/* Chart - Client Component - Always visible */}
+        <div className="flex flex-1 min-h-[200px] -ml-2">
           <GitHubChart data={data.commitsByDay} />
         </div>
       </CardContent>

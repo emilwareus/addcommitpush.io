@@ -182,7 +182,7 @@ async function concatenateAudioFiles(inputPaths: string[], outputPath: string): 
       // Clean up file list
       try {
         unlinkSync(fileListPath)
-      } catch (err) {
+      } catch {
         // Ignore cleanup errors
       }
 
@@ -246,7 +246,7 @@ function cleanupTempFiles(): void {
     for (const file of files) {
       try {
         unlinkSync(join(TEMP_DIR, file))
-      } catch (err) {
+      } catch {
         // Ignore errors
       }
     }

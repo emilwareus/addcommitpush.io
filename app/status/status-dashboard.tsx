@@ -13,12 +13,12 @@ export function StatusDashboard({ githubData }: StatusDashboardProps) {
   return (
     <LayoutGroup>
       <motion.div
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 auto-rows-[240px] gap-4"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
         layout
       >
-        {/* GitHub Stats - Large card (2x2 on large screens) */}
+        {/* GitHub Stats - Large card (2 columns on large screens, full height) */}
         <motion.div
-          className="lg:col-span-2 lg:row-span-2"
+          className="lg:col-span-2"
           layout
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -27,9 +27,8 @@ export function StatusDashboard({ githubData }: StatusDashboardProps) {
           <GitHubCard data={githubData} />
         </motion.div>
 
-        {/* Spotify Now Playing - Medium card (1x1) */}
+        {/* Spotify Now Playing */}
         <motion.div
-          className="lg:row-span-1"
           layout
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
