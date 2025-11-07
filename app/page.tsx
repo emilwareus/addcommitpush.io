@@ -65,7 +65,7 @@ export default function HomePage() {
               <span className="text-primary neon-glow">[add commit push]</span>
             </h1>
             <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl text-pretty leading-relaxed">
-              Welcome to my trash yard of a blog! My name is Emil, and I'm a sphagetti coder, founder, research, and investor. Here I share my thoughts on tech, data, leadership, and startups (and maybe even some politics in the future..).
+              Welcome to my trash yard of a blog! My name is Emil, and I&apos;m a sphagetti coder, founder, research, and investor. Here I share my thoughts on tech, data, leadership, and startups (and maybe even some politics in the future..).
               <br />
 
               Enjoy!
