@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Cpu, Earth, Menu, X } from "lucide-react"
+import { Activity, Cpu, Earth, Menu, X } from "lucide-react"
 import { useState } from "react"
 import Image from "next/image"
 
@@ -14,6 +14,7 @@ export function Navigation() {
   const links = [
     { href: "/", label: "Blog", icon: Earth },
     { href: "/about", label: "About", icon: Cpu },
+    { href: "/status", label: "Status", icon: Activity },
   ]
 
   return (

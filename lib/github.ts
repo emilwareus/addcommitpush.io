@@ -29,7 +29,9 @@ export interface GitHubStatusData {
   totalIssues: number
   totalReviews: number
   commitsByDay: DayActivity[]
-  prsByDay: DayActivity[]
+  openedPRsByDay: DayActivity[]
+  mergedPRsByDay: DayActivity[]
+  prsByDay: DayActivity[] // Combined for visualization
   issuesByDay: DayActivity[]
   reviewsByDay: DayActivity[]
   topLanguages: Language[]
@@ -429,18 +431,21 @@ async function fetchGitHubDataInternal(): Promise<GitHubStatusData> {
     }
   })
 
-  // Aggregate PRs by day (both opened and merged)
-  const prsByDayMap = new Map<string, number>()
+  // Aggregate opened PRs by day
+  const openedPRsByDayMap = new Map<string, number>()
+  // Aggregate merged PRs by day
+  const mergedPRsByDayMap = new Map<string, number>()
+  
   accountsData.forEach((account) => {
     account.prs.forEach((pr) => {
       // Count opened PR (+1)
       const openedDate = pr.createdAt.split('T')[0]
-      prsByDayMap.set(openedDate, (prsByDayMap.get(openedDate) || 0) + 1)
+      openedPRsByDayMap.set(openedDate, (openedPRsByDayMap.get(openedDate) || 0) + 1)
       
       // Count merged PR (+1) if it was merged
       if (pr.mergedAt) {
         const mergedDate = pr.mergedAt.split('T')[0]
-        prsByDayMap.set(mergedDate, (prsByDayMap.get(mergedDate) || 0) + 1)
+        mergedPRsByDayMap.set(mergedDate, (mergedPRsByDayMap.get(mergedDate) || 0) + 1)
       }
     })
   })
@@ -499,9 +504,18 @@ async function fetchGitHubDataInternal(): Promise<GitHubStatusData> {
     allDates = dates
   }
 
+  // Combine opened and merged PRs for visualization
+  const prsByDayMap = new Map<string, number>()
+  allDates.forEach((date) => {
+    const opened = openedPRsByDayMap.get(date) || 0
+    const merged = mergedPRsByDayMap.get(date) || 0
+    prsByDayMap.set(date, opened + merged)
+  })
+
   // Calculate totals
   const totalCommits = Array.from(commitsByDayMap.values()).reduce((sum, count) => sum + count, 0)
-  const totalPRs = Array.from(prsByDayMap.values()).reduce((sum, count) => sum + count, 0)
+  // Total PRs should only count unique opened PRs, not merged
+  const totalPRs = Array.from(openedPRsByDayMap.values()).reduce((sum, count) => sum + count, 0)
   const totalIssues = Array.from(issuesByDayMap.values()).reduce((sum, count) => sum + count, 0)
   const totalReviews = Array.from(reviewsByDayMap.values()).reduce((sum, count) => sum + count, 0)
 
@@ -527,6 +541,14 @@ async function fetchGitHubDataInternal(): Promise<GitHubStatusData> {
     commitsByDay: allDates.map((date) => ({
       date,
       count: commitsByDayMap.get(date) || 0,
+    })),
+    openedPRsByDay: allDates.map((date) => ({
+      date,
+      count: openedPRsByDayMap.get(date) || 0,
+    })),
+    mergedPRsByDay: allDates.map((date) => ({
+      date,
+      count: mergedPRsByDayMap.get(date) || 0,
     })),
     prsByDay: allDates.map((date) => ({
       date,
