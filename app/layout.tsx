@@ -1,9 +1,10 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Space_Grotesk } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
 import "./globals.css"
 import { Navigation } from "@/components/navigation"
+import { PHProvider } from "./providers"
+import { PostHogPageView } from "./posthog-pageview"
 
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"] })
 
@@ -41,11 +42,13 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${spaceGrotesk.className} font-sans antialiased`}>
-        <div className="min-h-screen grid-bg">
-          <Navigation />
-          {children}
-        </div>
-        <Analytics />
+        <PHProvider>
+          <PostHogPageView />
+          <div className="min-h-screen grid-bg">
+            <Navigation />
+            {children}
+          </div>
+        </PHProvider>
       </body>
     </html>
   )
