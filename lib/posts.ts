@@ -23,6 +23,17 @@ const posts: Post[] = [
     readTime: "8 min read",
     // audioUrl: "/audio/recruiting-engineers.mp3",
   },
+  {
+    title: "Building a SaaS Business, Zero to One in Hindsight",
+    slug: "saas-zero-to-one-hindsight",
+    description:
+      "Lessons learned from building Debricked as a co-founder, covering customer validation, execution prioritization, data-driven culture, conviction-based building, and focus strategies.",
+    publishedAt: "2022-12-27",
+    updatedAt: "2022-12-27",
+    tags: ["startup", "saas", "business"],
+    cover: "/posts/saas-zero-to-one-hindsight/cover-optimized.avif",
+    readTime: "10 min read",
+  },
 ]
 
 export function getAllPosts(): Post[] {

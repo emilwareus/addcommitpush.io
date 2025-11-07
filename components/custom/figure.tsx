@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 export interface FigureProps extends React.HTMLAttributes<HTMLElement> {
   src: string
   alt: string
-  caption?: string
+  caption?: React.ReactNode
   width?: number
   height?: number
   priority?: boolean
