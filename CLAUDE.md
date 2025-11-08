@@ -1,6 +1,6 @@
 ## Claude Code Playbook — addcommitpush.io (Next.js 16 + TypeScript)
 
-You are a senior TypeScript + Next.js engineer and an expert technical blog writer. This repository is a personal blog built with Next.js 16 (App Router), React 19, Tailwind CSS v4, and strict TypeScript. Content lives as MDX files compiled at build-time into static pages for maximum performance.
+You are a senior TypeScript + Next.js engineer and an expert technical blog writer. This repository is a personal blog built with Next.js 16 (App Router), React 19, Tailwind CSS v4, and strict TypeScript. Blog posts are React TSX components rendered as static pages at build-time for maximum performance.
 
 Follow this playbook precisely. Be bold: prefer single, clean solutions. Remove legacy paths rather than maintaining dual systems.
 
@@ -38,7 +38,8 @@ pnpm optimize-images  # optimize images for web (generates AVIF, WebP, optimized
 
 ### Blog architecture
 
-- Content source: `content/posts/**/*.mdx`
+- Content source: `components/blog-posts/**/*.tsx` (React components)
+- Post metadata: `lib/posts.ts` (TypeScript data structure)
 - Routes:
   - Index/list: `app/(site)/blog/page.tsx`
   - Detail: `app/(site)/blog/[slug]/page.tsx`
@@ -47,46 +48,39 @@ pnpm optimize-images  # optimize images for web (generates AVIF, WebP, optimized
 - Enforce static generation for all blog pages:
   - `export const dynamic = "error"`
   - `export const revalidate = false`
-  - `export async function generateStaticParams()` reads all slugs from `content/posts`
-
-MDX processing options (opinionated):
-- Use `@next/mdx` for MDX support in Next 16 App Router.
-- Recommended plugins:
-  - `remark-gfm` (tables, strikethrough)
-  - `remark-smartypants`
-  - `rehype-slug` and `rehype-autolink-headings` (a11y-friendly anchored headings)
-  - `rehype-pretty-code` (code syntax highlighting)
+  - `export async function generateStaticParams()` reads all slugs from `lib/posts.ts`
 
 SEO & discoverability:
 - `app/sitemap.ts` and `app/robots.ts`
 - `generateMetadata` in route files for per-post OG/SEO
-- Build-time RSS/Atom feed at `/feed.xml` and `/feed.atom` from post frontmatter
+- Build-time RSS/Atom feed at `/feed.xml` and `/feed.atom` from post metadata
 
 ---
 
-### Post schema (frontmatter)
+### Post schema
 
-Every MDX file under `content/posts/` must start with YAML frontmatter that conforms to this shape (types shown for clarity):
+Blog posts are defined as TypeScript objects in `lib/posts.ts` with the following structure:
 
-```yaml
----
-title: "<Human-readable title>"            # string (required)
-slug: "<kebab-case-slug>"                  # string (required, unique)
-description: "<120–160 chars>"             # string (required, for SEO)
-publishedAt: "2025-01-15"                  # YYYY-MM-DD or ISO date (required)
-updatedAt: "2025-01-20"                    # optional, ISO date
-tags: [nextjs, typescript, performance]     # string[] (optional)
-cover: "/posts/<slug>/cover.jpg"          # optional path under public/
-draft: false                                # boolean (default false)
-canonicalUrl: "https://..."                # optional
-ogImage: "/posts/<slug>/og.png"           # optional path under public/
----
+```typescript
+interface BlogPost {
+  title: string;                           // Human-readable title (required)
+  slug: string;                            // kebab-case-slug (required, unique)
+  description: string;                     // 120-160 chars for SEO (required)
+  publishedAt: string;                     // YYYY-MM-DD or ISO date (required)
+  updatedAt?: string;                      // ISO date (optional)
+  tags?: string[];                         // e.g., ["nextjs", "typescript", "performance"]
+  cover?: string;                          // Path under public/, e.g., "/posts/<slug>/cover.jpg"
+  draft?: boolean;                         // Default false
+  canonicalUrl?: string;                   // Optional
+  ogImage?: string;                        // Path under public/, e.g., "/posts/<slug>/og.png"
+  component: React.ComponentType;          // The TSX component from components/blog-posts/
+}
 ```
 
 Constraints:
-- `slug` must match filename (e.g. `content/posts/<slug>.mdx`).
-- Draft posts are excluded from production builds and feeds.
-- Reading time is computed; do not store it.
+- `slug` must match the component filename (e.g., `components/blog-posts/<slug>.tsx`)
+- Draft posts are excluded from production builds and feeds
+- Reading time is computed; do not store it
 
 ---
 
@@ -103,69 +97,74 @@ Constraints:
   - Prefer active voice, short paragraphs, and precise terminology.
   - Show the minimal viable example first; iterate into variations.
   - Cite sources and standards where relevant (RFCs, docs). Use descriptive link text.
-  - Use MDX fenced code blocks with language tags, keep lines < 100 chars.
+  - Use proper JSX/React syntax for code blocks, keep lines < 100 chars.
   - Add alt text for every image. Use vector/SVG when possible; fall back to optimized PNG/JPEG.
 
-Example post skeleton (MDX):
-
-```mdx
----
-title: "SSR-free static MDX with Next 16"
-slug: "static-mdx-next-16"
-description: "How to render MDX posts as fully static pages in Next.js 16."
-publishedAt: "2025-01-15"
-tags: [nextjs, mdx, performance]
-cover: "/posts/static-mdx-next-16/cover.png"
----
-
-> TL;DR: Use App Router + `@next/mdx` + static params. Avoid Pages Router APIs.
-
-## Key takeaways
-- Fully static posts are fast, cacheable, and easy to deploy
-- `generateStaticParams` drives SSG for dynamic routes
-- Keep MDX plugins minimal and audited
-
-## Example
+Example post component structure:
 
 ```tsx
-// app/(site)/blog/[slug]/page.tsx
+// components/blog-posts/static-rendering-next-16.tsx
+export function StaticRenderingNext16Content() {
+  return (
+    <div className="prose prose-invert prose-base sm:prose-lg md:prose-xl max-w-none">
+      <p>
+        TL;DR: Use App Router + static params + React components. Avoid Pages Router APIs.
+      </p>
+
+      <h2>Key takeaways</h2>
+      <ul>
+        <li>Fully static posts are fast, cacheable, and easy to deploy</li>
+        <li>generateStaticParams drives SSG for dynamic routes</li>
+        <li>Pure React components keep the stack simple</li>
+      </ul>
+
+      <h2>Example</h2>
+      <pre><code>{`// app/(site)/blog/[slug]/page.tsx
 export const dynamic = "error";
 export const revalidate = false;
 
 export async function generateStaticParams() {
-  // read slugs from content/posts
+  return getAllPosts().map(post => ({ slug: post.slug }));
 }
 
 export default async function PostPage({ params }) {
-  // load and render MDX for params.slug
+  const post = getPostBySlug(params.slug);
+  return <post.component />;
+}`}</code></pre>
+
+      <h2>Pitfalls</h2>
+      <ul>
+        <li>Do not use Pages Router APIs in App Router</li>
+        <li>Avoid client components unless necessary</li>
+      </ul>
+
+      <h2>References</h2>
+      <ul>
+        <li><a href="https://nextjs.org/docs">Next.js App Router docs</a></li>
+      </ul>
+    </div>
+  );
 }
-```
-
-## Pitfalls
-- Do not use Pages Router APIs in App Router
-- Avoid client components unless necessary
-
-## References
-- Next.js App Router MDX docs
 ```
 
 ---
 
 ### Implementation checklist (single, clean approach)
 
-1) MDX pipeline
-- Add `@next/mdx` to `next.config.ts` with recommended remark/rehype plugins
-- Support `.mdx` imports from `content/posts`
+1) Post components
+- Create React TSX components in `components/blog-posts/<slug>.tsx`
+- Each component exports a function that returns the post content as JSX
 
-2) Content loader
-- Implement a small library `lib/posts.ts` to:
-  - read `content/posts` from the filesystem at build time
-  - parse frontmatter, validate schema, and compute derived fields
-  - expose `getAllPosts()` and `getPostBySlug(slug)` returning typed data
+2) Content registry
+- Maintain `lib/posts.ts` with:
+  - TypeScript array of post metadata objects
+  - Import all post components
+  - Map slugs to components
+  - Expose `getAllPosts()` and `getPostBySlug(slug)` returning typed data
 
 3) Routes
 - `app/(site)/blog/page.tsx`: list posts (exclude drafts), sorted by `publishedAt`
-- `app/(site)/blog/[slug]/page.tsx`: render MDX for a single post
+- `app/(site)/blog/[slug]/page.tsx`: render the post component for a single post
 - Use `generateStaticParams` and `generateMetadata`
 - Set `dynamic = "error"` and `revalidate = false`
 
@@ -189,8 +188,8 @@ export default async function PostPage({ params }) {
 
 - Project structure (high-level):
   - `app/` — App Router pages/components
-  - `content/posts/` — MDX sources
-  - `lib/` — shared utilities (no React code here)
+  - `components/blog-posts/` — Blog post React components
+  - `lib/` — shared utilities (no React code here, includes post metadata registry)
   - `public/` — static assets
   - `scripts/` — build-time automation scripts (TypeScript, executed via tsx)
 - Code style:
@@ -202,7 +201,7 @@ export default async function PostPage({ params }) {
 - Source images: Place originals in `public/posts/<slug>/` (e.g., `cover.png`)
 - Run: `pnpm optimize-images` to generate optimized variants
 - Outputs: `<name>-optimized.avif`, `<name>-optimized.webp`, `<name>-optimized.<ext>`
-- Use WebP in frontmatter for best balance: `cover: "/posts/<slug>/cover-optimized.webp"`
+- Use WebP in post metadata for best balance: `cover: "/posts/<slug>/cover-optimized.webp"`
 - Target: <200KB per image (WebP typically achieves 85-95% size reduction)
 - The script uses Sharp for optimization and skips files already containing "-optimized"
 
@@ -235,10 +234,11 @@ export default async function PostPage({ params }) {
 ### How Claude should operate here
 
 - When asked to add a post:
-  - Propose a `slug`, create `content/posts/<slug>.mdx` with required frontmatter
+  - Propose a `slug`, create `components/blog-posts/<slug>.tsx` as a React component
+  - Add post metadata entry to `lib/posts.ts` with all required fields
   - Create a `public/posts/<slug>/` folder for media and reference them with absolute `/posts/<slug>/…` paths
   - If images are added, run `pnpm optimize-images` to generate optimized variants
-  - Use optimized image paths in frontmatter (e.g., `cover: "/posts/<slug>/cover-optimized.webp"`)
+  - Use optimized image paths in metadata (e.g., `cover: "/posts/<slug>/cover-optimized.webp"`)
   - Ensure the new post is picked up by the static params generator
 - When asked to add features:
   - Implement the single chosen approach end-to-end; do not keep legacy pathways
@@ -249,8 +249,8 @@ export default async function PostPage({ params }) {
 
 ### References and best practices
 
-- Next.js App Router docs (MDX, metadata, SSG) — see the official Next.js documentation
-- MDX in Next — prefer `@next/mdx` with minimal, audited plugins
+- Next.js App Router docs (metadata, SSG) — see the official Next.js documentation
+- React component best practices — keep components focused and reusable
 - Guidance on concise `CLAUDE.md` files — see community write-ups like the Apidog "Claude.md" overview for keeping this file focused and high-signal
 
 Keep this document up to date as the source of truth for how this blog is structured and extended.

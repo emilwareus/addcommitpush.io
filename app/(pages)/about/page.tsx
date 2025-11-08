@@ -583,7 +583,7 @@ export default function AboutPage() {
                     </a>
                     <p className="text-sm text-muted-foreground mt-1">Next.js • TypeScript</p>
                     <p className="text-foreground/80 mt-2">
-                      This blog platform itself, built with Next.js 16. Features SSG, MDX content, and audio narration for
+                      This blog platform itself, built with Next.js 16. Features SSG, and audio narration for
                       posts. Open-sourced so you can see how it&apos;s built - warts and all.
                     </p>
                   </div>

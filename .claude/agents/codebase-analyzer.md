@@ -12,7 +12,8 @@ You are a specialist at understanding HOW code works. Your job is to analyze imp
 - Primary app code in `app/` (routes, layouts, server/client components)
 - Config in `next.config.ts`, `tsconfig.json`, `eslint.config.mjs`
 - Static assets in `public/`
-- Blog content (if present) in `content/posts/` as MDX
+- Blog post components in `components/blog-posts/` as React TSX files
+- Post metadata registry in `lib/posts.ts`
 - Prefer analyzing Server Components by default; Client Components are explicitly marked with `"use client"`
 - Favor SSG where possible; avoid Pages Router APIs
 

@@ -8,7 +8,7 @@ You are a specialist at finding WHERE code lives in a codebase. Your job is to l
 
 Repository specifics (addcommitpush.io):
 - Framework: Next.js 16 (App Router)
-- Focus directories: `app/` (routes/components), `public/` (assets), `.claude/` (agents/commands), config files at repo root
+- Focus directories: `app/` (routes/components), `components/blog-posts/` (blog post TSX components), `lib/` (utilities including post metadata), `public/` (assets), `.claude/` (agents/commands), config files at repo root
 
 ## Core Responsibilities
 
@@ -16,7 +16,7 @@ Repository specifics (addcommitpush.io):
 
    - Search for files containing relevant keywords
    - Look for directory patterns and naming conventions
-   - Check common locations (`app/`, `lib/`, `public/`, `.claude/`, `content/posts/`)
+   - Check common locations (`app/`, `lib/`, `components/blog-posts/`, `public/`, `.claude/`)
 
 2. **Categorize Findings**
 
@@ -48,7 +48,7 @@ First, think deeply about the most effective search patterns for the requested f
 
 ### Refine by Language/Framework
 
-- **This repository (Next.js 16 + TypeScript)**: Look in `app/` (routes, layouts, server/client components), `lib/` (utilities if present), `public/` (assets), and `.claude/` (agents/commands). Config files live at the root: `next.config.ts`, `tsconfig.json`, `eslint.config.mjs`.
+- **This repository (Next.js 16 + TypeScript)**: Look in `app/` (routes, layouts, server/client components), `components/blog-posts/` (blog post TSX components), `lib/` (utilities including post metadata registry), `public/` (assets), and `.claude/` (agents/commands). Config files live at the root: `next.config.ts`, `tsconfig.json`, `eslint.config.mjs`.
 - **General**: Check for feature-specific directories — you got this!
 
 ### Common Patterns to Find
@@ -57,7 +57,7 @@ First, think deeply about the most effective search patterns for the requested f
 - `*test*`, `*spec*`, `__tests__/`, `*.test.ts`, `*.test.tsx` - Test files
 - `*config*` - Configuration
 - `*.d.ts`, `*.types.*`, `types/*.ts` - Type definitions
-- `app/`, `lib/`, `content/`, `.claude/` - Common Next.js locations
+- `app/`, `lib/`, `components/blog-posts/`, `.claude/` - Common Next.js locations
 - `README*`, `*.md` in feature dirs - Documentation
 
 ## Output Format
@@ -70,7 +70,8 @@ Structure your findings like this:
 ### Implementation Files
 - `app/(site)/blog/[slug]/page.tsx` - Blog post page route
 - `app/(site)/blog/page.tsx` - Blog index route
-- `lib/posts.ts` - Content/MDX loader utilities (if present)
+- `lib/posts.ts` - Post metadata registry and utilities
+- `components/blog-posts/[slug].tsx` - Individual blog post component
 - `app/api/[feature]/route.ts` - API route (if applicable)
 
 ### Test Files
@@ -88,9 +89,10 @@ Structure your findings like this:
 
 ### Related Directories
 - `app/` - Routes, layouts, components
+- `components/blog-posts/` - Blog post TSX components
+- `lib/` - Utilities and post metadata registry
 - `public/` - Static assets
 - `.claude/` - Agents and commands docs
-- `content/posts/` - MDX content (if present)
 
 ### Entry Points
 - `app/` - App Router routes and layouts for [feature]

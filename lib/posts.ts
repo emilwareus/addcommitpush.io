@@ -41,7 +41,8 @@ const posts: Post[] = [
       "How to structure, compact, and orchestrate information with commands, agents, and scripts.",
     publishedAt: "2025-11-07",
     tags: ["ai", "agents", "workflows", "research"],
-    readTime: "15 min read",
+    cover: "/posts/context-engineering-claude-code/cover-optimized.webp",
+    readTime: "10 min read",
   },
 ]
 
