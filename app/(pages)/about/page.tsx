@@ -31,7 +31,7 @@ export default function AboutPage() {
                 I&apos;m a business-savvy data nerd who spends way too much time in front of a
                 screen. I run a few different companies, invest, advise, and hack. My most notable
                 achievement was founding, scaling, and exiting Debricked, a startup I co-founded in
-                2018. Following Debricked&apos;s 2022 acquisition, we joined Micro Focus. I lead
+                2018. Following Debricked&apos;s 2022 acquisition, we joined Micro Focus. I led
                 teams developing application security solutions using machine learning, graph
                 algorithms, and static analysis techniques.
               </p>
