@@ -1,0 +1,129 @@
+Context engineering is the deliberate structuring and compacting of information so agents can think clearly, act decisively, and remain reproducible.
+
+In practice, that means moving away from cramming everything into a single prompt and toward a system where workflows are orchestrated, analysis is specialized, and context-bloating tasks are offloaded. This note distills a working architecture built around three layers:
+
+Commands: reproducible and more deterministic workflows
+Sub-agents: context compression
+
+Who is this article for?
+
+You have already spent more on AI coding tools the last 6 months than any other tools in your 10-year coding career. You have done a few passes on the CLAUDE.md file, used a few MCP tools, but realized this didn't speed you up as much as you wished.
+
+But first, these are not my ideas! I stole with pride! This approach was pioneered by Dex and Vaibhav from AI That Works, who shared their original commands and agents. You can watch their podcast episode where they dive deep into advanced context engineering for coding agents. Links in the blog text. Massive thanks to them for sharing this framework!
+
+The Four-Phase Pipeline
+
+The main part of this approach is a repeatable pipeline that keeps cognitive load low while producing durable artifacts at every step. You move fast, with traceability:
+
+Research → Plan → Implement → Validate: four phases that mirror how real work actually happens.
+
+Each phase produces an artifact (research doc, plan, implementation changes, validation report).
+
+Concretely, a research command spawns focused sub-agents in parallel, compacts their findings, and writes a document with file:line references, search results, architecture insights, etc. The planning command consumes only that synthesized document (not the entire codebase, but can also explore a bit if needed), proposes options, and captures the final plan. Implementation follows the plan while adapting to reality, and validation confirms the result with both automated checks and a short human review. Implement and validate incrementally, one phase at a time.
+
+Commands: Workflow Orchestration
+
+Commands encapsulate repeatable workflows. Each orchestrates a complete workflow, spawning specialized agents and producing git-tracked artifacts. Core commands:
+
+Command: “research codebase.” Purpose: Spawns parallel agents (locator, analyzer, pattern-finder, web-search-researcher) to explore codebase and web. Reads mentioned files fully before delegating. Output: thoughts/shared/research/ YYYY-MM-DD_topic.md
+
+Command: “create plan.” Purpose: Reads research + tickets, asks clarifying questions, proposes design options, iterates with the user, writes spec with success criteria. Output: thoughts/shared/plans/ feature-name.md
+
+Command: “implement plan.” Purpose: Executes approved plan phases sequentially, updates checkboxes, adapts when reality differs from spec, runs build/lint/typecheck per phase. Output: Code changes + updated plan checkboxes
+
+Command: “validate plan.” Purpose: Verifies all automated checks (build, lint, types), lists manual test steps, analyzes git diff, identifies deviations from the plan. Output: Validation report with pass/fail + next steps
+
+If you want to dive deeper, you’ll find the links in the blog text.
+
+Specialized Agents
+
+Agents are narrow professionals with minimal tools and clear responsibilities, and most importantly its own context window. Instead of one agent doing everything, use small experts that return high-signal, low-volume context:
+
+Locator: finds where code lives using search tools; returns structured file locations without reading content.
+
+Analyzer: reads relevant files end-to-end, traces data flow, and cites exact file:line references.
+
+Pattern Finder: surfaces working examples from the codebase, including test patterns and variations.
+
+Web Search Researcher: finds relevant information from web sources using strategic searches; returns synthesized findings with citations and links.
+
+Additional sub-agents for tools: Instead of MCP servers that clog the main context, write targeted bash scripts and a sub-agent that can use them. Follow-up post coming on this!
+
+The key is constraint: each agent does one job well and returns only what the next phase needs. The sub-agent can fail, hit 404 pages, forget which directory it is in, etc., and all that noise will not pollute the main context. It just outputs clean, summarized findings to the main agent that doesn't need to know about all the failed file reads.
+
+codebase-locator: Tools: Grep, Glob, LS. Returns: WHERE code lives: file paths grouped by purpose (impl, tests, config, types). No content analysis.
+
+codebase-analyzer: Tools: Read, Grep, Glob, LS. Returns: HOW code works: traces data flow, explains logic, cites exact file:line, identifies patterns.
+
+codebase-pattern-finder: Tools: Read, Grep, Glob, LS. Returns: Examples to model after: finds similar implementations, extracts code snippets, shows test patterns.
+
+thoughts-locator: Tools: Grep, Glob, LS. Returns: Discovers docs in thoughts/ directory: past research, decisions, plans.
+
+thoughts-analyzer: Tools: Read, Grep, Glob, LS. Returns: Extracts key insights from specific thoughts documents (historical context).
+
+web-search-researcher: Tools: WebSearch, WebFetch. Returns: External docs and resources (only when explicitly asked). Returns links.
+
+The Workflow
+
+This workflow works best for well-scoped features that require a moderate amount of code—typically 1-3K lines in a Go/TypeScript codebase, or 5-30 non-test file changes. For smaller tasks, use Cursor directly. For larger features, break them into smaller pieces first.
+
+Step 1: Research
+
+Start by running the research command — run “research codebase” (details in the blog text).
+
+The command will prompt you with "what would you like to research?". Provide a detailed prompt like:
+
+Your goal is to research how to implement a reset password feature, both frontend and backend. This should go in the backend internal user service — exact path in the blog text — with handler, HTTP port, domain logic, and interacting with the database adapter. Make sure to add unit tests in the domain layer, and component tests for the port. Follow the patterns in the backend architecture document — see the blog text.
+
+For the frontend, research an architecture and implementation that is in line with the frontend features login — exact path in the blog text. Follow the frontend architecture guidelines — see the blog text.
+
+This generates a research document with file references, target architecture, and critically—a "What not to do" section that helps guide Claude in the right direction without detours.
+
+Important: Review the research document closely. Check if it found all relevant files, if the target architecture looks reasonable, and if you agree with the "what not to do" section. In about 50% of cases, I edit these sections manually using Cursor with a powerful model or by editing the file directly.
+
+For an example of a well-structured research document, see the link in the blog text.
+
+Step 2: Planning
+
+Once you're happy with the research, create a plan with the “create plan” command. Details in the blog text.
+
+Additional instructions might include: "make it 4 phases", "make sure to add e2e tests in the frontend to the plan", etc. You can also add "think deeply" for higher accuracy (but avoid "ultrathink"—it's a token burner that uses the main context to explore).
+
+Review the plan document as well. Do the phases make sense? Go over the targeted changes. Sometimes I create multiple plans from one research document, or combine multiple research documents into one plan.
+
+For an example of a well-structured plan document, see the link in the blog text.
+
+Step 3: Implement & Validate Loop
+
+Now the fun part—implement and validate incrementally, phase by phase:
+
+Implement phase 1 using the “implement plan” command — details in the blog text.
+
+Then validate using the “validate plan” command — details in the blog text. Remember to check things off in the plan and add comments about deviations from the plan to the document.
+
+Repeat this loop for each phase until all phases are complete, then run a final validation on the full plan. I typically review the code between iterations to ensure it makes sense and guide the AI if needed. Aim for "working software" in each phase—tests should pass and there should be no lint errors. The validation step will catch missing interface implementations and run your linters.
+
+Git Management
+
+Two approaches work well:
+
+Commit each iteration
+Work with staged changes to easily see diffs
+
+Choose whatever feels best for you.
+
+Results & Future
+
+In my experience, this flow completely one-shots (after research/plan refinements) 2-5 such features per day. I run up to 3 in parallel—one "big hairy" problem and two simpler, more straightforward ones.
+
+In the future, I want to make this a "linear workflow" where humans gather information into Linear issues (the initial research prompts), and moving issues into different phases would auto-trigger different steps, creating PRs with research docs, etc.
+
+Codebase Requirements
+
+I don't think this will work well in all settings and codebases. The right type of "mid/mid+" size problems is the right fit. The better your codebase is, the better code AI will write. Just like in boomer-coding, quality compounds into velocity over time, and tech debt snowballs to a turd, but with AI the effects of this have increased. Prioritize solving your tech debt!
+
+Also, in my experience, language matters... in TypeScript and JavaScript you can loop in 20+ different ways or chain useEffects in magical ways to create foot-cannons... if Cloudflare can't properly use useEffect... are you sure our PhD-level next token predictors can? I actually like a lot of things about TS, but too many variations confuse the AI. In my "big" codebase I'm working on our backend is built in Go, and Claude/Cursor are simply fantastic there! Simplicity = clarity = less hallucination = higher velocity. This is at least the state late 2025, in a year or so... who knows.
+
+TL;DR
+
+IMO, SpecDD is the new way of developing software! Claude Code is excellent at this with proper commands and guidance. Starting with a research and planning phase to create .md files that clearly set HIGH-value context is a great way to get more accurate results from Claude Code. Running multiple SpecDD flows at the same time... like spinning plates, is the new name of the game in some codebases. This maybe takes out a bit of the old "fun" about developing, but I'm mostly excited about user value and winning in the market, which is more fun than polishing a stone.

@@ -17,8 +17,6 @@ Be bold and opinionated. Prefer one clean approach over multiple options. Delete
 - Writes in crisp, straightforward English with occasional Swedish flavor (optional, sparing), e.g., a greeting or aside.
 - Uses bullets and short paragraphs; keeps code/quotes minimal and purposeful.
 
- 
-
 ---
 
 ### Non‑negotiables
@@ -32,15 +30,13 @@ Be bold and opinionated. Prefer one clean approach over multiple options. Delete
 
 ### Content types supported
 
-1) Reflective essays (leadership, startups, recruiting)
-2) Technical deep dives (Next.js, TypeScript, performance)
-3) Practical guides/checklists (process, hiring, delivery)
+1. Reflective essays (leadership, startups, recruiting)
+2. Technical deep dives (Next.js, TypeScript, performance)
+3. Practical guides/checklists (process, hiring, delivery)
 
 Each post must clearly state: audience, problem, outcome.
 
 ---
-
- 
 
 ---
 
@@ -57,8 +53,6 @@ Each post must clearly state: audience, problem, outcome.
 - Optional structured data handled by the platform; content must supply accurate metadata.
 
 ---
-
- 
 
 ### Editorial checklist (before publishing)
 
@@ -92,8 +86,6 @@ Each post must clearly state: audience, problem, outcome.
 
 ---
 
- 
-
 ---
 
 ### Scope discipline
@@ -103,10 +95,6 @@ Each post must clearly state: audience, problem, outcome.
 
 ---
 
- 
-
 ---
 
 Keep this document focused and living. Update when voice, structure, or platform conventions evolve.
-
-

@@ -7,6 +7,7 @@ Follow this playbook precisely. Be bold: prefer single, clean solutions. Remove 
 ---
 
 ### Non‑negotiables
+
 - Use App Router only. Do not introduce Pages Router APIs (no `getStaticProps`, `getStaticPaths`).
 - Render posts as fully static. Prefer SSG. Enforce with `export const dynamic = "error"` and `export const revalidate = false` on blog routes.
 - Default to Server Components. Mark Client Components explicitly with `"use client"` only when necessary.
@@ -16,6 +17,7 @@ Follow this playbook precisely. Be bold: prefer single, clean solutions. Remove 
 ---
 
 ### Tech snapshot
+
 - Next.js: 16.x (App Router)
 - React: 19.x
 - TypeScript: 5.x (strict)
@@ -51,6 +53,7 @@ pnpm optimize-images  # optimize images for web (generates AVIF, WebP, optimized
   - `export async function generateStaticParams()` reads all slugs from `lib/posts.ts`
 
 SEO & discoverability:
+
 - `app/sitemap.ts` and `app/robots.ts`
 - `generateMetadata` in route files for per-post OG/SEO
 - Build-time RSS/Atom feed at `/feed.xml` and `/feed.atom` from post metadata
@@ -63,21 +66,22 @@ Blog posts are defined as TypeScript objects in `lib/posts.ts` with the followin
 
 ```typescript
 interface BlogPost {
-  title: string;                           // Human-readable title (required)
-  slug: string;                            // kebab-case-slug (required, unique)
-  description: string;                     // 120-160 chars for SEO (required)
-  publishedAt: string;                     // YYYY-MM-DD or ISO date (required)
-  updatedAt?: string;                      // ISO date (optional)
-  tags?: string[];                         // e.g., ["nextjs", "typescript", "performance"]
-  cover?: string;                          // Path under public/, e.g., "/posts/<slug>/cover.jpg"
-  draft?: boolean;                         // Default false
-  canonicalUrl?: string;                   // Optional
-  ogImage?: string;                        // Path under public/, e.g., "/posts/<slug>/og.png"
-  component: React.ComponentType;          // The TSX component from components/blog-posts/
+  title: string; // Human-readable title (required)
+  slug: string; // kebab-case-slug (required, unique)
+  description: string; // 120-160 chars for SEO (required)
+  publishedAt: string; // YYYY-MM-DD or ISO date (required)
+  updatedAt?: string; // ISO date (optional)
+  tags?: string[]; // e.g., ["nextjs", "typescript", "performance"]
+  cover?: string; // Path under public/, e.g., "/posts/<slug>/cover.jpg"
+  draft?: boolean; // Default false
+  canonicalUrl?: string; // Optional
+  ogImage?: string; // Path under public/, e.g., "/posts/<slug>/og.png"
+  component: React.ComponentType; // The TSX component from components/blog-posts/
 }
 ```
 
 Constraints:
+
 - `slug` must match the component filename (e.g., `components/blog-posts/<slug>.tsx`)
 - Draft posts are excluded from production builds and feeds
 - Reading time is computed; do not store it
@@ -107,9 +111,7 @@ Example post component structure:
 export function StaticRenderingNext16Content() {
   return (
     <div className="prose prose-invert prose-base sm:prose-lg md:prose-xl max-w-none">
-      <p>
-        TL;DR: Use App Router + static params + React components. Avoid Pages Router APIs.
-      </p>
+      <p>TL;DR: Use App Router + static params + React components. Avoid Pages Router APIs.</p>
 
       <h2>Key takeaways</h2>
       <ul>
@@ -119,7 +121,8 @@ export function StaticRenderingNext16Content() {
       </ul>
 
       <h2>Example</h2>
-      <pre><code>{`// app/(site)/blog/[slug]/page.tsx
+      <pre>
+        <code>{`// app/(site)/blog/[slug]/page.tsx
 export const dynamic = "error";
 export const revalidate = false;
 
@@ -130,7 +133,8 @@ export async function generateStaticParams() {
 export default async function PostPage({ params }) {
   const post = getPostBySlug(params.slug);
   return <post.component />;
-}`}</code></pre>
+}`}</code>
+      </pre>
 
       <h2>Pitfalls</h2>
       <ul>
@@ -140,7 +144,9 @@ export default async function PostPage({ params }) {
 
       <h2>References</h2>
       <ul>
-        <li><a href="https://nextjs.org/docs">Next.js App Router docs</a></li>
+        <li>
+          <a href="https://nextjs.org/docs">Next.js App Router docs</a>
+        </li>
       </ul>
     </div>
   );
@@ -151,34 +157,40 @@ export default async function PostPage({ params }) {
 
 ### Implementation checklist (single, clean approach)
 
-1) Post components
+1. Post components
+
 - Create React TSX components in `components/blog-posts/<slug>.tsx`
 - Each component exports a function that returns the post content as JSX
 
-2) Content registry
+2. Content registry
+
 - Maintain `lib/posts.ts` with:
   - TypeScript array of post metadata objects
   - Import all post components
   - Map slugs to components
   - Expose `getAllPosts()` and `getPostBySlug(slug)` returning typed data
 
-3) Routes
+3. Routes
+
 - `app/(site)/blog/page.tsx`: list posts (exclude drafts), sorted by `publishedAt`
 - `app/(site)/blog/[slug]/page.tsx`: render the post component for a single post
 - Use `generateStaticParams` and `generateMetadata`
 - Set `dynamic = "error"` and `revalidate = false`
 
-4) SEO & feeds
+4. SEO & feeds
+
 - `app/sitemap.ts` and `app/robots.ts`
 - Build-time RSS/Atom generation under `public/`
 
-5) Assets & images
+5. Assets & images
+
 - Store per-post media under `public/posts/<slug>/`
 - Use `next/image` for responsive, optimized images with explicit `alt`
 - Run `pnpm optimize-images` to generate modern formats (AVIF, WebP) from source images
 - Reference optimized images in frontmatter: `cover: "/posts/<slug>/cover-optimized.webp"`
 
-6) Quality gates
+6. Quality gates
+
 - `pnpm lint` must pass
 - Add a `typecheck` script (tsc --noEmit) and keep it green
 
@@ -198,6 +210,7 @@ export default async function PostPage({ params }) {
   - No dead code; remove unused exports; keep modules focused
 
 #### Image optimization workflow
+
 - Source images: Place originals in `public/posts/<slug>/` (e.g., `cover.png`)
 - Run: `pnpm optimize-images` to generate optimized variants
 - Outputs: `<name>-optimized.avif`, `<name>-optimized.webp`, `<name>-optimized.<ext>`
@@ -206,6 +219,7 @@ export default async function PostPage({ params }) {
 - The script uses Sharp for optimization and skips files already containing "-optimized"
 
 #### Audio file workflow
+
 - Source audio: Place MP3 files in `public/posts/<slug>/audio.mp3`
 - Format: MP3 at 128-192 kbps for spoken word (podcast/narration style)
 - Target size: <20 MB per file (10-minute audio at 192 kbps ≈ 14.4 MB)
@@ -216,14 +230,13 @@ export default async function PostPage({ params }) {
   ```
 - Post metadata: Add `audioUrl: "/posts/<slug>/audio.mp3"` to post object in `lib/posts.ts`
 - Integration: Import and render `<AudioPlayer>` component in post content:
-  ```tsx
-  import { AudioPlayer } from "@/components/audio-player"
 
-  <AudioPlayer
-    audioUrl="/posts/<slug>/audio.mp3"
-    title="Post Title - Audio Version"
-  />
+  ```tsx
+  import { AudioPlayer } from '@/components/audio-player';
+
+  <AudioPlayer audioUrl="/posts/<slug>/audio.mp3" title="Post Title - Audio Version" />;
   ```
+
 - Features: Automatic playback controls (play/pause, seek, volume, speed: 1x/1.25x/1.5x/2x)
 - Indicator: Blog listing automatically shows Headphones icon for posts with audio
 - Preload: Audio uses `preload="metadata"` to load duration without full download
@@ -254,5 +267,3 @@ export default async function PostPage({ params }) {
 - Guidance on concise `CLAUDE.md` files — see community write-ups like the Apidog "Claude.md" overview for keeping this file focused and high-signal
 
 Keep this document up to date as the source of truth for how this blog is structured and extended.
-
-

@@ -1,16 +1,16 @@
-import { Suspense } from 'react'
-import { getGitHubStatusData } from '@/lib/github'
-import { getLinearStatusData } from '@/lib/linear'
-import type { DayActivity } from '@/lib/github'
-import { StatusGrid } from './components/status-grid'
-import { StatusDashboard } from './status-dashboard'
+import { Suspense } from 'react';
+import { getGitHubStatusData } from '@/lib/github';
+import { getLinearStatusData } from '@/lib/linear';
+import type { DayActivity } from '@/lib/github';
+import { StatusGrid } from './components/status-grid';
+import { StatusDashboard } from './status-dashboard';
 
-export const dynamic = 'force-dynamic' // Don't pre-render at build time
-export const revalidate = 3600 // 1 hour
+export const dynamic = 'force-dynamic'; // Don't pre-render at build time
+export const revalidate = 3600; // 1 hour
 
 export const metadata = {
   title: 'Status - Emil Wareus',
-  description: 'What I\'m working on, listening to, and doing right now.',
+  description: "What I'm working on, listening to, and doing right now.",
   openGraph: {
     title: 'Status - Emil Wareus',
     description: 'Real-time view into my current activities.',
@@ -30,38 +30,36 @@ export const metadata = {
     description: 'Real-time view into my current activities.',
     images: ['https://addcommitpush.io/og-status.png'],
   },
-}
+};
 
 export default async function StatusPage() {
   const [githubData, linearData] = await Promise.all([
     getGitHubStatusData(),
     getLinearStatusData(),
-  ])
+  ]);
 
   // Combine Linear issues with GitHub issues
   const combinedIssuesByDay: DayActivity[] = githubData.issuesByDay.map((githubDay, index) => {
-    const linearDay = linearData.issuesByDay[index]
+    const linearDay = linearData.issuesByDay[index];
     return {
       date: githubDay.date,
       count: githubDay.count + (linearDay?.count || 0),
-    }
-  })
+    };
+  });
 
-  const combinedTotalIssues = githubData.totalIssues + linearData.totalIssues
+  const combinedTotalIssues = githubData.totalIssues + linearData.totalIssues;
 
   // Create combined data
   const combinedData = {
     ...githubData,
     issuesByDay: combinedIssuesByDay,
     totalIssues: combinedTotalIssues,
-  }
+  };
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-7xl">
       <div className="mb-8">
-        <h1 className="text-4xl sm:text-5xl font-bold mb-4 neon-glow">
-          Status
-        </h1>
+        <h1 className="text-4xl sm:text-5xl font-bold mb-4 neon-glow">Status</h1>
         <p className="text-muted-foreground text-lg">
           What I&apos;m working on, listening to, and doing right now.
         </p>
@@ -76,9 +74,7 @@ export default async function StatusPage() {
         <StatusDashboard githubData={combinedData} />
       </div>
 
-      <p className="text-sm text-muted-foreground mt-8">
-        Last updated: Just now
-      </p>
+      <p className="text-sm text-muted-foreground mt-8">Last updated: Just now</p>
     </div>
-  )
+  );
 }

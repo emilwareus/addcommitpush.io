@@ -13,6 +13,7 @@ pnpm check-links
 ```
 
 This script:
+
 - Extracts all external links from the about page
 - Tests each link for accessibility (HTTP 200 status)
 - Reports broken or inaccessible links
@@ -29,6 +30,7 @@ This script:
 ### 1. Verify Links Before Adding
 
 Always test links manually before adding them to the codebase:
+
 - Click the link to ensure it works
 - Verify it points to the intended content
 - Check that the page loads in a reasonable time
@@ -38,6 +40,7 @@ Always test links manually before adding them to the codebase:
 Some websites return 403 Forbidden for automated requests but work in browsers. For these cases:
 
 **Good:** Remove the link and keep the text
+
 ```tsx
 // Instead of:
 <a href="https://example.com/blocked">Organization Name</a>
@@ -75,7 +78,7 @@ Always include these attributes for external links:
 ```tsx
 <a
   href="https://external-site.com"
-  target="_blank"           // Opens in new tab
+  target="_blank" // Opens in new tab
   rel="noopener noreferrer" // Security best practice
 >
   Link Text
@@ -94,6 +97,7 @@ When the link checker finds broken links:
 ### 7. Link Organization
 
 Keep related links grouped and well-structured:
+
 - Use consistent formatting for similar link types
 - Group links by category (papers, talks, podcasts, etc.)
 - Maintain visual hierarchy with proper heading levels
@@ -108,8 +112,8 @@ To check links in other pages, modify the `extractLinksFromAboutPage()` function
 
 ```typescript
 function extractLinksFromPage(pagePath: string): string[] {
-  const content = readFileSync(pagePath, "utf-8")
-  const hrefMatches = content.match(/href="(https?:\/\/[^"]+)"/g) || []
+  const content = readFileSync(pagePath, 'utf-8');
+  const hrefMatches = content.match(/href="(https?:\/\/[^"]+)"/g) || [];
   // ... rest of extraction logic
 }
 ```
@@ -155,6 +159,7 @@ jobs:
 ### Link checker reports false positives
 
 Some sites block automated requests. If a link works in browsers but fails in the checker:
+
 1. Verify it's not actually broken
 2. Consider if the link is essential
 3. Remove the link if it's not reliable for all users
@@ -164,7 +169,7 @@ Some sites block automated requests. If a link works in browsers but fails in th
 Increase the timeout in the script if legitimate sites are timing out:
 
 ```typescript
-const timeoutId = setTimeout(() => controller.abort(), 15000) // Increase to 15s
+const timeoutId = setTimeout(() => controller.abort(), 15000); // Increase to 15s
 ```
 
 ## Resources

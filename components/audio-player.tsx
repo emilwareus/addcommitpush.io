@@ -1,91 +1,91 @@
-"use client"
+'use client';
 
-import { useState, useRef, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Play, Pause, Volume2, VolumeX, Headphones } from "lucide-react"
-import { Slider } from "@/components/ui/slider"
+import { useState, useRef, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Play, Pause, Volume2, VolumeX, Headphones } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
 
 interface AudioPlayerProps {
-  audioUrl: string
-  title: string
+  audioUrl: string;
+  title: string;
 }
 
 export function AudioPlayer({ audioUrl }: AudioPlayerProps) {
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
-  const [duration, setDuration] = useState(0)
-  const [volume, setVolume] = useState(1)
-  const [isMuted, setIsMuted] = useState(false)
-  const [playbackRate, setPlaybackRate] = useState(1)
-  const audioRef = useRef<HTMLAudioElement>(null)
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const [isMuted, setIsMuted] = useState(false);
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
-    const audio = audioRef.current
-    if (!audio) return
+    const audio = audioRef.current;
+    if (!audio) return;
 
-    const updateTime = () => setCurrentTime(audio.currentTime)
-    const updateDuration = () => setDuration(audio.duration)
-    const handleEnded = () => setIsPlaying(false)
+    const updateTime = () => setCurrentTime(audio.currentTime);
+    const updateDuration = () => setDuration(audio.duration);
+    const handleEnded = () => setIsPlaying(false);
 
-    audio.addEventListener("timeupdate", updateTime)
-    audio.addEventListener("loadedmetadata", updateDuration)
-    audio.addEventListener("ended", handleEnded)
+    audio.addEventListener('timeupdate', updateTime);
+    audio.addEventListener('loadedmetadata', updateDuration);
+    audio.addEventListener('ended', handleEnded);
 
     return () => {
-      audio.removeEventListener("timeupdate", updateTime)
-      audio.removeEventListener("loadedmetadata", updateDuration)
-      audio.removeEventListener("ended", handleEnded)
-    }
-  }, [])
+      audio.removeEventListener('timeupdate', updateTime);
+      audio.removeEventListener('loadedmetadata', updateDuration);
+      audio.removeEventListener('ended', handleEnded);
+    };
+  }, []);
 
   const togglePlay = () => {
-    if (!audioRef.current) return
+    if (!audioRef.current) return;
 
     if (isPlaying) {
-      audioRef.current.pause()
+      audioRef.current.pause();
     } else {
-      audioRef.current.play()
+      audioRef.current.play();
     }
-    setIsPlaying(!isPlaying)
-  }
+    setIsPlaying(!isPlaying);
+  };
 
   const handleSeek = (value: number[]) => {
-    if (!audioRef.current) return
-    audioRef.current.currentTime = value[0]
-    setCurrentTime(value[0])
-  }
+    if (!audioRef.current) return;
+    audioRef.current.currentTime = value[0];
+    setCurrentTime(value[0]);
+  };
 
   const handleVolumeChange = (value: number[]) => {
-    if (!audioRef.current) return
-    const newVolume = value[0]
-    audioRef.current.volume = newVolume
-    setVolume(newVolume)
-    setIsMuted(newVolume === 0)
-  }
+    if (!audioRef.current) return;
+    const newVolume = value[0];
+    audioRef.current.volume = newVolume;
+    setVolume(newVolume);
+    setIsMuted(newVolume === 0);
+  };
 
   const toggleMute = () => {
-    if (!audioRef.current) return
+    if (!audioRef.current) return;
     if (isMuted) {
-      audioRef.current.volume = volume || 0.5
-      setIsMuted(false)
+      audioRef.current.volume = volume || 0.5;
+      setIsMuted(false);
     } else {
-      audioRef.current.volume = 0
-      setIsMuted(true)
+      audioRef.current.volume = 0;
+      setIsMuted(true);
     }
-  }
+  };
 
   const handlePlaybackRateChange = (rate: number) => {
-    if (!audioRef.current) return
-    audioRef.current.playbackRate = rate
-    setPlaybackRate(rate)
-  }
+    if (!audioRef.current) return;
+    audioRef.current.playbackRate = rate;
+    setPlaybackRate(rate);
+  };
 
   const formatTime = (time: number) => {
-    const minutes = Math.floor(time / 60)
-    const seconds = Math.floor(time % 60)
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`
-  }
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  };
 
   return (
     <Card className="p-6 bg-card/50 backdrop-blur border-primary/30">
@@ -119,7 +119,7 @@ export function AudioPlayer({ audioUrl }: AudioPlayerProps) {
             <Button
               key={rate}
               onClick={() => handlePlaybackRateChange(rate)}
-              variant={playbackRate === rate ? "default" : "ghost"}
+              variant={playbackRate === rate ? 'default' : 'ghost'}
               size="sm"
               className="text-xs px-3 py-1 h-7"
             >
@@ -130,7 +130,11 @@ export function AudioPlayer({ audioUrl }: AudioPlayerProps) {
 
         {/* Controls */}
         <div className="flex items-center justify-between">
-          <Button onClick={togglePlay} size="lg" className="bg-primary hover:bg-primary/80 text-primary-foreground">
+          <Button
+            onClick={togglePlay}
+            size="lg"
+            className="bg-primary hover:bg-primary/80 text-primary-foreground"
+          >
             {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
           </Button>
 
@@ -149,5 +153,5 @@ export function AudioPlayer({ audioUrl }: AudioPlayerProps) {
         </div>
       </div>
     </Card>
-  )
+  );
 }

@@ -4,7 +4,7 @@ researcher: Claude (Sonnet 4.5)
 git_commit: 295cac032e277cc99b9ef642fc50b1be13bef55c
 branch: main
 repository: addcommitpush.io
-topic: "Claude Code Skills and SEO Optimizer Skill Design"
+topic: 'Claude Code Skills and SEO Optimizer Skill Design'
 tags: [research, skills, seo, claude-code, blog-optimization]
 status: complete
 last_updated: 2025-11-07
@@ -45,11 +45,13 @@ Skills are **dynamically-loaded instruction folders** that teach Claude speciali
 - **Execution**: Can include scripts (Python/JavaScript) for deterministic operations
 
 **Installation Paths**:
+
 - Personal (all projects): `~/.claude/skills/skill-name/SKILL.md`
 - Project (team-shared): `.claude/skills/skill-name/SKILL.md`
 - Plugin (auto-installed): Bundled with Claude Code plugins
 
 **References**:
+
 - [Claude Skills Blog](https://claude.com/blog/skills)
 - [Official Documentation](https://code.claude.com/docs/en/skills)
 - [Skills GitHub Repository](https://github.com/anthropics/skills) (15.8k stars)
@@ -74,14 +76,14 @@ Required YAML frontmatter:
 
 ```yaml
 ---
-name: skill-name                    # Lowercase, hyphens only (max 64 chars)
-description: What it does and when  # Max 1024 chars, third-person
+name: skill-name # Lowercase, hyphens only (max 64 chars)
+description: What it does and when # Max 1024 chars, third-person
 ---
-
 # Instructions below
 ```
 
 **Optional frontmatter fields**:
+
 - `allowed-tools`: Restrict Claude to specific tools (Claude Code only)
 - `version`: Track iterations (e.g., "1.0.0")
 - `license`: Brief license designation
@@ -94,10 +96,10 @@ From [Best Practices](https://docs.claude.com/en/docs/agents-and-tools/agent-ski
 > Write descriptions in **third person** (injected into system prompt). Be **specific and include key terms** for both what the skill does AND triggers/contexts.
 
 **Good example**:
-*"Extract text and tables from PDF files, fill forms, merge documents. Use when working with PDF files or when the user mentions PDFs, forms, or document extraction."*
+_"Extract text and tables from PDF files, fill forms, merge documents. Use when working with PDF files or when the user mentions PDFs, forms, or document extraction."_
 
 **Bad example**:
-*"Helps with documents"* (too vague)
+_"Helps with documents"_ (too vague)
 
 #### Progressive Disclosure Pattern
 
@@ -114,6 +116,7 @@ This allows skills to reference unbounded context without fitting everything in 
 From [Skill Authoring Best Practices](https://docs.claude.com/en/docs/agents-and-tools/agent-skills/best-practices):
 
 **Content Guidelines**:
+
 - Keep SKILL.md under 500 lines (context window is shared)
 - Use gerund naming (e.g., `processing-pdfs`, `analyzing-spreadsheets`)
 - Organize references one level deep from SKILL.md
@@ -122,12 +125,14 @@ From [Skill Authoring Best Practices](https://docs.claude.com/en/docs/agents-and
 - Test across Haiku, Sonnet, and Opus models
 
 **Code and Scripts**:
+
 - Handle errors explicitly
 - Use forward slashes for all paths (`scripts/helper.py`)
-- Make execution intent clear: *"Run analyze.py"* vs *"See analyze.py"*
+- Make execution intent clear: _"Run analyze.py"_ vs _"See analyze.py"_
 - List required packages and verify availability
 
 **Quality Checklist**:
+
 - ✓ Specific description with key terms and triggers
 - ✓ SKILL.md < 500 lines with separate reference files
 - ✓ One-level-deep file references
@@ -142,11 +147,13 @@ From [Skill Authoring Best Practices](https://docs.claude.com/en/docs/agents-and
 From the [anthropics/skills repository](https://github.com/anthropics/skills):
 
 **Development & Technical**:
+
 - `artifacts-builder`: Complex HTML artifacts using React/Tailwind/shadcn
 - `mcp-builder`: MCP server creation guidance
 - `webapp-testing`: Playwright-based web app testing
 
 **Meta Skills**:
+
 - `skill-creator`: Framework for building effective skills with 6-step process:
   1. Gather concrete usage examples
   2. Analyze for reusable resources
@@ -167,28 +174,32 @@ From the [anthropics/skills repository](https://github.com/anthropics/skills):
 #### What's Working
 
 **Global Metadata** (`app/layout.tsx`):
+
 ```typescript
 export const metadata: Metadata = {
   title: {
-    default: "addcommitpush.io - Emil Wåreus",
-    template: "%s | addcommitpush.io",  // Template for all pages
+    default: 'addcommitpush.io - Emil Wåreus',
+    template: '%s | addcommitpush.io', // Template for all pages
   },
-  description: "Tech blog by Emil Wåreus...",
+  description: 'Tech blog by Emil Wåreus...',
   openGraph: {
-    title: "addcommitpush.io - Emil Wåreus",
-    description: "Tech blog...",
-    siteName: "addcommitpush.io",
-    type: "website",
+    title: 'addcommitpush.io - Emil Wåreus',
+    description: 'Tech blog...',
+    siteName: 'addcommitpush.io',
+    type: 'website',
   },
-  twitter: { /* ... */ },
-}
+  twitter: {
+    /* ... */
+  },
+};
 ```
 
 **Per-Post Metadata** (`app/(site)/blog/[slug]/page.tsx:19-41`):
+
 ```typescript
 export async function generateMetadata({ params }): Promise<Metadata> {
-  const { slug } = await params
-  const post = getPostBySlug(slug)
+  const { slug } = await params;
+  const post = getPostBySlug(slug);
 
   return {
     title: `${post.title} | addcommitpush.io`,
@@ -196,16 +207,17 @@ export async function generateMetadata({ params }): Promise<Metadata> {
     openGraph: {
       title: post.title,
       description: post.description,
-      type: "article",
+      type: 'article',
       publishedTime: new Date(post.publishedAt).toISOString(),
-      authors: ["Emil Wåreus"],
+      authors: ['Emil Wåreus'],
       tags: post.tags,
     },
-  }
+  };
 }
 ```
 
 **Current Capabilities**:
+
 - ✓ Template-based titles
 - ✓ Per-post descriptions
 - ✓ OpenGraph article metadata with publish time
@@ -253,6 +265,7 @@ export async function generateMetadata({ params }): Promise<Metadata> {
 **CLAUDE.md Compliance**:
 
 The project playbook explicitly requires (CLAUDE.md lines 52, 90-94, 112):
+
 - ✗ Sitemap and robots.txt
 - ✗ Build-time RSS/Atom feeds
 - ✗ Full frontmatter schema with `draft`, `canonicalUrl`, `ogImage`
@@ -265,15 +278,15 @@ The project playbook explicitly requires (CLAUDE.md lines 52, 90-94, 112):
 ```typescript
 // lib/posts.ts:1-11
 export interface Post {
-  title: string
-  slug: string
-  description: string
-  publishedAt: string
-  updatedAt?: string    // Not used in metadata
-  tags?: string[]
-  cover?: string        // Not used in metadata
-  readTime: string
-  audioUrl?: string
+  title: string;
+  slug: string;
+  description: string;
+  publishedAt: string;
+  updatedAt?: string; // Not used in metadata
+  tags?: string[];
+  cover?: string; // Not used in metadata
+  readTime: string;
+  audioUrl?: string;
 }
 ```
 
@@ -284,9 +297,10 @@ export interface Post {
 **Name**: `seo-optimizer`
 
 **Description**:
-*"Audit and optimize SEO for Next.js 16 App Router blogs. Generates sitemaps, robots.txt, RSS/Atom feeds, validates metadata, creates OG images, and ensures schema completeness. Use when the user mentions SEO, search optimization, metadata, feeds, sitemaps, or improving blog discoverability."*
+_"Audit and optimize SEO for Next.js 16 App Router blogs. Generates sitemaps, robots.txt, RSS/Atom feeds, validates metadata, creates OG images, and ensures schema completeness. Use when the user mentions SEO, search optimization, metadata, feeds, sitemaps, or improving blog discoverability."_
 
 **Target Use Cases**:
+
 1. Complete SEO infrastructure setup for new blogs
 2. Audit existing SEO implementation against best practices
 3. Generate missing components (sitemap, robots, feeds)
@@ -316,7 +330,7 @@ export interface Post {
 
 #### SKILL.md Structure (Draft)
 
-```markdown
+````markdown
 ---
 name: seo-optimizer
 description: Audit and optimize SEO for Next.js 16 App Router blogs. Generates sitemaps, robots.txt, RSS/Atom feeds, validates metadata, creates OG images, and ensures schema completeness. Use when the user mentions SEO, search optimization, metadata, feeds, sitemaps, or improving blog discoverability.
@@ -376,22 +390,23 @@ Use `scripts/audit_seo.py` to generate a compliance report.
 Based on audit findings, create:
 
 **Sitemap** (`app/sitemap.ts`):
+
 ```typescript
-import { MetadataRoute } from 'next'
-import { getAllPosts } from '@/lib/posts'
+import { MetadataRoute } from 'next';
+import { getAllPosts } from '@/lib/posts';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const posts = getAllPosts()
-  const baseUrl = 'https://addcommitpush.io'
+  const posts = getAllPosts();
+  const baseUrl = 'https://addcommitpush.io';
 
   const blogPosts = posts
-    .filter(post => !post.draft)
-    .map(post => ({
+    .filter((post) => !post.draft)
+    .map((post) => ({
       url: `${baseUrl}/blog/${post.slug}`,
       lastModified: new Date(post.updatedAt || post.publishedAt),
       changeFrequency: 'monthly' as const,
       priority: 0.8,
-    }))
+    }));
 
   return [
     {
@@ -407,13 +422,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.9,
     },
     ...blogPosts,
-  ]
+  ];
 }
 ```
+````
 
 **Robots.txt** (`app/robots.ts`):
+
 ```typescript
-import { MetadataRoute } from 'next'
+import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -423,17 +440,19 @@ export default function robots(): MetadataRoute.Robots {
       disallow: '/private/',
     },
     sitemap: 'https://addcommitpush.io/sitemap.xml',
-  }
+  };
 }
 ```
 
 **RSS Feed** (build-time script):
+
 - Create `scripts/generate-feed.ts`
 - Generate XML from `getAllPosts()`
 - Output to `public/feed.xml` and `public/feed.atom`
 - Add to build pipeline
 
 **OG Images** (dynamic per-post):
+
 - Create `app/(site)/blog/[slug]/opengraph-image.tsx`
 - Use `ImageResponse` from `next/og`
 - Pull post title, description, tags from frontmatter
@@ -446,31 +465,31 @@ Update `lib/posts.ts` interface:
 ```typescript
 export interface Post {
   // Core fields
-  title: string
-  slug: string
-  description: string
+  title: string;
+  slug: string;
+  description: string;
 
   // Temporal
-  publishedAt: string
-  updatedAt?: string
+  publishedAt: string;
+  updatedAt?: string;
 
   // Categorization
-  tags?: string[]
+  tags?: string[];
 
   // SEO fields (new)
-  canonicalUrl?: string
-  ogImage?: string
-  keywords?: string[]
+  canonicalUrl?: string;
+  ogImage?: string;
+  keywords?: string[];
 
   // Publishing
-  draft?: boolean
+  draft?: boolean;
 
   // Media
-  cover?: string
+  cover?: string;
 
   // UX
-  readTime: string
-  audioUrl?: string
+  readTime: string;
+  audioUrl?: string;
 }
 ```
 
@@ -480,9 +499,9 @@ Enhance `app/(site)/blog/[slug]/page.tsx` metadata:
 
 ```typescript
 export async function generateMetadata({ params }): Promise<Metadata> {
-  const { slug } = await params
-  const post = getPostBySlug(slug)
-  const baseUrl = 'https://addcommitpush.io'
+  const { slug } = await params;
+  const post = getPostBySlug(slug);
+  const baseUrl = 'https://addcommitpush.io';
 
   return {
     title: `${post.title} | addcommitpush.io`,
@@ -496,9 +515,7 @@ export async function generateMetadata({ params }): Promise<Metadata> {
       description: post.description,
       type: 'article',
       publishedTime: new Date(post.publishedAt).toISOString(),
-      modifiedTime: post.updatedAt
-        ? new Date(post.updatedAt).toISOString()
-        : undefined,
+      modifiedTime: post.updatedAt ? new Date(post.updatedAt).toISOString() : undefined,
       authors: ['Emil Wåreus'],
       tags: post.tags,
       images: [
@@ -516,7 +533,7 @@ export async function generateMetadata({ params }): Promise<Metadata> {
       description: post.description,
       images: [post.ogImage || `${baseUrl}/blog/${slug}/opengraph-image`],
     },
-  }
+  };
 }
 ```
 
@@ -611,10 +628,12 @@ curl -I http://localhost:3000/blog/[slug]/opengraph-image
 ## References
 
 See bundled documentation:
+
 - `reference/nextjs-seo.md` - Next.js-specific SEO patterns
 - `reference/schema-fields.md` - Complete frontmatter reference
 - `reference/og-image-patterns.md` - OG image generation approaches
-```
+
+````
 
 #### Supporting Files
 
@@ -707,11 +726,11 @@ def audit_seo(project_root: str) -> dict:
 if __name__ == "__main__":
     project_root = os.getcwd()
     audit_seo(project_root)
-```
+````
 
 **`reference/schema-fields.md`** - Complete frontmatter reference:
 
-```markdown
+````markdown
 # Blog Post Frontmatter Schema
 
 ## Complete Field Reference
@@ -754,52 +773,54 @@ if __name__ == "__main__":
 
 ```yaml
 ---
-title: "Building Production-Ready Next.js Apps"
-slug: "production-nextjs"
-description: "Learn how to optimize Next.js applications for production deployment with SSG, ISR, and edge caching strategies."
-publishedAt: "2025-01-15"
-updatedAt: "2025-01-20"
+title: 'Building Production-Ready Next.js Apps'
+slug: 'production-nextjs'
+description: 'Learn how to optimize Next.js applications for production deployment with SSG, ISR, and edge caching strategies.'
+publishedAt: '2025-01-15'
+updatedAt: '2025-01-20'
 tags: [nextjs, performance, deployment]
-canonicalUrl: "https://addcommitpush.io/blog/production-nextjs"
-ogImage: "/posts/production-nextjs/og-optimized.webp"
+canonicalUrl: 'https://addcommitpush.io/blog/production-nextjs'
+ogImage: '/posts/production-nextjs/og-optimized.webp'
 keywords: [next.js, static generation, edge caching, performance]
-cover: "/posts/production-nextjs/cover-optimized.webp"
+cover: '/posts/production-nextjs/cover-optimized.webp'
 draft: false
 ---
 ```
+````
 
 ## TypeScript Interface
 
 ```typescript
 export interface Post {
   // Core (required)
-  title: string
-  slug: string
-  description: string
-  publishedAt: string
+  title: string;
+  slug: string;
+  description: string;
+  publishedAt: string;
 
   // Temporal
-  updatedAt?: string
+  updatedAt?: string;
 
   // Categorization
-  tags?: string[]
+  tags?: string[];
 
   // SEO
-  canonicalUrl?: string
-  ogImage?: string
-  keywords?: string[]
+  canonicalUrl?: string;
+  ogImage?: string;
+  keywords?: string[];
 
   // Publishing
-  draft?: boolean
+  draft?: boolean;
 
   // Media
-  cover?: string
+  cover?: string;
 
   // UX (computed)
-  readTime: string
-  audioUrl?: string
+  readTime: string;
+  audioUrl?: string;
 }
 ```
+
 ```
 
 #### Integration with Existing Workflow
@@ -877,11 +898,13 @@ This means the `description` field is **critical** for discovery. It must contai
 ### Content Flow
 
 ```
+
 MDX frontmatter → lib/posts.ts interface → generateMetadata() → <head> tags
-                                         → sitemap.ts → sitemap.xml
-                                         → generate-feed.ts → feed.xml/atom
-                                         → opengraph-image.tsx → OG image
-```
+→ sitemap.ts → sitemap.xml
+→ generate-feed.ts → feed.xml/atom
+→ opengraph-image.tsx → OG image
+
+````
 
 ## Historical Context (from .claude/)
 
@@ -972,7 +995,7 @@ mkdir -p .claude/skills/seo-optimizer/{reference,templates,scripts,examples}
 # 6. Test activation
 # Ask Claude: "Can you optimize SEO for this blog?"
 # Verify skill loads and provides guidance
-```
+````
 
 To implement the SEO infrastructure:
 
@@ -995,6 +1018,7 @@ git commit -m "feat: Complete SEO infrastructure with sitemap, robots, feeds, OG
 ## Links and References
 
 **Claude Code Skills Documentation**:
+
 - [Claude Skills Blog](https://claude.com/blog/skills)
 - [Official Skills Documentation](https://code.claude.com/docs/en/skills)
 - [Skills GitHub Repository](https://github.com/anthropics/skills)
@@ -1006,12 +1030,14 @@ git commit -m "feat: Complete SEO infrastructure with sitemap, robots, feeds, OG
 - [How to Create Custom Skills](https://support.claude.com/en/articles/12512198-how-to-create-custom-skills)
 
 **Next.js SEO Resources**:
+
 - [Next.js Metadata API](https://nextjs.org/docs/app/api-reference/functions/generate-metadata)
 - [Next.js Sitemap](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/sitemap)
 - [Next.js Robots](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/robots)
 - [Next.js OG Images](https://nextjs.org/docs/app/api-reference/file-conventions/metadata/opengraph-image)
 
 **SEO Best Practices**:
+
 - [Google Search Central - Sitemaps](https://developers.google.com/search/docs/crawling-indexing/sitemaps/overview)
 - [Schema.org - BlogPosting](https://schema.org/BlogPosting)
 - [Open Graph Protocol](https://ogp.me/)

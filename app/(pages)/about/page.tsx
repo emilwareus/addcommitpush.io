@@ -1,8 +1,8 @@
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { ExternalLink, FileText, BookOpen, Mic, Code2, FlaskConical } from "lucide-react"
-import Image from "next/image"
-import { patents } from "@/lib/patents"
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { ExternalLink, FileText, BookOpen, Mic, Code2, FlaskConical } from 'lucide-react';
+import Image from 'next/image';
+import { patents } from '@/lib/patents';
 
 export default function AboutPage() {
   return (
@@ -13,19 +13,34 @@ export default function AboutPage() {
           <div className="mb-16 md:mb-24 text-center">
             <div className="w-28 h-28 sm:w-36 sm:h-36 mx-auto mb-8 rounded-full bg-gradient-to-br from-primary via-secondary to-accent p-1">
               <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
-                <Image src="/code-icon.svg" alt="Code Icon" width={80} height={80} className="w-14 h-14 sm:w-20 sm:h-20" />
+                <Image
+                  src="/code-icon.svg"
+                  alt="Code Icon"
+                  width={80}
+                  height={80}
+                  className="w-14 h-14 sm:w-20 sm:h-20"
+                />
               </div>
             </div>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 text-balance">
-              <span className="text-primary neon-glow">Hey, I&apos;m</span>{" "}
+              <span className="text-primary neon-glow">Hey, I&apos;m</span>{' '}
               <span className="text-secondary neon-glow">Emil</span>
             </h1>
             <div className="prose prose-lg max-w-none text-foreground/90">
               <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto text-pretty leading-relaxed">
-                I&apos;m a business-savvy data nerd who spends way too much time in front of a screen. I run a few different companies, invest, advise, and hack. My most notable achievement was founding, scaling, and exiting Debricked, a startup I co-founded in 2018. Following Debricked&apos;s 2022 acquisition, we joined Micro Focus. I lead teams developing application security solutions using machine learning, graph algorithms, and static analysis techniques.
+                I&apos;m a business-savvy data nerd who spends way too much time in front of a
+                screen. I run a few different companies, invest, advise, and hack. My most notable
+                achievement was founding, scaling, and exiting Debricked, a startup I co-founded in
+                2018. Following Debricked&apos;s 2022 acquisition, we joined Micro Focus. I lead
+                teams developing application security solutions using machine learning, graph
+                algorithms, and static analysis techniques.
               </p>
-              <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto text-pretty leading-relaxed mt-4">I also enjoy writing spaghetti code while drinking wine. 🍷</p>
-              <p className="text-base sm:text-lg md:text-xl text-foreground max-w-3xl mx-auto text-balance leading-relaxed mt-6 font-medium">Current projects</p>
+              <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto text-pretty leading-relaxed mt-4">
+                I also enjoy writing spaghetti code while drinking wine. 🍷
+              </p>
+              <p className="text-base sm:text-lg md:text-xl text-foreground max-w-3xl mx-auto text-balance leading-relaxed mt-6 font-medium">
+                Current projects
+              </p>
               <div className="mt-3 grid grid-cols-1 gap-3 text-left sm:text-center">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center gap-1 sm:gap-2">
                   <Badge asChild variant="outline">
@@ -53,7 +68,9 @@ export default function AboutPage() {
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   </Badge>
-                  <span className="text-sm text-muted-foreground">Neo4j + Gemini for Swedish political data</span>
+                  <span className="text-sm text-muted-foreground">
+                    Neo4j + Gemini for Swedish political data
+                  </span>
                 </div>
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center gap-1 sm:gap-2">
                   <Badge asChild variant="outline">
@@ -67,7 +84,9 @@ export default function AboutPage() {
                       <ExternalLink className="w-3 h-3" />
                     </a>
                   </Badge>
-                  <span className="text-sm text-muted-foreground">AI podcast transcript analysis and recommendations</span>
+                  <span className="text-sm text-muted-foreground">
+                    AI podcast transcript analysis and recommendations
+                  </span>
                 </div>
               </div>
             </div>
@@ -79,7 +98,9 @@ export default function AboutPage() {
               <CardContent className="p-8 md:p-10">
                 <div className="flex items-center gap-3 mb-8">
                   <Mic className="w-6 h-6 text-secondary" />
-                  <h2 className="text-2xl md:text-3xl font-bold text-secondary">Podcast Appearances</h2>
+                  <h2 className="text-2xl md:text-3xl font-bold text-secondary">
+                    Podcast Appearances
+                  </h2>
                 </div>
 
                 <ul className="space-y-4">
@@ -155,7 +176,9 @@ export default function AboutPage() {
                     </a>
                     <p className="text-sm text-muted-foreground">Neo4j</p>
                     <p className="text-foreground/80 mt-2">
-                      Exploring how knowledge graphs and AI bring transparency to politics through Valkompass.ai, an open-source project using Neo4j and Gemini to analyze Swedish political data.
+                      Exploring how knowledge graphs and AI bring transparency to politics through
+                      Valkompass.ai, an open-source project using Neo4j and Gemini to analyze
+                      Swedish political data.
                     </p>
                   </li>
                 </ul>
@@ -167,7 +190,9 @@ export default function AboutPage() {
               <CardContent className="p-8 md:p-10">
                 <div className="flex items-center gap-3 mb-8">
                   <Mic className="w-6 h-6 text-primary" />
-                  <h2 className="text-2xl md:text-3xl font-bold text-primary">Conference Presentations</h2>
+                  <h2 className="text-2xl md:text-3xl font-bold text-primary">
+                    Conference Presentations
+                  </h2>
                 </div>
 
                 <div className="space-y-6">
@@ -190,7 +215,7 @@ export default function AboutPage() {
                       >
                         ØreDev 2022
                       </a>
-                      ,{" "}
+                      ,{' '}
                       <a
                         href="https://events.linuxfoundation.org/archive/2022/open-source-summit-north-america/program/schedule/"
                         target="_blank"
@@ -201,7 +226,7 @@ export default function AboutPage() {
                       </a>
                     </p>
                     <p className="text-foreground/80 mt-2">
-                      Addresses false alert fatigue in security scanning.{" "}
+                      Addresses false alert fatigue in security scanning.{' '}
                       <a
                         href="https://www.youtube.com/watch?v=FvOoLU4Oy9I"
                         target="_blank"
@@ -225,7 +250,9 @@ export default function AboutPage() {
                       <ExternalLink className="w-4 h-4" />
                     </a>
                     <p className="text-sm text-muted-foreground mt-1">GOTO Copenhagen 2022</p>
-                    <p className="text-foreground/80 mt-2">Neo4j applications for complex dependency resolution.</p>
+                    <p className="text-foreground/80 mt-2">
+                      Neo4j applications for complex dependency resolution.
+                    </p>
                   </div>
 
                   <div className="border-l-2 border-primary/30 pl-4">
@@ -240,7 +267,7 @@ export default function AboutPage() {
                     </a>
                     <p className="text-sm text-muted-foreground mt-1">Foo Café Malmö 2022</p>
                     <p className="text-foreground/80 mt-2">
-                      Community health metrics and project success prediction.{" "}
+                      Community health metrics and project success prediction.{' '}
                       <a
                         href="https://www.youtube.com/watch?v=u9jU4xJ03ek"
                         target="_blank"
@@ -263,9 +290,11 @@ export default function AboutPage() {
                       Semantic Code Discovery - AI-powered code recommendations
                       <ExternalLink className="w-4 h-4" />
                     </a>
-                    <p className="text-sm text-muted-foreground mt-1">Foo Café Malmö 2022, State of AI series</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Foo Café Malmö 2022, State of AI series
+                    </p>
                     <p className="text-foreground/80 mt-2">
-                      Introduction to semantic code search capabilities.{" "}
+                      Introduction to semantic code search capabilities.{' '}
                       <a
                         href="https://youtu.be/swZAIirxdik?t=1881"
                         target="_blank"
@@ -279,10 +308,12 @@ export default function AboutPage() {
                   </div>
 
                   <div className="border-l-2 border-primary/30 pl-4">
-                    <div className="text-lg font-medium text-foreground">Additional Presentations</div>
+                    <div className="text-lg font-medium text-foreground">
+                      Additional Presentations
+                    </div>
                     <p className="text-foreground/80 mt-2">
-                      Zero to One AI education for managers, company tech-talks, hackathons, and machine learning
-                      events.
+                      Zero to One AI education for managers, company tech-talks, hackathons, and
+                      machine learning events.
                     </p>
                   </div>
                 </div>
@@ -294,7 +325,9 @@ export default function AboutPage() {
               <CardContent className="p-8 md:p-10">
                 <div className="flex items-center gap-3 mb-8">
                   <ExternalLink className="w-6 h-6 text-accent" />
-                  <h2 className="text-2xl md:text-3xl font-bold text-accent">External Blog Posts</h2>
+                  <h2 className="text-2xl md:text-3xl font-bold text-accent">
+                    External Blog Posts
+                  </h2>
                 </div>
 
                 <div className="space-y-6">
@@ -310,7 +343,7 @@ export default function AboutPage() {
                     </a>
                     <p className="text-sm text-muted-foreground mt-1">LinkedIn</p>
                     <p className="text-foreground/80 mt-2">
-                      Research on why projects become unmaintained.{" "}
+                      Research on why projects become unmaintained.{' '}
                       <a
                         href="https://www.youtube.com/watch?v=u9jU4xJ03ek"
                         target="_blank"
@@ -350,7 +383,9 @@ export default function AboutPage() {
                       <ExternalLink className="w-4 h-4" />
                     </a>
                     <p className="text-sm text-muted-foreground mt-1">The Hacker News</p>
-                    <p className="text-foreground/80 mt-2">Data-driven insights on vulnerability discovery timelines.</p>
+                    <p className="text-foreground/80 mt-2">
+                      Data-driven insights on vulnerability discovery timelines.
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -367,7 +402,9 @@ export default function AboutPage() {
                 <div className="space-y-8">
                   {/* Primary Publications */}
                   <div>
-                    <h3 className="text-xl font-semibold mb-4 text-foreground">Primary Publications</h3>
+                    <h3 className="text-xl font-semibold mb-4 text-foreground">
+                      Primary Publications
+                    </h3>
                     <div className="space-y-6">
                       <div className="border-l-2 border-secondary/30 pl-4">
                         <a
@@ -381,8 +418,8 @@ export default function AboutPage() {
                         </a>
                         <p className="text-sm text-muted-foreground mt-1">Springer</p>
                         <p className="text-foreground/80 mt-2">
-                          Addresses vulnerability database labeling using Named Entity Recognition. Achieved F-measure
-                          of 0.86 with precision 0.857 and recall 0.865.
+                          Addresses vulnerability database labeling using Named Entity Recognition.
+                          Achieved F-measure of 0.86 with precision 0.857 and recall 0.865.
                         </p>
                       </div>
 
@@ -393,14 +430,15 @@ export default function AboutPage() {
                           rel="noopener noreferrer"
                           className="text-lg font-medium text-foreground hover:text-secondary transition-colors inline-flex items-center gap-2"
                         >
-                          Security Issue Classification for Vulnerability Management with Semi-supervised Learning
+                          Security Issue Classification for Vulnerability Management with
+                          Semi-supervised Learning
                           <ExternalLink className="w-4 h-4" />
                         </a>
                         <p className="text-sm text-muted-foreground mt-1">SCITEPRESS</p>
                         <p className="text-foreground/80 mt-2">
-                          Uses Hierarchical Attention Networks for automated classification. Achieved F1 score of 71% and
-                          identified approximately 191,036 potentially vulnerable issues. Nominated for best paper at
-                          conference.
+                          Uses Hierarchical Attention Networks for automated classification.
+                          Achieved F1 score of 71% and identified approximately 191,036 potentially
+                          vulnerable issues. Nominated for best paper at conference.
                         </p>
                       </div>
                     </div>
@@ -408,7 +446,9 @@ export default function AboutPage() {
 
                   {/* Supervised Publications */}
                   <div>
-                    <h3 className="text-xl font-semibold mb-4 text-foreground">Supervised Publications</h3>
+                    <h3 className="text-xl font-semibold mb-4 text-foreground">
+                      Supervised Publications
+                    </h3>
                     <ul className="space-y-3">
                       <li className="border-l-2 border-secondary/30 pl-4">
                         <a
@@ -489,7 +529,8 @@ export default function AboutPage() {
                           rel="noopener noreferrer"
                           className="text-foreground hover:text-secondary transition-colors inline-flex items-center gap-2"
                         >
-                          Recommending Relevant Open Source Software using Semantic Functionality Search
+                          Recommending Relevant Open Source Software using Semantic Functionality
+                          Search
                           <ExternalLink className="w-3 h-3" />
                         </a>
                         <p className="text-sm text-muted-foreground">Lund University</p>
@@ -513,7 +554,8 @@ export default function AboutPage() {
                           rel="noopener noreferrer"
                           className="text-foreground hover:text-secondary transition-colors inline-flex items-center gap-2"
                         >
-                          Reducing time of vulnerability exposure in open source software usage for public sector software development
+                          Reducing time of vulnerability exposure in open source software usage for
+                          public sector software development
                           <ExternalLink className="w-3 h-3" />
                         </a>
                         <p className="text-sm text-muted-foreground">University of Lübeck</p>
@@ -535,9 +577,7 @@ export default function AboutPage() {
                 <div className="space-y-6">
                   {patents.map((patent, index) => (
                     <div key={index} className="border-l-2 border-primary/30 pl-4">
-                      <div className="text-lg font-medium text-foreground mb-1">
-                        {patent.title}
-                      </div>
+                      <div className="text-lg font-medium text-foreground mb-1">{patent.title}</div>
                       <div className="flex flex-wrap gap-2 items-center text-sm text-muted-foreground mt-1">
                         {patent.filings.map((filing, filingIndex) => (
                           <span key={filing.id}>
@@ -550,7 +590,9 @@ export default function AboutPage() {
                               {filing.id}
                               <ExternalLink className="w-3 h-3" />
                             </a>
-                            {filingIndex < patent.filings.length - 1 && <span className="mx-1">•</span>}
+                            {filingIndex < patent.filings.length - 1 && (
+                              <span className="mx-1">•</span>
+                            )}
                           </span>
                         ))}
                         <span>• {patent.assignee}</span>
@@ -567,7 +609,9 @@ export default function AboutPage() {
               <CardContent className="p-8 md:p-10">
                 <div className="flex items-center gap-3 mb-8">
                   <Code2 className="w-6 h-6 text-accent" />
-                  <h2 className="text-2xl md:text-3xl font-bold text-accent">Open Source Projects</h2>
+                  <h2 className="text-2xl md:text-3xl font-bold text-accent">
+                    Open Source Projects
+                  </h2>
                 </div>
 
                 <div className="space-y-6">
@@ -583,8 +627,9 @@ export default function AboutPage() {
                     </a>
                     <p className="text-sm text-muted-foreground mt-1">Next.js • TypeScript</p>
                     <p className="text-foreground/80 mt-2">
-                      This blog platform itself, built with Next.js 16. Features SSG, and audio narration for
-                      posts. Open-sourced so you can see how it&apos;s built - warts and all.
+                      This blog platform itself, built with Next.js 16. Features SSG, and audio
+                      narration for posts. Open-sourced so you can see how it&apos;s built - warts
+                      and all.
                     </p>
                   </div>
 
@@ -600,9 +645,10 @@ export default function AboutPage() {
                     </a>
                     <p className="text-sm text-muted-foreground mt-1">Go • Docker</p>
                     <p className="text-foreground/80 mt-2">
-                      Command-line interface for open source security scanning and software composition analysis.
-                      Delivers vulnerability detection, compliance checking, and health metrics directly to the command
-                      prompt. Integrates seamlessly into CI/CD pipelines with multi-platform support.
+                      Command-line interface for open source security scanning and software
+                      composition analysis. Delivers vulnerability detection, compliance checking,
+                      and health metrics directly to the command prompt. Integrates seamlessly into
+                      CI/CD pipelines with multi-platform support.
                     </p>
                   </div>
 
@@ -618,9 +664,10 @@ export default function AboutPage() {
                     </a>
                     <p className="text-sm text-muted-foreground mt-1">Next.js • Neo4j • Gemini</p>
                     <p className="text-foreground/80 mt-2">
-                      Open source platform for exploring Swedish political party positions using AI-powered analysis.
-                      Combines knowledge graphs (Neo4j) with Google Gemini to analyze party programs, manifestos, and
-                      voting records. Provides transparent, data-driven insights for voters, journalists, and citizens.
+                      Open source platform for exploring Swedish political party positions using
+                      AI-powered analysis. Combines knowledge graphs (Neo4j) with Google Gemini to
+                      analyze party programs, manifestos, and voting records. Provides transparent,
+                      data-driven insights for voters, journalists, and citizens.
                     </p>
                   </div>
 
@@ -636,8 +683,8 @@ export default function AboutPage() {
                     </a>
                     <p className="text-sm text-muted-foreground mt-1">NLP</p>
                     <p className="text-foreground/80 mt-2">
-                      Early-stage project automating group chat management using NLP. Self-described as &quot;very very
-                      early stage&quot;.
+                      Early-stage project automating group chat management using NLP. Self-described
+                      as &quot;very very early stage&quot;.
                     </p>
                   </div>
                 </div>
@@ -664,10 +711,11 @@ export default function AboutPage() {
                       <ExternalLink className="w-4 h-4" />
                     </a>
                     <p className="text-sm text-muted-foreground mt-1">
-                      AI and Risk-based Vulnerability Management for Trustworthy Open Source Adoption
+                      AI and Risk-based Vulnerability Management for Trustworthy Open Source
+                      Adoption
                     </p>
                     <p className="text-foreground/80 mt-2">
-                      Runtime vulnerability detection using eBPF.{" "}
+                      Runtime vulnerability detection using eBPF.{' '}
                       <a
                         href="https://www.vinnova.se/en/p/ai--and-risk-based-vulnerability-management-for-trustworthy-open-source-adoption-arvos/"
                         target="_blank"
@@ -676,7 +724,7 @@ export default function AboutPage() {
                       >
                         Funded by Vinnova
                       </a>
-                      . Collaboration:{" "}
+                      . Collaboration:{' '}
                       <a
                         href="https://www.debricked.com"
                         target="_blank"
@@ -685,7 +733,7 @@ export default function AboutPage() {
                       >
                         Debricked
                       </a>
-                      ,{" "}
+                      ,{' '}
                       <a
                         href="https://elastisys.com/"
                         target="_blank"
@@ -704,7 +752,7 @@ export default function AboutPage() {
                       Health and Security Management in Open Source Software
                     </p>
                     <p className="text-foreground/80 mt-2">
-                      Swedish industry OSS risk management initiative. Partners: RISE,{" "}
+                      Swedish industry OSS risk management initiative. Partners: RISE,{' '}
                       <a
                         href="https://www.debricked.com"
                         target="_blank"
@@ -713,7 +761,7 @@ export default function AboutPage() {
                       >
                         Debricked
                       </a>
-                      ,{" "}
+                      ,{' '}
                       <a
                         href="https://www.scania.com/"
                         target="_blank"
@@ -722,7 +770,7 @@ export default function AboutPage() {
                       >
                         Scania
                       </a>
-                      ,{" "}
+                      ,{' '}
                       <a
                         href="https://addalot.se/"
                         target="_blank"
@@ -741,5 +789,5 @@ export default function AboutPage() {
         </div>
       </div>
     </main>
-  )
+  );
 }

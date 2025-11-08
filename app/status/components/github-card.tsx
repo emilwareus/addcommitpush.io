@@ -1,9 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { GitHubChart } from './github-chart'
-import type { GitHubStatusData } from '@/lib/github'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { GitHubChart } from './github-chart';
+import type { GitHubStatusData } from '@/lib/github';
 
 interface GitHubCardProps {
-  data: GitHubStatusData
+  data: GitHubStatusData;
 }
 
 export function GitHubCard({ data }: GitHubCardProps) {
@@ -40,5 +40,5 @@ export function GitHubCard({ data }: GitHubCardProps) {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

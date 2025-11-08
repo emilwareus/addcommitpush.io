@@ -1,29 +1,33 @@
-import { Badge } from "@/components/ui/badge"
-import { ArrowLeft } from "lucide-react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { getPostBySlug, getAllSlugs } from "@/lib/posts"
-import { notFound } from "next/navigation"
-import type { Metadata } from "next"
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { getPostBySlug, getAllSlugs } from '@/lib/posts';
+import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 
-export const dynamic = "error"
-export const revalidate = false
+export const dynamic = 'error';
+export const revalidate = false;
 
 export async function generateStaticParams() {
-  const slugs = getAllSlugs()
+  const slugs = getAllSlugs();
   return slugs.map((slug) => ({
     slug,
-  }))
+  }));
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params
-  const post = getPostBySlug(slug)
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const post = getPostBySlug(slug);
 
   if (!post) {
     return {
-      title: "Post Not Found | addcommitpush.io",
-    }
+      title: 'Post Not Found | addcommitpush.io',
+    };
   }
 
   return {
@@ -32,47 +36,47 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     openGraph: {
       title: post.title,
       description: post.description,
-      type: "article",
+      type: 'article',
       publishedTime: new Date(post.publishedAt).toISOString(),
-      authors: ["Emil Wåreus"],
+      authors: ['Emil Wåreus'],
       tags: post.tags,
     },
-  }
+  };
 }
 
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params
-  const post = getPostBySlug(slug)
+  const { slug } = await params;
+  const post = getPostBySlug(slug);
 
   if (!post) {
-    notFound()
+    notFound();
   }
 
   // Dynamic content import
   const postContent = await (async () => {
     switch (slug) {
-      case "recruiting-engineers-as-a-startup": {
+      case 'recruiting-engineers-as-a-startup': {
         const { RecruitingEngineersContent } = await import(
-          "@/components/blog-posts/recruiting-engineers-as-a-startup"
-        )
-        return <RecruitingEngineersContent />
+          '@/components/blog-posts/recruiting-engineers-as-a-startup'
+        );
+        return <RecruitingEngineersContent />;
       }
-      case "saas-zero-to-one-hindsight": {
+      case 'saas-zero-to-one-hindsight': {
         const { SaasZeroToOneHindsightContent } = await import(
-          "@/components/blog-posts/saas-zero-to-one-hindsight"
-        )
-        return <SaasZeroToOneHindsightContent />
+          '@/components/blog-posts/saas-zero-to-one-hindsight'
+        );
+        return <SaasZeroToOneHindsightContent />;
       }
-      case "context-engineering-claude-code": {
+      case 'context-engineering-claude-code': {
         const { ContextEngineeringClaudeCodeContent } = await import(
-          "@/components/blog-posts/context-engineering-claude-code"
-        )
-        return <ContextEngineeringClaudeCodeContent />
+          '@/components/blog-posts/context-engineering-claude-code'
+        );
+        return <ContextEngineeringClaudeCodeContent />;
       }
       default:
-        notFound()
+        notFound();
     }
-  })()
+  })();
 
   return (
     <main className="min-h-screen">
@@ -94,10 +98,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
               <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mb-8">
                 <time dateTime={post.publishedAt}>
-                  {new Date(post.publishedAt).toLocaleDateString("en-US", {
-                    month: "long",
-                    day: "numeric",
-                    year: "numeric",
+                  {new Date(post.publishedAt).toLocaleDateString('en-US', {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
                   })}
                 </time>
                 <span>·</span>
@@ -122,5 +126,5 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         </div>
       </div>
     </main>
-  )
+  );
 }

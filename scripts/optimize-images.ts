@@ -73,9 +73,7 @@ async function optimizeImage(inputPath: string): Promise<OptimizationResult> {
     // Generate AVIF (best compression)
     if (config.targetFormats.includes('avif')) {
       const avifPath = join(dir, `${name}-optimized.avif`);
-      await sharp(inputPath)
-        .avif({ quality: config.quality.avif, effort: 6 })
-        .toFile(avifPath);
+      await sharp(inputPath).avif({ quality: config.quality.avif, effort: 6 }).toFile(avifPath);
 
       const avifSize = (await stat(avifPath)).size;
       result.outputs.push({
@@ -89,9 +87,7 @@ async function optimizeImage(inputPath: string): Promise<OptimizationResult> {
     // Generate WebP (fallback)
     if (config.targetFormats.includes('webp')) {
       const webpPath = join(dir, `${name}-optimized.webp`);
-      await sharp(inputPath)
-        .webp({ quality: config.quality.webp })
-        .toFile(webpPath);
+      await sharp(inputPath).webp({ quality: config.quality.webp }).toFile(webpPath);
 
       const webpSize = (await stat(webpPath)).size;
       result.outputs.push({
@@ -107,9 +103,7 @@ async function optimizeImage(inputPath: string): Promise<OptimizationResult> {
       const optimizedPath = join(dir, `${name}-optimized${ext}`);
 
       if (ext.toLowerCase() === '.png') {
-        await sharp(inputPath)
-          .png({ compressionLevel: config.quality.png })
-          .toFile(optimizedPath);
+        await sharp(inputPath).png({ compressionLevel: config.quality.png }).toFile(optimizedPath);
       } else {
         await sharp(inputPath)
           .jpeg({ quality: config.quality.jpeg, mozjpeg: true })
@@ -124,7 +118,6 @@ async function optimizeImage(inputPath: string): Promise<OptimizationResult> {
         savings: `${(((result.originalSize - optimizedSize) / result.originalSize) * 100).toFixed(1)}%`,
       });
     }
-
   } catch (error) {
     result.error = error instanceof Error ? error.message : String(error);
   }
@@ -170,7 +163,9 @@ async function main() {
         console.log(`✓ ${relativePath} (${formatBytes(result.originalSize)})`);
 
         for (const output of result.outputs) {
-          console.log(`  → ${output.format}: ${formatBytes(output.size)} (saved ${output.savings})`);
+          console.log(
+            `  → ${output.format}: ${formatBytes(output.size)} (saved ${output.savings})`
+          );
         }
         console.log();
       }

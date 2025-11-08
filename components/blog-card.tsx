@@ -1,11 +1,11 @@
-import Link from "next/link"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Calendar, Clock, Headphones } from "lucide-react"
-import type { Post } from "@/lib/posts"
+import Link from 'next/link';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Calendar, Clock, Headphones } from 'lucide-react';
+import type { Post } from '@/lib/posts';
 
 interface BlogCardProps {
-  post: Post
+  post: Post;
 }
 
 export function BlogCard({ post }: BlogCardProps) {
@@ -17,9 +17,13 @@ export function BlogCard({ post }: BlogCardProps) {
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold group-hover:text-primary transition-colors text-balance leading-tight">
               {post.title}
             </h2>
-            {post.audioUrl && <Headphones className="w-5 h-5 sm:w-6 sm:h-6 text-secondary flex-shrink-0 mt-1" />}
+            {post.audioUrl && (
+              <Headphones className="w-5 h-5 sm:w-6 sm:h-6 text-secondary flex-shrink-0 mt-1" />
+            )}
           </div>
-          <p className="text-base sm:text-lg text-muted-foreground leading-relaxed text-pretty">{post.description}</p>
+          <p className="text-base sm:text-lg text-muted-foreground leading-relaxed text-pretty">
+            {post.description}
+          </p>
         </CardHeader>
         <CardContent className="pb-4">
           <div className="flex flex-wrap gap-2">
@@ -35,10 +39,10 @@ export function BlogCard({ post }: BlogCardProps) {
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
               <span>
-                {new Date(post.publishedAt).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
+                {new Date(post.publishedAt).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
                 })}
               </span>
             </div>
@@ -50,5 +54,5 @@ export function BlogCard({ post }: BlogCardProps) {
         </CardFooter>
       </Card>
     </Link>
-  )
+  );
 }

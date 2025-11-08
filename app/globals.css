@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -88,8 +88,8 @@
 }
 
 @theme inline {
-  --font-sans: "Space Grotesk", "Geist", "Geist Fallback";
-  --font-mono: "Geist Mono", "Geist Mono Fallback";
+  --font-sans: 'Space Grotesk', 'Geist', 'Geist Fallback';
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -139,16 +139,21 @@
 
 /* Reduced glow intensity for better readability */
 .neon-glow {
-  text-shadow: 0 0 8px currentColor, 0 0 15px currentColor;
+  text-shadow:
+    0 0 8px currentColor,
+    0 0 15px currentColor;
 }
 
 .neon-border {
-  box-shadow: 0 0 8px currentColor, inset 0 0 8px currentColor;
+  box-shadow:
+    0 0 8px currentColor,
+    inset 0 0 8px currentColor;
 }
 
 /* Subtler grid background */
 .grid-bg {
-  background-image: linear-gradient(to right, oklch(0.32 0.03 270 / 0.2) 1px, transparent 1px),
+  background-image:
+    linear-gradient(to right, oklch(0.32 0.03 270 / 0.2) 1px, transparent 1px),
     linear-gradient(to bottom, oklch(0.32 0.03 270 / 0.2) 1px, transparent 1px);
   background-size: 50px 50px;
 }

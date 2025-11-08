@@ -1,21 +1,18 @@
-'use client'
+'use client';
 
-import { motion, LayoutGroup } from 'framer-motion'
-import { GitHubCard } from './components/github-card'
-import { SpotifyCard } from './components/spotify-card'
-import type { GitHubStatusData } from '@/lib/github'
+import { motion, LayoutGroup } from 'framer-motion';
+import { GitHubCard } from './components/github-card';
+import { SpotifyCard } from './components/spotify-card';
+import type { GitHubStatusData } from '@/lib/github';
 
 interface StatusDashboardProps {
-  githubData: GitHubStatusData
+  githubData: GitHubStatusData;
 }
 
 export function StatusDashboard({ githubData }: StatusDashboardProps) {
   return (
     <LayoutGroup>
-      <motion.div
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-        layout
-      >
+      <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" layout>
         {/* GitHub Stats - Large card (2 columns on large screens, full height) */}
         <motion.div
           className="lg:col-span-2"
@@ -38,5 +35,5 @@ export function StatusDashboard({ githubData }: StatusDashboardProps) {
         </motion.div>
       </motion.div>
     </LayoutGroup>
-  )
+  );
 }
