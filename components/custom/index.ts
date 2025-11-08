@@ -1,6 +1,9 @@
-export { BlogHeading } from "./blog-heading"
-export { BlogList } from "./blog-list"
-export { BlogListItem } from "./blog-list-item"
-export { Citation } from "./citation"
-export { Callout } from "./callout"
-export { Figure } from "./figure"
+export { BlogHeading } from './blog-heading';
+export { BlogList } from './blog-list';
+export { BlogListItem } from './blog-list-item';
+export { BlogLink } from './blog-link';
+export { Citation } from './citation';
+export { Callout } from './callout';
+export { Figure } from './figure';
+export { Terminal } from './terminal';
+export { TerminalCommand } from './terminal-command';

@@ -11,6 +11,7 @@ Create custom typography components in `/components/custom/` to enhance blog pos
 ### What Exists Now
 
 **Blog Post Implementation** (`app/(site)/blog/[slug]/page.tsx:105-326`):
+
 - Hardcoded JSX content with plain HTML elements
 - Prose classes applied to wrapper div only
 - Basic Tailwind prose utilities: `prose-headings:text-primary`, `prose-a:text-secondary`
@@ -18,12 +19,14 @@ Create custom typography components in `/components/custom/` to enhance blog pos
 - Single post: "Recruiting engineers as a startup"
 
 **Design System** (`app/globals.css:140-154`):
+
 - OKLCH color palette with semantic tokens
 - Custom neon effects: `.neon-glow`, `.neon-border`, `.grid-bg`
 - Primary font: Space Grotesk
 - Existing component patterns: CVA variants, cn() utility, shadcn/ui structure
 
 **Component Architecture** (`/components/`):
+
 - Two-tier structure: `/ui/` (primitives) and root (features)
 - Server Components by default
 - TypeScript strict mode
@@ -42,6 +45,7 @@ Create custom typography components in `/components/custom/` to enhance blog pos
 ### What Success Looks Like
 
 After implementation:
+
 1. **6 new reusable components** in `/components/custom/`:
    - BlogHeading (h1-h6 with neon effects)
    - BlogList (styled ul/ol with custom bullets)
@@ -63,12 +67,14 @@ After implementation:
 ### Verification
 
 #### Automated Verification:
+
 - [x] Build succeeds: `pnpm build`
 - [ ] No linting errors: `pnpm lint` (eslint not configured - skipped)
 - [x] Type checks pass: `pnpm exec tsc --noEmit`
 - [x] Dev server runs: `pnpm dev`
 
 #### Manual Verification:
+
 - [ ] Navigate to `http://localhost:3000/blog/recruiting-engineers-as-a-startup`
 - [ ] H1 headings display with strong neon glow effect
 - [ ] H2 headings have decorative bottom border with glow
@@ -82,6 +88,7 @@ After implementation:
 ## What We're NOT Doing
 
 **Explicitly out of scope:**
+
 - ❌ MDX integration or markdown processing
 - ❌ Syntax-highlighted code blocks (CodeBlock component)
 - ❌ Content management system or CMS integration
@@ -103,6 +110,7 @@ Build components in **two phases** based on priority and dependencies:
 2. **Phase 2 (Content Enhancement)**: Supporting components - citations, callouts, figures
 
 Each component will:
+
 - Follow established shadcn/ui patterns (CVA variants, props interfaces)
 - Use Server Components (no "use client" directive)
 - Integrate with existing design tokens
@@ -148,43 +156,34 @@ mkdir -p /Users/emilwareus/Development/addcommitpush.io/components/custom
 **Full Implementation**:
 
 ```typescript
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "@/lib/utils"
+import * as React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '@/lib/utils';
 
-const headingVariants = cva(
-  "font-bold text-balance scroll-mt-20",
-  {
-    variants: {
-      level: {
-        1: "text-3xl sm:text-4xl md:text-5xl text-primary neon-glow mt-0 mb-8",
-        2: "text-2xl sm:text-3xl md:text-4xl text-primary neon-glow mt-12 mb-6 pb-3 border-b border-primary/30",
-        3: "text-xl sm:text-2xl md:text-3xl text-primary mt-10 mb-5",
-        4: "text-lg sm:text-xl md:text-2xl text-foreground mt-8 mb-4",
-        5: "text-base sm:text-lg md:text-xl text-foreground mt-6 mb-3",
-        6: "text-sm sm:text-base md:text-lg text-muted-foreground mt-4 mb-2",
-      },
+const headingVariants = cva('font-bold text-balance scroll-mt-20', {
+  variants: {
+    level: {
+      1: 'text-3xl sm:text-4xl md:text-5xl text-primary neon-glow mt-0 mb-8',
+      2: 'text-2xl sm:text-3xl md:text-4xl text-primary neon-glow mt-12 mb-6 pb-3 border-b border-primary/30',
+      3: 'text-xl sm:text-2xl md:text-3xl text-primary mt-10 mb-5',
+      4: 'text-lg sm:text-xl md:text-2xl text-foreground mt-8 mb-4',
+      5: 'text-base sm:text-lg md:text-xl text-foreground mt-6 mb-3',
+      6: 'text-sm sm:text-base md:text-lg text-muted-foreground mt-4 mb-2',
     },
-    defaultVariants: {
-      level: 1,
-    },
-  }
-)
+  },
+  defaultVariants: {
+    level: 1,
+  },
+});
 
 export interface BlogHeadingProps
   extends React.HTMLAttributes<HTMLHeadingElement>,
     VariantProps<typeof headingVariants> {
-  level: 1 | 2 | 3 | 4 | 5 | 6
+  level: 1 | 2 | 3 | 4 | 5 | 6;
 }
 
-export function BlogHeading({
-  level,
-  className,
-  children,
-  id,
-  ...props
-}: BlogHeadingProps) {
-  const Comp = `h${level}` as const
+export function BlogHeading({ level, className, children, id, ...props }: BlogHeadingProps) {
+  const Comp = `h${level}` as const;
 
   return React.createElement(
     Comp,
@@ -194,11 +193,12 @@ export function BlogHeading({
       ...props,
     },
     children
-  )
+  );
 }
 ```
 
 **Key features**:
+
 - CVA variants for all 6 heading levels
 - Neon glow on h1 and h2 (uses existing `.neon-glow` class)
 - H2 has decorative border-bottom with primary/30 opacity
@@ -218,39 +218,31 @@ export function BlogHeading({
 **Full Implementation**:
 
 ```typescript
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "@/lib/utils"
+import * as React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '@/lib/utils';
 
-const listVariants = cva(
-  "my-6 space-y-2",
-  {
-    variants: {
-      variant: {
-        unordered: "list-none pl-0",
-        ordered: "list-decimal pl-6 marker:text-primary marker:font-bold",
-        checklist: "list-none pl-0",
-      },
+const listVariants = cva('my-6 space-y-2', {
+  variants: {
+    variant: {
+      unordered: 'list-none pl-0',
+      ordered: 'list-decimal pl-6 marker:text-primary marker:font-bold',
+      checklist: 'list-none pl-0',
     },
-    defaultVariants: {
-      variant: "unordered",
-    },
-  }
-)
+  },
+  defaultVariants: {
+    variant: 'unordered',
+  },
+});
 
 export interface BlogListProps
   extends React.HTMLAttributes<HTMLUListElement | HTMLOListElement>,
     VariantProps<typeof listVariants> {
-  variant?: 'unordered' | 'ordered' | 'checklist'
+  variant?: 'unordered' | 'ordered' | 'checklist';
 }
 
-export function BlogList({
-  variant = "unordered",
-  className,
-  children,
-  ...props
-}: BlogListProps) {
-  const Comp = variant === "ordered" ? "ol" : "ul"
+export function BlogList({ variant = 'unordered', className, children, ...props }: BlogListProps) {
+  const Comp = variant === 'ordered' ? 'ol' : 'ul';
 
   return React.createElement(
     Comp,
@@ -259,11 +251,12 @@ export function BlogList({
       ...props,
     },
     children
-  )
+  );
 }
 ```
 
 **Key features**:
+
 - Polymorphic: creates `<ul>` or `<ol>` based on variant
 - Unordered lists: reset default bullets (custom icons via BlogListItem)
 - Ordered lists: cyan numbered markers with bold font
@@ -313,6 +306,7 @@ export function BlogListItem({
 ```
 
 **Key features**:
+
 - Default chevron icon from lucide-react
 - Icon color: secondary (neon pink)
 - Flexbox layout: icon + text
@@ -332,9 +326,9 @@ export function BlogListItem({
 **Full Implementation**:
 
 ```typescript
-export { BlogHeading } from "./blog-heading"
-export { BlogList } from "./blog-list"
-export { BlogListItem } from "./blog-list-item"
+export { BlogHeading } from './blog-heading';
+export { BlogList } from './blog-list';
+export { BlogListItem } from './blog-list-item';
 ```
 
 ---
@@ -344,6 +338,7 @@ export { BlogListItem } from "./blog-list-item"
 **File**: `app/(site)/blog/[slug]/page.tsx`
 
 **Changes**:
+
 1. Add import at top of file (after existing imports, around line 8)
 2. Replace all `<h1>`, `<h2>`, `<h3>` elements with `<BlogHeading>`
 3. Replace all `<ul>` with `<BlogList variant="unordered">`
@@ -352,12 +347,13 @@ export { BlogListItem } from "./blog-list-item"
 **Add import** (line 8):
 
 ```typescript
-import { BlogHeading, BlogList, BlogListItem } from "@/components/custom"
+import { BlogHeading, BlogList, BlogListItem } from '@/components/custom';
 ```
 
 **Example transformations** (lines 114-326):
 
 **Before**:
+
 ```tsx
 <h1>Intro</h1>
 <p>As someone who's worked as a data lead...</p>
@@ -371,6 +367,7 @@ import { BlogHeading, BlogList, BlogListItem } from "@/components/custom"
 ```
 
 **After**:
+
 ```tsx
 <BlogHeading level={1}>Intro</BlogHeading>
 <p>As someone who's worked as a data lead...</p>
@@ -384,6 +381,7 @@ import { BlogHeading, BlogList, BlogListItem } from "@/components/custom"
 ```
 
 **Full replacement guide**:
+
 - Line 114: `<h1>Intro</h1>` → `<BlogHeading level={1}>Intro</BlogHeading>`
 - Line 123: `<h3>What will you get to read</h3>` → `<BlogHeading level={3}>What will you get to read</BlogHeading>`
 - Lines 125-129: Wrap in `<BlogList>`, convert `<li>` to `<BlogListItem>`
@@ -399,6 +397,7 @@ import { BlogHeading, BlogList, BlogListItem } from "@/components/custom"
 - Line 311: `<h1>TL;DR + Conclusion</h1>` → `<BlogHeading level={1}>TL;DR + Conclusion</BlogHeading>`
 
 **All unordered lists** (multiple locations):
+
 - Lines 146-157: List of candidate traits → `<BlogList>` + `<BlogListItem>`
 - Other lists throughout document
 
@@ -407,6 +406,7 @@ import { BlogHeading, BlogList, BlogListItem } from "@/components/custom"
 ### Phase 1 Success Criteria
 
 #### Automated Verification:
+
 - [ ] Build succeeds: `pnpm build`
 - [ ] No linting errors: `pnpm lint`
 - [ ] Type checks pass: `pnpm exec tsc --noEmit`
@@ -414,6 +414,7 @@ import { BlogHeading, BlogList, BlogListItem } from "@/components/custom"
 - [ ] No console errors in browser
 
 #### Manual Verification:
+
 - [ ] Navigate to `http://localhost:3000/blog/recruiting-engineers-as-a-startup`
 - [ ] All H1 headings ("Intro", "The process", "How do I find good candidates", "TL;DR + Conclusion") display with strong neon glow
 - [ ] All H2 headings ("Interview with you") have decorative bottom border with cyan glow
@@ -480,6 +481,7 @@ export function Citation({
 ```
 
 **Key features**:
+
 - Semantic HTML: `<figure>`, `<blockquote>`, `<cite>`
 - Neon border on left (border-secondary + neon-border class)
 - Card background with 30% opacity
@@ -570,6 +572,7 @@ export function Callout({
 ```
 
 **Key features**:
+
 - 4 CVA variants: info (cyan), warning (yellow), tip (green), note (purple)
 - Auto-selected icons from lucide-react
 - Custom icon override support
@@ -633,6 +636,7 @@ export function Figure({
 ```
 
 **Key features**:
+
 - Wraps Next.js Image component
 - Default 1200x630 dimensions (blog post standard)
 - Optional caption with centered text
@@ -649,12 +653,12 @@ export function Figure({
 **Changes**: Add new exports
 
 ```typescript
-export { BlogHeading } from "./blog-heading"
-export { BlogList } from "./blog-list"
-export { BlogListItem } from "./blog-list-item"
-export { Citation } from "./citation"
-export { Callout } from "./callout"
-export { Figure } from "./figure"
+export { BlogHeading } from './blog-heading';
+export { BlogList } from './blog-list';
+export { BlogListItem } from './blog-list-item';
+export { Citation } from './citation';
+export { Callout } from './callout';
+export { Figure } from './figure';
 ```
 
 ---
@@ -664,6 +668,7 @@ export { Figure } from "./figure"
 **File**: `app/(site)/blog/[slug]/page.tsx`
 
 **Changes**:
+
 1. Update import to include Phase 2 components (line 8)
 2. Optionally replace existing `<figure>` with `<Figure>` component (lines 90-102)
 3. Optionally add `<Callout>` for the note on line 131-134
@@ -671,12 +676,20 @@ export { Figure } from "./figure"
 **Update import** (line 8):
 
 ```typescript
-import { BlogHeading, BlogList, BlogListItem, Citation, Callout, Figure } from "@/components/custom"
+import {
+  BlogHeading,
+  BlogList,
+  BlogListItem,
+  Citation,
+  Callout,
+  Figure,
+} from '@/components/custom';
 ```
 
 **Optional: Replace cover image figure** (lines 90-102):
 
 **Before**:
+
 ```tsx
 <figure className="mb-12 rounded-lg overflow-hidden">
   <Image
@@ -694,6 +707,7 @@ import { BlogHeading, BlogList, BlogListItem, Citation, Callout, Figure } from "
 ```
 
 **After**:
+
 ```tsx
 <Figure
   src="/posts/recruiting-engineers-as-a-startup/cover.png"
@@ -709,7 +723,8 @@ import { BlogHeading, BlogList, BlogListItem, Citation, Callout, Figure } from "
 
 ```tsx
 <Callout variant="note" title="Important">
-  This blogpost is written from the perspective of a head/VP of engineering, CTO, or similar at a small startup.
+  This blogpost is written from the perspective of a head/VP of engineering, CTO, or similar at a
+  small startup.
 </Callout>
 ```
 
@@ -718,6 +733,7 @@ import { BlogHeading, BlogList, BlogListItem, Citation, Callout, Figure } from "
 ### Phase 2 Success Criteria
 
 #### Automated Verification:
+
 - [x] Build succeeds: `pnpm build`
 - [ ] No linting errors: `pnpm lint` (eslint not configured - skipped)
 - [x] Type checks pass: `pnpm exec tsc --noEmit`
@@ -725,6 +741,7 @@ import { BlogHeading, BlogList, BlogListItem, Citation, Callout, Figure } from "
 - [ ] No console errors in browser
 
 #### Manual Verification:
+
 - [ ] Citation component displays with neon pink left border
 - [ ] Callout variants render with correct colors (info=cyan, warning=yellow, tip=green, note=purple)
 - [ ] Callout icons appear and are properly aligned
@@ -746,6 +763,7 @@ Not required for this implementation - these are presentational Server Component
 **Complete walkthrough** (after both phases):
 
 1. **Start dev server**:
+
    ```bash
    pnpm dev
    ```
@@ -788,6 +806,7 @@ Not required for this implementation - these are presentational Server Component
    ```bash
    pnpm build
    ```
+
    - Ensure static generation succeeds
    - Check for any build warnings
 
@@ -796,6 +815,7 @@ Not required for this implementation - these are presentational Server Component
 ### Server Components
 
 All custom components are Server Components (no "use client" directive):
+
 - **Zero client JavaScript**: No runtime overhead for typography
 - **Static HTML**: All styling rendered at build time
 - **Optimal bundle size**: Components don't increase client bundle
@@ -809,6 +829,7 @@ All custom components are Server Components (no "use client" directive):
 ### Image Optimization
 
 Figure component uses Next.js Image:
+
 - Automatic responsive images
 - Lazy loading by default
 - WebP conversion
@@ -821,8 +842,16 @@ Figure component uses Next.js Image:
 When creating new blog posts:
 
 1. **Import components**:
+
    ```typescript
-   import { BlogHeading, BlogList, BlogListItem, Citation, Callout, Figure } from "@/components/custom"
+   import {
+     BlogHeading,
+     BlogList,
+     BlogListItem,
+     Citation,
+     Callout,
+     Figure,
+   } from '@/components/custom';
    ```
 
 2. **Use semantic heading levels**:
@@ -851,6 +880,7 @@ When creating new blog posts:
 ### No Breaking Changes
 
 This implementation is **purely additive**:
+
 - No existing files deleted
 - No breaking changes to existing components
 - Blog card, navigation, other pages unaffected

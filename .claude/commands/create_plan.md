@@ -396,7 +396,7 @@ Please review it and let me know:
 ### For New Features:
 
 - Research existing patterns first (scan `app/` for similar routes/components)
-- Define content/data shape and frontmatter if applicable (for MDX)
+- Define content/data shape and metadata if applicable (for blog posts)
 - Implement Server Components and route handlers (App Router)
 - Add Client Components only when necessary (`"use client"`)
 - Wire metadata/SEO and SSG via `generateStaticParams`/`generateMetadata`

@@ -4,7 +4,7 @@ researcher: Claude Code
 git_commit: 061153440c422dea14cacfca93c10eaa8d54683d
 branch: main
 repository: addcommitpush.io
-topic: "Advanced Context Engineering with Claude Code"
+topic: 'Advanced Context Engineering with Claude Code'
 tags: [research, claude-code, context-engineering, agents, commands, bash-scripts, workflows]
 status: complete
 last_updated: 2025-11-07
@@ -34,6 +34,7 @@ Context engineering with Claude Code is about **deliberately structuring and com
 **Key Insight**: Rather than cramming everything into prompts, advanced users decompose tasks into specialized phases, spawn parallel sub-agents for research, and offload computation to TypeScript scripts executed via bash.
 
 **Core Principles** from advanced context engineering framework:
+
 - Context engineering ≠ cramming more into prompts
 - Deliberate practice of structuring, compacting, and aligning information
 - Use sub-agents for task decomposition (planning → research → implementation)
@@ -57,12 +58,14 @@ Phase 4: Validation (verify)      → .claude/commands/validate_plan.md
 **Purpose**: Comprehensive codebase exploration through parallel sub-agent orchestration
 
 **Key Characteristics**:
+
 - Spawns multiple specialized agents concurrently
 - Synthesizes findings from different perspectives
 - Generates structured research documents (`.claude/research/*.md`)
 - Uses YAML frontmatter for metadata tracking
 
 **Agent Orchestration Pattern**:
+
 ```markdown
 1. Read directly mentioned files FULLY (no partial reads)
 2. Spawn parallel research tasks:
@@ -77,12 +80,14 @@ Phase 4: Validation (verify)      → .claude/commands/validate_plan.md
 ```
 
 **Context Compaction Strategy**:
+
 - Main context ONLY sees agent results (not raw file reads)
 - Each agent uses focused tools (Grep, Glob, Read, LS)
 - Results pre-filtered and structured before synthesis
 - Prevents "context explosion" from reading entire codebase
 
 **Example Research Output Structure**:
+
 ```markdown
 ---
 date: 2025-11-07T00:00:00Z
@@ -93,17 +98,22 @@ status: complete
 ---
 
 ## Research Question
+
 [Original user query]
 
 ## Summary
+
 [High-level findings]
 
 ## Detailed Findings
+
 ### Component 1
+
 - Finding with reference (file:line)
 - Connection to other components
 
 ## Code References
+
 - `path/to/file.ts:123` - Description
 ```
 
@@ -114,23 +124,28 @@ status: complete
 **Purpose**: Interactive plan creation with skepticism and thoroughness
 
 **Critical Pattern - "Read FULLY before spawning sub-tasks"**:
+
 ```markdown
 Step 1: Read all mentioned files IMMEDIATELY and FULLY
+
 - Use Read tool WITHOUT limit/offset parameters
 - DO NOT spawn sub-tasks before reading these files yourself
 - CRITICAL: Read files completely, not partially
 
 Step 2: Spawn initial research tasks
+
 - codebase-locator to find related files
 - codebase-analyzer to understand implementation
 - thoughts-locator to find existing decisions
 
 Step 3: Read ALL files identified by research tasks
+
 - After research completes, read them FULLY
 - Complete understanding before proceeding
 ```
 
 **Interactive Planning Flow**:
+
 1. Read ticket/requirements fully
 2. Research codebase patterns in parallel
 3. Present findings and ask focused questions
@@ -138,41 +153,54 @@ Step 3: Read ALL files identified by research tasks
 5. Write detailed plan with phases
 
 **Plan Structure Template**:
-```markdown
+
+````markdown
 # Feature Implementation Plan
 
 ## Overview
+
 [What we're building]
 
 ## Current State Analysis
+
 [What exists, what's missing]
 
 ## Desired End State
+
 [Specification + verification steps]
 
 ## What We're NOT Doing
+
 [Explicit scope boundaries]
 
 ## Phase 1: [Name]
+
 ### Changes Required:
+
 #### 1. Component/File
+
 **File**: `path/to/file`
 **Changes**: [Summary]
+
 ```code
 // Specific code to add
 ```
+````
 
 ### Success Criteria:
 
 #### Automated Verification:
+
 - [ ] Build succeeds: `pnpm build`
 - [ ] Linting passes: `pnpm lint`
 - [ ] Type checking: `pnpm exec tsc --noEmit`
 
 #### Manual Verification:
+
 - [ ] Feature works as expected in UI
 - [ ] Edge cases handled
-```
+
+````
 
 **Key Innovation - Automated vs Manual Verification**:
 - **Automated**: Commands execution agents can run (`pnpm build`, curl checks)
@@ -191,9 +219,10 @@ Plans are carefully designed, but reality can be messy.
 - Follow the plan's intent while adapting to what you find
 - Think deeply when plans don't match reality
 - Update checkboxes as you complete sections
-```
+````
 
 **Verification Approach**:
+
 ```bash
 # After each phase, run:
 pnpm build
@@ -205,6 +234,7 @@ pnpm exec tsc --noEmit
 ```
 
 **Resuming Work Pattern**:
+
 - Trust completed checkmarks
 - Pick up from first unchecked item
 - Verify previous work only if something seems off
@@ -214,6 +244,7 @@ pnpm exec tsc --noEmit
 **Purpose**: Verify implementation matches plan specifications
 
 **Discovery Strategy**:
+
 ```bash
 # If starting fresh:
 git log --oneline -n 20
@@ -226,29 +257,37 @@ pnpm exec tsc --noEmit
 ```
 
 **Validation Report Structure**:
+
 ```markdown
 ## Validation Report: [Plan Name]
 
 ### Implementation Status
+
 ✓ Phase 1: Fully implemented
 ⚠️ Phase 2: Partially implemented (see issues)
 
 ### Automated Verification Results
+
 ✓ Build passes
 ✗ Linting issues: 3 warnings
 
 ### Code Review Findings
+
 #### Matches Plan:
+
 - Database migration correct
 - API endpoints implemented
 
 #### Deviations:
+
 - Different variable names (improvement)
 
 #### Potential Issues:
+
 - Missing index could impact performance
 
 ### Manual Testing Required:
+
 - [ ] Verify feature in UI
 - [ ] Test error states
 ```
@@ -264,22 +303,27 @@ pnpm exec tsc --noEmit
 **Tools**: Grep, Glob, LS (read-only, search-focused)
 
 **Responsibilities**:
+
 - Find files by topic/feature
 - Categorize findings (implementation, tests, config, types)
 - Return structured locations (NOT content analysis)
 
 **Output Format**:
+
 ```markdown
 ## File Locations for [Feature]
 
 ### Implementation Files
+
 - `app/(site)/blog/[slug]/page.tsx` - Blog post route
 - `lib/posts.ts` - Content loader utilities
 
 ### Test Files
+
 - `__tests__/lib/posts.test.ts` - Unit tests
 
 ### Configuration
+
 - `next.config.ts` - Next.js config
 - `tsconfig.json` - TypeScript config
 ```
@@ -295,42 +339,52 @@ pnpm exec tsc --noEmit
 **Tools**: Read, Grep, Glob, LS
 
 **Responsibilities**:
+
 - Analyze implementation details
 - Trace data flow
 - Identify architectural patterns
 - Provide exact file:line references
 
 **Analysis Strategy**:
+
 ```markdown
 Step 1: Read Entry Points
+
 - Main files mentioned
 - Public methods/exports
 - Surface area identification
 
 Step 2: Follow Code Path
+
 - Trace function calls
 - Note transformations
 - Identify dependencies
 - Ultrathink about connections
 
 Step 3: Understand Key Logic
+
 - Focus on business logic
 - Identify validation, transformation, error handling
 ```
 
 **Output Example**:
+
 ```markdown
 ## Analysis: [Component]
 
 ### Entry Points
+
 - `api/routes.js:45` - POST /webhooks endpoint
 
 ### Core Implementation
+
 #### 1. Request Validation (`handlers/webhook.js:15-32`)
+
 - Validates signature using HMAC-SHA256
 - Returns 401 if validation fails
 
 ### Data Flow
+
 1. Request → api/routes.js:45
 2. Validation → handlers/webhook.js:15-32
 3. Processing → services/webhook-processor.js:8
@@ -347,29 +401,35 @@ Step 3: Understand Key Logic
 **Value**: Provides concrete code examples, not just descriptions
 
 **Search Strategy**:
+
 ```markdown
 Step 1: Identify pattern types
+
 - Feature patterns (similar functionality)
 - Structural patterns (organization)
 - Integration patterns (connections)
 - Testing patterns (how to test)
 
 Step 2: Search for examples
+
 - Use Grep/Glob/LS
 - Read promising files
 - Extract relevant sections
 
 Step 3: Present multiple variations
+
 - Show working code with context
 - Note which approach is preferred
 - Include test examples
 ```
 
 **Output Structure**:
+
 ````markdown
 ## Pattern Examples: [Type]
 
 ### Pattern 1: [Name]
+
 **Found in**: `src/api/users.js:45-67`
 **Used for**: User listing with pagination
 
@@ -381,11 +441,14 @@ router.get('/users', async (req, res) => {
 ```
 
 **Key aspects**:
+
 - Uses query parameters for page/limit
 - Returns pagination metadata
 
 ### Testing Patterns
+
 **Found in**: `tests/api/pagination.test.js:15-45`
+
 ```javascript
 describe('Pagination', () => {
   it('should paginate results', async () => {
@@ -404,6 +467,7 @@ describe('Pagination', () => {
 **Pattern**: Main context spawns agents → Agents use tools → Only results return
 
 **Context Flow**:
+
 ```
 User Query (100 words)
     ↓
@@ -419,6 +483,7 @@ Research Document (2000 words with references)
 ```
 
 **Alternative (without agents)**:
+
 ```
 User Query
     ↓
@@ -434,6 +499,7 @@ Context overflow / degraded performance
 **Pattern**: Store metadata in YAML frontmatter, load content on-demand
 
 **Example from research documents**:
+
 ```yaml
 ---
 date: 2025-11-07T00:00:00Z
@@ -446,6 +512,7 @@ last_updated: 2025-11-07
 ```
 
 **Benefits**:
+
 - Quick scanning without reading full documents
 - Git metadata linked (reproducibility)
 - Status tracking (complete, in-progress, implemented)
@@ -454,6 +521,7 @@ last_updated: 2025-11-07
 #### Technique 3: "Read FULLY before spawning" Rule
 
 **Critical Discovery from create_plan.md**:
+
 ```markdown
 IMPORTANT: Use the Read tool WITHOUT limit/offset parameters
 CRITICAL: DO NOT spawn sub-tasks before reading these files yourself
@@ -461,12 +529,14 @@ NEVER read files partially - if mentioned, read completely
 ```
 
 **Rationale**:
+
 - Partial reads lead to misunderstanding
 - Sub-agents can't fix incomplete context from main agent
 - Full read = better decomposition into sub-tasks
 - Prevents "telephone game" of partial information
 
 **Anti-Pattern**:
+
 ```
 User mentions ticket file →
   Main agent spawns research agent with partial context →
@@ -476,6 +546,7 @@ User mentions ticket file →
 ```
 
 **Correct Pattern**:
+
 ```
 User mentions ticket file →
   Main agent reads FULLY →
@@ -494,6 +565,7 @@ User mentions ticket file →
 **Purpose**: Generate AVIF, WebP, and optimized originals from source images
 
 **Why Script Instead of MCP Tool**:
+
 1. **No context consumption**: Runs entirely in bash, zero tokens used
 2. **Reusable by humans**: `pnpm optimize-images` works outside Claude Code
 3. **Version controlled**: Script logic in git, not hidden in MCP server
@@ -501,6 +573,7 @@ User mentions ticket file →
 5. **Composable**: Can chain with other scripts
 
 **Architecture**:
+
 ```typescript
 // scripts/optimize-images.ts
 import sharp from 'sharp';
@@ -508,23 +581,26 @@ import sharp from 'sharp';
 const config = {
   quality: { avif: 75, webp: 80, jpeg: 85 },
   concurrency: 4,
-  targetFormats: ['avif', 'webp', 'original']
+  targetFormats: ['avif', 'webp', 'original'],
 };
 
-async function findImages(directory: string): Promise<string[]>
-async function optimizeImage(inputPath: string): Promise<OptimizationResult>
+async function findImages(directory: string): Promise<string[]>;
+async function optimizeImage(inputPath: string): Promise<OptimizationResult>;
 
 // Execution via: pnpm optimize-images
 ```
 
 **Usage in Claude Code**:
+
 ```markdown
 # In command or agent:
+
 Run: `pnpm optimize-images` to generate optimized variants
 No need to process images in context - script handles everything
 ```
 
 **Pre-approval in settings** ([.claude/settings.local.json:26](file:///Users/emilwareus/Development/addcommitpush.io/.claude/settings.local.json#26)):
+
 ```json
 {
   "permissions": {
@@ -538,12 +614,14 @@ No need to process images in context - script handles everything
 **Purpose**: Extract plain text from blog post components for TTS generation
 
 **Why Script**:
+
 - Parses React/JSX without loading into context
 - Regex transformations outside token budget
 - Outputs clean text file for audio workflow
 - Human-runnable: `pnpm extract-text <slug>`
 
 **Workflow Integration**:
+
 ```
 1. Human/Claude: `pnpm extract-text recruiting-engineers-as-a-startup`
    Output: podcasts/scripts/recruiting-engineers-as-a-startup.txt
@@ -563,6 +641,7 @@ No need to process images in context - script handles everything
 #### When to Use Scripts vs MCP Tools
 
 **Use TypeScript/Bash Scripts When**:
+
 - ✅ Heavy computation (image processing, file transformations)
 - ✅ Reusable by humans outside Claude Code
 - ✅ Logic should be version controlled
@@ -570,12 +649,14 @@ No need to process images in context - script handles everything
 - ✅ Composable with other scripts
 
 **Use MCP Tools When**:
+
 - ✅ External API integration (GitHub, Linear, databases)
 - ✅ Authentication/secrets management
 - ✅ Real-time data fetching
 - ✅ Cross-repository operations
 
 **Hybrid Approach in This Repository**:
+
 - **Scripts**: Image optimization, text extraction, audio generation (local computation)
 - **MCP Tools**: Playwright (browser automation), IDE diagnostics (external services)
 - **Result**: Minimal MCP configuration, most automation in git-tracked scripts
@@ -589,6 +670,7 @@ No need to process images in context - script handles everything
 **Constraint**: "90% identical to original - only fix audio-unfriendly elements"
 
 **Transformations**:
+
 ```markdown
 ✅ "See the chart below" → "Consider the following data"
 ✅ "Click here" → "More information"
@@ -602,6 +684,7 @@ No need to process images in context - script handles everything
 ```
 
 **Workflow Integration**:
+
 ```
 1. pnpm extract-text <slug>           # Script extracts text
 2. /refine-text                       # Command refines for audio
@@ -659,6 +742,7 @@ Claude: /validate_plan
 **Strategy**: Pre-approve trusted commands to reduce friction
 
 **Example Permissions**:
+
 ```json
 {
   "permissions": {
@@ -677,6 +761,7 @@ Claude: /validate_plan
 ```
 
 **Benefits**:
+
 - No permission prompts for routine operations
 - Explicit allow-list (security boundary)
 - Per-domain WebFetch control
@@ -689,6 +774,7 @@ Claude: /validate_plan
 ## Code References
 
 ### Commands
+
 - `.claude/commands/create_plan.md:1-460` - Interactive plan creation
 - `.claude/commands/validate_plan.md:1-177` - Implementation verification
 - `.claude/commands/implement_plan.md:1-76` - Plan execution
@@ -696,6 +782,7 @@ Claude: /validate_plan
 - `.claude/commands/refine-text.md:1-77` - Text refinement for audio
 
 ### Agents
+
 - `.claude/agents/codebase-locator.md:1-118` - File location specialist
 - `.claude/agents/codebase-analyzer.md:1-136` - Implementation analysis specialist
 - `.claude/agents/codebase-pattern-finder.md:1-228` - Pattern discovery specialist
@@ -704,16 +791,19 @@ Claude: /validate_plan
 - `.claude/agents/web-search-researcher.md` - Web research specialist
 
 ### Scripts
+
 - `scripts/optimize-images.ts:1-192` - Image optimization automation
 - `scripts/extract-post-text.ts:1-164` - Blog text extraction
 - `scripts/generate-audio.ts` - TTS integration
 - `scripts/check-about-links.ts` - Link validation
 
 ### Plans & Research
+
 - `.claude/plans/audio-blog-posts-implementation.md:1-645` - 6-phase implementation plan
 - `.claude/research/2025-11-07_audio-files-blog-posts.md:1-754` - Comprehensive architecture research
 
 ### Configuration
+
 - `.claude/settings.local.json:1-49` - Permissions and pre-approvals
 
 ## Architecture Insights
@@ -733,18 +823,21 @@ Claude: /validate_plan
 **Traditional Approach**: Load everything into context, hope for best
 
 **Advanced Approach**:
+
 - Spawn sub-agents to filter and summarize
 - Store findings in structured documents
 - Main context only sees synthesized results
 - Scripts handle computation outside context
 
 **Analogy**: Database query optimization
+
 - Bad: `SELECT * FROM all_tables` (context overflow)
 - Good: Targeted queries with JOINs (agent orchestration)
 
 ### 3. Traceability and Reproducibility
 
 **Every research/plan includes**:
+
 - Git commit hash
 - Branch name
 - Timestamp
@@ -754,6 +847,7 @@ Claude: /validate_plan
 **Benefit**: Can trace decision history, reproduce context at any point
 
 **Example**:
+
 ```yaml
 git_commit: 061153440c422dea14cacfca93c10eaa8d54683d
 branch: main
@@ -774,6 +868,7 @@ If plan fails, can `git checkout <hash>` and understand original context
 6. **Pre-approve**: Add to permissions → `.claude/settings.local.json`
 
 **Real Example from This Repository**:
+
 - Started with manual research for blog posts
 - Created `research_codebase.md` command to formalize process
 - Extracted `codebase-locator`, `codebase-analyzer` agents
@@ -784,13 +879,16 @@ If plan fails, can `git checkout <hash>` and understand original context
 ### 5. Human-in-the-Loop Decision Points
 
 **Commands include explicit user interaction**:
+
 - Planning: Present options, ask for preferences
 - Implementation: Stop when plan deviates, ask for guidance
 - Validation: Separate automated vs manual verification
 
 **Example from create_plan.md**:
+
 ```markdown
 Present findings and design options:
+
 - Option A - [pros/cons]
 - Option B - [pros/cons]
 
@@ -808,6 +906,7 @@ Which approach aligns best with your vision?
 **Scenario**: Add audio narration to blog posts
 
 **Step 1: Research** (`/research_codebase`)
+
 ```
 User: "How can we serve audio files for blog posts?"
 
@@ -821,6 +920,7 @@ Key Finding: AudioPlayer already exists, just needs integration
 ```
 
 **Step 2: Planning** (`/create_plan`)
+
 ```
 User: "Create a plan to add audio"
 
@@ -835,6 +935,7 @@ Output: .claude/plans/audio-blog-posts-implementation.md
 ```
 
 **Step 3: Implementation** (`/implement_plan`)
+
 ```
 User: "Implement the plan"
 
@@ -851,6 +952,7 @@ Output: All changes committed, plan marked complete
 ```
 
 **Step 4: Validation** (`/validate_plan`)
+
 ```
 User: "Validate the implementation"
 
@@ -872,6 +974,7 @@ Output: Confirmation all automated checks pass, list manual tests for user
 **Command**: `/research_codebase "How does authentication work?"`
 
 **Claude's Process**:
+
 ```
 1. Spawn codebase-locator:
    Find: auth middleware, session management, user models
@@ -900,6 +1003,7 @@ Output: Confirmation all automated checks pass, list manual tests for user
 **Scenario**: Optimize images before committing blog post
 
 **Workflow**:
+
 ```bash
 # 1. Add source images to public/posts/my-post/
 cp ~/Desktop/cover.png public/posts/my-post/
@@ -932,18 +1036,22 @@ git commit -m "Add my-post with optimized images"
 **Foundation**: Document your project structure and conventions
 
 **Template**:
+
 ```markdown
 ## Tech Stack
+
 - Framework: [Next.js 16, Django, Rails, etc.]
 - Language: [TypeScript, Python, Ruby]
 - Key directories: [app/, lib/, config/]
 
 ## Conventions
+
 - Testing: [Jest, Pytest, RSpec]
 - Code style: [ESLint, Black, Rubocop]
 - Build commands: [pnpm build, make, rake]
 
 ## Workflows
+
 - Development: [pnpm dev]
 - Testing: [pnpm test]
 - Deployment: [pnpm build && deploy]
@@ -954,6 +1062,7 @@ git commit -m "Add my-post with optimized images"
 ### Step 2: Identify Repetitive Workflows
 
 **Questions to Ask**:
+
 - Do you repeatedly research the same type of questions?
 - Do you follow a standard process for planning features?
 - Do you run the same verification commands?
@@ -966,12 +1075,14 @@ git commit -m "Add my-post with optimized images"
 **Start Simple**: Document existing workflow
 
 **Example - Code Review Command**:
+
 ```markdown
 # .claude/commands/review.md
 
 You are tasked with reviewing code changes before committing.
 
 ## Steps:
+
 1. Run `git diff` to see changes
 2. For each file changed:
    - Check for security issues
@@ -993,11 +1104,13 @@ You are tasked with reviewing code changes before committing.
 ### Step 4: Extract Specialized Agents
 
 **When to Create Agent**:
+
 - Command spawns same type of research repeatedly
 - Need focused exploration with specific tools
 - Want to reduce context in main orchestration
 
 **Agent Template**:
+
 ```markdown
 ---
 name: my-agent
@@ -1008,15 +1121,19 @@ tools: Grep, Glob, Read
 You are a specialist at [specific task].
 
 ## Responsibilities:
+
 1. [Primary responsibility]
 2. [Secondary responsibility]
 
 ## Search Strategy:
+
 [How to find relevant code]
 
 ## Output Format:
 ```
+
 [Structured output format]
+
 ```
 
 ## Important Guidelines:
@@ -1027,11 +1144,13 @@ You are a specialist at [specific task].
 ### Step 5: Offload to Scripts
 
 **When to Create Script**:
+
 - Heavy computation (image processing, file parsing)
 - Reusable by humans outside Claude
 - Logic should be version controlled
 
 **Script Template** (TypeScript with tsx):
+
 ```typescript
 #!/usr/bin/env tsx
 
@@ -1062,6 +1181,7 @@ main().catch((error) => {
 ```
 
 **Add to package.json**:
+
 ```json
 {
   "scripts": {
@@ -1071,6 +1191,7 @@ main().catch((error) => {
 ```
 
 **Pre-approve in settings**:
+
 ```json
 {
   "permissions": {
@@ -1082,6 +1203,7 @@ main().catch((error) => {
 ### Step 6: Iterate and Refine
 
 **Continuous Improvement**:
+
 1. Use commands/agents in real workflows
 2. Identify pain points or repetition
 3. Refactor commands (extract common patterns to agents)
@@ -1089,6 +1211,7 @@ main().catch((error) => {
 5. Update CLAUDE.md with new workflows
 
 **Example Evolution**:
+
 ```
 Week 1: Manual research → Document in CLAUDE.md
 Week 2: Create /research command → Standardize process
@@ -1102,12 +1225,14 @@ Week 5: Pre-approve commands → Remove friction
 ### 1. Context Engineering Principles
 
 **Core Philosophy**:
+
 - Context engineering ≠ cramming more into prompts
 - It's deliberate structuring, compacting, and aligning information
 - Use sub-agents for task decomposition
 - Human focus on high-leverage work: CLAUDE.md > prompts > research > plans > implementation
 
 **Anti-Patterns to Avoid**:
+
 - ❌ Loading entire codebase into context
 - ❌ Reading files partially (use FULL reads)
 - ❌ Spawning sub-agents without understanding task first
@@ -1119,6 +1244,7 @@ Week 5: Pre-approve commands → Remove friction
 **Research → Plan → Implement → Validate**
 
 **Each phase**:
+
 - Generates timestamped artifact (research doc, plan doc, validation report)
 - Has clear success criteria
 - Can be resumed independently
@@ -1131,6 +1257,7 @@ Week 5: Pre-approve commands → Remove friction
 **Pattern**: Spawn multiple specialized agents in parallel
 
 **Agent Types**:
+
 - **Locator**: WHERE does code live? (Grep, Glob, LS)
 - **Analyzer**: HOW does code work? (Read, Grep, Glob, LS)
 - **Pattern Finder**: WHAT examples exist? (Grep, Glob, Read, LS)
@@ -1140,12 +1267,14 @@ Week 5: Pre-approve commands → Remove friction
 ### 4. Scripts Over MCP Tools
 
 **Use Scripts When**:
+
 - ✅ Heavy computation (image optimization, file parsing)
 - ✅ Reusable by humans
 - ✅ Version controlled logic
 - ✅ Debugging needed
 
 **Use MCP Tools When**:
+
 - ✅ External API integration
 - ✅ Authentication management
 - ✅ Real-time data fetching
@@ -1244,12 +1373,14 @@ The three-tier system (Commands → Agents → Scripts) creates a **force multip
 3. **Scripts** offload computation outside token budget
 
 **Result**:
+
 - 98% context reduction through agent parallelization
 - Reproducible workflows through artifact generation
 - Minimal friction through pre-approved operations
 - Fast iteration through script automation
 
 **The Path Forward**:
+
 1. Document your conventions (CLAUDE.md)
 2. Identify repetitive workflows
 3. Create commands/agents/scripts incrementally

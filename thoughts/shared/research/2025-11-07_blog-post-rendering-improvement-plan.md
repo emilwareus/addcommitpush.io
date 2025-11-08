@@ -4,7 +4,7 @@ researcher: Claude (Sonnet 4.5)
 git_commit: afda235e1db82d83e810c77dd8a3baaf6c5a8787
 branch: main
 repository: addcommitpush.io
-topic: "Improving blog post rendering/layout with custom reusable components"
+topic: 'Improving blog post rendering/layout with custom reusable components'
 tags: [research, blog, components, typography, design-system, tailwind-v4]
 status: complete
 last_updated: 2025-11-07
@@ -41,6 +41,7 @@ The current blog post implementation at `app/(site)/blog/[slug]/page.tsx` uses b
 **Location**: `app/(site)/blog/[slug]/page.tsx:105-112`
 
 Current prose styling approach:
+
 ```tsx
 <div className="prose prose-invert prose-base sm:prose-lg md:prose-xl max-w-none
   prose-headings:text-primary prose-headings:font-bold prose-headings:mt-12 prose-headings:mb-6
@@ -54,6 +55,7 @@ Current prose styling approach:
 ```
 
 **Issues identified**:
+
 - Generic prose classes lack visual hierarchy and polish
 - No decorative elements or neon effects on headings
 - Bullets are plain text, not styled
@@ -66,6 +68,7 @@ Current prose styling approach:
 **Strengths** (from `app/globals.css` and component analysis):
 
 **Color Palette (OKLCH)**:
+
 - `--primary: oklch(0.7 0.14 195)` - Neon cyan
 - `--secondary: oklch(0.68 0.18 340)` - Neon pink
 - `--accent: oklch(0.62 0.16 300)` - Neon purple
@@ -73,13 +76,18 @@ Current prose styling approach:
 - `--foreground: oklch(0.92 0.005 280)` - Near-white
 
 **Custom Effects** (`app/globals.css:140-154`):
+
 ```css
 .neon-glow {
-  text-shadow: 0 0 8px currentColor, 0 0 15px currentColor;
+  text-shadow:
+    0 0 8px currentColor,
+    0 0 15px currentColor;
 }
 
 .neon-border {
-  box-shadow: 0 0 8px currentColor, inset 0 0 8px currentColor;
+  box-shadow:
+    0 0 8px currentColor,
+    inset 0 0 8px currentColor;
 }
 
 .grid-bg {
@@ -91,6 +99,7 @@ Current prose styling approach:
 ```
 
 **Typography**:
+
 - Primary font: Space Grotesk (geometric sans-serif)
 - Responsive scaling: `text-4xl sm:text-5xl md:text-6xl lg:text-7xl`
 - Semantic color tokens for consistent theming
@@ -98,6 +107,7 @@ Current prose styling approach:
 ### 3. Component Architecture Patterns
 
 **Existing Structure** (from component analysis):
+
 ```
 /components/
 ├── ui/                    # Primitives (shadcn/ui style)
@@ -111,6 +121,7 @@ Current prose styling approach:
 ```
 
 **Patterns identified**:
+
 1. **CVA for variants**: Components use `class-variance-authority` for type-safe variants
 2. **Server Components by default**: Only use `"use client"` when interactive
 3. **Props interfaces**: Explicit TypeScript interfaces for all props
@@ -118,30 +129,33 @@ Current prose styling approach:
 5. **Semantic tokens**: All colors reference design system variables
 
 **Example pattern** (from `components/ui/badge.tsx`):
+
 ```tsx
 const badgeVariants = cva(
-  "inline-flex items-center justify-center rounded-full border px-2 py-0.5...",
+  'inline-flex items-center justify-center rounded-full border px-2 py-0.5...',
   {
     variants: {
       variant: {
-        default: "border-transparent bg-primary text-primary-foreground",
-        secondary: "border-transparent bg-secondary text-secondary-foreground",
+        default: 'border-transparent bg-primary text-primary-foreground',
+        secondary: 'border-transparent bg-secondary text-secondary-foreground',
         // ...
       },
     },
   }
-)
+);
 ```
 
 ### 4. Blog Content Rendering
 
 **Current approach** (`app/(site)/blog/[slug]/page.tsx:114-326`):
+
 - All content hardcoded as JSX
 - Plain HTML elements: `<h1>`, `<h2>`, `<h3>`, `<p>`, `<ul>`, `<li>`
 - No component composition
 - Prose classes applied to wrapper div only
 
 **Future MDX approach** (not yet implemented):
+
 - Will need custom MDX components for rich rendering
 - Components must be Server Components (no client interactivity needed)
 - Should integrate seamlessly with design system
@@ -149,6 +163,7 @@ const badgeVariants = cva(
 ## Proposed Component Architecture
 
 ### Directory Structure
+
 ```
 /components/custom/
 ├── blog-heading.tsx       # H1-H6 with neon effects and hierarchy
@@ -168,22 +183,25 @@ const badgeVariants = cva(
 **Purpose**: Replace plain headings with styled versions featuring neon effects and visual hierarchy
 
 **Variants**:
+
 - `h1`: Hero heading with strong glow, large size
 - `h2`: Section heading with medium glow, divider line
 - `h3`: Subsection with subtle glow
 - `h4`-`h6`: Utility headings with minimal effects
 
 **Props**:
+
 ```typescript
 interface BlogHeadingProps {
-  level: 1 | 2 | 3 | 4 | 5 | 6
-  children: React.ReactNode
-  className?: string
-  id?: string  // For anchor links
+  level: 1 | 2 | 3 | 4 | 5 | 6;
+  children: React.ReactNode;
+  className?: string;
+  id?: string; // For anchor links
 }
 ```
 
 **Design features**:
+
 - Neon glow on h1/h2
 - Decorative accent line for h2
 - Responsive sizing
@@ -191,6 +209,7 @@ interface BlogHeadingProps {
 - Proper spacing (mt-12, mb-6)
 
 **Example usage**:
+
 ```tsx
 <BlogHeading level={1}>Intro</BlogHeading>
 <BlogHeading level={2}>The process</BlogHeading>
@@ -201,20 +220,23 @@ interface BlogHeadingProps {
 **Purpose**: Styled unordered/ordered lists with custom bullets and spacing
 
 **Variants**:
+
 - `unordered`: Custom bullet style (neon dot or icon)
 - `ordered`: Numbered with accent color
 - `checklist`: Todo-style list with checkboxes
 
 **Props**:
+
 ```typescript
 interface BlogListProps {
-  variant?: 'unordered' | 'ordered' | 'checklist'
-  children: React.ReactNode
-  className?: string
+  variant?: 'unordered' | 'ordered' | 'checklist';
+  children: React.ReactNode;
+  className?: string;
 }
 ```
 
 **Design features**:
+
 - Custom bullets with primary/secondary colors
 - Enhanced spacing between items
 - Nested list support
@@ -225,15 +247,17 @@ interface BlogListProps {
 **Purpose**: Individual list items with optional icons and custom styling
 
 **Props**:
+
 ```typescript
 interface BlogListItemProps {
-  icon?: React.ReactNode  // Optional lucide-react icon
-  children: React.ReactNode
-  className?: string
+  icon?: React.ReactNode; // Optional lucide-react icon
+  children: React.ReactNode;
+  className?: string;
 }
 ```
 
 **Design features**:
+
 - Optional icon with accent color
 - Text with proper line-height
 - Hover state for interactive feel
@@ -243,20 +267,23 @@ interface BlogListItemProps {
 **Purpose**: Blockquotes and citations with neon border effect
 
 **Variants**:
+
 - `default`: Standard quote
 - `author`: Quote with attribution
 
 **Props**:
+
 ```typescript
 interface CitationProps {
-  children: React.ReactNode
-  author?: string
-  source?: string
-  className?: string
+  children: React.ReactNode;
+  author?: string;
+  source?: string;
+  className?: string;
 }
 ```
 
 **Design features**:
+
 - Neon border on left side (using `neon-border` utility)
 - Italic text with muted foreground
 - Optional author attribution with accent color
@@ -267,23 +294,26 @@ interface CitationProps {
 **Purpose**: Highlighted information boxes (info, warning, tip, note)
 
 **Variants**:
+
 - `info`: Blue/cyan, informational
 - `warning`: Orange/yellow, caution
 - `tip`: Green, helpful hint
 - `note`: Purple, side note
 
 **Props**:
+
 ```typescript
 interface CalloutProps {
-  variant?: 'info' | 'warning' | 'tip' | 'note'
-  title?: string
-  children: React.ReactNode
-  icon?: React.ReactNode
-  className?: string
+  variant?: 'info' | 'warning' | 'tip' | 'note';
+  title?: string;
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+  className?: string;
 }
 ```
 
 **Design features**:
+
 - Color-coded based on variant
 - Optional icon (lucide-react)
 - Neon border with matching color
@@ -294,18 +324,20 @@ interface CalloutProps {
 **Purpose**: Image wrapper with caption and optional border
 
 **Props**:
+
 ```typescript
 interface FigureProps {
-  src: string
-  alt: string
-  caption?: string
-  width?: number
-  height?: number
-  className?: string
+  src: string;
+  alt: string;
+  caption?: string;
+  width?: number;
+  height?: number;
+  className?: string;
 }
 ```
 
 **Design features**:
+
 - Next.js Image optimization
 - Caption with muted text
 - Rounded corners
@@ -317,6 +349,7 @@ interface FigureProps {
 ### Phase 1: Core Typography Components (Priority: High)
 
 **Components to build**:
+
 1. `blog-heading.tsx` - Immediate visual impact
 2. `blog-list.tsx` - Improve bullet styling
 3. `blog-list-item.tsx` - Custom list items
@@ -324,6 +357,7 @@ interface FigureProps {
 **Estimated effort**: 2-3 hours
 
 **Steps**:
+
 1. Create `/components/custom/` directory
 2. Build BlogHeading with CVA variants for all levels
 3. Build BlogList with unordered/ordered variants
@@ -334,6 +368,7 @@ interface FigureProps {
 ### Phase 2: Content Enhancement Components (Priority: Medium)
 
 **Components to build**:
+
 1. `citation.tsx` - Blockquotes and quotes
 2. `callout.tsx` - Info boxes
 3. `figure.tsx` - Image captions
@@ -341,6 +376,7 @@ interface FigureProps {
 **Estimated effort**: 2 hours
 
 **Steps**:
+
 1. Build Citation with author attribution
 2. Build Callout with 4 variants
 3. Build Figure wrapping next/image
@@ -350,12 +386,14 @@ interface FigureProps {
 ### Phase 3: Future MDX Integration (Priority: Low)
 
 **Components to build**:
+
 1. `code-block.tsx` - Syntax highlighting with rehype-pretty-code
 2. MDX components mapping object
 
 **Estimated effort**: 3-4 hours
 
 **Steps**:
+
 1. Install MDX dependencies (@next/mdx, remark-gfm, rehype-slug, etc.)
 2. Create `content/posts/` directory
 3. Update `lib/posts.ts` to read filesystem
@@ -370,43 +408,34 @@ interface FigureProps {
 **File**: `/components/custom/blog-heading.tsx`
 
 ```typescript
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "@/lib/utils"
+import * as React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '@/lib/utils';
 
-const headingVariants = cva(
-  "font-bold text-balance scroll-mt-20",
-  {
-    variants: {
-      level: {
-        1: "text-3xl sm:text-4xl md:text-5xl text-primary neon-glow mt-0 mb-8",
-        2: "text-2xl sm:text-3xl md:text-4xl text-primary neon-glow mt-12 mb-6 pb-3 border-b border-primary/30",
-        3: "text-xl sm:text-2xl md:text-3xl text-primary mt-10 mb-5",
-        4: "text-lg sm:text-xl md:text-2xl text-foreground mt-8 mb-4",
-        5: "text-base sm:text-lg md:text-xl text-foreground mt-6 mb-3",
-        6: "text-sm sm:text-base md:text-lg text-muted-foreground mt-4 mb-2",
-      },
+const headingVariants = cva('font-bold text-balance scroll-mt-20', {
+  variants: {
+    level: {
+      1: 'text-3xl sm:text-4xl md:text-5xl text-primary neon-glow mt-0 mb-8',
+      2: 'text-2xl sm:text-3xl md:text-4xl text-primary neon-glow mt-12 mb-6 pb-3 border-b border-primary/30',
+      3: 'text-xl sm:text-2xl md:text-3xl text-primary mt-10 mb-5',
+      4: 'text-lg sm:text-xl md:text-2xl text-foreground mt-8 mb-4',
+      5: 'text-base sm:text-lg md:text-xl text-foreground mt-6 mb-3',
+      6: 'text-sm sm:text-base md:text-lg text-muted-foreground mt-4 mb-2',
     },
-    defaultVariants: {
-      level: 1,
-    },
-  }
-)
+  },
+  defaultVariants: {
+    level: 1,
+  },
+});
 
 export interface BlogHeadingProps
   extends React.HTMLAttributes<HTMLHeadingElement>,
     VariantProps<typeof headingVariants> {
-  level: 1 | 2 | 3 | 4 | 5 | 6
+  level: 1 | 2 | 3 | 4 | 5 | 6;
 }
 
-export function BlogHeading({
-  level,
-  className,
-  children,
-  id,
-  ...props
-}: BlogHeadingProps) {
-  const Comp = `h${level}` as const
+export function BlogHeading({ level, className, children, id, ...props }: BlogHeadingProps) {
+  const Comp = `h${level}` as const;
 
   return React.createElement(
     Comp,
@@ -416,11 +445,12 @@ export function BlogHeading({
       ...props,
     },
     children
-  )
+  );
 }
 ```
 
 **Key features**:
+
 - CVA variants for all heading levels
 - Responsive sizing with mobile-first approach
 - Neon glow effect on h1/h2 using existing `.neon-glow` class
@@ -433,39 +463,31 @@ export function BlogHeading({
 **File**: `/components/custom/blog-list.tsx`
 
 ```typescript
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
-import { cn } from "@/lib/utils"
+import * as React from 'react';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '@/lib/utils';
 
-const listVariants = cva(
-  "my-6 space-y-2",
-  {
-    variants: {
-      variant: {
-        unordered: "list-none pl-0",
-        ordered: "list-decimal pl-6 marker:text-primary marker:font-bold",
-        checklist: "list-none pl-0",
-      },
+const listVariants = cva('my-6 space-y-2', {
+  variants: {
+    variant: {
+      unordered: 'list-none pl-0',
+      ordered: 'list-decimal pl-6 marker:text-primary marker:font-bold',
+      checklist: 'list-none pl-0',
     },
-    defaultVariants: {
-      variant: "unordered",
-    },
-  }
-)
+  },
+  defaultVariants: {
+    variant: 'unordered',
+  },
+});
 
 export interface BlogListProps
   extends React.HTMLAttributes<HTMLUListElement | HTMLOListElement>,
     VariantProps<typeof listVariants> {
-  variant?: 'unordered' | 'ordered' | 'checklist'
+  variant?: 'unordered' | 'ordered' | 'checklist';
 }
 
-export function BlogList({
-  variant = "unordered",
-  className,
-  children,
-  ...props
-}: BlogListProps) {
-  const Comp = variant === "ordered" ? "ol" : "ul"
+export function BlogList({ variant = 'unordered', className, children, ...props }: BlogListProps) {
+  const Comp = variant === 'ordered' ? 'ol' : 'ul';
 
   return React.createElement(
     Comp,
@@ -474,11 +496,12 @@ export function BlogList({
       ...props,
     },
     children
-  )
+  );
 }
 ```
 
 **Key features**:
+
 - Polymorphic (ul/ol) based on variant
 - Custom marker colors for ordered lists
 - Reset default list styles for custom rendering
@@ -521,6 +544,7 @@ export function BlogListItem({
 ```
 
 **Key features**:
+
 - Default chevron icon (customizable)
 - Icon in secondary color (neon pink)
 - Flexbox layout for proper alignment
@@ -566,6 +590,7 @@ export function Citation({
 ```
 
 **Key features**:
+
 - Semantic HTML (`<figure>`, `<blockquote>`, `<cite>`)
 - Neon border on left using secondary color
 - Card background for depth
@@ -649,6 +674,7 @@ export function Callout({
 ```
 
 **Key features**:
+
 - 4 variants with distinct colors
 - Auto-selected icons based on variant
 - Custom icon override support
@@ -695,6 +721,7 @@ import { BlogHeading, BlogList, BlogListItem, Citation, Callout } from "@/compon
 ## Design System Integration
 
 All components will use:
+
 - **Semantic color tokens**: `text-primary`, `text-secondary`, `text-accent`, `bg-card`
 - **Spacing scale**: `my-6`, `my-8`, `my-12` for vertical rhythm
 - **Responsive typography**: Mobile-first with `sm:`, `md:`, `lg:` breakpoints
@@ -706,17 +733,20 @@ All components will use:
 ## Migration Path
 
 ### Immediate (Week 1):
+
 1. Create `/components/custom/` directory
 2. Build BlogHeading, BlogList, BlogListItem
 3. Update `app/(site)/blog/[slug]/page.tsx` to use new components
 4. Test visual improvements on `/blog/recruiting-engineers-as-a-startup`
 
 ### Short-term (Week 2-3):
+
 1. Build Citation and Callout components
 2. Add to existing blog post where appropriate
 3. Create documentation in CLAUDE.md
 
 ### Long-term (Month 1):
+
 1. Install MDX dependencies
 2. Create `content/posts/` directory
 3. Convert hardcoded content to MDX files
@@ -726,23 +756,27 @@ All components will use:
 ## Technical Considerations
 
 ### TypeScript Patterns
+
 - Explicit props interfaces extending `React.HTMLAttributes<T>`
 - CVA `VariantProps` type for variant safety
 - Polymorphic components using `React.createElement`
 
 ### Accessibility
+
 - Semantic HTML elements (`<figure>`, `<blockquote>`, `<cite>`)
 - ARIA roles where appropriate (`role="note"`)
 - Proper heading hierarchy (h1 → h2 → h3)
 - Alt text for icons (`aria-hidden="true"`)
 
 ### Performance
+
 - Server Components (no client bundle size impact)
 - No runtime JavaScript for styling
 - Tailwind CSS purges unused classes
 - Next.js Image optimization for figures
 
 ### Maintainability
+
 - Barrel export in `index.ts` for clean imports
 - Consistent naming convention (`blog-*`)
 - CVA for variant management (type-safe, scalable)

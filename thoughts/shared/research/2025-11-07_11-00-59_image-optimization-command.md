@@ -4,7 +4,7 @@ researcher: Claude Code
 git_commit: afda235e1db82d83e810c77dd8a3baaf6c5a8787
 branch: main
 repository: addcommitpush.io
-topic: "Creating an internal image optimization command"
+topic: 'Creating an internal image optimization command'
 tags: [research, codebase, images, optimization, seo, sharp, scripts]
 status: complete
 last_updated: 2025-11-07
@@ -22,6 +22,7 @@ last_updated_by: Claude Code
 ## Research Question
 
 How to create an internal command that optimizes images for this Next.js 16 blog? The command should:
+
 - Take existing images (currently too large for SEO)
 - Optimize them for web delivery
 - Name optimized versions with a suffix (e.g., "-optimized")
@@ -39,6 +40,7 @@ The project should use **Sharp** (the industry-leading Node.js image optimizatio
 5. Support batch processing with progress reporting
 
 **Key findings**:
+
 - Sharp is 4-5x faster than alternatives and has native TypeScript support
 - The project already uses `tsx` for running TypeScript scripts (see `check-links` example)
 - Currently only 1 blog post image exists: `public/posts/recruiting-engineers-as-a-startup/cover.png`
@@ -52,12 +54,14 @@ The project should use **Sharp** (the industry-leading Node.js image optimizatio
 **Location**: `public/posts/recruiting-engineers-as-a-startup/cover.png`
 
 **Current issues**:
+
 - Single PNG format (no modern WebP/AVIF alternatives)
 - Unknown file size (likely unoptimized)
 - No responsive size variants
 - No optimization workflow in place
 
 **Image usage pattern** (`app/(site)/blog/[slug]/page.tsx:90-102`):
+
 ```tsx
 <Image
   src="/posts/recruiting-engineers-as-a-startup/cover.png"
@@ -69,6 +73,7 @@ The project should use **Sharp** (the industry-leading Node.js image optimizatio
 ```
 
 **Storage convention**:
+
 - Path: `public/posts/<slug>/<filename>`
 - Referenced in code as: `/posts/<slug>/<filename>` (no /public prefix)
 - Post metadata includes `cover?: string` field in interface
@@ -78,6 +83,7 @@ The project should use **Sharp** (the industry-leading Node.js image optimizatio
 **Pattern reference**: `scripts/check-about-links.ts:1-142`
 
 **Key elements**:
+
 1. **Shebang** (line 1): `#!/usr/bin/env tsx`
 2. **Imports**: Node.js built-ins (fs, path) + project modules via `@/*` aliases
 3. **Interfaces**: Strongly-typed data structures (lines 10-15)
@@ -87,11 +93,13 @@ The project should use **Sharp** (the industry-leading Node.js image optimizatio
 7. **Progress reporting**: User-friendly console output with emojis (line 105)
 
 **Execution setup** (`package.json:10`):
+
 ```json
 "check-links": "tsx scripts/check-about-links.ts"
 ```
 
 **Dependencies available**:
+
 - `tsx@^4.20.6` (devDependency for running TypeScript)
 - TypeScript 5.x with strict mode
 - ESM module support with bundler resolution
@@ -102,21 +110,25 @@ The project should use **Sharp** (the industry-leading Node.js image optimizatio
 **Source**: Web research findings
 
 **Performance**:
+
 - 4-5x faster than ImageMagick/Imagemin
 - Processes 3MB JPEG in 6.38s (vs Imagemin's 9.31s)
 - Better compression: 33.31% reduction for JPEG, 83% for PNG
 
 **Format support**:
+
 - Input: JPEG, PNG, WebP, AVIF, GIF, TIFF, SVG
 - Output: JPEG, PNG, WebP, AVIF, GIF, TIFF
 - Native TypeScript definitions (no @types package needed)
 
 **Installation**:
+
 ```bash
 pnpm add -D sharp
 ```
 
 **Key APIs**:
+
 ```typescript
 import sharp from 'sharp';
 
@@ -127,17 +139,14 @@ await sharp('input.png')
   .toFile('output.webp');
 
 // Generate AVIF (best compression)
-await sharp('input.png')
-  .avif({ quality: 75 })
-  .toFile('output.avif');
+await sharp('input.png').avif({ quality: 75 }).toFile('output.avif');
 
 // Optimized JPEG with mozjpeg
-await sharp('input.jpg')
-  .jpeg({ quality: 85, mozjpeg: true })
-  .toFile('output-optimized.jpg');
+await sharp('input.jpg').jpeg({ quality: 85, mozjpeg: true }).toFile('output-optimized.jpg');
 ```
 
 **Recommended quality settings**:
+
 - JPEG: quality 85 with mozjpeg: true
 - PNG: compressionLevel 8-9
 - WebP: quality 80 (lossy)
@@ -146,16 +155,19 @@ await sharp('input.jpg')
 ### Component 4: SEO Best Practices
 
 **File size targets** (2025 standards):
+
 - Hero/cover images: 50-100KB (target)
 - Maximum: 200KB per image
 - Thumbnails: 10-30KB
 
 **Format strategy**:
+
 1. AVIF (primary): 50% smaller than JPEG, 80% browser support
 2. WebP (fallback): 25-30% smaller than JPEG, 96% browser support
 3. Optimized JPEG (legacy): Universal support
 
 **Next.js integration**:
+
 - Use `next/image` component (already implemented)
 - Automatic format negotiation based on browser support
 - Runtime optimization for production builds
@@ -171,6 +183,7 @@ await sharp('input.jpg')
 5. **Formats generated**: AVIF, WebP, optimized original
 
 **Workflow**:
+
 ```
 Input: public/posts/my-post/cover.png (500KB)
 Output:
@@ -180,6 +193,7 @@ Output:
 ```
 
 **Script structure** (based on existing pattern):
+
 ```typescript
 #!/usr/bin/env tsx
 import sharp from 'sharp';
@@ -204,7 +218,7 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error("Fatal error:", error);
+  console.error('Fatal error:', error);
   process.exit(1);
 });
 ```
@@ -223,6 +237,7 @@ main().catch((error) => {
 ### Pattern: TypeScript Scripts with tsx
 
 This project has established a clean pattern for build-time automation:
+
 - Scripts live in `scripts/` directory
 - Use tsx for JIT TypeScript execution (no build step needed)
 - Follow consistent structure: shebang → interfaces → helpers → main → error handling
@@ -232,6 +247,7 @@ This project has established a clean pattern for build-time automation:
 ### Pattern: Image Asset Organization
 
 Images follow a clear convention:
+
 - Storage: `public/posts/<slug>/<filename>`
 - Reference: `/posts/<slug>/<filename>` (public/ implicit)
 - Metadata: `cover?: string` in Post interface
@@ -240,6 +256,7 @@ Images follow a clear convention:
 ### Pattern: Batch Processing with Concurrency
 
 The existing `check-about-links.ts` script demonstrates proper batch processing:
+
 - Process items in batches of 5 (`CONCURRENCY = 5`)
 - Use `Promise.all()` for concurrent operations within batch
 - Report progress after each batch
@@ -328,9 +345,7 @@ async function optimizeImage(inputPath: string): Promise<OptimizationResult> {
     // Generate AVIF (best compression)
     if (config.targetFormats.includes('avif')) {
       const avifPath = join(dir, `${name}-optimized.avif`);
-      await sharp(inputPath)
-        .avif({ quality: config.quality.avif, effort: 6 })
-        .toFile(avifPath);
+      await sharp(inputPath).avif({ quality: config.quality.avif, effort: 6 }).toFile(avifPath);
 
       const avifSize = (await stat(avifPath)).size;
       result.outputs.push({
@@ -344,9 +359,7 @@ async function optimizeImage(inputPath: string): Promise<OptimizationResult> {
     // Generate WebP (fallback)
     if (config.targetFormats.includes('webp')) {
       const webpPath = join(dir, `${name}-optimized.webp`);
-      await sharp(inputPath)
-        .webp({ quality: config.quality.webp })
-        .toFile(webpPath);
+      await sharp(inputPath).webp({ quality: config.quality.webp }).toFile(webpPath);
 
       const webpSize = (await stat(webpPath)).size;
       result.outputs.push({
@@ -362,9 +375,7 @@ async function optimizeImage(inputPath: string): Promise<OptimizationResult> {
       const optimizedPath = join(dir, `${name}-optimized${ext}`);
 
       if (ext.toLowerCase() === '.png') {
-        await sharp(inputPath)
-          .png({ compressionLevel: config.quality.png })
-          .toFile(optimizedPath);
+        await sharp(inputPath).png({ compressionLevel: config.quality.png }).toFile(optimizedPath);
       } else {
         await sharp(inputPath)
           .jpeg({ quality: config.quality.jpeg, mozjpeg: true })
@@ -379,7 +390,6 @@ async function optimizeImage(inputPath: string): Promise<OptimizationResult> {
         savings: `${(((result.originalSize - optimizedSize) / result.originalSize) * 100).toFixed(1)}%`,
       });
     }
-
   } catch (error) {
     result.error = error instanceof Error ? error.message : String(error);
   }
@@ -425,7 +435,9 @@ async function main() {
         console.log(`✓ ${relativePath} (${formatBytes(result.originalSize)})`);
 
         for (const output of result.outputs) {
-          console.log(`  → ${output.format}: ${formatBytes(output.size)} (saved ${output.savings})`);
+          console.log(
+            `  → ${output.format}: ${formatBytes(output.size)} (saved ${output.savings})`
+          );
         }
         console.log();
       }
@@ -449,18 +461,21 @@ main().catch((error) => {
 ### Installation Steps
 
 1. **Install Sharp and p-limit**:
+
 ```bash
 pnpm add -D sharp p-limit
 pnpm add -D @types/node  # If not already installed
 ```
 
 2. **Create script file**:
+
 ```bash
 touch scripts/optimize-images.ts
 chmod +x scripts/optimize-images.ts
 ```
 
 3. **Add to package.json**:
+
 ```json
 {
   "scripts": {
@@ -470,6 +485,7 @@ chmod +x scripts/optimize-images.ts
 ```
 
 4. **Usage**:
+
 ```bash
 # Optimize all images in public/posts
 pnpm optimize-images
@@ -502,6 +518,7 @@ Progress: 1/1
 After optimization, update image references to use modern formats:
 
 **Option 1: Update Post Metadata**
+
 ```typescript
 {
   title: "Recruiting engineers as a startup",
@@ -512,6 +529,7 @@ After optimization, update image references to use modern formats:
 ```
 
 **Option 2: Use Picture Element** (for maximum compatibility):
+
 ```tsx
 <picture>
   <source
@@ -533,6 +551,7 @@ After optimization, update image references to use modern formats:
 ```
 
 **Option 3: Let Next.js Handle It** (simplest):
+
 - Just use the optimized WebP/AVIF files with next/image
 - Next.js will automatically serve the best format based on browser support
 - Simply update the `cover` path to point to `-optimized` version
@@ -540,6 +559,7 @@ After optimization, update image references to use modern formats:
 ## Related Resources
 
 ### Documentation Links
+
 - [Sharp Official Documentation](https://sharp.pixelplumbing.com/)
 - [Sharp GitHub Repository](https://github.com/lovell/sharp)
 - [Next.js Image Optimization](https://nextjs.org/docs/app/getting-started/images)
@@ -547,17 +567,20 @@ After optimization, update image references to use modern formats:
 - [Google Image SEO Best Practices](https://developers.google.com/search/docs/appearance/google-images)
 
 ### Performance & Benchmarks
+
 - [Sharp vs Imagemin Comparison](https://blockqueue.io/blog/2024-09-22-sharp-vs-imagemin-comparison)
 - [Image Format Comparison 2025](https://www.thecssagency.com/blog/best-web-image-format)
 - [2025 Guide to Image Resizing for SEO](https://searchxpro.com/2025-guide-to-image-resizing-for-seo/)
 
 ### Tutorials & Guides
+
 - [Optimize Images with Sharp - Codú](https://www.codu.co/articles/optimize-and-transform-images-in-node-js-with-sharp-z8dyo7wi)
 - [Sharp Batch Processing Patterns - Medium](https://medium.com/@pradipcpgn/using-sharp-as-image-optimization-tool-in-node-js-04f2efa59dbd)
 - [Responsive Images Tutorial - imgix](https://docs.imgix.com/en-US/getting-started/tutorials/responsive-design/responsive-images-with-srcset)
 - [MDN Responsive Images Guide](https://developer.mozilla.org/en-US/docs/Learn/HTML/Multimedia_and_embedding/Responsive_images)
 
 ### Alternative Tools
+
 - [next-image-export-optimizer](https://www.npmjs.com/package/next-image-export-optimizer) - Build-time optimization for static exports
 - [next-export-optimize-images](https://next-export-optimize-images.vercel.app/) - Alternative static export optimizer
 - [Squoosh (browser)](https://squoosh.app/) - Manual browser-based optimization

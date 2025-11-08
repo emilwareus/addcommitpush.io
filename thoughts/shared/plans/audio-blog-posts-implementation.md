@@ -44,12 +44,14 @@ After this plan is complete:
 ### Verification:
 
 #### Automated Verification:
+
 - [ ] Build succeeds: `pnpm build`
 - [ ] Type checking passes: `pnpm exec tsc --noEmit`
 - [ ] Linting passes: `pnpm lint`
 - [ ] Audio file exists: `ls -la public/posts/recruiting-engineers-as-a-startup/audio.mp3`
 
 #### Manual Verification:
+
 - [ ] Navigate to `/blog/recruiting-engineers-as-a-startup`
 - [ ] AudioPlayer component renders below the header
 - [ ] Play/pause button works
@@ -75,12 +77,14 @@ After this plan is complete:
 ## Implementation Approach
 
 Follow the established pattern for static assets:
+
 1. Store audio file in `public/posts/<slug>/audio.mp3`
 2. Reference with absolute path from public root: `/posts/<slug>/audio.mp3`
 3. Integrate AudioPlayer component into post content (similar to Figure component)
 4. Enhanced AudioPlayer with playback speed controls
 
 This approach provides:
+
 - Zero configuration needed
 - Automatic CDN caching on Vercel
 - Version control with git
@@ -104,20 +108,23 @@ Enhance the existing AudioPlayer component to support playback speed controls (1
 **Changes**: Add playback speed state and controls
 
 **After line 19** (after `const [isMuted, setIsMuted] = useState(false)`), add:
+
 ```typescript
-const [playbackRate, setPlaybackRate] = useState(1)
+const [playbackRate, setPlaybackRate] = useState(1);
 ```
 
 **After line 75** (after the `toggleMute` function), add:
+
 ```typescript
 const handlePlaybackRateChange = (rate: number) => {
-  if (!audioRef.current) return
-  audioRef.current.playbackRate = rate
-  setPlaybackRate(rate)
-}
+  if (!audioRef.current) return;
+  audioRef.current.playbackRate = rate;
+  setPlaybackRate(rate);
+};
 ```
 
 **After line 107** (after the progress bar div closes), add playback speed controls:
+
 ```typescript
         {/* Playback Speed Controls */}
         <div className="flex items-center justify-center gap-2">
@@ -141,11 +148,13 @@ const handlePlaybackRateChange = (rate: number) => {
 ### Success Criteria:
 
 #### Automated Verification:
+
 - [x] Build succeeds: `pnpm build`
 - [x] Type checking passes: `pnpm exec tsc --noEmit`
 - [x] Linting passes: `pnpm lint`
 
 #### Manual Verification:
+
 - [ ] AudioPlayer component still renders without errors
 - [ ] Speed buttons (1x, 1.25x, 1.5x, 2x) appear below progress bar
 - [ ] Active speed button has different styling
@@ -164,6 +173,7 @@ Create a placeholder audio file and update the post metadata to enable audio for
 #### 1. Create Placeholder Audio File
 
 **Command**: Create empty placeholder MP3 file
+
 ```bash
 # Create a 1-second silent MP3 placeholder using ffmpeg
 # User will replace this with actual recording
@@ -171,6 +181,7 @@ ffmpeg -f lavfi -i anullsrc=r=44100:cl=mono -t 1 -q:a 9 -acodec libmp3lame publi
 ```
 
 **Alternative if ffmpeg not available**: Create empty file
+
 ```bash
 touch public/posts/recruiting-engineers-as-a-startup/audio.mp3
 ```
@@ -184,11 +195,13 @@ touch public/posts/recruiting-engineers-as-a-startup/audio.mp3
 **Changes**: Uncomment and fix the audioUrl path
 
 **Replace line 24**:
+
 ```typescript
 // audioUrl: "/audio/recruiting-engineers.mp3",
 ```
 
 **With**:
+
 ```typescript
 audioUrl: "/posts/recruiting-engineers-as-a-startup/audio.mp3",
 ```
@@ -198,12 +211,14 @@ audioUrl: "/posts/recruiting-engineers-as-a-startup/audio.mp3",
 ### Success Criteria:
 
 #### Automated Verification:
+
 - [x] Audio file exists: `ls -la public/posts/recruiting-engineers-as-a-startup/audio.mp3`
 - [x] Build succeeds: `pnpm build`
 - [x] Type checking passes: `pnpm exec tsc --noEmit`
 - [x] Linting passes: `pnpm lint`
 
 #### Manual Verification:
+
 - [ ] Navigate to `/` (blog listing)
 - [ ] "Recruiting engineers as a startup" card shows Headphones icon
 - [ ] Clicking the card navigates to the post detail page
@@ -225,12 +240,14 @@ Add the AudioPlayer component to the "Recruiting engineers as a startup" post co
 **Changes**: Import and render AudioPlayer component
 
 **Add to imports** (line 1):
+
 ```typescript
-import { BlogHeading, BlogList, BlogListItem, Figure } from "@/components/custom"
-import { AudioPlayer } from "@/components/audio-player"
+import { BlogHeading, BlogList, BlogListItem, Figure } from '@/components/custom';
+import { AudioPlayer } from '@/components/audio-player';
 ```
 
 **After line 14** (after the `<Figure>` component), add:
+
 ```typescript
       <AudioPlayer
         audioUrl="/posts/recruiting-engineers-as-a-startup/audio.mp3"
@@ -243,11 +260,13 @@ import { AudioPlayer } from "@/components/audio-player"
 ### Success Criteria:
 
 #### Automated Verification:
+
 - [x] Build succeeds: `pnpm build`
 - [x] Type checking passes: `pnpm exec tsc --noEmit`
 - [x] Linting passes: `pnpm lint`
 
 #### Manual Verification:
+
 - [ ] Navigate to `/blog/recruiting-engineers-as-a-startup`
 - [ ] AudioPlayer renders between cover image and intro section
 - [ ] AudioPlayer matches the design style of the blog
@@ -266,6 +285,7 @@ Verify the complete audio feature works end-to-end across all touchpoints.
 ### Testing Steps:
 
 #### Automated Verification:
+
 - [x] Build succeeds: `pnpm build`
 - [x] Type checking passes: `pnpm exec tsc --noEmit`
 - [x] Linting passes: `pnpm lint`
@@ -276,11 +296,13 @@ Verify the complete audio feature works end-to-end across all touchpoints.
 #### Manual Verification:
 
 **1. Blog Listing Page** (`/`)
+
 - [ ] "Recruiting engineers as a startup" card shows Headphones icon in top-right
 - [ ] Other posts without audio don't show the icon
 - [ ] Icon is visible on mobile and desktop
 
 **2. Blog Post Detail Page** (`/blog/recruiting-engineers-as-a-startup`)
+
 - [ ] Cover image renders correctly
 - [ ] AudioPlayer renders below cover image
 - [ ] AudioPlayer has "Listen to this post" header with Headphones icon
@@ -301,17 +323,20 @@ Verify the complete audio feature works end-to-end across all touchpoints.
 - [ ] Post content renders correctly below AudioPlayer
 
 **3. Accessibility**
+
 - [ ] Tab navigation works through all controls
 - [ ] Keyboard controls work (Space = play/pause, Arrow keys = seek)
 - [ ] Screen reader announces audio controls properly
 
 **4. Performance**
+
 - [ ] Page load time is acceptable
 - [ ] No console errors or warnings
 - [ ] Audio metadata loads without downloading full file (`preload="metadata"`)
 - [ ] AudioPlayer doesn't block page rendering
 
 **5. Mobile Testing**
+
 - [ ] AudioPlayer renders correctly on mobile viewport
 - [ ] Touch controls work (tap play, drag seek, drag volume)
 - [ ] No horizontal scrolling
@@ -347,7 +372,7 @@ Update CLAUDE.md playbook to document the audio file workflow for future posts.
 
 **After the "Image optimization workflow" section** (around line 150), add:
 
-```markdown
+````markdown
 #### Audio file workflow
 
 - Source audio: Place MP3 files in `public/posts/<slug>/audio.mp3`
@@ -358,21 +383,23 @@ Update CLAUDE.md playbook to document the audio file workflow for future posts.
   # Optimize audio for web (spoken word)
   ffmpeg -i input.wav -codec:a libmp3lame -b:a 192k -ar 44100 output.mp3
   ```
+````
+
 - Post metadata: Add `audioUrl: "/posts/<slug>/audio.mp3"` to post object in `lib/posts.ts`
 - Integration: Import and render `<AudioPlayer>` component in post content:
-  ```tsx
-  import { AudioPlayer } from "@/components/audio-player"
 
-  <AudioPlayer
-    audioUrl="/posts/<slug>/audio.mp3"
-    title="Post Title - Audio Version"
-  />
+  ```tsx
+  import { AudioPlayer } from '@/components/audio-player';
+
+  <AudioPlayer audioUrl="/posts/<slug>/audio.mp3" title="Post Title - Audio Version" />;
   ```
+
 - Features: Automatic playback controls (play/pause, seek, volume, speed: 1x/1.25x/1.5x/2x)
 - Indicator: Blog listing automatically shows Headphones icon for posts with audio
 - Preload: Audio uses `preload="metadata"` to load duration without full download
 - Serving: Files automatically served via Next.js static serving with CDN caching on Vercel
-```
+
+````
 
 **Rationale**: This documents the complete workflow for future posts, following the same format as the image optimization documentation.
 
@@ -419,11 +446,11 @@ last_updated: 2025-11-07
 last_updated_by: Claude Code
 implementation_plan: .claude/plans/audio-blog-posts-implementation.md
 ---
-```
+````
 
 **Add section at end** (after "Conclusion"):
-```markdown
 
+```markdown
 ---
 
 ## Implementation
@@ -435,6 +462,7 @@ implementation_plan: .claude/plans/audio-blog-posts-implementation.md
 **First Post with Audio**: "Recruiting engineers as a startup"
 
 **Changes Made**:
+
 1. Enhanced AudioPlayer with playback speed controls (1x, 1.25x, 1.5x, 2x)
 2. Added audio file to `public/posts/recruiting-engineers-as-a-startup/audio.mp3`
 3. Updated post metadata in `lib/posts.ts` with audioUrl
@@ -447,11 +475,13 @@ implementation_plan: .claude/plans/audio-blog-posts-implementation.md
 ### Success Criteria:
 
 #### Automated Verification:
+
 - [x] Research document updated without syntax errors
 - [x] Markdown renders correctly when viewed
 - [x] Internal links work correctly
 
 #### Manual Verification:
+
 - [x] Status changed from "complete" to "implemented"
 - [x] Implementation section accurately reflects changes
 - [x] References to implementation plan are correct
@@ -473,6 +503,7 @@ Not applicable - this project doesn't have a test suite configured. All verifica
 See Phase 4 for comprehensive manual testing checklist.
 
 **Priority test scenarios**:
+
 1. Blog listing shows Headphones icon for posts with audio
 2. AudioPlayer renders correctly in blog post
 3. All playback controls work (play, seek, volume, speed)
@@ -495,6 +526,7 @@ See Phase 4 for comprehensive manual testing checklist.
 ### Cost Estimation
 
 **Example calculation for "Recruiting engineers as a startup"**:
+
 - Estimated audio length: 10 minutes (based on 8 min read time)
 - File size at 192 kbps: ~14.4 MB
 - Expected plays/month: 100-500 (estimate based on blog traffic)
@@ -512,6 +544,7 @@ See Phase 4 for comprehensive manual testing checklist.
 ### When to Reconsider Approach
 
 Migrate to external hosting (S3/R2/CDN) if:
+
 - Bandwidth costs exceed $50/month consistently
 - Individual files exceed 50 MB
 - Need detailed play analytics
@@ -524,6 +557,7 @@ Migrate to external hosting (S3/R2/CDN) if:
 Not applicable - this is a new feature addition, not a migration.
 
 **Future migration path** (if needed):
+
 1. Move audio files from `public/posts/<slug>/` to external hosting (S3/R2/CDN)
 2. Update `audioUrl` values in `lib/posts.ts` to external URLs (e.g., `https://cdn.example.com/audio.mp3`)
 3. AudioPlayer component requires no changes (works with any URL)
@@ -565,21 +599,25 @@ Not applicable - this is a new feature addition, not a migration.
 ### Optimization Commands
 
 **Convert WAV to optimized MP3**:
+
 ```bash
 ffmpeg -i input.wav -codec:a libmp3lame -b:a 192k -ar 44100 output.mp3
 ```
 
 **Check file info**:
+
 ```bash
 ffmpeg -i audio.mp3
 ```
 
 **Reduce file size (lower bitrate)**:
+
 ```bash
 ffmpeg -i input.mp3 -codec:a libmp3lame -b:a 128k output.mp3
 ```
 
 **Convert stereo to mono** (smaller size for spoken word):
+
 ```bash
 ffmpeg -i input.mp3 -codec:a libmp3lame -b:a 192k -ac 1 output.mp3
 ```
@@ -588,13 +626,13 @@ ffmpeg -i input.mp3 -codec:a libmp3lame -b:a 192k -ac 1 output.mp3
 
 10-minute audio file sizes at different bitrates:
 
-| Bitrate | File Size | Use Case |
-|---------|-----------|----------|
-| 64 kbps | 4.8 MB | Low quality, very small |
-| 128 kbps | 9.6 MB | **Recommended for spoken word** |
-| 192 kbps | 14.4 MB | **High quality spoken word** |
-| 256 kbps | 19.2 MB | Music/high fidelity |
-| 320 kbps | 24 MB | Maximum quality MP3 |
+| Bitrate  | File Size | Use Case                        |
+| -------- | --------- | ------------------------------- |
+| 64 kbps  | 4.8 MB    | Low quality, very small         |
+| 128 kbps | 9.6 MB    | **Recommended for spoken word** |
+| 192 kbps | 14.4 MB   | **High quality spoken word**    |
+| 256 kbps | 19.2 MB   | Music/high fidelity             |
+| 320 kbps | 24 MB     | Maximum quality MP3             |
 
 ---
 
@@ -603,6 +641,7 @@ ffmpeg -i input.mp3 -codec:a libmp3lame -b:a 192k -ac 1 output.mp3
 Use this checklist to track progress:
 
 ### Phase 1: Add Playback Speed Controls
+
 - [x] Add `playbackRate` state to AudioPlayer
 - [x] Add `handlePlaybackRateChange` function
 - [x] Add speed control buttons UI
@@ -610,6 +649,7 @@ Use this checklist to track progress:
 - [x] Verify build passes
 
 ### Phase 2: Create Placeholder & Update Metadata
+
 - [x] Create placeholder audio file
 - [x] Update `lib/posts.ts` with audioUrl
 - [x] Verify file exists
@@ -617,28 +657,33 @@ Use this checklist to track progress:
 - [ ] Verify blog listing shows Headphones icon (user manual test)
 
 ### Phase 3: Integrate AudioPlayer
+
 - [x] Import AudioPlayer in post content component
 - [x] Add AudioPlayer component to JSX
 - [x] Verify build passes
 - [ ] Verify AudioPlayer renders (user manual test)
 
 ### Phase 4: Test Full Integration
+
 - [x] Complete all automated verification steps
 - [ ] Complete all manual verification steps (user testing required)
 - [ ] Test on mobile devices (user testing required)
 - [ ] Test edge cases (user testing required)
 
 ### Phase 5: Documentation
+
 - [x] Update CLAUDE.md with audio workflow
 - [x] Verify documentation is clear and accurate
 - [x] Verify code examples are correct
 
 ### Phase 6: Update Research Document
+
 - [x] Update status to "implemented"
 - [x] Add implementation section
 - [x] Verify links work
 
 ### Final
+
 - [x] All phases complete
 - [x] All automated success criteria met
 - [x] Ready for user testing and commit

@@ -7,7 +7,7 @@ tools: Grep, Glob, Read, LS
 You are a specialist at finding code patterns and examples in the codebase. Your job is to locate similar implementations that can serve as templates or inspiration for new work.
 
 Repository specifics (addcommitpush.io):
-- Next.js 16 (App Router) + TypeScript; look for patterns in `app/` (server/client components, route handlers), `lib/` utilities, and `.claude/` docs.
+- Next.js 16 (App Router) + TypeScript; look for patterns in `app/` (server/client components, route handlers), `lib/` utilities, `components/blog-posts/` (blog post TSX components), and `.claude/` docs.
 - Prefer Server Component patterns; use Client Components only when necessary (`"use client"`).
 
 ## Core Responsibilities
@@ -47,7 +47,7 @@ What to look for based on request:
 ### Step 2: Search!
 
 - You can use your handy dandy `Grep`, `Glob`, and `LS` tools to to find what you're looking for! You know how it's done!
-- For this repo, prioritize `.tsx` in `app/` and `.ts` in `lib/`; scan for `generateStaticParams`, `generateMetadata`, `export const dynamic`, and MDX usage if present.
+- For this repo, prioritize `.tsx` in `app/` and `components/blog-posts/`, `.ts` in `lib/`; scan for `generateStaticParams`, `generateMetadata`, `export const dynamic`, and React component patterns.
 
 ### Step 3: Read and Extract
 

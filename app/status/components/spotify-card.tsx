@@ -1,79 +1,75 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import useSWR from 'swr'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import Image from 'next/image'
+import { useState, useEffect } from 'react';
+import useSWR from 'swr';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import Image from 'next/image';
 
 interface SpotifyResponse {
-  isPlaying: boolean
-  title?: string
-  artist?: string
-  album?: string
-  albumImageUrl?: string
-  songUrl?: string
-  progressMs?: number
-  durationMs?: number
-  error?: string
+  isPlaying: boolean;
+  title?: string;
+  artist?: string;
+  album?: string;
+  albumImageUrl?: string;
+  songUrl?: string;
+  progressMs?: number;
+  durationMs?: number;
+  error?: string;
 }
 
 const fetcher = async (url: string): Promise<SpotifyResponse> => {
-  const response = await fetch(url)
-  
+  const response = await fetch(url);
+
   // Handle rate limiting (429 status code from Vercel WAF or our API)
   if (response.status === 429) {
     // Try to parse JSON, but Vercel WAF might return plain text
-    const data = await response.json().catch(() => ({ isPlaying: false, error: 'rate_limit' }))
-    throw { status: 429, data }
+    const data = await response.json().catch(() => ({ isPlaying: false, error: 'rate_limit' }));
+    throw { status: 429, data };
   }
-  
+
   if (!response.ok) {
     // For other errors, try to parse JSON or throw generic error
-    const errorData = await response.json().catch(() => ({ isPlaying: false }))
-    throw { status: response.status, data: errorData }
+    const errorData = await response.json().catch(() => ({ isPlaying: false }));
+    throw { status: response.status, data: errorData };
   }
-  
-  return response.json()
-}
+
+  return response.json();
+};
 
 export function SpotifyCard() {
-  const [isRateLimited, setIsRateLimited] = useState(false)
-  
-  const { data, error, isLoading } = useSWR<SpotifyResponse>(
-    '/api/spotify',
-    fetcher,
-    {
-      refreshInterval: isRateLimited ? 0 : 10000, // Disable polling when rate limited
-      revalidateOnFocus: !isRateLimited, // Disable revalidation when rate limited
-      onError: (err: any) => {
-        // Check if error is rate limit (429)
-        if (err?.status === 429 || err?.data?.error === 'rate_limit') {
-          setIsRateLimited(true)
-        }
-      },
-      onSuccess: () => {
-        // Reset rate limit flag on successful response
-        if (isRateLimited) {
-          setIsRateLimited(false)
-        }
-      },
-    }
-  )
+  const [isRateLimited, setIsRateLimited] = useState(false);
+
+  const { data, error, isLoading } = useSWR<SpotifyResponse>('/api/spotify', fetcher, {
+    refreshInterval: isRateLimited ? 0 : 10000, // Disable polling when rate limited
+    revalidateOnFocus: !isRateLimited, // Disable revalidation when rate limited
+    onError: (err: any) => {
+      // Check if error is rate limit (429)
+      if (err?.status === 429 || err?.data?.error === 'rate_limit') {
+        setIsRateLimited(true);
+      }
+    },
+    onSuccess: () => {
+      // Reset rate limit flag on successful response
+      if (isRateLimited) {
+        setIsRateLimited(false);
+      }
+    },
+  });
 
   // Auto-reset rate limit after 60 seconds
   useEffect(() => {
     if (isRateLimited) {
       const timer = setTimeout(() => {
-        setIsRateLimited(false)
-      }, 60000) // Rate limit window is typically 60 seconds
-      
-      return () => clearTimeout(timer)
+        setIsRateLimited(false);
+      }, 60000); // Rate limit window is typically 60 seconds
+
+      return () => clearTimeout(timer);
     }
-  }, [isRateLimited])
+  }, [isRateLimited]);
 
   // Handle rate limiting
-  const rateLimitError = error && (error.status === 429 || error.data?.error === 'rate_limit')
-  
+  const rateLimitError = error && (error.status === 429 || error.data?.error === 'rate_limit');
+
   if (rateLimitError || isRateLimited) {
     return (
       <Card className="h-full flex flex-col items-center justify-center hover:border-secondary/40 transition-all duration-300">
@@ -83,7 +79,7 @@ export function SpotifyCard() {
           <p className="text-xs text-muted-foreground mt-2">Please wait a moment...</p>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   if (error || !data) {
@@ -98,7 +94,7 @@ export function SpotifyCard() {
           )}
         </CardContent>
       </Card>
-    )
+    );
   }
 
   if (!data.isPlaying) {
@@ -109,7 +105,7 @@ export function SpotifyCard() {
           <p className="text-muted-foreground">Not playing anything</p>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -156,12 +152,18 @@ export function SpotifyCard() {
               />
             </div>
             <div className="flex justify-between text-xs text-muted-foreground">
-              <span>{Math.floor(data.progressMs / 60000)}:{String(Math.floor((data.progressMs % 60000) / 1000)).padStart(2, '0')}</span>
-              <span>{Math.floor(data.durationMs / 60000)}:{String(Math.floor((data.durationMs % 60000) / 1000)).padStart(2, '0')}</span>
+              <span>
+                {Math.floor(data.progressMs / 60000)}:
+                {String(Math.floor((data.progressMs % 60000) / 1000)).padStart(2, '0')}
+              </span>
+              <span>
+                {Math.floor(data.durationMs / 60000)}:
+                {String(Math.floor((data.durationMs % 60000) / 1000)).padStart(2, '0')}
+              </span>
             </div>
           </div>
         )}
       </CardContent>
     </Card>
-  )
+  );
 }
