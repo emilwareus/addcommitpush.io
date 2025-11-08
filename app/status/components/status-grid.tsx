@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import type { GitHubStatusData } from '@/lib/github'
 
@@ -92,6 +93,13 @@ function getSeverityColor(severity: IncidentReport['severity']): string {
 }
 
 
+interface TooltipState {
+  visible: boolean
+  x: number
+  y: number
+  content: { date: string; count: number; label: string }
+}
+
 export function StatusGrid({ data }: StatusGridProps) {
   // Calculate uptime percentages for each activity type
   const totalDays = data.commitsByDay.length
@@ -104,6 +112,27 @@ export function StatusGrid({ data }: StatusGridProps) {
   const prUptime = Math.round((daysWithPRs / totalDays) * 100)
   const issueUptime = Math.round((daysWithIssues / totalDays) * 100)
   const reviewUptime = Math.round((daysWithReviews / totalDays) * 100)
+
+  const [tooltip, setTooltip] = useState<TooltipState>({
+    visible: false,
+    x: 0,
+    y: 0,
+    content: { date: '', count: 0, label: '' },
+  })
+
+  const handleBarHover = (e: React.MouseEvent<HTMLDivElement>, day: { date: string; count: number }, label: string) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    setTooltip({
+      visible: true,
+      x: rect.left + rect.width / 2,
+      y: rect.top - 8,
+      content: { date: day.date, count: day.count, label },
+    })
+  }
+
+  const handleBarLeave = () => {
+    setTooltip({ visible: false, x: 0, y: 0, content: { date: '', count: 0, label: '' } })
+  }
 
   return (
     <div className="w-full">
@@ -138,13 +167,10 @@ export function StatusGrid({ data }: StatusGridProps) {
               {[...data.commitsByDay].reverse().map((day, i) => (
                 <div
                   key={i}
-                  className={`w-3 h-10 rounded flex-shrink-0 ${getCommitColor(day.count)} transition-all group relative cursor-pointer`}
-                >
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 border border-border">
-                    <div className="font-semibold">{formatDate(day.date)}</div>
-                    <div className="text-muted-foreground">{day.count} {day.count === 1 ? 'commit' : 'commits'}</div>
-                  </div>
-                </div>
+                  className={`w-3 h-10 rounded flex-shrink-0 ${getCommitColor(day.count)} transition-all cursor-pointer`}
+                  onMouseEnter={(e) => handleBarHover(e, day, 'commit')}
+                  onMouseLeave={handleBarLeave}
+                />
               ))}
             </div>
           </div>
@@ -159,13 +185,10 @@ export function StatusGrid({ data }: StatusGridProps) {
               {[...data.prsByDay].reverse().map((day, i) => (
                 <div
                   key={i}
-                  className={`w-3 h-10 rounded flex-shrink-0 ${getPRColor(day.count)} transition-all group relative cursor-pointer`}
-                >
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 border border-border">
-                    <div className="font-semibold">{formatDate(day.date)}</div>
-                    <div className="text-muted-foreground">{day.count} {day.count === 1 ? 'PR' : 'PRs'}</div>
-                  </div>
-                </div>
+                  className={`w-3 h-10 rounded flex-shrink-0 ${getPRColor(day.count)} transition-all cursor-pointer`}
+                  onMouseEnter={(e) => handleBarHover(e, day, 'PR')}
+                  onMouseLeave={handleBarLeave}
+                />
               ))}
             </div>
           </div>
@@ -180,13 +203,10 @@ export function StatusGrid({ data }: StatusGridProps) {
               {[...data.issuesByDay].reverse().map((day, i) => (
                 <div
                   key={i}
-                  className={`w-3 h-10 rounded flex-shrink-0 ${getIssueColor(day.count)} transition-all group relative cursor-pointer`}
-                >
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 border border-border">
-                    <div className="font-semibold">{formatDate(day.date)}</div>
-                    <div className="text-muted-foreground">{day.count} {day.count === 1 ? 'issue' : 'issues'}</div>
-                  </div>
-                </div>
+                  className={`w-3 h-10 rounded flex-shrink-0 ${getIssueColor(day.count)} transition-all cursor-pointer`}
+                  onMouseEnter={(e) => handleBarHover(e, day, 'issue')}
+                  onMouseLeave={handleBarLeave}
+                />
               ))}
             </div>
           </div>
@@ -201,13 +221,10 @@ export function StatusGrid({ data }: StatusGridProps) {
               {[...data.reviewsByDay].reverse().map((day, i) => (
                 <div
                   key={i}
-                  className={`w-3 h-10 rounded flex-shrink-0 ${getReviewColor(day.count)} transition-all group relative cursor-pointer`}
-                >
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10 border border-border">
-                    <div className="font-semibold">{formatDate(day.date)}</div>
-                    <div className="text-muted-foreground">{day.count} {day.count === 1 ? 'review' : 'reviews'}</div>
-                  </div>
-                </div>
+                  className={`w-3 h-10 rounded flex-shrink-0 ${getReviewColor(day.count)} transition-all cursor-pointer`}
+                  onMouseEnter={(e) => handleBarHover(e, day, 'review')}
+                  onMouseLeave={handleBarLeave}
+                />
               ))}
             </div>
           </div>
@@ -333,6 +350,25 @@ export function StatusGrid({ data }: StatusGridProps) {
           </div>
         </div>
       </Card>
+
+      {/* Fixed Tooltip - rendered outside Card to avoid overflow clipping */}
+      {tooltip.visible && (
+        <div
+          className="fixed px-2 py-1 bg-popover text-popover-foreground text-xs rounded shadow-lg whitespace-nowrap z-[9999] border border-border pointer-events-none"
+          style={{
+            left: `${tooltip.x}px`,
+            top: `${tooltip.y}px`,
+            transform: 'translate(-50%, -100%)',
+          }}
+        >
+          <div className="font-semibold">{formatDate(tooltip.content.date)}</div>
+          <div className="text-muted-foreground">
+            {tooltip.content.count} {tooltip.content.count === 1 
+              ? tooltip.content.label === 'PR' ? 'PR' : tooltip.content.label === 'commit' ? 'commit' : tooltip.content.label === 'issue' ? 'issue' : 'review'
+              : tooltip.content.label === 'PR' ? 'PRs' : tooltip.content.label === 'commit' ? 'commits' : tooltip.content.label === 'issue' ? 'issues' : 'reviews'}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
