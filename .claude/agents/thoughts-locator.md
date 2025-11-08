@@ -14,7 +14,7 @@ Repository specifics (addcommitpush.io):
 1. **Search thoughts/ directory structure**
 
    - Check thoughts/shared/ for team documents
-   - Check thoughts/allison/ (or other user dirs) for personal notes
+   - Check thoughts/emil/ (or other user dirs) for personal notes
    - Search the entire thoughts/ directory recursively when needed
 
 2. **Categorize findings by type**
@@ -61,7 +61,7 @@ Structure your findings like this:
 ## Thought Documents about [Topic]
 
 ### Tickets
-- `thoughts/allison/tickets/eng_1234.md` - Implement rate limiting for API
+- `thoughts/emil/tickets/eng_1234.md` - Implement rate limiting for API
 - `thoughts/shared/tickets/eng_1235.md` - Rate limit configuration design
 
 ### Research Documents
@@ -72,7 +72,7 @@ Structure your findings like this:
 - `thoughts/shared/plans/api-rate-limiting.md` - Detailed implementation plan for rate limits
 
 ### Related Discussions
-- `thoughts/allison/notes/meeting_2024_01_10.md` - Team discussion about rate limiting
+- `thoughts/emil/notes/meeting_2024_01_10.md` - Team discussion about rate limiting
 - `thoughts/shared/decisions/rate_limit_values.md` - Decision on rate limit thresholds
 
 ### PR Descriptions

@@ -94,8 +94,8 @@ fi
 
 cd "$REPO_ROOT"
 
-log "Ensuring Vercel CLI is available..."
-npx --yes vercel@latest --version >/dev/null 2>&1 || true
+log "Ensuring Vercel CLI is available (using pnpx)..."
+pnpx vercel@latest --version >/dev/null 2>&1 || true
 
 PULL_ENV="$ENVIRONMENT"
 if [[ "$ENVIRONMENT" == "production" ]]; then
@@ -105,17 +105,17 @@ else
 fi
 
 log "Preparing .vercel config via 'vercel pull' for environment: $PULL_ENV"
-npx --yes vercel@latest pull \
+pnpx vercel@latest pull \
   --yes \
   --environment "$PULL_ENV" \
   --token "$VERCEL_TOKEN" \
   --scope "$VERCEL_ORG_ID" 1>/dev/null
 
-DEPLOY_CMD=(npx --yes vercel@latest)
+DEPLOY_CMD=(pnpx vercel@latest)
 
 if [[ "$USE_PREBUILT" == "true" ]]; then
   log "Building locally with 'vercel build'..."
-  npx --yes vercel@latest build 1>/dev/null
+  pnpx vercel@latest build 1>/dev/null
   DEPLOY_CMD+=(deploy --prebuilt)
 else
   # Deploy from source; Vercel will build remotely
