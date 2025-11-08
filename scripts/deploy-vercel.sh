@@ -94,15 +94,8 @@ fi
 
 cd "$REPO_ROOT"
 
-# Determine which package runner to use (pnpx if pnpm is available, otherwise npx)
-if command -v pnpm >/dev/null 2>&1; then
-  PKG_RUNNER="pnpx"
-else
-  PKG_RUNNER="npx"
-fi
-
-log "Ensuring Vercel CLI is available (using $PKG_RUNNER)..."
-$PKG_RUNNER --yes vercel@latest --version >/dev/null 2>&1 || true
+log "Ensuring Vercel CLI is available (using pnpx)..."
+pnpx vercel@latest --version >/dev/null 2>&1 || true
 
 PULL_ENV="$ENVIRONMENT"
 if [[ "$ENVIRONMENT" == "production" ]]; then
@@ -112,17 +105,17 @@ else
 fi
 
 log "Preparing .vercel config via 'vercel pull' for environment: $PULL_ENV"
-$PKG_RUNNER --yes vercel@latest pull \
+pnpx vercel@latest pull \
   --yes \
   --environment "$PULL_ENV" \
   --token "$VERCEL_TOKEN" \
   --scope "$VERCEL_ORG_ID" 1>/dev/null
 
-DEPLOY_CMD=($PKG_RUNNER --yes vercel@latest)
+DEPLOY_CMD=(pnpx vercel@latest)
 
 if [[ "$USE_PREBUILT" == "true" ]]; then
   log "Building locally with 'vercel build'..."
-  $PKG_RUNNER --yes vercel@latest build 1>/dev/null
+  pnpx vercel@latest build 1>/dev/null
   DEPLOY_CMD+=(deploy --prebuilt)
 else
   # Deploy from source; Vercel will build remotely
