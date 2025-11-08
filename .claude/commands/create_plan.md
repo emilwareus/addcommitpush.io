@@ -24,8 +24,8 @@ Please provide:
 
 I'll analyze this information and work with you to create a comprehensive plan.
 
-Tip: You can also invoke this command with a ticket file directly: `/create_plan thoughts/allison/tickets/eng_1234.md`
-For deeper analysis, try: `/create_plan think deeply about thoughts/allison/tickets/eng_1234.md`
+Tip: You can also invoke this command with a ticket file directly: `/create_plan thoughts/emil/tickets/eng_1234.md`
+For deeper analysis, try: `/create_plan think deeply about thoughts/emil/tickets/eng_1234.md`
 ```
 
 Then wait for the user's input.
@@ -279,7 +279,7 @@ After structure approval:
 
 ## References
 
-- Original ticket: `thoughts/allison/tickets/eng_XXXX.md`
+- Original ticket: `thoughts/emil/tickets/eng_XXXX.md`
 - Related research: `thoughts/shared/research/[relevant].md`
 - Similar implementation: `[file:line]`
 
@@ -448,7 +448,7 @@ tasks = [
 User: /implementation_plan
 Assistant: I'll help you create a detailed implementation plan...
 
-User: We need to add parent-child tracking for Claude sub-tasks. See thoughts/allison/tickets/eng_1478.md
+User: We need to add parent-child tracking for Claude sub-tasks. See thoughts/emil/tickets/eng_1478.md
 Assistant: Let me read that ticket file completely first...
 
 [Reads file fully]
