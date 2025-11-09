@@ -49,7 +49,7 @@ export function ContextEngineeringClaudeCodeContent() {
           In practice, that means moving away from cramming everything into a single prompt and
           toward a system where workflows are orchestrated, analysis is specialized, and
           context-bloating tasks are offloaded. This note distills a working architecture built
-          around three layers:
+          around two layers:
         </p>
 
         <BlogList variant="unordered">
