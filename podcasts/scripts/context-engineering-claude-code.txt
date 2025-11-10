@@ -25,9 +25,9 @@ Commands: Workflow Orchestration
 
 Commands encapsulate repeatable workflows. Each orchestrates a complete workflow, spawning specialized agents and producing git-tracked artifacts. Core commands:
 
-Command: “research codebase.” Purpose: Spawns parallel agents (locator, analyzer, pattern-finder, web-search-researcher) to explore codebase and web. Reads mentioned files fully before delegating. Output: thoughts/shared/research/ YYYY-MM-DD_topic.md
+Command: “research codebase.” Purpose: Spawns parallel agents (locator, analyzer, pattern-finder, web-search-researcher) to explore codebase and web. Reads mentioned files fully before delegating. Output: thoughts/shared/research/ date prefixed markdown file with research.
 
-Command: “create plan.” Purpose: Reads research + tickets, asks clarifying questions, proposes design options, iterates with the user, writes spec with success criteria. Output: thoughts/shared/plans/ feature-name.md
+Command: “create plan.” Purpose: Reads research + tickets, asks clarifying questions, proposes design options, iterates with the user, writes spec with success criteria. Output: thoughts/shared/plans/ markdown file with plan.
 
 Command: “implement plan.” Purpose: Executes approved plan phases sequentially, updates checkboxes, adapts when reality differs from spec, runs build/lint/typecheck per phase. Output: Code changes + updated plan checkboxes
 
