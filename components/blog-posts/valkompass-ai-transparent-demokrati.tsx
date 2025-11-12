@@ -18,7 +18,7 @@ export function ValkompassAiTransparentDemokratiContent() {
         <p>
           Demokrati kräver informerade väljare. I Sverige 2025 står vi inför en paradox: vi har{' '}
           <a
-            href="https://www.scb.se/valstatistik/"
+            href="https://www.scb.se/hitta-statistik/sverige-i-siffror/manniskorna-i-sverige/valdeltagande-i-sverige/"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -26,7 +26,7 @@ export function ValkompassAiTransparentDemokratiContent() {
           </a>{' '}
           – samtidigt visar{' '}
           <a
-            href="https://www.medieakademin.se/fortroendebarometern/"
+            href="https://medieakademin.se/fortroendebarometern/"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -65,11 +65,11 @@ export function ValkompassAiTransparentDemokratiContent() {
           själv&quot; – den får endast söka i vår kunskapsbas och sammanfatta dokument. Tekniskt
           använder vi en hårt begränsad RAG-arkitektur (Retrieval-Augmented Generation) med{' '}
           <a
-            href="https://ai.google.dev/gemini-api"
+            href="https://ai.google.dev/gemini-api/docs"
             target="_blank"
             rel="noopener noreferrer"
           >
-            Google Gemini 2.5 Flash
+            Google Gemini 2.5 Flash
           </a>
           , men svaren måste alltid bottna i källor. Den kan inte fantisera utan citerar och
           sammanfattar endast från godkända dokument, med länkar och gärna ordagranna citat. Finns
@@ -107,7 +107,7 @@ export function ValkompassAiTransparentDemokratiContent() {
           granska, kritisera och förbättra. Tycker du vi gjort fel val i teknik, data eller
           styrning av AIn – hjälp oss göra den bättre. Koden och data finns på{' '}
           <a
-            href="https://www.github.com/valkompass-ai/valkompass-ai"
+            href="https://github.com/valkompass-ai/valkompass-ai"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -134,7 +134,11 @@ export function ValkompassAiTransparentDemokratiContent() {
         <BlogList variant="unordered">
           <BlogListItem>
             Utöka politiska datan till voteringar, protokoll och budgetar (via{' '}
-            <a href="https://data.riksdagen.se/" target="_blank" rel="noopener noreferrer">
+            <a
+              href="https://www.riksdagen.se/sv/dokument-och-lagar/riksdagens-oppna-data/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Riksdagens öppna data
             </a>
             ).
@@ -142,7 +146,7 @@ export function ValkompassAiTransparentDemokratiContent() {
           <BlogListItem>
             Göra statistik tillgänglig från{' '}
             <a
-              href="https://www.scb.se/vara-tjanster/oppna-data/api-for-oppna-data/"
+              href="https://www.scb.se/vara-tjanster/oppna-data/"
               target="_blank"
               rel="noopener noreferrer"
             >
