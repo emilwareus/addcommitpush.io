@@ -12,6 +12,15 @@ export interface Post {
 
 const posts: Post[] = [
   {
+    title: 'Valkompass.ai - Transparent demokrati med AI',
+    slug: 'valkompass-ai-transparent-demokrati',
+    description:
+      'Hur vi bygger ett verktyg för att göra svensk politik mer tillgänglig genom AI-driven analys av officiella dokument, helt transparent och öppet.',
+    publishedAt: '2025-11-12',
+    tags: ['ai', 'demokrati', 'open-source', 'sverige'],
+    readTime: '5 min read',
+  },
+  {
     title: 'Recruiting engineers as a startup',
     slug: 'recruiting-engineers-as-a-startup',
     description:
