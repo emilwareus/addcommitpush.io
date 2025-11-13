@@ -13,6 +13,7 @@ export function ValkompassAiTransparentDemokratiContent() {
           prose-ul:text-foreground prose-ul:my-6
           prose-li:text-foreground prose-li:my-2"
       >
+        {/* TODO: Add cover image */}
         <BlogHeading level={1}>Valkompass.ai</BlogHeading>
 
         <p>
