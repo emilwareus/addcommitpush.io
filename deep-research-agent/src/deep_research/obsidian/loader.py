@@ -21,12 +21,12 @@ class SessionLoader:
 
         Args:
             session_id: Session ID (e.g., "session_20250120_142530_abc123")
-            version: Session version (default 1)
+            version: Session version (ignored in new structure, kept for compatibility)
 
         Returns:
             ResearchSession object with full context
         """
-        session_file = self.vault_path / "sessions" / f"{session_id}_v{version}.md"
+        session_file = self.vault_path / session_id / "session.md"
 
         if not session_file.exists():
             raise FileNotFoundError(f"Session not found: {session_file}")
@@ -66,7 +66,7 @@ class SessionLoader:
 
     def _load_workers(self, session_id: str) -> list[WorkerFullContext]:
         """Load all workers for a session."""
-        workers_dir = self.vault_path / "workers" / session_id
+        workers_dir = self.vault_path / session_id / "workers"
 
         if not workers_dir.exists():
             return []
@@ -233,7 +233,7 @@ class SessionLoader:
 
     def _load_report(self, session_id: str, version: int) -> str:
         """Load report content."""
-        report_file = self.vault_path / "reports" / f"{session_id}_report_v{version}.md"
+        report_file = self.vault_path / session_id / "reports" / f"report_v{version}.md"
 
         if not report_file.exists():
             return ""
@@ -266,13 +266,19 @@ class SessionLoader:
         Returns:
             List of dicts with session metadata
         """
-        sessions_dir = self.vault_path / "sessions"
-
-        if not sessions_dir.exists():
+        if not self.vault_path.exists():
             return []
 
         sessions = []
-        for session_file in sorted(sessions_dir.glob("session_*_v*.md")):
+        # Each session is now a directory with session.md inside
+        for session_dir in sorted(self.vault_path.glob("session_*")):
+            if not session_dir.is_dir():
+                continue
+
+            session_file = session_dir / "session.md"
+            if not session_file.exists():
+                continue
+
             content = session_file.read_text()
             frontmatter, _ = self._parse_frontmatter(content)
 

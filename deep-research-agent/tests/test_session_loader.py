@@ -319,9 +319,9 @@ async def test_parse_react_trace(tmp_path: Path, sample_session: ResearchSession
         mock_extract.return_value = []
         await writer.write_session(sample_session)
 
-    # Load worker file
+    # Load worker file (new structure)
     loader = SessionLoader(vault_path=str(tmp_path))
-    worker_file = tmp_path / "workers" / "session_test_123" / "task_1_worker.md"
+    worker_file = tmp_path / "session_test_123" / "workers" / "task_1_worker.md"
     content = worker_file.read_text()
 
     _, body = loader._parse_frontmatter(content)
