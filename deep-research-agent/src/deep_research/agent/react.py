@@ -1,4 +1,5 @@
 """ReAct agent implementation."""
+from datetime import datetime
 import re
 from dataclasses import dataclass
 from typing import Any
@@ -124,6 +125,7 @@ class ReactAgent:
         self.prompt_tokens = 0
         self.completion_tokens = 0
         self.visited_urls: set[str] = set()  # Track actually fetched URLs
+        self.react_iterations: list[dict[str, Any]] = []  # Track for export
 
     async def research(self, query: str) -> ResearchReport:
         """Execute research on query."""
@@ -133,6 +135,7 @@ class ReactAgent:
         self.prompt_tokens = 0
         self.completion_tokens = 0
         self.visited_urls = set()  # Reset visited URLs
+        self.react_iterations = []  # Reset iterations
 
         # Initialize messages
         self.messages = [
@@ -167,6 +170,7 @@ class ReactAgent:
                         "prompt_tokens": self.prompt_tokens,
                         "completion_tokens": self.completion_tokens,
                         "visited_sources": len(visited_sources),
+                        "react_iterations": self.react_iterations,
                         **self._build_cost_metadata(),
                     },
                 )
@@ -198,7 +202,7 @@ class ReactAgent:
         )
 
     async def _step(self) -> str:
-        """Execute one ReAct step."""
+        """Execute one ReAct step with full trace capture."""
         self.iterations += 1
         verbose.iteration(self.iterations, self.max_iterations)
         logger.info("reasoning_step", iteration=self.iterations, max_iterations=self.max_iterations)
@@ -221,10 +225,8 @@ class ReactAgent:
             # Return a fallback response to continue gracefully
             raise RuntimeError(f"LLM invocation failed: {str(e)}")
 
-        # Show the LLM's thinking
+        # Extract thought (content before tool calls)
         thought_text = ""
-
-        # Handle different content formats
         if isinstance(content, str):
             thought_text = content
         elif isinstance(content, list):
@@ -236,31 +238,48 @@ class ReactAgent:
                     thought_text += block
 
         # Clean up and extract meaningful thoughts
-        if thought_text:
+        display_thought = thought_text
+        if display_thought:
             # Remove answer tags if present
-            if "<answer>" in thought_text:
-                thought_text = thought_text.split("<answer>")[0].strip()
+            if "<answer>" in display_thought:
+                display_thought = display_thought.split("<answer>")[0].strip()
 
             # Remove tool_calls tags if present (some models wrap them)
-            if "<tool_calls>" in thought_text:
-                thought_text = thought_text.split("<tool_calls>")[0].strip()
+            if "<tool_calls>" in display_thought:
+                display_thought = display_thought.split("<tool_calls>")[0].strip()
 
             # Show the thought if it's substantial
-            thought_text = thought_text.strip()
-            if len(thought_text) > 20:  # At least 20 chars to be meaningful
+            display_thought = display_thought.strip()
+            if len(display_thought) > 20:  # At least 20 chars to be meaningful
                 # Limit to 800 chars for readability
-                display_text = thought_text[:800]
-                if len(thought_text) > 800:
-                    display_text += "..."
-                verbose.thinking(display_text)
+                preview_text = display_thought[:800]
+                if len(display_thought) > 800:
+                    preview_text += "..."
+                verbose.thinking(preview_text)
+
+        # Track tool calls for this iteration
+        iteration_tool_calls: list[dict[str, Any]] = []
+        combined_observation = ""
 
         # Add AI message to history
         self.messages.append(response)
 
-        # Execute tool calls if present
+        # Check for answer
+        if self._has_answer(str(content)):
+            # Capture final iteration (thought only, no actions)
+            self.react_iterations.append({
+                "iteration": self.iterations,
+                "thought": thought_text,
+                "actions": [],
+                "observation": "",
+                "timestamp": datetime.now().isoformat(),
+            })
+            return str(content)
+
+        # Execute tool calls
         if hasattr(response, "tool_calls") and response.tool_calls:
             # Show tool decisions as reasoning when there's no text content
-            if not thought_text or len(thought_text) < 20:
+            if not display_thought or len(display_thought) < 20:
                 for tool_call in response.tool_calls:
                     tool_name = tool_call["name"]
                     args = tool_call["args"]
@@ -281,6 +300,11 @@ class ReactAgent:
 
             logger.info("agent_taking_action", num_tools=len(response.tool_calls))
             for tool_call in response.tool_calls:
+                # Capture tool call metadata
+                tool_start = datetime.now()
+                tool_success = True
+                tool_result = ""
+
                 # Log the tool execution with args
                 args_str = str(tool_call["args"])
                 if len(args_str) > 100:
@@ -288,24 +312,51 @@ class ReactAgent:
                 logger.debug("tool_executing", tool=tool_call["name"], args=args_str)
 
                 # Find and execute the tool
-                tool_result = ""
                 for tool_instance in self.tools:
                     if tool_instance.name == tool_call["name"]:
                         try:
                             verbose.print(f"Executing {tool_call['name']} with args: {tool_call['args']}", style="dim")
-                            tool_result = await tool_instance.ainvoke(tool_call["args"])
-                            verbose.print(f"Tool {tool_call['name']} returned {len(str(tool_result))} chars", style="dim")
+                            result_val = await tool_instance.ainvoke(tool_call["args"])
+                            tool_result = str(result_val)
+                            verbose.print(f"Tool {tool_call['name']} returned {len(tool_result)} chars", style="dim")
                             logger.debug("tool_success", tool=tool_call["name"])
+                            
+                            combined_observation += f"Tool {tool_call['name']} output:\n{tool_result[:500]}...\n\n"
                         except Exception as e:
                             logger.error("tool_error", tool=tool_call["name"], error=str(e))
                             verbose.error(f"Tool {tool_call['name']} failed: {str(e)}")
                             tool_result = f"Tool error: {str(e)}"
+                            tool_success = False
+                            combined_observation += f"Tool {tool_call['name']} error: {str(e)}\n\n"
                         break
+
+                # Record tool call
+                tool_end = datetime.now()
+                tool_duration = (tool_end - tool_start).total_seconds()
+                
+                iteration_tool_calls.append({
+                    "tool_name": tool_call["name"],
+                    "arguments": tool_call["args"],
+                    "result": tool_result,
+                    "success": tool_success,
+                    "duration_seconds": tool_duration,
+                    "timestamp": tool_start.isoformat(),
+                    "iteration": self.iterations,
+                })
 
                 # Add tool result to messages
                 self.messages.append(
-                    ToolMessage(content=str(tool_result), tool_call_id=tool_call["id"])
+                    ToolMessage(content=tool_result, tool_call_id=tool_call["id"])
                 )
+
+        # Capture complete iteration
+        self.react_iterations.append({
+            "iteration": self.iterations,
+            "thought": thought_text,
+            "actions": iteration_tool_calls,
+            "observation": combined_observation,
+            "timestamp": datetime.now().isoformat(),
+        })
 
         return str(content)
 

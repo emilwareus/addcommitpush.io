@@ -26,6 +26,7 @@ dependencies = [
     "jupyter-client>=8.6.0",
     "nbconvert>=7.16.0",
     "scikit-learn>=1.5.0",
+    "pyyaml>=6.0.0",
 ]
 
 [project.optional-dependencies]
@@ -52,6 +53,7 @@ dev = [
     "mypy>=1.13.0",
     "pandas-stubs>=2.2.0",
     "types-seaborn>=0.13.0",
+    "types-pyyaml>=6.0.0",
     "ipykernel>=7.1.0",
 ]
 

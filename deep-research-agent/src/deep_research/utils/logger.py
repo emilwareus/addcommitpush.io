@@ -88,7 +88,7 @@ def get_logger(name: str) -> Any:
             processors=[
                 structlog.processors.TimeStamper(fmt="iso"),
                 structlog.processors.add_log_level,
-                _console_renderer,
+                _console_renderer,  # type: ignore[list-item]
             ],
         )
 

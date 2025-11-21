@@ -45,3 +45,13 @@ TODO.md
 
 # temporary audio generation files
 .tmp-audio/
+outputs/sessions/.obsidian/app.json
+outputs/sessions/.obsidian/appearance.json
+outputs/sessions/.obsidian/core-plugins.json
+outputs/sessions/.obsidian/graph.json
+outputs/sessions/.obsidian/workspace.json
+outputs/sessions/deep research/.obsidian/app.json
+outputs/sessions/deep research/.obsidian/appearance.json
+outputs/sessions/deep research/.obsidian/core-plugins.json
+outputs/sessions/deep research/.obsidian/graph.json
+outputs/sessions/deep research/.obsidian/workspace.json

@@ -1,5 +1,6 @@
 """LeadResearcher orchestrator using LangGraph."""
 
+from datetime import datetime
 import json
 from typing import Any
 
@@ -10,10 +11,11 @@ from pydantic import BaseModel, ValidationError
 
 from ..llm.client import get_llm
 from ..models import SupportedModel
+from ..obsidian.writer import ObsidianWriter
 from ..utils.logger import get_logger
 from ..utils.progress import NoOpProgress, ProgressCallback
 from ..utils.tokens import count_tokens
-from .state import ResearchState
+from .state import ReActIteration, ResearchSession, ResearchState, ToolCall
 from .worker import WorkerAgent
 
 logger = get_logger(__name__)
@@ -61,9 +63,27 @@ class LeadResearcher:
         self.progress = progress or NoOpProgress()
         self.graph = self._build_graph()
         self._reset_usage_tracking()
+        self.session: ResearchSession | None = None
+        self.obsidian_writer = ObsidianWriter(vault_path="outputs/obsidian")
 
     async def research(self, query: str) -> dict[str, Any]:
         """Execute multi-agent research."""
+        # Initialize session
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        session_hash = abs(hash(query)) % 1000000  # 6-digit hash
+        session_id = f"session_{timestamp}_{session_hash:06d}"
+
+        self.session = ResearchSession(
+            session_id=session_id,
+            version=1,
+            parent_session_id=None,
+            query=query,
+            complexity_score=0.0,
+            status="running",
+            created_at=datetime.now().isoformat(),
+            model=self.model,
+        )
+
         self._reset_usage_tracking()
         initial_state: ResearchState = {
             "query": query,
@@ -76,7 +96,44 @@ class LeadResearcher:
         }
 
         result = await self.graph.ainvoke(initial_state)
-        return self._attach_cost_metadata(result)
+
+        # Enrich result with cost metadata first
+        result = self._attach_cost_metadata(result)
+
+        # Update session with results
+        self.session.report = result["report"]
+        self.session.all_sources = result["sources"]
+        self.session.status = "completed"
+        self.session.updated_at = datetime.now().isoformat()
+        self.session.cost = result["metadata"].get("cost", {}).get("total_cost", 0.0)
+        self.session.tokens = {
+            "prompt": result["metadata"].get("prompt_tokens", 0),
+            "completion": result["metadata"].get("completion_tokens", 0),
+            "total": result["metadata"].get("prompt_tokens", 0) + result["metadata"].get("completion_tokens", 0),
+        }
+
+        # Attach session metadata to result
+        result["metadata"]["session_id"] = session_id
+        result["metadata"]["session_version"] = 1
+
+        # Write to Obsidian (always enabled)
+        try:
+            session_path = await self.obsidian_writer.write_session(self.session)
+            result["metadata"]["obsidian_session_path"] = str(session_path)
+            logger.info(
+                "obsidian_session_written",
+                session_id=self.session.session_id,
+                path=str(session_path),
+            )
+        except Exception as e:
+            logger.error(
+                "obsidian_write_failed",
+                session_id=self.session.session_id,
+                error=str(e),
+            )
+            # Don't fail the research - continue without Obsidian output
+
+        return result
 
     def _build_graph(self) -> Any:
         """Build LangGraph workflow."""
@@ -139,6 +196,10 @@ Your response must be a JSON object with:
             )
 
         analysis = self._parse_query_analysis(response.content)
+        
+        if self.session:
+            self.session.complexity_score = analysis.complexity
+
         logger.info(
             "query_analysis_complete",
             complexity=analysis.complexity,
@@ -192,7 +253,7 @@ Example format:
 
         # Invoke LLM to generate sub-tasks with retry logic
         max_retries = 3
-        last_error = None
+        last_error: Exception | None = None
 
         for attempt in range(max_retries):
             try:
@@ -217,6 +278,10 @@ Example format:
                 )
 
                 sub_tasks = self._parse_sub_tasks(response.content)
+                
+                if self.session:
+                    self.session.sub_tasks = [task.model_dump() for task in sub_tasks]
+
                 logger.info("research_plan_created", num_tasks=len(sub_tasks))
                 for i, task in enumerate(sub_tasks, 1):
                     obj_preview = task.objective[:100]
@@ -343,13 +408,41 @@ Example format:
 
             # Add timeout to prevent workers from hanging indefinitely (30 minutes)
             result = await asyncio.wait_for(
-                worker.execute(task["objective"]),
+                worker.execute(task["objective"], task_metadata=task),
                 timeout=1800.0
             )
             logger.debug("worker_execution_complete", worker_id=worker_id)
 
             # Compress findings
             summary = await self._compress(result.content, max_tokens=2000)
+
+            # NEW: Capture full context from worker
+            if self.session and hasattr(worker, "full_context") and worker.full_context:
+                full_ctx = worker.full_context
+
+                # Copy ReAct iterations from agent
+                if hasattr(worker.agent, "react_iterations"):
+                    full_ctx.react_iterations = [
+                        ReActIteration(
+                            iteration=it["iteration"],
+                            thought=it["thought"],
+                            actions=[ToolCall(**tc) for tc in it["actions"]],
+                            observation=it["observation"],
+                            timestamp=it["timestamp"],
+                        )
+                        for it in worker.agent.react_iterations
+                    ]
+                    full_ctx.tool_calls = [
+                        ToolCall(**tc)
+                        for it in worker.agent.react_iterations
+                        for tc in it["actions"]
+                    ]
+
+                # Store compressed summary (for synthesis)
+                full_ctx.compressed_summary = summary
+
+                # Add to session
+                self.session.workers.append(full_ctx)
 
             self.progress.on_worker_complete(worker_id)
 
