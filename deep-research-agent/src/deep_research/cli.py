@@ -650,6 +650,18 @@ def list_workers(session_id: str, vault_path: str, version: int) -> None:
     console.print(f"\n[dim]Session file: {vault_path}/sessions/{session_id}_v{version}.md[/dim]")
 
 
+@cli.command()
+def interactive() -> None:
+    """Start interactive REPL mode.
+
+    Example:
+        research interactive
+    """
+    from .repl.shell import interactive_repl
+
+    asyncio.run(interactive_repl())
+
+
 def main() -> None:
     """Main entry point."""
     cli()
