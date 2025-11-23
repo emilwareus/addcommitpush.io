@@ -6,25 +6,26 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/fatih/color"
 	"go-research/internal/events"
+
+	"github.com/fatih/color"
 )
 
 const (
-	panelHeight    = 5 // Lines per worker panel
-	maxThoughtLen  = 200
-	spinnerFrames  = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+	panelHeight   = 5 // Lines per worker panel
+	maxThoughtLen = 200
+	spinnerFrames = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
 )
 
 // WorkerPanel represents a single worker's display area
 type WorkerPanel struct {
-	WorkerNum   int
-	Objective   string
-	Status      string // "starting", "thinking", "tool", "complete", "failed"
-	Thought     string // Current thought/reasoning (streamed)
-	ToolName    string // Current tool being called
-	Iteration   int
-	spinnerIdx  int
+	WorkerNum  int
+	Objective  string
+	Status     string // "starting", "thinking", "tool", "complete", "failed"
+	Thought    string // Current thought/reasoning (streamed)
+	ToolName   string // Current tool being called
+	Iteration  int
+	spinnerIdx int
 }
 
 // MultiWorkerDisplay manages multiple worker panels with live updates
@@ -227,7 +228,7 @@ func (d *MultiWorkerDisplay) buildPanelLines(panel *WorkerPanel) []string {
 	// Line 1: Header [Icon Worker N: Objective]
 	headerText := fmt.Sprintf(" %s Worker %d: %s ", statusIcon, panel.WorkerNum, objTrunc)
 	headerLen := visualLength(headerText)
-	padding := 78 - headerLen
+	padding := 75 - headerLen
 	if padding < 0 {
 		padding = 0
 	}
@@ -238,7 +239,7 @@ func (d *MultiWorkerDisplay) buildPanelLines(panel *WorkerPanel) []string {
 	// Lines 2 & 3: Thought content (2 lines)
 	// We want to show the last 2 lines of thoughts to give a "streaming" feel
 	thoughtLines := d.wrapText(panel.Thought, 74)
-	
+
 	// Line 2
 	line1 := "..."
 	if len(thoughtLines) > 0 {
@@ -246,16 +247,18 @@ func (d *MultiWorkerDisplay) buildPanelLines(panel *WorkerPanel) []string {
 	}
 	if len(thoughtLines) > 1 {
 		// If we have multiple lines, show the last 2
-		// But wrapText returns from start. 
+		// But wrapText returns from start.
 		// Actually wrapText implementation takes the END of the text if it's too long.
 		// "if len(text) > maxLen*2 { text = text[len(text)-maxLen*2:] }"
 		// So wrapText returns the *latest* content split into lines.
 		// We should display them in order.
 		line1 = thoughtLines[0]
 	}
-	
+
 	pad1 := 74 - visualLength(line1)
-	if pad1 < 0 { pad1 = 0 }
+	if pad1 < 0 {
+		pad1 = 0
+	}
 	lines[1] = fmt.Sprintf("│ %s%s │", dim.Sprint(line1), strings.Repeat(" ", pad1))
 
 	// Line 3
@@ -264,7 +267,9 @@ func (d *MultiWorkerDisplay) buildPanelLines(panel *WorkerPanel) []string {
 		line2 = thoughtLines[1]
 	}
 	pad2 := 74 - visualLength(line2)
-	if pad2 < 0 { pad2 = 0 }
+	if pad2 < 0 {
+		pad2 = 0
+	}
 	lines[2] = fmt.Sprintf("│ %s%s │", dim.Sprint(line2), strings.Repeat(" ", pad2))
 
 	// Line 4: Status/Action
@@ -296,13 +301,13 @@ func (d *MultiWorkerDisplay) buildPanelLines(panel *WorkerPanel) []string {
 	default:
 		plainStatusText = " o waiting "
 	}
-	
+
 	statusLen := visualLength(plainStatusText)
-	bottomPadding := 78 - statusLen
+	bottomPadding := 75 - statusLen
 	if bottomPadding < 0 {
 		bottomPadding = 0
 	}
-	
+
 	lines[3] = fmt.Sprintf("└─%s%s┘", statusText, strings.Repeat("─", bottomPadding))
 
 	// Line 5: Spacer
