@@ -97,9 +97,10 @@ func (w *Writer) writeReport(dir string, sess *session.Session) error {
 	filename := filepath.Join(dir, "reports", fmt.Sprintf("report_v%d.md", sess.Version))
 
 	frontmatter := map[string]interface{}{
-		"version":   sess.Version,
-		"query":     sess.Query,
-		"generated": time.Now().Format(time.RFC3339),
+		"version":      sess.Version,
+		"query":        sess.Query,
+		"generated":    time.Now().Format(time.RFC3339),
+		"source_count": len(sess.Sources),
 	}
 
 	fm, err := yaml.Marshal(frontmatter)
@@ -113,6 +114,16 @@ func (w *Writer) writeReport(dir string, sess *session.Session) error {
 	content.WriteString("---\n\n")
 	content.WriteString("# Research Report\n\n")
 	content.WriteString(sess.Report)
+
+	// Add sources section
+	content.WriteString("\n\n---\n\n## Sources\n\n")
+	if len(sess.Sources) > 0 {
+		for _, src := range sess.Sources {
+			content.WriteString(fmt.Sprintf("- %s\n", src))
+		}
+	} else {
+		content.WriteString("*No sources collected*\n")
+	}
 
 	return os.WriteFile(filename, content.Bytes(), 0644)
 }
@@ -172,6 +183,16 @@ const sessionMOCTemplate = `---
 ## Reports
 
 - [[reports/report_v{{.Version}}.md|Report v{{.Version}}]]
+
+## Sources
+
+{{if .Sources}}
+{{range .Sources}}
+- {{.}}
+{{end}}
+{{else}}
+*No sources collected*
+{{end}}
 
 ## Stats
 
