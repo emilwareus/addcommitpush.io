@@ -6,7 +6,7 @@ import { StatusGrid } from './components/status-grid';
 import { StatusDashboard } from './status-dashboard';
 
 export const dynamic = 'force-dynamic'; // Don't pre-render at build time
-export const revalidate = 3600; // 1 hour
+export const revalidate = 3600 * 4; // 4 hour
 
 export const metadata = {
   title: 'Status - Emil Wareus',

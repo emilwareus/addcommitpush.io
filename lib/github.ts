@@ -1,4 +1,3 @@
-import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
 
 // Support multiple GitHub accounts
@@ -577,5 +576,4 @@ const getCachedGitHubData = unstable_cache(fetchGitHubDataInternal, ['github-sta
   revalidate: 3600 * 12, // 12 hours in seconds
 });
 
-// Add request-level deduplication
-export const getGitHubStatusData = cache(getCachedGitHubData);
+export const getGitHubStatusData = getCachedGitHubData;
