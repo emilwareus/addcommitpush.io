@@ -5,8 +5,8 @@ import type { DayActivity } from '@/lib/github';
 import { StatusGrid } from './components/status-grid';
 import { StatusDashboard } from './status-dashboard';
 
-export const dynamic = 'force-dynamic'; // Don't pre-render at build time
-export const revalidate = 3600 * 4; // 4 hour
+// ISR: statically generate at build, revalidate every 4 hours (shared by all users)
+export const revalidate = 14400; // 4 hours in seconds
 
 export const metadata = {
   title: 'Status - Emil Wareus',

@@ -6,8 +6,8 @@ import { getPostBySlug, getAllSlugs } from '@/lib/posts';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
+// Fully static: error if dynamic APIs are used
 export const dynamic = 'error';
-export const revalidate = false;
 
 export async function generateStaticParams() {
   const slugs = getAllSlugs();

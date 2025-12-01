@@ -1,8 +1,8 @@
 import { BlogCard } from '@/components/blog-card';
 import { getAllPosts } from '@/lib/posts';
 
+// Fully static: error if dynamic APIs are used
 export const dynamic = 'error';
-export const revalidate = false;
 
 export const metadata = {
   title: 'addcommitpush.io | Tech, Data, Leadership & Startups',
