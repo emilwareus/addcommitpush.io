@@ -164,7 +164,56 @@ func (d *MultiWorkerDisplay) HandleEvent(event events.Event) {
 				d.updatePanel(panel)
 			}
 		}
+
+	case events.EventAnalysisStarted:
+		msg := "Analyzing facts and cross-validating sources..."
+		if data, ok := event.Data.(map[string]interface{}); ok {
+			if m, ok := data["message"].(string); ok {
+				msg = m
+			}
+		}
+		d.printStatusLine(cyan.Sprintf("⚡ %s", msg))
+
+	case events.EventAnalysisProgress:
+		if data, ok := event.Data.(map[string]interface{}); ok {
+			if msg, ok := data["message"].(string); ok {
+				d.printStatusLine(cyan.Sprintf("  → %s", msg))
+			}
+		}
+
+	case events.EventAnalysisComplete:
+		d.printStatusLine(green.Sprint("✓ Analysis complete"))
+
+	case events.EventSynthesisStarted:
+		msg := "Synthesizing report from research findings..."
+		if data, ok := event.Data.(map[string]interface{}); ok {
+			if m, ok := data["message"].(string); ok {
+				msg = m
+			}
+		}
+		d.printStatusLine(cyan.Sprintf("⚡ %s", msg))
+
+	case events.EventSynthesisProgress:
+		if data, ok := event.Data.(map[string]interface{}); ok {
+			if msg, ok := data["message"].(string); ok {
+				d.printStatusLine(cyan.Sprintf("  → %s", msg))
+			}
+		}
+
+	case events.EventSynthesisComplete:
+		d.printStatusLine(green.Sprint("✓ Report synthesis complete"))
+
+	case events.EventCostUpdated:
+		if data, ok := event.Data.(events.CostUpdateData); ok {
+			msg := fmt.Sprintf("Cost update [%s]: $%.4f (%d tok)", data.Scope, data.TotalCost, data.TotalTokens)
+			d.printStatusLine(cyan.Sprintf("💰 %s", msg))
+		}
 	}
+}
+
+// printStatusLine prints a status line below all panels
+func (d *MultiWorkerDisplay) printStatusLine(msg string) {
+	fmt.Fprintf(d.w, "\n%s\n", msg)
 }
 
 // Stop finishes the display and moves cursor below panels
@@ -220,7 +269,12 @@ func (d *MultiWorkerDisplay) buildPanelLines(panel *WorkerPanel) []string {
 
 	// Header line with status indicator
 	statusIcon, statusColor := d.getStatusIndicator(panel.Status)
-	objTrunc := truncateStr(panel.Objective, 60)
+	iconWidth := visualLength(statusIcon)
+	// Calculate max objective length: total 78 - borders (3) - spaces/prefix (14) - icon
+	// " {icon} Worker N: {obj} " where prefix = " Worker N: " = 11, plus 2 spaces = 13
+	// But worker num can be 2 digits, so use 14 for safety
+	maxObjLen := 75 - 14 - iconWidth
+	objTrunc := truncateVisual(panel.Objective, maxObjLen)
 	if objTrunc == "" {
 		objTrunc = "Waiting..."
 	}
@@ -389,18 +443,83 @@ func truncateStr(s string, n int) string {
 	return string(r[:n]) + "..."
 }
 
+// truncateVisual truncates a string to fit within maxVisualWidth visual characters,
+// adding "..." suffix if truncated
+func truncateVisual(s string, maxVisualWidth int) string {
+	if visualLength(s) <= maxVisualWidth {
+		return s
+	}
+
+	// Reserve 3 chars for "..."
+	targetWidth := maxVisualWidth - 3
+	if targetWidth < 0 {
+		targetWidth = 0
+	}
+
+	// Build truncated string by visual width
+	var result []rune
+	width := 0
+	for _, r := range s {
+		var charWidth int
+		if r < 128 {
+			charWidth = 1
+		} else {
+			// Use same logic as visualLength
+			switch {
+			case r >= 0x2800 && r <= 0x28FF, // Braille
+				r >= 0x2500 && r <= 0x257F, // Box Drawing
+				r >= 0x2580 && r <= 0x259F, // Block Elements
+				r >= 0x25A0 && r <= 0x25FF, // Geometric Shapes
+				r == 0x2713 || r == 0x2717, // Check/X marks
+				r == 0x2022,                // Bullet
+				r >= 0x2700 && r <= 0x27BF: // Dingbats
+				charWidth = 1
+			default:
+				charWidth = 2
+			}
+		}
+
+		if width+charWidth > targetWidth {
+			break
+		}
+		result = append(result, r)
+		width += charWidth
+	}
+
+	return string(result) + "..."
+}
+
 // visualLength calculates the visual width of a string
-// assuming most non-ASCII characters are 2 cells wide
+// accounting for different character widths in terminals
 func visualLength(s string) int {
 	l := 0
 	for _, r := range s {
 		if r < 128 {
 			l++
 		} else {
-			// Braille patterns (spinner) are narrow
-			if r >= 0x2800 && r <= 0x28FF {
+			switch {
+			// Braille patterns (spinner) are single-width
+			case r >= 0x2800 && r <= 0x28FF:
 				l++
-			} else {
+			// Box Drawing characters are single-width
+			case r >= 0x2500 && r <= 0x257F:
+				l++
+			// Block Elements are single-width
+			case r >= 0x2580 && r <= 0x259F:
+				l++
+			// Geometric Shapes - most are single-width
+			case r >= 0x25A0 && r <= 0x25FF:
+				l++
+			// Miscellaneous Symbols - check mark ✓ (U+2713), ballot x ✗ (U+2717)
+			case r == 0x2713 || r == 0x2717:
+				l++
+			// General Punctuation - bullet • (U+2022)
+			case r == 0x2022:
+				l++
+			// Dingbats - some single-width
+			case r >= 0x2700 && r <= 0x27BF:
+				l++
+			default:
 				l += 2 // Assume wide for emojis/other unicode
 			}
 		}

@@ -625,6 +625,10 @@ The topic shows promise for future development.`,
 	if len(result.Workers) != 5 {
 		t.Errorf("Expected 5 workers, got %d", len(result.Workers))
 	}
+
+	if result.Cost.TotalTokens == 0 {
+		t.Error("expected deep research result to include aggregated cost")
+	}
 }
 
 func TestDeepResearchLowComplexity(t *testing.T) {
@@ -1685,6 +1689,327 @@ func TestResearchContextCancellation(t *testing.T) {
 	cancel() // Cancel immediately
 
 	_, err := reactAgent.Research(ctx, "Cancelled query")
+
+	if err == nil {
+		t.Error("Expected error due to context cancellation")
+	}
+}
+
+// =============================================================================
+// E2E Tests: Deep Research Orchestrator (State-of-the-Art Implementation)
+// =============================================================================
+
+func TestDeepOrchestratorFullWorkflow(t *testing.T) {
+	cfg := testConfig()
+	defer os.RemoveAll(filepath.Dir(cfg.StateFile))
+
+	bus := events.NewBus(100)
+	defer bus.Close()
+
+	// Mock LLM responses for the deep orchestrator workflow:
+	// 1. Perspective discovery
+	// 2. Query generation for each perspective (3 perspectives)
+	// 3. Fact extraction (3 times)
+	// 4. Gap identification (3 times)
+	// 5. Cross-validation
+	// 6. Gap detection
+	// 7. Report outline
+	// 8. Section writing (5 sections)
+	mockLLM := NewMockLLMClient(
+		// 1. Perspective discovery
+		`[
+			{"name": "Technical Expert", "focus": "Implementation details", "questions": ["How does it work technically?"]},
+			{"name": "Industry Analyst", "focus": "Market trends", "questions": ["What are the market trends?"]},
+			{"name": "End User", "focus": "Practical applications", "questions": ["How can users benefit?"]}
+		]`,
+		// 2-4. Query generation for each perspective
+		`["query about technical implementation", "how does the technology work"]`,
+		`["market analysis query", "industry trends"]`,
+		`["user experience query", "practical benefits"]`,
+		// 5-7. Fact extraction for each search
+		`[{"content": "Technical fact 1: The system uses neural networks", "source": "https://tech.example.com", "confidence": 0.9}]`,
+		`[{"content": "Market fact 1: Growing at 25% annually", "source": "https://market.example.com", "confidence": 0.8}]`,
+		`[{"content": "User fact 1: 90% satisfaction rate", "source": "https://user.example.com", "confidence": 0.85}]`,
+		// 8-10. Gap identification (empty = no gaps = sufficient coverage)
+		`[]`,
+		`[]`,
+		`[]`,
+		// 11. Cross-validation
+		`[{"content": "Technical fact 1: The system uses neural networks", "validation_score": 0.9, "corroborated_by": ["https://tech.example.com"]}]`,
+		// 12. Contradiction detection
+		`[]`,
+		// 13. Knowledge gaps
+		`[]`,
+		// 14. Report outline
+		`["Introduction", "Technical Overview", "Market Analysis", "User Experience", "Conclusion"]`,
+		// 15-19. Section writing (5 sections)
+		`This research report examines the topic from multiple perspectives, providing a comprehensive analysis.`,
+		`The technical implementation relies on advanced neural network architectures. [source: https://tech.example.com]`,
+		`The market shows strong growth at 25% annually, driven by increasing adoption. [source: https://market.example.com]`,
+		`End users report 90% satisfaction rates with the technology. [source: https://user.example.com]`,
+		`In conclusion, the technology shows promise across technical, market, and user dimensions.`,
+	)
+
+	mockTools := NewMockToolExecutor()
+
+	// Create deep orchestrator with mocks
+	orch := orchestrator.NewDeepOrchestrator(bus, cfg,
+		orchestrator.WithDeepClient(mockLLM),
+		orchestrator.WithDeepTools(mockTools),
+	)
+
+	ctx := context.Background()
+	result, err := orch.Research(ctx, "How do modern AI systems work?")
+
+	// Assertions
+	if err != nil {
+		t.Fatalf("Deep research failed: %v", err)
+	}
+
+	// Verify plan was created with perspectives
+	if result.Plan == nil {
+		t.Fatal("Expected plan to be created")
+	}
+
+	if len(result.Plan.Perspectives) != 3 {
+		t.Errorf("Expected 3 perspectives, got %d", len(result.Plan.Perspectives))
+	}
+
+	// Verify perspectives are correct
+	expectedPerspectives := []string{"Technical Expert", "Industry Analyst", "End User"}
+	for i, expected := range expectedPerspectives {
+		if result.Plan.Perspectives[i].Name != expected {
+			t.Errorf("Expected perspective %d to be '%s', got '%s'",
+				i, expected, result.Plan.Perspectives[i].Name)
+		}
+	}
+
+	// Verify search results were collected
+	if len(result.SearchResults) == 0 {
+		t.Error("Expected search results to be collected")
+	}
+
+	// Verify report was generated
+	if result.Report == nil {
+		t.Fatal("Expected report to be generated")
+	}
+
+	if result.Report.FullContent == "" {
+		t.Error("Expected report to have content")
+	}
+
+	// Verify report has meaningful content (at least 100 chars)
+	if len(result.Report.FullContent) < 100 {
+		t.Errorf("Report content too short (%d chars), expected meaningful content", len(result.Report.FullContent))
+	}
+
+	// Verify report has section structure (## headings)
+	if !strings.Contains(result.Report.FullContent, "##") {
+		t.Error("Report should have section headings (##)")
+	}
+
+	// Verify sources section exists (always added by compileReport)
+	if !strings.Contains(result.Report.FullContent, "## Sources") {
+		t.Error("Report should contain Sources section")
+	}
+
+	// Note: Citations may be empty if mock tool results don't get URL-parsed correctly
+	// The important thing is the workflow completes and produces a report
+
+	// Verify duration was tracked
+	if result.Duration <= 0 {
+		t.Error("Expected duration to be tracked")
+	}
+
+	if result.Cost.TotalTokens == 0 {
+		t.Error("Expected aggregated cost to be tracked")
+	}
+	if result.Report.Cost.TotalTokens == 0 {
+		t.Error("Expected report to include synthesis cost")
+	}
+}
+
+func TestDeepOrchestratorWithPerspectiveDiscoveryFallback(t *testing.T) {
+	cfg := testConfig()
+	defer os.RemoveAll(filepath.Dir(cfg.StateFile))
+
+	bus := events.NewBus(100)
+	defer bus.Close()
+
+	// First response is malformed (will trigger default perspectives)
+	// Then provide valid responses for the rest of the workflow
+	mockLLM := NewMockLLMClient(
+		// 1. Malformed perspective discovery (triggers fallback)
+		`not valid json`,
+		// 2-4. Query generation for default perspectives (3)
+		`["technical query"]`,
+		`["practical query"]`,
+		`["limitations query"]`,
+		// 5-7. Fact extraction
+		`[{"content": "Fact 1", "source": "https://example.com", "confidence": 0.8}]`,
+		`[{"content": "Fact 2", "source": "https://example2.com", "confidence": 0.7}]`,
+		`[{"content": "Fact 3", "source": "https://example3.com", "confidence": 0.75}]`,
+		// 8-10. Gap identification
+		`[]`,
+		`[]`,
+		`[]`,
+		// 11. Cross-validation
+		`[]`,
+		// 12. Contradiction detection
+		`[]`,
+		// 13. Knowledge gaps
+		`[]`,
+		// 14. Report outline
+		`["Introduction", "Analysis", "Conclusion"]`,
+		// 15-17. Section writing
+		`Introduction to the topic.`,
+		`Detailed analysis of the subject.`,
+		`Concluding remarks.`,
+	)
+
+	mockTools := NewMockToolExecutor()
+
+	orch := orchestrator.NewDeepOrchestrator(bus, cfg,
+		orchestrator.WithDeepClient(mockLLM),
+		orchestrator.WithDeepTools(mockTools),
+	)
+
+	ctx := context.Background()
+	result, err := orch.Research(ctx, "Test with fallback perspectives")
+
+	if err != nil {
+		t.Fatalf("Deep research failed: %v", err)
+	}
+
+	// Should use default perspectives when discovery fails
+	if result.Plan == nil {
+		t.Fatal("Expected plan to be created")
+	}
+
+	// Default perspectives are: Technical Expert, Practical User, Critic
+	if len(result.Plan.Perspectives) != 3 {
+		t.Errorf("Expected 3 default perspectives, got %d", len(result.Plan.Perspectives))
+	}
+
+	// Verify report was still generated
+	if result.Report == nil || result.Report.FullContent == "" {
+		t.Error("Expected report to be generated even with fallback perspectives")
+	}
+}
+
+func TestDeepOrchestratorEventsEmitted(t *testing.T) {
+	cfg := testConfig()
+	defer os.RemoveAll(filepath.Dir(cfg.StateFile))
+
+	bus := events.NewBus(100)
+	defer bus.Close()
+
+	// Subscribe to events
+	eventCh := bus.Subscribe(
+		events.EventResearchStarted,
+		events.EventPlanCreated,
+		events.EventWorkerStarted,
+		events.EventWorkerProgress,
+		events.EventWorkerComplete,
+		events.EventSynthesisStarted,
+		events.EventSynthesisComplete,
+	)
+
+	// Minimal mock responses
+	mockLLM := NewMockLLMClient(
+		// Perspectives (just 1 for simplicity)
+		`[{"name": "Expert", "focus": "Details", "questions": ["What?"]}]`,
+		// Query generation
+		`["search query"]`,
+		// Fact extraction
+		`[{"content": "A fact", "source": "https://example.com", "confidence": 0.9}]`,
+		// Gap identification (no gaps)
+		`[]`,
+		// Cross-validation
+		`[]`,
+		// Contradictions
+		`[]`,
+		// Knowledge gaps
+		`[]`,
+		// Outline
+		`["Section 1"]`,
+		// Section content
+		`Content for section 1.`,
+	)
+
+	mockTools := NewMockToolExecutor()
+
+	orch := orchestrator.NewDeepOrchestrator(bus, cfg,
+		orchestrator.WithDeepClient(mockLLM),
+		orchestrator.WithDeepTools(mockTools),
+	)
+
+	ctx := context.Background()
+	_, err := orch.Research(ctx, "Test events")
+
+	if err != nil {
+		t.Fatalf("Deep research failed: %v", err)
+	}
+
+	// Collect events with timeout
+	receivedEvents := make(map[events.EventType]int)
+	timeout := time.After(500 * time.Millisecond)
+collectLoop:
+	for {
+		select {
+		case event := <-eventCh:
+			receivedEvents[event.Type]++
+		case <-timeout:
+			break collectLoop
+		}
+	}
+
+	// Verify key events were emitted
+	expectedEvents := []events.EventType{
+		events.EventResearchStarted,
+		events.EventPlanCreated,
+		events.EventWorkerStarted,
+		events.EventSynthesisStarted,
+		events.EventSynthesisComplete,
+	}
+
+	for _, eventType := range expectedEvents {
+		if receivedEvents[eventType] == 0 {
+			t.Errorf("Expected event %v to be emitted", eventType)
+		}
+	}
+
+	// PlanCreated should have worker count of 1 (1 perspective)
+	if receivedEvents[events.EventPlanCreated] != 1 {
+		t.Errorf("Expected 1 PlanCreated event, got %d", receivedEvents[events.EventPlanCreated])
+	}
+}
+
+func TestDeepOrchestratorContextCancellation(t *testing.T) {
+	cfg := testConfig()
+	defer os.RemoveAll(filepath.Dir(cfg.StateFile))
+
+	bus := events.NewBus(100)
+	defer bus.Close()
+
+	// Mock with many responses that would take a while
+	responses := make([]string, 50)
+	for i := range responses {
+		responses[i] = `["query"]`
+	}
+	mockLLM := NewMockLLMClient(responses...)
+
+	mockTools := NewMockToolExecutor()
+
+	orch := orchestrator.NewDeepOrchestrator(bus, cfg,
+		orchestrator.WithDeepClient(mockLLM),
+		orchestrator.WithDeepTools(mockTools),
+	)
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel immediately
+
+	_, err := orch.Research(ctx, "Cancelled deep research")
 
 	if err == nil {
 		t.Error("Expected error due to context cancellation")

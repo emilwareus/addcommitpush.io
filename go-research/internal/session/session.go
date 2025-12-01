@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"go-research/internal/llm"
+
 	"github.com/google/uuid"
 )
 
@@ -121,6 +123,24 @@ func (c *CostBreakdown) Add(other CostBreakdown) {
 	c.InputCost += other.InputCost
 	c.OutputCost += other.OutputCost
 	c.TotalCost += other.TotalCost
+}
+
+// NewCostBreakdown constructs a cost breakdown from token usage.
+func NewCostBreakdown(model string, inputTokens, outputTokens, totalTokens int) CostBreakdown {
+	if totalTokens == 0 {
+		totalTokens = inputTokens + outputTokens
+	}
+
+	inputCost, outputCost, totalCost := llm.CalculateCost(model, inputTokens, outputTokens)
+
+	return CostBreakdown{
+		InputTokens:  inputTokens,
+		OutputTokens: outputTokens,
+		TotalTokens:  totalTokens,
+		InputCost:    inputCost,
+		OutputCost:   outputCost,
+		TotalCost:    totalCost,
+	}
 }
 
 // New creates a new session

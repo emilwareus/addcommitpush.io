@@ -17,7 +17,11 @@ const (
 	EventResearchStarted EventType = iota
 	EventQueryAnalyzed
 	EventPlanCreated
+	EventAnalysisStarted
+	EventAnalysisProgress
+	EventAnalysisComplete
 	EventSynthesisStarted
+	EventSynthesisProgress
 	EventSynthesisComplete
 	EventResearchComplete
 	EventResearchFailed
@@ -37,6 +41,7 @@ const (
 	EventToolResult
 	EventAnswerFound
 	EventLLMChunk // Streaming LLM output
+	EventCostUpdated
 
 	// Session events
 	EventSessionCreated
@@ -90,4 +95,15 @@ type LLMChunkData struct {
 type PlanCreatedData struct {
 	WorkerCount int
 	Complexity  float64
+}
+
+// CostUpdateData captures cost information emitted during research.
+type CostUpdateData struct {
+	Scope        string
+	InputTokens  int
+	OutputTokens int
+	TotalTokens  int
+	InputCost    float64
+	OutputCost   float64
+	TotalCost    float64
 }

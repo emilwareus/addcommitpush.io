@@ -40,6 +40,13 @@ func (v *Visualizer) Start() {
 		events.EventLLMChunk,
 		events.EventToolCall,
 		events.EventIterationStarted,
+		events.EventAnalysisStarted,
+		events.EventAnalysisProgress,
+		events.EventAnalysisComplete,
+		events.EventSynthesisStarted,
+		events.EventSynthesisProgress,
+		events.EventSynthesisComplete,
+		events.EventCostUpdated,
 	)
 
 	go func() {
@@ -72,4 +79,3 @@ func (v *Visualizer) Stop() {
 		v.ctx.Renderer.Unmute()
 	})
 }
-

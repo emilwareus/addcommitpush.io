@@ -197,3 +197,13 @@ func dedupe(items []string) []string {
 	}
 	return result
 }
+
+// DeepResearch executes state-of-the-art deep research using:
+// - Multi-perspective planning (STORM-style)
+// - DAG-based parallel task execution
+// - Context folding for long-horizon tasks
+// - Specialized sub-agents (search, analysis, synthesis)
+func (o *Orchestrator) DeepResearch(ctx context.Context, query string) (*DeepResult, error) {
+	deep := NewDeepOrchestrator(o.bus, o.appConfig)
+	return deep.Research(ctx, query)
+}
