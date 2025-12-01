@@ -35,6 +35,378 @@ A state-of-the-art deep research agent built in Go, implementing multi-perspecti
 └──────────────────────────────────────────────────────────────────┘
 ```
 
+---
+
+## Complete Research Workflow (5 Steps)
+
+The deep research process executes in **5 main steps** with well-defined loops:
+
+```mermaid
+flowchart TB
+    subgraph Step1["Step 1: Planning (1× execution)"]
+        A[User Query] --> B[Perspective Discovery]
+        B --> C[Build Research DAG]
+    end
+
+    subgraph Step2["Step 2: DAG Execution (N× until complete)"]
+        C --> D{Get Ready Tasks}
+        D --> E[Execute Tasks in Parallel]
+        E --> F{All Complete?}
+        F -->|No| G[Context Folding Check]
+        G --> D
+        F -->|Yes| H[Collect Results]
+    end
+
+    subgraph Step3["Step 3: Analysis (1× execution)"]
+        H --> I[Cross-Validate Facts]
+        I --> J[Detect Contradictions]
+        J --> K[Identify Knowledge Gaps]
+    end
+
+    subgraph Step4["Step 4: Gap Filling (0-N× per gap)"]
+        K --> L{Gaps Found?}
+        L -->|Yes| M[Additional Searches]
+        M --> N[Merge Results]
+        L -->|No| N
+    end
+
+    subgraph Step5["Step 5: Synthesis (1× execution)"]
+        N --> O[Generate Outline]
+        O --> P[Write Sections]
+        P --> Q[Compile Report]
+    end
+
+    Q --> R[Final Report]
+```
+
+---
+
+## Step 1: Planning (1× Execution)
+
+**Files:**
+- [`internal/planning/planner.go`](internal/planning/planner.go) - Plan creation
+- [`internal/planning/perspectives.go`](internal/planning/perspectives.go) - Perspective discovery
+- [`internal/planning/dag.go`](internal/planning/dag.go) - DAG structure
+
+### 1.1 Perspective Discovery Loop
+
+```mermaid
+flowchart LR
+    A[Topic] --> B["LLM Call (1×)"]
+    B --> C{Parse Success?}
+    C -->|Yes| D[3-5 Expert Perspectives]
+    C -->|No| E[Default Perspectives]
+    D --> F[Return Perspectives]
+    E --> F
+```
+
+**Loop count:** `1× LLM call`
+
+### 1.2 DAG Construction
+
+```
+                    ┌─────────┐
+                    │  root   │ (Initial Analysis)
+                    └────┬────┘
+           ┌─────────────┼─────────────┐
+           ▼             ▼             ▼
+      ┌─────────┐  ┌─────────┐  ┌─────────┐
+      │search_0 │  │search_1 │  │search_2 │  (Parallel per perspective)
+      └────┬────┘  └────┬────┘  └────┬────┘
+           └─────────────┼─────────────┘
+                         ▼
+               ┌─────────────────┐
+               │ cross_validate  │ (Analysis)
+               └────────┬────────┘
+                        ▼
+               ┌─────────────────┐
+               │   fill_gaps     │ (Gap filling)
+               └────────┬────────┘
+                        ▼
+               ┌─────────────────┐
+               │   synthesize    │ (Report generation)
+               └─────────────────┘
+```
+
+**DAG Node Types:**
+| Type | Count | Description |
+|------|-------|-------------|
+| `root` | 1 | Initial topic analysis |
+| `search_N` | 3-5 | One per perspective (parallel) |
+| `cross_validate` | 1 | Analysis after all searches |
+| `fill_gaps` | 1 | Knowledge gap filling |
+| `synthesize` | 1 | Report generation |
+
+---
+
+## Step 2: DAG Execution Loop
+
+**File:** [`internal/orchestrator/deep.go:282-369`](internal/orchestrator/deep.go#L282)
+
+### Main DAG Loop (runs until all nodes complete)
+
+```mermaid
+flowchart TB
+    A[Start DAG Execution] --> B{All Complete?}
+    B -->|Yes| Z[Return Results]
+    B -->|No| C{Token Usage > 75%?}
+    C -->|Yes| D[Execute Context Folding]
+    D --> E
+    C -->|No| E[Get Ready Tasks]
+    E --> F{Tasks Available?}
+    F -->|No| G["Sleep 100ms"]
+    G --> B
+    F -->|Yes| H["Launch Parallel Goroutines"]
+
+    subgraph Parallel["Parallel Execution (1 goroutine per ready task)"]
+        H --> I[Set Status: Running]
+        I --> J[Emit WorkerStarted]
+        J --> K[Execute Task]
+        K --> L{Success?}
+        L -->|Yes| M[Store Result]
+        M --> N[Emit WorkerComplete]
+        L -->|No| O[Emit WorkerFailed]
+    end
+
+    N --> P[WaitGroup.Wait]
+    O --> P
+    P --> B
+```
+
+**Loop execution counts:**
+| Operation | Count |
+|-----------|-------|
+| Outer loop iterations | Variable until `DAG.AllComplete()` |
+| Parallel goroutines per iteration | 1-5 (number of ready tasks) |
+| Context folding checks | 1× per outer iteration |
+
+---
+
+## Step 2.1: Search Agent Loop (per perspective)
+
+**File:** [`internal/agents/search.go`](internal/agents/search.go)
+
+Each search task runs an **iterative refinement loop** (max 3 iterations):
+
+```mermaid
+flowchart TB
+    A[Start Search] --> B["Generate Initial Queries (1× LLM)"]
+    B --> C{Iteration < 3?}
+    C -->|No| Z[Return SearchResult]
+    C -->|Yes| D[Increment Iteration]
+
+    D --> E["Execute Web Searches (3-5 queries)"]
+    E --> F["Extract Facts (1× LLM)"]
+    F --> G["Identify Gaps (1× LLM)"]
+
+    G --> H{Sufficient Coverage?}
+    H -->|Yes| Z
+    H -->|No| I{Gaps Found?}
+    I -->|No| Z
+    I -->|Yes| J["Generate Gap Queries (1× LLM)"]
+    J --> C
+
+    style D fill:#f9f,stroke:#333
+    style E fill:#bbf,stroke:#333
+    style F fill:#bfb,stroke:#333
+    style G fill:#fbf,stroke:#333
+```
+
+**Loop execution counts (per search task):**
+| Operation | Per Iteration | Max Total |
+|-----------|---------------|-----------|
+| Iterations | - | **3** (configurable) |
+| Web searches | 3-5 | 15 |
+| LLM calls | 3 (queries + facts + gaps) | 9 |
+
+**Termination conditions:**
+1. `MaxIterations` reached (default: 3)
+2. No knowledge gaps identified
+3. Sufficient coverage: `≥5 facts AND <2 gaps`
+
+---
+
+## Step 3: Analysis (1× Execution, 4 Sub-steps)
+
+**File:** [`internal/agents/analysis.go`](internal/agents/analysis.go)
+
+```mermaid
+flowchart TB
+    A[All Facts Collected] --> B["1. Cross-Validate Facts (1× LLM)"]
+    B --> C["2. Detect Contradictions (1× LLM)"]
+    C --> D["3. Identify Knowledge Gaps (1× LLM)"]
+    D --> E["4. Assess Source Quality (local, no LLM)"]
+    E --> F[Return AnalysisResult]
+
+    style B fill:#fbb,stroke:#333
+    style C fill:#fbf,stroke:#333
+    style D fill:#bfb,stroke:#333
+    style E fill:#ddd,stroke:#333
+```
+
+**LLM calls:** `3×` total (no loops, sequential execution)
+
+| Sub-step | LLM Calls | Output |
+|----------|-----------|--------|
+| Cross-validation | 1 | `ValidatedFacts[]` |
+| Contradiction detection | 1 | `Contradictions[]` |
+| Gap identification | 1 | `KnowledgeGaps[]` |
+| Source quality | 0 (local) | `SourceQuality{}` |
+
+---
+
+## Step 4: Gap Filling Loop (0-N× Iterations)
+
+**File:** [`internal/orchestrator/deep.go:394-446`](internal/orchestrator/deep.go#L394)
+
+Only executes if knowledge gaps with `Importance >= 0.5` were identified.
+
+```mermaid
+flowchart TB
+    A[Knowledge Gaps from Analysis] --> B{For Each Gap}
+    B --> C{Importance >= 0.5?}
+    C -->|No| B
+    C -->|Yes| D[Create Synthetic Perspective]
+    D --> E["Run Full Search Agent Loop (up to 3 iterations)"]
+    E --> F[Emit Worker Events]
+    F --> G[Store Results]
+    G --> B
+    B -->|All Processed| H[Merge with Main Results]
+
+    style E fill:#f9f,stroke:#333
+```
+
+**Loop execution:**
+| Condition | Iterations |
+|-----------|------------|
+| No gaps or all low importance | 0 |
+| Per high-importance gap | 1 search agent execution (up to 3 iterations each) |
+| Typical | 0-3 gap filling operations |
+
+---
+
+## Step 5: Synthesis (1× Execution, N Sections)
+
+**File:** [`internal/agents/synthesis.go`](internal/agents/synthesis.go)
+
+```mermaid
+flowchart TB
+    A[Research Complete] --> B["1. Generate Outline (1× LLM)"]
+    B --> C["2. Write Each Section"]
+    C --> D["3. Extract Citations (local)"]
+    D --> E["4. Compile Report (local)"]
+    E --> F[Final Report]
+
+    subgraph SectionLoop["Section Writing Loop (4-6 iterations)"]
+        C --> G{For Each Section}
+        G --> H[Check Cancellation]
+        H --> I[Emit Progress Event]
+        I --> J["Write Section (1× LLM)"]
+        J --> G
+    end
+
+    style B fill:#bfb,stroke:#333
+    style J fill:#fbf,stroke:#333
+```
+
+**LLM calls:** `1 + N` where N = number of sections (typically 4-6)
+
+| Operation | LLM Calls |
+|-----------|-----------|
+| Generate outline | 1 |
+| Write sections | 4-6 (one per section) |
+| **Total** | **5-7** |
+
+---
+
+## Context Folding (Conditional, During DAG Execution)
+
+**Files:**
+- [`internal/context/manager.go`](internal/context/manager.go) - Manager
+- [`internal/context/folding.go`](internal/context/folding.go) - Folding strategies
+
+```mermaid
+flowchart TB
+    A{Token Usage > 75%?} -->|No| B[Skip Folding]
+    A -->|Yes| C[Decide Folding Strategy]
+    C --> D[Execute Multi-Scale Compression]
+    D --> E[Update Summaries L0..Ln]
+    E --> F[Recalculate Token Count]
+    F --> G[Continue DAG Execution]
+```
+
+**Trigger:** Checked once per DAG loop iteration
+
+---
+
+## Total Execution Summary
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                     TOTAL LOOP EXECUTION COUNTS                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  STEP 1: PLANNING                                                           │
+│    ├─ Perspective Discovery ────────────────── 1× LLM call                  │
+│    └─ DAG Construction ─────────────────────── 0 LLM calls (local)          │
+│                                                                             │
+│  STEP 2: DAG EXECUTION                                                      │
+│    ├─ Outer DAG loop ───────────────────────── Variable until complete      │
+│    ├─ Parallel search tasks ────────────────── 3-5 (one per perspective)    │
+│    │                                                                        │
+│    └─ Per Search Task (SearchAgent loop):                                   │
+│         ├─ Max iterations ──────────────────── 3                            │
+│         ├─ LLM calls per iteration ─────────── 3 (queries + facts + gaps)   │
+│         ├─ Web searches per iteration ──────── 3-5                          │
+│         └─ Total LLM per search task ───────── up to 9                      │
+│                                                                             │
+│  STEP 3: ANALYSIS                                                           │
+│    ├─ Cross-validation ─────────────────────── 1× LLM call                  │
+│    ├─ Contradiction detection ──────────────── 1× LLM call                  │
+│    └─ Gap identification ───────────────────── 1× LLM call                  │
+│                                                                             │
+│  STEP 4: GAP FILLING (conditional)                                          │
+│    └─ Per high-importance gap ──────────────── Full search agent (up to 9 LLM) │
+│                                                                             │
+│  STEP 5: SYNTHESIS                                                          │
+│    ├─ Outline generation ───────────────────── 1× LLM call                  │
+│    └─ Section writing ──────────────────────── 4-6× LLM calls               │
+│                                                                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  TYPICAL TOTAL (3 perspectives, no gap filling):                            │
+│    Planning:     1 LLM                                                      │
+│    Search:       3 × 9 = 27 LLM max (often less due to early termination)   │
+│    Analysis:     3 LLM                                                      │
+│    Synthesis:    6 LLM                                                      │
+│    ─────────────────────────────────────                                    │
+│    TOTAL:        ~30-40 LLM calls                                           │
+│    WEB SEARCHES: ~15-25 queries                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Source Files Reference
+
+| Component | File | Description |
+|-----------|------|-------------|
+| **Orchestrator** | [`internal/orchestrator/deep.go`](internal/orchestrator/deep.go) | Main research coordinator |
+| **Planner** | [`internal/planning/planner.go`](internal/planning/planner.go) | Research plan creation |
+| **DAG** | [`internal/planning/dag.go`](internal/planning/dag.go) | Task dependency graph |
+| **Perspectives** | [`internal/planning/perspectives.go`](internal/planning/perspectives.go) | Multi-perspective discovery |
+| **Search Agent** | [`internal/agents/search.go`](internal/agents/search.go) | Iterative web search |
+| **Analysis Agent** | [`internal/agents/analysis.go`](internal/agents/analysis.go) | Cross-validation & gaps |
+| **Synthesis Agent** | [`internal/agents/synthesis.go`](internal/agents/synthesis.go) | Report generation |
+| **Context Manager** | [`internal/context/manager.go`](internal/context/manager.go) | Token budget management |
+| **Context Folding** | [`internal/context/folding.go`](internal/context/folding.go) | Multi-scale compression |
+| **LLM Client** | [`internal/llm/client.go`](internal/llm/client.go) | OpenRouter API integration |
+| **Tools Registry** | [`internal/tools/registry.go`](internal/tools/registry.go) | Tool execution |
+| **Web Search** | [`internal/tools/search.go`](internal/tools/search.go) | Brave Search integration |
+| **Events** | [`internal/events/bus.go`](internal/events/bus.go) | Event system for progress |
+| **Event Types** | [`internal/events/types.go`](internal/events/types.go) | Event type definitions |
+
+---
+
 ## Key Features
 
 ### 1. Multi-Perspective Research (STORM-style)

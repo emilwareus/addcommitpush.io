@@ -43,6 +43,14 @@ const (
 	EventLLMChunk // Streaming LLM output
 	EventCostUpdated
 
+	// Cross-validation & gap-filling progress events
+	EventCrossValidationStarted  // Starting cross-validation phase
+	EventCrossValidationProgress // Per-fact or batch progress
+	EventCrossValidationComplete // Cross-validation done
+	EventGapFillingStarted       // Starting gap-filling phase
+	EventGapFillingProgress      // Per-gap progress
+	EventGapFillingComplete      // Gap-filling done
+
 	// Session events
 	EventSessionCreated
 	EventSessionLoaded
@@ -93,8 +101,27 @@ type LLMChunkData struct {
 
 // PlanCreatedData contains data when a research plan is created
 type PlanCreatedData struct {
-	WorkerCount int
-	Complexity  float64
+	WorkerCount  int
+	Complexity   float64
+	Topic        string
+	Perspectives []PerspectiveData
+	DAGNodes     []DAGNodeData
+}
+
+// PerspectiveData contains information about a research perspective
+type PerspectiveData struct {
+	Name      string
+	Focus     string
+	Questions []string
+}
+
+// DAGNodeData contains information about a DAG node for visualization
+type DAGNodeData struct {
+	ID           string
+	TaskType     string // "search", "analyze", "synthesize", "validate"
+	Description  string
+	Dependencies []string
+	Status       string // "pending", "running", "complete", "failed"
 }
 
 // CostUpdateData captures cost information emitted during research.
@@ -106,4 +133,23 @@ type CostUpdateData struct {
 	InputCost    float64
 	OutputCost   float64
 	TotalCost    float64
+}
+
+// CrossValidationProgressData contains progress info for fact validation
+type CrossValidationProgressData struct {
+	Phase       string  // "cross-validate", "detect-contradictions", "identify-gaps"
+	Current     int     // Current item being processed
+	Total       int     // Total items to process
+	CurrentFact string  // Description of current fact being validated
+	Message     string  // Status message
+	Progress    float64 // 0.0 to 1.0 progress
+}
+
+// GapFillingProgressData contains progress info for knowledge gap filling
+type GapFillingProgressData struct {
+	GapIndex    int     // Current gap index (0-based)
+	TotalGaps   int     // Total gaps to fill
+	GapDesc     string  // Description of current gap
+	Status      string  // "searching", "processing", "complete", "skipped"
+	Progress    float64 // 0.0 to 1.0 progress
 }

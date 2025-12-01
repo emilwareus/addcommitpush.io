@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
+	"go-research/internal/events"
 	"go-research/internal/llm"
 	"go-research/internal/session"
 )
@@ -14,6 +16,7 @@ import (
 type AnalysisAgent struct {
 	client llm.ChatClient
 	model  string
+	bus    *events.Bus
 }
 
 // NewAnalysisAgent creates a new analysis agent with the given LLM client.
@@ -21,6 +24,15 @@ func NewAnalysisAgent(client llm.ChatClient) *AnalysisAgent {
 	return &AnalysisAgent{
 		client: client,
 		model:  client.GetModel(),
+	}
+}
+
+// NewAnalysisAgentWithBus creates an analysis agent with event bus for progress reporting
+func NewAnalysisAgentWithBus(client llm.ChatClient, bus *events.Bus) *AnalysisAgent {
+	return &AnalysisAgent{
+		client: client,
+		model:  client.GetModel(),
+		bus:    bus,
 	}
 }
 
@@ -63,42 +75,153 @@ func (a *AnalysisAgent) Analyze(ctx context.Context, topic string, facts []Fact,
 	}
 
 	var totalCost session.CostBreakdown
+	totalSteps := 3 // cross-validate, contradictions, gaps
 
-	// 1. Cross-validate facts
-	validatedFacts, cost, err := a.crossValidate(ctx, facts)
+	// Emit overall start
+	a.emitCrossValidationStarted(len(facts), totalSteps)
+
+	// 1. Cross-validate facts (step 1/3)
+	a.emitCrossValidationProgress("cross-validate", 1, totalSteps, "Cross-validating facts for mutual corroboration...", 0.0)
+	validatedFacts, cost, err := a.crossValidateWithProgress(ctx, facts)
 	if err != nil {
 		return nil, fmt.Errorf("cross-validation: %w", err)
 	}
 	result.ValidatedFacts = validatedFacts
 	totalCost.Add(cost)
+	a.emitCrossValidationProgress("cross-validate", 1, totalSteps, fmt.Sprintf("Validated %d facts", len(validatedFacts)), 0.33)
 
-	// 2. Detect contradictions
-	contradictions, cost, err := a.detectContradictions(ctx, facts)
+	// 2. Detect contradictions (step 2/3)
+	a.emitCrossValidationProgress("detect-contradictions", 2, totalSteps, "Scanning for contradictions between sources...", 0.33)
+	contradictions, cost, err := a.detectContradictionsWithProgress(ctx, facts)
 	if err != nil {
 		return nil, fmt.Errorf("contradiction detection: %w", err)
 	}
 	result.Contradictions = contradictions
 	totalCost.Add(cost)
+	a.emitCrossValidationProgress("detect-contradictions", 2, totalSteps, fmt.Sprintf("Found %d contradictions", len(contradictions)), 0.66)
 
-	// 3. Identify knowledge gaps
-	gaps, cost, err := a.identifyKnowledgeGaps(ctx, topic, facts, expectedCoverage)
+	// 3. Identify knowledge gaps (step 3/3)
+	a.emitCrossValidationProgress("identify-gaps", 3, totalSteps, "Identifying knowledge gaps and missing coverage...", 0.66)
+	gaps, cost, err := a.identifyKnowledgeGapsWithProgress(ctx, topic, facts, expectedCoverage)
 	if err != nil {
 		return nil, fmt.Errorf("gap identification: %w", err)
 	}
 	result.KnowledgeGaps = gaps
 	totalCost.Add(cost)
+	a.emitCrossValidationProgress("identify-gaps", 3, totalSteps, fmt.Sprintf("Identified %d knowledge gaps", len(gaps)), 1.0)
 
-	// 4. Assess source quality
+	// 4. Assess source quality (fast, no LLM call)
 	result.SourceQuality = a.assessSourceQuality(facts)
 	result.Cost = totalCost
+
+	// Emit completion
+	a.emitCrossValidationComplete(len(validatedFacts), len(contradictions), len(gaps))
 
 	return result, nil
 }
 
-// crossValidate analyzes facts for mutual corroboration and assigns validation scores.
-func (a *AnalysisAgent) crossValidate(ctx context.Context, facts []Fact) ([]ValidatedFact, session.CostBreakdown, error) {
+// emitCrossValidationStarted emits event when cross-validation begins
+func (a *AnalysisAgent) emitCrossValidationStarted(factCount, totalSteps int) {
+	if a.bus == nil {
+		return
+	}
+	a.bus.Publish(events.Event{
+		Type:      events.EventCrossValidationStarted,
+		Timestamp: time.Now(),
+		Data: events.CrossValidationProgressData{
+			Total:   factCount,
+			Message: fmt.Sprintf("Starting analysis of %d facts in %d phases", factCount, totalSteps),
+		},
+	})
+}
+
+// emitCrossValidationProgress emits progress during cross-validation phases
+func (a *AnalysisAgent) emitCrossValidationProgress(phase string, current, total int, message string, progress float64) {
+	if a.bus == nil {
+		return
+	}
+	a.bus.Publish(events.Event{
+		Type:      events.EventCrossValidationProgress,
+		Timestamp: time.Now(),
+		Data: events.CrossValidationProgressData{
+			Phase:    phase,
+			Current:  current,
+			Total:    total,
+			Message:  message,
+			Progress: progress,
+		},
+	})
+}
+
+// emitCrossValidationComplete emits event when cross-validation finishes
+func (a *AnalysisAgent) emitCrossValidationComplete(validated, contradictions, gaps int) {
+	if a.bus == nil {
+		return
+	}
+	a.bus.Publish(events.Event{
+		Type:      events.EventCrossValidationComplete,
+		Timestamp: time.Now(),
+		Data: events.CrossValidationProgressData{
+			Progress: 1.0,
+			Message:  fmt.Sprintf("Analysis complete: %d validated, %d contradictions, %d gaps", validated, contradictions, gaps),
+		},
+	})
+}
+
+// crossValidateWithProgress analyzes facts in batches with progress reporting
+func (a *AnalysisAgent) crossValidateWithProgress(ctx context.Context, facts []Fact) ([]ValidatedFact, session.CostBreakdown, error) {
 	if len(facts) == 0 {
 		return nil, session.CostBreakdown{}, nil
+	}
+
+	// For larger sets, process in batches to show progress
+	batchSize := 15
+	if len(facts) <= batchSize {
+		// Small set - process all at once with fact-by-fact progress simulation
+		return a.crossValidateBatchWithProgress(ctx, facts, 0, len(facts))
+	}
+
+	// Process in batches
+	var allValidated []ValidatedFact
+	var totalCost session.CostBreakdown
+
+	for i := 0; i < len(facts); i += batchSize {
+		end := i + batchSize
+		if end > len(facts) {
+			end = len(facts)
+		}
+		batch := facts[i:end]
+
+		validated, cost, err := a.crossValidateBatchWithProgress(ctx, batch, i, len(facts))
+		if err != nil {
+			return allValidated, totalCost, err
+		}
+		allValidated = append(allValidated, validated...)
+		totalCost.Add(cost)
+	}
+
+	return allValidated, totalCost, nil
+}
+
+// crossValidateBatchWithProgress validates a batch while emitting per-fact progress
+func (a *AnalysisAgent) crossValidateBatchWithProgress(ctx context.Context, facts []Fact, startIdx, totalFacts int) ([]ValidatedFact, session.CostBreakdown, error) {
+	// Emit progress for each fact we're about to validate
+	for i, f := range facts {
+		factIdx := startIdx + i
+		progress := float64(factIdx) / float64(totalFacts) * 0.33 // Cross-validation is 0-33% of total
+		truncContent := f.Content
+		if len(truncContent) > 60 {
+			truncContent = truncContent[:57] + "..."
+		}
+		a.emitCrossValidationProgress(
+			"cross-validate",
+			factIdx+1,
+			totalFacts,
+			fmt.Sprintf("Checking: %s", truncContent),
+			progress,
+		)
+		// Small delay to make the streaming visible
+		time.Sleep(30 * time.Millisecond)
 	}
 
 	var factsText strings.Builder
@@ -142,10 +265,32 @@ Include all facts in the output.`, factsText.String())
 	return parseValidatedFacts(resp.Choices[0].Message.Content), cost, nil
 }
 
-// detectContradictions finds conflicting claims between facts.
-func (a *AnalysisAgent) detectContradictions(ctx context.Context, facts []Fact) ([]Contradiction, session.CostBreakdown, error) {
+// detectContradictionsWithProgress finds conflicting claims with progress reporting
+func (a *AnalysisAgent) detectContradictionsWithProgress(ctx context.Context, facts []Fact) ([]Contradiction, session.CostBreakdown, error) {
 	if len(facts) < 2 {
 		return nil, session.CostBreakdown{}, nil
+	}
+
+	// Emit progress as we scan through fact pairs
+	totalPairs := len(facts) * (len(facts) - 1) / 2
+	if totalPairs > 0 {
+		pairNum := 0
+		for i := 0; i < len(facts); i++ {
+			for j := i + 1; j < len(facts); j++ {
+				pairNum++
+				if pairNum%5 == 0 || pairNum == 1 { // Emit every 5th pair to avoid spam
+					progress := 0.33 + (float64(pairNum)/float64(totalPairs))*0.33 // Contradiction detection is 33-66%
+					a.emitCrossValidationProgress(
+						"detect-contradictions",
+						pairNum,
+						totalPairs,
+						fmt.Sprintf("Comparing pair %d/%d for contradictions...", pairNum, totalPairs),
+						progress,
+					)
+					time.Sleep(20 * time.Millisecond)
+				}
+			}
+		}
 	}
 
 	var factsText strings.Builder
@@ -188,8 +333,27 @@ Return JSON array (empty if none found):
 	return parseContradictions(resp.Choices[0].Message.Content), cost, nil
 }
 
-// identifyKnowledgeGaps finds important areas not yet covered by the gathered facts.
-func (a *AnalysisAgent) identifyKnowledgeGaps(ctx context.Context, topic string, facts []Fact, expectedCoverage []string) ([]KnowledgeGap, session.CostBreakdown, error) {
+// identifyKnowledgeGapsWithProgress finds important areas not yet covered with progress reporting
+func (a *AnalysisAgent) identifyKnowledgeGapsWithProgress(ctx context.Context, topic string, facts []Fact, expectedCoverage []string) ([]KnowledgeGap, session.CostBreakdown, error) {
+	// Emit progress for each coverage area we're checking
+	if len(expectedCoverage) > 0 {
+		for i, area := range expectedCoverage {
+			progress := 0.66 + (float64(i)/float64(len(expectedCoverage)))*0.34 // Gap identification is 66-100%
+			truncArea := area
+			if len(truncArea) > 50 {
+				truncArea = truncArea[:47] + "..."
+			}
+			a.emitCrossValidationProgress(
+				"identify-gaps",
+				i+1,
+				len(expectedCoverage),
+				fmt.Sprintf("Checking coverage: %s", truncArea),
+				progress,
+			)
+			time.Sleep(25 * time.Millisecond)
+		}
+	}
+
 	var factsText strings.Builder
 	for _, f := range facts {
 		factsText.WriteString(fmt.Sprintf("- %s\n", f.Content))

@@ -549,6 +549,14 @@ func (m *MockAgentRunner) Research(ctx context.Context, objective string) (sessi
 		FinalOutput: m.Output,
 		Status:      session.WorkerComplete,
 		Sources:     []string{"https://mock-source.com"},
+		Cost: session.CostBreakdown{
+			InputTokens:  100,
+			OutputTokens: 50,
+			TotalTokens:  150,
+			InputCost:    0.0001,
+			OutputCost:   0.0001,
+			TotalCost:    0.0002,
+		},
 	}, nil
 }
 

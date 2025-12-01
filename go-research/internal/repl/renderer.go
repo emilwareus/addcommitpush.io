@@ -40,12 +40,14 @@ func (r *Renderer) Unmute() {
 
 // Colors
 var (
-	cyan   = color.New(color.FgCyan)
-	green  = color.New(color.FgGreen)
-	yellow = color.New(color.FgYellow)
-	red    = color.New(color.FgRed)
-	bold   = color.New(color.Bold)
-	dim    = color.New(color.Faint)
+	cyan    = color.New(color.FgCyan)
+	green   = color.New(color.FgGreen)
+	yellow  = color.New(color.FgYellow)
+	red     = color.New(color.FgRed)
+	bold    = color.New(color.Bold)
+	dim     = color.New(color.Faint)
+	magenta = color.New(color.FgMagenta)
+	blue    = color.New(color.FgBlue)
 )
 
 // Welcome shows the welcome message

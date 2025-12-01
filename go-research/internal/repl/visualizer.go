@@ -8,20 +8,25 @@ import (
 
 // Visualizer handles the interactive worker display
 type Visualizer struct {
-	ctx      *Context
-	display  *MultiWorkerDisplay
-	stopCh   chan struct{}
-	doneCh   chan struct{}
-	stopOnce sync.Once
+	ctx              *Context
+	dagDisplay       *DAGDisplay
+	display          *MultiWorkerDisplay
+	analysisProgress *AnalysisProgressDisplay
+	stopCh           chan struct{}
+	doneCh           chan struct{}
+	stopOnce         sync.Once
 }
 
 // NewVisualizer creates a new visualizer
 func NewVisualizer(ctx *Context) *Visualizer {
+	w := ctx.Renderer.StreamWriter()
 	return &Visualizer{
-		ctx:     ctx,
-		display: NewMultiWorkerDisplay(ctx.Renderer.StreamWriter()),
-		stopCh:  make(chan struct{}),
-		doneCh:  make(chan struct{}),
+		ctx:              ctx,
+		dagDisplay:       NewDAGDisplay(w),
+		display:          NewMultiWorkerDisplay(w),
+		analysisProgress: NewAnalysisProgressDisplay(w),
+		stopCh:           make(chan struct{}),
+		doneCh:           make(chan struct{}),
 	}
 }
 
@@ -47,6 +52,13 @@ func (v *Visualizer) Start() {
 		events.EventSynthesisProgress,
 		events.EventSynthesisComplete,
 		events.EventCostUpdated,
+		// Cross-validation & gap-filling progress events
+		events.EventCrossValidationStarted,
+		events.EventCrossValidationProgress,
+		events.EventCrossValidationComplete,
+		events.EventGapFillingStarted,
+		events.EventGapFillingProgress,
+		events.EventGapFillingComplete,
 	)
 
 	go func() {
@@ -56,15 +68,30 @@ func (v *Visualizer) Start() {
 			case <-v.stopCh:
 				return
 			case event := <-eventCh:
-				// Initialize display when we know worker count
+				// When plan is created, first render DAG visualization, then init worker panels
 				if event.Type == events.EventPlanCreated {
 					if data, ok := event.Data.(events.PlanCreatedData); ok {
+						// Render the DAG visualization first
+						v.dagDisplay.Render(data)
+						// Then initialize and start the worker panels
 						v.display.InitWorkers(data.WorkerCount)
 						v.display.Start()
 					}
 					continue
 				}
-				v.display.HandleEvent(event)
+
+				// Route cross-validation and gap-filling events to the analysis progress display
+				switch event.Type {
+				case events.EventCrossValidationStarted,
+					events.EventCrossValidationProgress,
+					events.EventCrossValidationComplete,
+					events.EventGapFillingStarted,
+					events.EventGapFillingProgress,
+					events.EventGapFillingComplete:
+					v.analysisProgress.HandleEvent(event)
+				default:
+					v.display.HandleEvent(event)
+				}
 			}
 		}
 	}()
