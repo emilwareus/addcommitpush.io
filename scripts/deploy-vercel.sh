@@ -133,12 +133,12 @@ DEPLOY_CMD+=(--yes --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID")
 
 log "Running: ${DEPLOY_CMD[*]}"
 set +e
-DEPLOYMENT_URL="$(${DEPLOY_CMD[@]} 2>/dev/null)"
+DEPLOYMENT_URL="$(${DEPLOY_CMD[@]})"
 STATUS=$?
 set -e
 
 if [[ $STATUS -ne 0 || -z "$DEPLOYMENT_URL" ]]; then
-  echo "Vercel deployment failed" >&2
+  echo "Vercel deployment failed with status $STATUS" >&2
   exit ${STATUS:-1}
 fi
 

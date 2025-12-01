@@ -1,0 +1,7 @@
+# Exclude deep-research-agent from Vercel deployment
+deep-research-agent/
+
+# Other non-Next.js directories
+outputs/
+go-research/
+
