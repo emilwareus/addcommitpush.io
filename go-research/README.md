@@ -1,6 +1,6 @@
 # Go Research Agent
 
-A Go-based deep research agent with an interactive REPL interface, multi-worker orchestration via goroutines/channels, ReAct agent pattern, and Obsidian vault persistence.
+A Go-based deep research agent implementing the STORM architecture (Synthesis of Topic Outlines through Retrieval and Multi-perspective Question Asking) with an interactive REPL interface.
 
 ## Quick Start
 
@@ -16,30 +16,58 @@ go run ./cmd/research
 
 ## Commands
 
-| Command | Alias | Description |
-|---------|-------|-------------|
-| `/fast <query>` | `/f` | Quick single-worker research |
-| `/deep <query>` | `/d` | Multi-worker parallel research |
-| `/expand <text>` | `/e` | Follow-up on current research |
-| `/sessions` | `/s` | List all saved sessions |
-| `/load <id>` | `/l` | Load a previous session |
-| `/workers` | `/w` | Show workers in current session |
-| `/rerun <n>` | `/r` | Re-run worker n with same objective |
-| `/recompile [text]` | `/rc` | Regenerate report (optional instructions) |
-| `/model [name]` | `/m` | Show or change the LLM model |
-| `/verbose` | `/v` | Toggle verbose debug output |
-| `/help` | `/h`, `/?` | Show help |
-| `/quit` | `/q`, `/exit` | Exit the REPL |
+### Research Agents
 
-**Tip:** Just type your question to start deep research. After research, type follow-ups to expand.
+| Command | Description |
+|---------|-------------|
+| `/fast <query>` | Quick single-worker research |
+| `/storm <query>` | STORM: Multi-perspective conversations with cross-validation and synthesis |
+
+### Active Session
+
+| Command | Description |
+|---------|-------------|
+| `/expand <text>` | Expand on current research |
+| `/workers` | Show worker/conversation status |
+
+### Sessions & History
+
+| Command | Description |
+|---------|-------------|
+| `/sessions` | List all sessions |
+| `/load <id>` | Load a previous session |
+| `/new` | Clear session and start fresh |
+| `/rerun <id>` | Rerun a previous query |
+
+### Settings & Controls
+
+| Command | Description |
+|---------|-------------|
+| `/recompile` | Hot reload the agent |
+| `/verbose on\|off` | Toggle verbose mode |
+| `/model <name>` | Switch LLM model |
+
+### Meta
+
+| Command | Description |
+|---------|-------------|
+| `/help` | Show all commands |
+| `/quit` | Exit the REPL |
+| `/architectures` | List available research architectures |
+| `/benchmark <query>` | Compare architecture results |
+
+**Tip:** Just type your question to start STORM research. After research, type follow-ups to expand.
 
 ## Examples
 
 ```bash
-# Just type to start deep research (no command needed!)
+# Just type to start STORM research (no command needed!)
 research> How do modern LLM agents work?
 
-# Quick single-worker research
+# Or explicitly use STORM
+research> /storm What are the implications of quantum computing on cryptography?
+
+# Quick single-worker research for simple queries
 research> /fast What is the ReAct agent pattern?
 
 # After research, just type follow-up questions
@@ -48,22 +76,118 @@ research> Tell me more about tool-use capabilities
 # Session management
 research> /sessions
 research> /load 2025-11-22-abc123
-research> /rerun 2
+research> /new
+```
+
+---
+
+## STORM Architecture
+
+This agent implements the **STORM** research methodology - a multi-perspective conversation-based approach that produces comprehensive, well-sourced reports.
+
+### How STORM Works
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  1. DISCOVER                                                     │
+│     - Survey related topics via web search                       │
+│     - LLM identifies 3-6 expert perspectives                     │
+│     - Each gets: Name, Focus, Initial Questions                  │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  2. CONVERSE (parallel per perspective)                          │
+│     For each perspective, simulate a conversation:               │
+│       WikiWriter: Asks questions based on persona                │
+│       TopicExpert: Converts questions → search queries           │
+│                    Executes web searches                         │
+│                    Synthesizes answers with citations            │
+│     Loop until "Thank you for your help!"                        │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  3. ANALYZE                                                      │
+│     - Extract all facts from conversations                       │
+│     - Detect contradictions between perspectives                 │
+│     - Identify knowledge gaps                                    │
+│     - Fill gaps with targeted searches                           │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  4. SYNTHESIZE (Two-Phase Outline)                               │
+│     a. Draft outline from conversation content                   │
+│     b. Refine outline for coherence                              │
+│     c. Generate full report with inline citations                │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Example CLI Visualization
+
+When you run `/storm <query>`, you'll see:
+
+```
+╭──────────────────────────────────────────────────────────────────────────────╮
+│                           🔬 STORM RESEARCH PLAN                             │
+│                                                                              │
+│  Topic: How do I build a custom security sandbox for cloud deployment?       │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+                               ┌────────────────┐
+                               │1. DISCOVER     │
+                               │Perspectives    │
+                               └────────────────┘
+                                       │
+                               ┌────────────────┐
+                               │2. CONVERSE     │
+                               │Parallel        │
+                               └────────────────┘
+                                       │
+                ┌───────────────┬───────────────┬───────────────┐
+                │               │               │               │
+         ┌────────────┐  ┌────────────┐  ┌────────────┐  ┌────────────┐
+         │   Conv 1   │  │   Conv 2   │  │   Conv 3   │  │   Conv 4   │
+         │○ pending │  │○ pending │  │○ pending │  │○ pending │
+         └────────────┘  └────────────┘  └────────────┘  └────────────┘
+                │               │               │               │
+                └───────────────┴───────────────┴───────────────┘
+                                       │
+                               ┌────────────────┐
+                               │3. ANALYZE      │
+                               │Validate Facts  │
+                               └────────────────┘
+                                       │
+                               ┌────────────────┐
+                               │4. SYNTHESIZE   │
+                               │Final Report    │
+                               └────────────────┘
+
+╭──────────────────────────────────────────────────────────────────────────────╮
+│  PERSPECTIVES (WikiWriter↔TopicExpert conversations):                        │
+│                                                                              │
+│  1. Cloud Security Ar... ─ Multi-tenant isolation, threat containment...     │
+│  2. Performance Engineer ─ Startup latency optimization, resource manage...  │
+│  3. GCP Platform Spec... ─ GCP-native implementation patterns, BYOC inte...  │
+│  4. DevSecOps Engineer   ─ Secure CI/CD integration, immutable infrastru...  │
+╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
 ---
 
 ## Features
 
-- **Interactive REPL** - Readline-powered CLI with tab completion and command history
+- **Interactive REPL** - Readline-powered CLI with command history
+- **STORM Architecture** - Multi-perspective conversation simulation
 - **Fast Mode** - Single-worker quick research for simple queries
-- **Deep Mode** - Multi-worker parallel research with automatic task decomposition
-- **ReAct Pattern** - Reason + Act agent loop with tool use (search, fetch)
+- **Cross-Validation** - Detect contradictions and fill knowledge gaps
+- **Two-Phase Synthesis** - Draft and refine outlines before report generation
 - **Session Persistence** - JSON state files + Obsidian-compatible markdown vault
-- **Streaming Output** - Real-time progress updates and token streaming
-- **Session Continuation** - Expand, rerun workers, recompile reports
+- **Streaming Output** - Real-time progress updates during conversations
+- **Session Continuation** - Expand, rerun, and load previous sessions
 
-## Architecture
+## System Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -74,11 +198,20 @@ research> /rerun 2
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│                        Orchestrator                              │
-│  ┌──────────┐  ┌────────────┐  ┌─────────────┐  ┌────────────┐  │
-│  │ Planner  │→ │ WorkerPool │→ │ ReAct Agents│→ │ Synthesizer│  │
-│  │(analyze) │  │(goroutines)│  │  (parallel) │  │  (report)  │  │
-│  └──────────┘  └────────────┘  └─────────────┘  └────────────┘  │
+│                    STORM Orchestrator                            │
+│  ┌────────────┐  ┌──────────────┐  ┌──────────┐  ┌───────────┐  │
+│  │ Perspective│→ │ Conversation │→ │ Analysis │→ │ Synthesis │  │
+│  │ Discovery  │  │  Simulation  │  │  Agent   │  │   Agent   │  │
+│  └────────────┘  └──────────────┘  └──────────┘  └───────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                    Conversation Agents                           │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │  WikiWriter ↔ TopicExpert (per perspective, parallel)       ││
+│  │    - WikiWriter asks questions from persona                 ││
+│  │    - TopicExpert searches and answers with citations        ││
+│  └─────────────────────────────────────────────────────────────┘│
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
@@ -95,22 +228,24 @@ research> /rerun 2
 | Component | Description |
 |-----------|-------------|
 | **REPL** | Interactive shell with readline, command parsing, and colored output |
-| **Orchestrator** | Coordinates multi-agent research: analyzes complexity, creates plans, manages workers |
-| **ReAct Agent** | Implements Reason+Act loop with tool calling (search, fetch) |
-| **Worker Pool** | Manages concurrent goroutines for parallel research |
+| **STORM Orchestrator** | Coordinates the 4-phase research flow |
+| **Perspective Discovery** | Surveys topics and generates expert perspectives |
+| **Conversation Simulation** | Parallel WikiWriter↔TopicExpert dialogues |
+| **Analysis Agent** | Validates facts, detects contradictions, fills gaps |
+| **Synthesis Agent** | Two-phase outline generation and report writing |
 | **Event Bus** | Pub/sub system for real-time progress updates |
 | **Session Store** | JSON persistence with Obsidian markdown export |
 
 ### Data Flow
 
 1. User enters query via REPL
-2. Router dispatches to appropriate handler (fast/deep)
+2. Router dispatches to appropriate handler (fast/storm)
 3. **Fast mode**: Single ReAct agent researches the query
-4. **Deep mode**:
-   - Planner analyzes query complexity (0.0-1.0)
-   - Creates N parallel research tasks based on complexity
-   - Worker pool executes tasks via goroutines
-   - Synthesizer combines results into final report
+4. **STORM mode**:
+   - **DISCOVER**: Survey related topics, generate 3-6 perspectives
+   - **CONVERSE**: Parallel WikiWriter↔TopicExpert conversations
+   - **ANALYZE**: Extract facts, detect contradictions, fill gaps
+   - **SYNTHESIZE**: Two-phase outline → final report with citations
 5. Session saved to JSON + Obsidian vault
 6. Results rendered to terminal
 
@@ -175,32 +310,32 @@ go run ./cmd/research
 
 ```
 go-research/
-├── cmd/research/          # Entry point
+├── cmd/research/              # Entry point
 │   └── main.go
 ├── internal/
-│   ├── agent/             # ReAct agent implementation
-│   │   ├── react.go       # Main agent loop
-│   │   ├── prompts.go     # System prompts
-│   │   └── worker.go      # Worker wrapper
-│   ├── config/            # Configuration loading
-│   ├── events/            # Event bus (pub/sub)
-│   ├── llm/               # LLM client (OpenRouter)
-│   ├── obsidian/          # Markdown vault writer
-│   ├── orchestrator/      # Multi-agent coordination
-│   │   ├── orchestrator.go
-│   │   ├── planner.go     # Query analysis & decomposition
-│   │   ├── pool.go        # Worker pool (goroutines)
-│   │   └── synthesizer.go # Report generation
-│   ├── repl/              # Interactive shell
-│   │   ├── repl.go        # Main loop
-│   │   ├── router.go      # Command routing
-│   │   ├── parser.go      # Input parsing
-│   │   ├── renderer.go    # Terminal output
-│   │   ├── completer.go   # Tab completion
-│   │   └── handlers/      # Command implementations
-│   ├── session/           # Session persistence
-│   ├── tools/             # Agent tools (search, fetch)
-│   └── e2e/               # End-to-end tests
+│   ├── agents/                # Conversation agents
+│   │   ├── conversation.go    # WikiWriter↔TopicExpert simulation
+│   │   ├── analysis.go        # Fact validation & gap detection
+│   │   └── synthesis.go       # Two-phase outline & report generation
+│   ├── architectures/         # Research architecture implementations
+│   │   ├── storm/             # STORM implementation
+│   │   └── catalog/           # Architecture registry
+│   ├── config/                # Configuration loading
+│   ├── events/                # Event bus (pub/sub)
+│   ├── llm/                   # LLM client (OpenRouter)
+│   ├── obsidian/              # Markdown vault writer
+│   ├── orchestrator/          # STORM orchestrator
+│   │   ├── deep_storm.go      # Main STORM flow
+│   │   └── orchestrator.go    # Fast mode orchestrator
+│   ├── planning/              # Perspective generation
+│   ├── repl/                  # Interactive shell
+│   │   ├── repl.go            # Main loop
+│   │   ├── router.go          # Command routing
+│   │   ├── dag_display.go     # STORM flow visualization
+│   │   └── handlers/          # Command implementations
+│   ├── session/               # Session persistence
+│   ├── tools/                 # Agent tools (search, fetch)
+│   └── e2e/                   # End-to-end tests
 ├── .env.example
 ├── go.mod
 └── README.md
@@ -215,22 +350,12 @@ go test ./...
 # Run with verbose output
 go test ./... -v
 
-# Run only E2E tests
+# Run STORM architecture tests
+go test ./internal/architectures/storm/... -v
+
+# Run E2E tests
 go test ./internal/e2e/... -v
-
-# Run specific test
-go test ./internal/e2e/... -run TestFastResearchWorkflow -v
 ```
-
-### Test Coverage
-
-The test suite includes 49 tests covering:
-
-- **Parser & Router** - Command parsing, aliases, routing
-- **Fast/Deep workflows** - Full research flows with mocked LLM
-- **Session management** - Persistence, versioning, loading
-- **All command handlers** - Edge cases and error handling
-- **Infrastructure** - Event bus, cost tracking, context cancellation
 
 ### Building
 
@@ -260,34 +385,24 @@ go mod tidy
 
 ## How It Works
 
-### ReAct Agent Loop
+### STORM Conversation Flow
 
-The agent follows the Reason + Act pattern:
+Each perspective runs a simulated conversation:
 
-1. **Think** - Analyze the current state and decide next action
-2. **Act** - Execute a tool (search, fetch) or provide final answer
-3. **Observe** - Process tool results
-4. **Repeat** - Until answer found or max iterations reached
+1. **WikiWriter** asks a question based on the perspective's focus
+2. **TopicExpert** converts the question to search queries
+3. **TopicExpert** executes web searches
+4. **TopicExpert** synthesizes an answer with citations
+5. **WikiWriter** asks follow-up questions or says "Thank you!"
+6. Repeat until conversation ends
 
-Tool calls use XML-style tags:
-```
-<tool name="search">{"query": "ReAct agent pattern LLM"}</tool>
-```
+### Perspective-Based Research
 
-Final answers are wrapped:
-```
-<answer>
-The ReAct pattern combines reasoning and acting...
-</answer>
-```
-
-### Complexity-Based Worker Allocation
-
-| Complexity Score | Workers | Use Case |
-|-----------------|---------|----------|
-| 0.0 - 0.3 | 1 | Simple factual queries |
-| 0.3 - 0.6 | 3 | Moderate multi-aspect topics |
-| 0.6 - 1.0 | 5 | Complex research requiring parallel investigation |
+| Complexity | Perspectives | Use Case |
+|------------|--------------|----------|
+| Simple | 2-3 | Factual queries with limited scope |
+| Moderate | 3-4 | Multi-aspect topics needing diverse views |
+| Complex | 5-6 | Deep research requiring comprehensive coverage |
 
 ### Session Persistence
 
@@ -300,22 +415,7 @@ Obsidian structure:
 ```
 <session-id>/
 ├── session.md      # Session overview with wiki-links
-├── workers/
-│   ├── worker_1.md
-│   └── worker_2.md
+├── conversations/  # Per-perspective conversation logs
 └── reports/
     └── report_v1.md
 ```
-
-## Dependencies
-
-- [chzyer/readline](https://github.com/chzyer/readline) - REPL readline support
-- [fatih/color](https://github.com/fatih/color) - Colored terminal output
-- [google/uuid](https://github.com/google/uuid) - Session ID generation
-- [joho/godotenv](https://github.com/joho/godotenv) - .env file loading
-- [golang.org/x/net/html](https://pkg.go.dev/golang.org/x/net/html) - HTML parsing for fetch tool
-- [gopkg.in/yaml.v3](https://github.com/go-yaml/yaml) - YAML frontmatter
-
-## License
-
-MIT
