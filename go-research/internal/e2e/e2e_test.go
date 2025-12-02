@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"go-research/internal/agent"
+	"go-research/internal/architectures/catalog"
 	"go-research/internal/config"
 	"go-research/internal/events"
 	"go-research/internal/llm"
@@ -78,8 +79,8 @@ func TestParserNaturalLanguage(t *testing.T) {
 }
 
 func TestParserPreservesRawText(t *testing.T) {
-	result := repl.Parse("/deep How do AI agents work?")
-	if result.RawText != "/deep How do AI agents work?" {
+	result := repl.Parse("/storm How do AI agents work?")
+	if result.RawText != "/storm How do AI agents work?" {
 		t.Errorf("RawText not preserved: '%s'", result.RawText)
 	}
 }
@@ -125,7 +126,6 @@ func TestRouterCommandAliases(t *testing.T) {
 		expected string
 	}{
 		{"/f test", "fast"},
-		{"/d test", "deep"},
 		{"/s", "sessions"},
 		{"/l id", "load"},
 		{"/w", "workers"},
@@ -173,7 +173,7 @@ func TestRouterUnknownCommandShowsHelp(t *testing.T) {
 	}
 }
 
-func TestRouterNaturalLanguageGoesToDeepWithoutSession(t *testing.T) {
+func TestRouterNaturalLanguageGoesToStormWithoutSession(t *testing.T) {
 	cfg := testConfig()
 	defer os.RemoveAll(filepath.Dir(cfg.StateFile))
 
@@ -184,13 +184,13 @@ func TestRouterNaturalLanguageGoesToDeepWithoutSession(t *testing.T) {
 	ctx := &repl.Context{Store: store, Bus: bus, Config: cfg, Renderer: repl.NewRenderer(&bytes.Buffer{})}
 	router := repl.NewRouter(ctx, handlers.RegisterAll())
 
-	// Without a session, natural language should go to deep
+	// Without a session, natural language should go to storm
 	handler, args, err := router.Route("What is the ReAct pattern?")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
 	if handler == nil {
-		t.Error("Expected deep handler for natural language without session")
+		t.Error("Expected storm handler for natural language without session")
 	}
 	if len(args) != 1 || args[0] != "What is the ReAct pattern?" {
 		t.Errorf("Expected full text as single arg, got: %v", args)
@@ -211,7 +211,7 @@ func TestRouterNaturalLanguageGoesToExpandWithSession(t *testing.T) {
 		Bus:      bus,
 		Config:   cfg,
 		Renderer: repl.NewRenderer(&bytes.Buffer{}),
-		Session:  session.New("test query", session.ModeDeep),
+		Session:  session.New("test query", session.ModeStorm),
 	}
 	router := repl.NewRouter(ctx, handlers.RegisterAll())
 
@@ -1235,7 +1235,7 @@ func TestWorkersHandlerWithWorkers(t *testing.T) {
 	defer bus.Close()
 
 	store, _ := session.NewStore(cfg.StateFile)
-	sess := session.New("Test", session.ModeDeep)
+	sess := session.New("Test", session.ModeStorm)
 	sess.Workers = []session.WorkerContext{
 		{ID: "w1", Objective: "Research topic A", Status: session.WorkerComplete, Sources: []string{"src1"}},
 		{ID: "w2", Objective: "Research topic B", Status: session.WorkerComplete, Sources: []string{"src2", "src3"}},
@@ -1452,7 +1452,7 @@ func TestFastHandlerNoArgs(t *testing.T) {
 	}
 }
 
-func TestDeepHandlerNoArgs(t *testing.T) {
+func TestStormArchitectureCommandNoArgs(t *testing.T) {
 	cfg := testConfig()
 	defer os.RemoveAll(filepath.Dir(cfg.StateFile))
 
@@ -1467,8 +1467,13 @@ func TestDeepHandlerNoArgs(t *testing.T) {
 		Config:   cfg,
 	}
 
-	handler := &handlers.DeepHandler{}
-	err := handler.Execute(ctx, []string{})
+	def, err := catalog.Get("storm")
+	if err != nil {
+		t.Fatalf("catalog get storm: %v", err)
+	}
+
+	handler := handlers.NewArchitectureCommandHandler(def)
+	err = handler.Execute(ctx, []string{})
 
 	if err == nil {
 		t.Error("Expected error when no query provided")
@@ -1510,10 +1515,10 @@ func TestSessionModePreservedAcrossVersions(t *testing.T) {
 		t.Errorf("Fast mode not preserved: %s", fastV2.Mode)
 	}
 
-	deepSess := session.New("Query", session.ModeDeep)
-	deepV2 := deepSess.NewVersion()
-	if deepV2.Mode != session.ModeDeep {
-		t.Errorf("Deep mode not preserved: %s", deepV2.Mode)
+	stormSess := session.New("Query", session.ModeStorm)
+	stormV2 := stormSess.NewVersion()
+	if stormV2.Mode != session.ModeStorm {
+		t.Errorf("Storm mode not preserved: %s", stormV2.Mode)
 	}
 }
 
@@ -1655,7 +1660,13 @@ func TestRendererWelcome(t *testing.T) {
 	var buf bytes.Buffer
 	r := repl.NewRenderer(&buf)
 
-	r.Welcome()
+	docs := []repl.CommandDoc{
+		{Name: "fast", Usage: "/fast <query>", Description: "Quick single-worker research", Category: repl.CommandCategoryAgents},
+		{Name: "storm", Usage: "/storm <query>", Description: "Multi-perspective research", Category: repl.CommandCategoryAgents},
+		{Name: "sessions", Usage: "/sessions", Description: "List sessions", Category: repl.CommandCategorySessions},
+	}
+
+	r.Welcome(docs)
 	output := buf.String()
 
 	if !strings.Contains(output, "Go Research Agent") {
@@ -1664,8 +1675,8 @@ func TestRendererWelcome(t *testing.T) {
 	if !strings.Contains(output, "/fast") {
 		t.Error("Welcome should show /fast command")
 	}
-	if !strings.Contains(output, "/deep") {
-		t.Error("Welcome should show /deep command")
+	if !strings.Contains(output, "/storm") {
+		t.Error("Welcome should show /storm command")
 	}
 }
 

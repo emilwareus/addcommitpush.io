@@ -66,12 +66,12 @@ type NewHandler struct{}
 
 // Execute starts a new session immediately
 func (h *NewHandler) Execute(ctx *repl.Context, args []string) error {
-	// Create a new blank session (defaults to Deep mode, can be changed)
-	sess := session.New("", session.ModeDeep)
+	// Create a new blank session (defaults to Storm mode)
+	sess := session.New("", session.ModeStorm)
 	ctx.Session = sess
 
 	ctx.Renderer.Info(fmt.Sprintf("✓ New session created: %s", sess.ID))
-	ctx.Renderer.Info("  Ready. Type a question or use /deep <query> to start.")
+	ctx.Renderer.Info("  Ready. Type a question or use /storm <query> to start.")
 
 	return nil
 }

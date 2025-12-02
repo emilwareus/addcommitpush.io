@@ -19,7 +19,7 @@ func createTestSession() *session.Session {
 		ID:              "2025-01-15-abc123",
 		Version:         1,
 		Query:           "What is the ReAct agent pattern?",
-		Mode:            session.ModeDeep,
+		Mode:            session.ModeStorm,
 		ComplexityScore: 0.75,
 		Workers: []session.WorkerContext{
 			{

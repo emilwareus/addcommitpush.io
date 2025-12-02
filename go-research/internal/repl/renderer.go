@@ -51,23 +51,36 @@ var (
 )
 
 // Welcome shows the welcome message
-func (r *Renderer) Welcome() {
-	cyan.Fprint(r.w, `
-╔═══════════════════════════════════════════════════════════╗
-║                    Go Research Agent                      ║
-║                                                           ║
-║  Just type your question to start deep research!          ║
-║                                                           ║
-║  Commands:                                                ║
-║    /fast <query>    - Quick single-worker research        ║
-║    /deep <query>    - Multi-worker deep research          ║
-║    /expand <text>   - Expand on current research          ║
-║    /sessions        - List all sessions                   ║
-║    /load <id>       - Load a session                      ║
-║    /new             - Clear session, start fresh          ║
-║    /help            - Show all commands                   ║
-╚═══════════════════════════════════════════════════════════╝
-`)
+func (r *Renderer) Welcome(docs []CommandDoc) {
+	lines := []string{
+		"Go Research Agent",
+		"",
+		"Just type your question to start research!",
+		"",
+		"Commands:",
+	}
+
+	categoryOrder := make([]string, 0)
+	grouped := make(map[string][]CommandDoc)
+	for _, doc := range docs {
+		grouped[doc.Category] = append(grouped[doc.Category], doc)
+		if len(grouped[doc.Category]) == 1 {
+			categoryOrder = append(categoryOrder, doc.Category)
+		}
+	}
+
+	for _, category := range categoryOrder {
+		if category == "" {
+			continue
+		}
+		lines = append(lines, fmt.Sprintf("%s:", category))
+		for _, doc := range grouped[category] {
+			lines = append(lines, fmt.Sprintf("  %s - %s", doc.Usage, doc.Description))
+		}
+		lines = append(lines, "")
+	}
+
+	cyan.Fprint(r.w, renderBox(lines))
 }
 
 // RenderEvent renders an event to the terminal
@@ -166,7 +179,6 @@ func (r *Renderer) Info(msg string) {
 
 // SessionRestored shows restored session info
 func (r *Renderer) SessionRestored(sessionID string, query string, workerCount int, sourceCount int, cost float64) {
-	r.Welcome()
 	green.Fprintf(r.w, "\n✓ Restored session: %s\n", sessionID)
 	dim.Fprintf(r.w, "  Query: %s\n", truncate(query, 60))
 	dim.Fprintf(r.w, "  Workers: %d | Sources: %d | Cost: $%.4f\n\n",
@@ -176,7 +188,7 @@ func (r *Renderer) SessionRestored(sessionID string, query string, workerCount i
 // SessionCleared shows that the session was cleared
 func (r *Renderer) SessionCleared(oldSessionID string) {
 	green.Fprintf(r.w, "✓ Session cleared: %s\n", oldSessionID)
-	cyan.Fprintln(r.w, "  Ready for new research. Type a question or use /deep <query>")
+	cyan.Fprintln(r.w, "  Ready for new research. Type a question or use /storm <query>")
 }
 
 func truncate(s string, n int) string {
@@ -184,6 +196,31 @@ func truncate(s string, n int) string {
 		return s
 	}
 	return s[:n] + "..."
+}
+
+func renderBox(lines []string) string {
+	width := 0
+	for _, line := range lines {
+		if len(line) > width {
+			width = len(line)
+		}
+	}
+	if width < 10 {
+		width = 10
+	}
+
+	horizontal := strings.Repeat("═", width+2)
+	var builder strings.Builder
+	builder.WriteString("╔" + horizontal + "╗\n")
+	for _, line := range lines {
+		padding := width - len(line)
+		if padding < 0 {
+			padding = 0
+		}
+		builder.WriteString(fmt.Sprintf("║ %s%s ║\n", line, strings.Repeat(" ", padding)))
+	}
+	builder.WriteString("╚" + horizontal + "╝\n")
+	return builder.String()
 }
 
 // Spinner provides animated progress indication for long-running operations

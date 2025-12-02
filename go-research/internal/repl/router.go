@@ -55,7 +55,7 @@ func (r *Router) Route(input string) (Handler, []string, error) {
 		return r.routeCommand(parsed)
 	}
 
-	// Natural language: if session exists, expand; otherwise start deep research
+	// Natural language: if session exists, expand; otherwise start storm research
 	if r.ctx.Session != nil {
 		handler, ok := r.handlers["expand"]
 		if !ok {
@@ -64,10 +64,10 @@ func (r *Router) Route(input string) (Handler, []string, error) {
 		return handler, []string{parsed.RawText}, nil
 	}
 
-	// No session - default to deep research
-	handler, ok := r.handlers["deep"]
+	// No session - use storm as default research handler
+	handler, ok := r.handlers["storm"]
 	if !ok {
-		return nil, nil, fmt.Errorf("deep handler not registered")
+		return nil, nil, fmt.Errorf("no default research handler registered (storm)")
 	}
 	return handler, []string{parsed.RawText}, nil
 }
@@ -82,8 +82,6 @@ func (r *Router) routeCommand(parsed ParsedInput) (Handler, []string, error) {
 		cmd = "quit"
 	case "f", "fast":
 		cmd = "fast"
-	case "d", "deep":
-		cmd = "deep"
 	case "s", "sessions":
 		cmd = "sessions"
 	case "l", "load":

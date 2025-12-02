@@ -124,7 +124,7 @@ func TestEventSourcedFullResearchWorkflow(t *testing.T) {
 		t.Errorf("Reconstructed query mismatch: %s", reconstructed.Query)
 	}
 
-	if reconstructed.Mode != "deep" {
+		if reconstructed.Mode != "storm" {
 		t.Errorf("Reconstructed mode mismatch: %s", reconstructed.Mode)
 	}
 
@@ -151,7 +151,7 @@ func TestEventSourcedStateReconstruction(t *testing.T) {
 				Type:        "research.started",
 			},
 			Query: "test query",
-			Mode:  "deep",
+			Mode:  "storm",
 		},
 		&events.PlanCreatedEvent{
 			BaseEvent: events.BaseEvent{
@@ -223,8 +223,8 @@ func TestEventSourcedStateReconstruction(t *testing.T) {
 		t.Errorf("Expected query 'test query', got '%s'", state.Query)
 	}
 
-	if state.Mode != "deep" {
-		t.Errorf("Expected mode 'deep', got '%s'", state.Mode)
+		if state.Mode != "storm" {
+		t.Errorf("Expected mode 'storm', got '%s'", state.Mode)
 	}
 
 	if state.Status != "searching" {
@@ -280,7 +280,7 @@ func TestEventSourcedResume(t *testing.T) {
 				Type:        "research.started",
 			},
 			Query: "resume test query",
-			Mode:  "deep",
+			Mode:  "storm",
 		},
 		&events.PlanCreatedEvent{
 			BaseEvent: events.BaseEvent{
@@ -520,7 +520,7 @@ func TestEventSourcedListSessions(t *testing.T) {
 				Type:        "research.started",
 			},
 			Query: "Query for " + sessionID,
-			Mode:  "deep",
+			Mode:  "storm",
 		}
 
 		if err := eventStore.AppendEvents(ctx, sessionID, []ports.Event{event}, 0); err != nil {

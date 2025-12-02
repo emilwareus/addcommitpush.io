@@ -128,7 +128,10 @@ func TestSearchAgentGeneratesQueries(t *testing.T) {
 		},
 	}
 
-	queries, cost := agent.generateQueries(context.Background(), state)
+	queries, cost, err := agent.generateQueries(context.Background(), state)
+	if err != nil {
+		t.Fatalf("generateQueries returned error: %v", err)
+	}
 
 	if len(queries) != 3 {
 		t.Errorf("expected 3 queries, got %d", len(queries))
@@ -153,7 +156,10 @@ func TestSearchAgentFallbackToGoal(t *testing.T) {
 		Goal: "fallback test topic",
 	}
 
-	queries, cost := agent.generateQueries(context.Background(), state)
+	queries, cost, err := agent.generateQueries(context.Background(), state)
+	if err != nil {
+		t.Fatalf("generateQueries returned error: %v", err)
+	}
 
 	if len(queries) != 1 {
 		t.Errorf("expected 1 query (fallback), got %d", len(queries))
@@ -186,7 +192,10 @@ func TestSearchAgentExtractFacts(t *testing.T) {
 		"2. Another Result\n   URL: https://example.com/2\n   More description\n",
 	}
 
-	facts, sources, cost := agent.extractFacts(context.Background(), searchResults)
+	facts, sources, cost, err := agent.extractFacts(context.Background(), searchResults)
+	if err != nil {
+		t.Fatalf("extractFacts returned error: %v", err)
+	}
 
 	if len(facts) != 2 {
 		t.Errorf("expected 2 facts, got %d", len(facts))
@@ -219,7 +228,10 @@ func TestSearchAgentIdentifyGaps(t *testing.T) {
 		},
 	}
 
-	gaps, cost := agent.identifyGaps(context.Background(), state)
+	gaps, cost, err := agent.identifyGaps(context.Background(), state)
+	if err != nil {
+		t.Fatalf("identifyGaps returned error: %v", err)
+	}
 
 	if len(gaps) != 2 {
 		t.Errorf("expected 2 gaps, got %d", len(gaps))

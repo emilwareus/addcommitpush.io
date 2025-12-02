@@ -2,8 +2,8 @@ package orchestrator
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"log"
 	"sync"
 	"time"
 
@@ -33,6 +33,12 @@ type DeepOrchestrator struct {
 	synthesisAgent *agents.SynthesisAgent
 	tools          tools.ToolExecutor
 }
+
+const (
+	gapImportanceThreshold = 0.5
+	gapFillConcurrency     = 3
+	gapFillTimeout         = 2 * time.Minute
+)
 
 // DeepOrchestratorOption allows configuring the deep orchestrator
 type DeepOrchestratorOption func(*DeepOrchestrator)
@@ -105,7 +111,7 @@ func (o *DeepOrchestrator) Research(ctx context.Context, query string) (*DeepRes
 		Timestamp: time.Now(),
 		Data: events.ResearchStartedData{
 			Query: query,
-			Mode:  "deep",
+			Mode:  "storm",
 		},
 	})
 
@@ -220,7 +226,10 @@ func (o *DeepOrchestrator) Research(ctx context.Context, query string) (*DeepRes
 				Message: fmt.Sprintf("Filling %d knowledge gaps...", len(analysisResult.KnowledgeGaps)),
 			},
 		})
-		gapResults := o.fillGaps(ctx, plan, analysisResult.KnowledgeGaps)
+		gapResults, err := o.fillGaps(ctx, plan, analysisResult.KnowledgeGaps)
+		if err != nil {
+			return nil, fmt.Errorf("gap filling: %w", err)
+		}
 		for id, result := range gapResults {
 			searchResults[id] = result
 		}
@@ -401,111 +410,200 @@ func (o *DeepOrchestrator) executeTask(ctx context.Context, plan *planning.Resea
 }
 
 // fillGaps performs additional searches to address identified knowledge gaps
-func (o *DeepOrchestrator) fillGaps(ctx context.Context, _ *planning.ResearchPlan, gaps []agents.KnowledgeGap) map[string]*agents.SearchResult {
+func (o *DeepOrchestrator) fillGaps(ctx context.Context, _ *planning.ResearchPlan, gaps []agents.KnowledgeGap) (map[string]*agents.SearchResult, error) {
 	results := make(map[string]*agents.SearchResult)
 
-	// Count important gaps
-	importantGaps := 0
-	for _, gap := range gaps {
-		if gap.Importance >= 0.5 {
-			importantGaps++
-		}
+	type gapItem struct {
+		originalIdx int
+		progressIdx int
+		gap         agents.KnowledgeGap
 	}
 
-	// Emit gap-filling started event
+	gapItems := make([]gapItem, 0, len(gaps))
+	importantCount := 0
+	for i, gap := range gaps {
+		item := gapItem{
+			originalIdx: i,
+			progressIdx: -1,
+			gap:         gap,
+		}
+		if gap.Importance >= gapImportanceThreshold {
+			item.progressIdx = importantCount
+			importantCount++
+		}
+		gapItems = append(gapItems, item)
+	}
+
 	o.bus.Publish(events.Event{
 		Type:      events.EventGapFillingStarted,
 		Timestamp: time.Now(),
 		Data: events.GapFillingProgressData{
-			TotalGaps: importantGaps,
+			TotalGaps: importantCount,
 			Progress:  0.0,
 		},
 	})
 
-	processedGaps := 0
-	for i, gap := range gaps {
-		// Skip low-importance gaps
-		if gap.Importance < 0.5 {
+	var workItems []gapItem
+	for _, item := range gapItems {
+		if item.progressIdx == -1 {
 			o.bus.Publish(events.Event{
 				Type:      events.EventGapFillingProgress,
 				Timestamp: time.Now(),
 				Data: events.GapFillingProgressData{
-					GapIndex:  i,
-					TotalGaps: len(gaps),
-					GapDesc:   gap.Description,
+					GapIndex:  item.originalIdx,
+					TotalGaps: importantCount,
+					GapDesc:   item.gap.Description,
 					Status:    "skipped",
-					Progress:  float64(i+1) / float64(len(gaps)),
+					Progress:  0.0,
 				},
 			})
 			continue
 		}
+		workItems = append(workItems, item)
+	}
 
-		processedGaps++
-		log.Printf("filling gap: %+v", gap)
-
-		// Emit progress: searching
+	if len(workItems) == 0 {
 		o.bus.Publish(events.Event{
-			Type:      events.EventGapFillingProgress,
+			Type:      events.EventGapFillingComplete,
 			Timestamp: time.Now(),
 			Data: events.GapFillingProgressData{
-				GapIndex:  processedGaps,
-				TotalGaps: importantGaps,
-				GapDesc:   gap.Description,
-				Status:    "searching",
-				Progress:  float64(processedGaps-1) / float64(importantGaps),
+				TotalGaps: importantCount,
+				Progress:  1.0,
 			},
 		})
+		return results, nil
+	}
 
-		// Create a synthetic perspective for this gap
-		gapPerspective := &planning.Perspective{
-			Name:      fmt.Sprintf("Gap Filler %d", i+1),
-			Focus:     gap.Description,
-			Questions: gap.SuggestedQueries,
+	gapCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	sem := make(chan struct{}, gapFillConcurrency)
+	var wg sync.WaitGroup
+	var mu sync.Mutex
+	var errOnce sync.Once
+	var firstErr error
+	completed := 0
+
+	recordErr := func(err error) {
+		if err == nil {
+			return
 		}
-
-		result, err := o.searchAgent.Search(ctx, gap.Description, gapPerspective)
-		if err != nil {
-			o.bus.Publish(events.Event{
-				Type:      events.EventGapFillingProgress,
-				Timestamp: time.Now(),
-				Data: events.GapFillingProgressData{
-					GapIndex:  processedGaps,
-					TotalGaps: importantGaps,
-					GapDesc:   gap.Description,
-					Status:    "failed",
-					Progress:  float64(processedGaps) / float64(importantGaps),
-				},
-			})
-			continue
-		}
-
-		results[fmt.Sprintf("gap_%d", i)] = result
-
-		// Emit progress: complete
-		o.bus.Publish(events.Event{
-			Type:      events.EventGapFillingProgress,
-			Timestamp: time.Now(),
-			Data: events.GapFillingProgressData{
-				GapIndex:  processedGaps,
-				TotalGaps: importantGaps,
-				GapDesc:   gap.Description,
-				Status:    "complete",
-				Progress:  float64(processedGaps) / float64(importantGaps),
-			},
+		errOnce.Do(func() {
+			firstErr = err
+			cancel()
 		})
 	}
 
-	// Emit gap-filling complete
+	currentProgress := func() float64 {
+		mu.Lock()
+		defer mu.Unlock()
+		if importantCount == 0 {
+			return 1.0
+		}
+		return float64(completed) / float64(importantCount)
+	}
+
+	incrementProgress := func() float64 {
+		mu.Lock()
+		defer mu.Unlock()
+		completed++
+		if importantCount == 0 {
+			return 1.0
+		}
+		return float64(completed) / float64(importantCount)
+	}
+
+	for _, work := range workItems {
+		work := work
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			select {
+			case sem <- struct{}{}:
+			case <-gapCtx.Done():
+				return
+			}
+			defer func() { <-sem }()
+
+			progressBefore := currentProgress()
+			o.bus.Publish(events.Event{
+				Type:      events.EventGapFillingProgress,
+				Timestamp: time.Now(),
+				Data: events.GapFillingProgressData{
+					GapIndex:  work.progressIdx,
+					TotalGaps: importantCount,
+					GapDesc:   work.gap.Description,
+					Status:    "searching",
+					Progress:  progressBefore,
+				},
+			})
+
+			perGapCtx, cancelGap := context.WithTimeout(gapCtx, gapFillTimeout)
+			defer cancelGap()
+
+			gapPerspective := &planning.Perspective{
+				Name:      fmt.Sprintf("Gap Filler %d", work.originalIdx+1),
+				Focus:     work.gap.Description,
+				Questions: work.gap.SuggestedQueries,
+			}
+
+			result, err := o.searchAgent.Search(perGapCtx, work.gap.Description, gapPerspective)
+			if err != nil {
+				status := "failed"
+				if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
+					status = "timeout"
+				}
+				o.bus.Publish(events.Event{
+					Type:      events.EventGapFillingProgress,
+					Timestamp: time.Now(),
+					Data: events.GapFillingProgressData{
+						GapIndex:  work.progressIdx,
+						TotalGaps: importantCount,
+						GapDesc:   work.gap.Description,
+						Status:    status,
+						Progress:  progressBefore,
+					},
+				})
+				recordErr(fmt.Errorf("gap %d (%s): %w", work.originalIdx+1, work.gap.Description, err))
+				return
+			}
+
+			mu.Lock()
+			results[fmt.Sprintf("gap_%d", work.originalIdx)] = result
+			mu.Unlock()
+
+			progressAfter := incrementProgress()
+			o.bus.Publish(events.Event{
+				Type:      events.EventGapFillingProgress,
+				Timestamp: time.Now(),
+				Data: events.GapFillingProgressData{
+					GapIndex:  work.progressIdx,
+					TotalGaps: importantCount,
+					GapDesc:   work.gap.Description,
+					Status:    "complete",
+					Progress:  progressAfter,
+				},
+			})
+		}()
+	}
+
+	wg.Wait()
+
+	if firstErr != nil {
+		return nil, firstErr
+	}
+
 	o.bus.Publish(events.Event{
 		Type:      events.EventGapFillingComplete,
 		Timestamp: time.Now(),
 		Data: events.GapFillingProgressData{
-			TotalGaps: importantGaps,
+			TotalGaps: importantCount,
 			Progress:  1.0,
 		},
 	})
 
-	return results
+	return results, nil
 }
 
 // collectFacts gathers all facts from search results

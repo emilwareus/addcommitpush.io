@@ -3,6 +3,7 @@ package agents
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -92,7 +93,10 @@ func (s *SearchAgent) SearchWithWorkerNum(ctx context.Context, goal string, pers
 	var totalCost session.CostBreakdown
 
 	// Generate initial queries from perspective
-	initialQueries, cost := s.generateQueries(ctx, state)
+	initialQueries, cost, err := s.generateQueries(ctx, state)
+	if err != nil {
+		return nil, fmt.Errorf("initial queries: %w", err)
+	}
 	state.Queries = initialQueries
 	totalCost.Add(cost)
 
@@ -113,10 +117,16 @@ func (s *SearchAgent) SearchWithWorkerNum(ctx context.Context, goal string, pers
 		}
 
 		// Execute searches
-		results := s.executeSearches(ctx, state.Queries)
+		results, err := s.executeSearches(ctx, state.Queries)
+		if err != nil {
+			return nil, fmt.Errorf("execute searches: %w", err)
+		}
 
 		// Extract facts from results
-		facts, sources, extractCost := s.extractFacts(ctx, results)
+		facts, sources, extractCost, err := s.extractFacts(ctx, results)
+		if err != nil {
+			return nil, fmt.Errorf("extract facts: %w", err)
+		}
 		totalCost.Add(extractCost)
 		state.Facts = append(state.Facts, facts...)
 		state.Sources = append(state.Sources, sources...)
@@ -135,7 +145,10 @@ func (s *SearchAgent) SearchWithWorkerNum(ctx context.Context, goal string, pers
 		}
 
 		// Identify knowledge gaps
-		gaps, gapCost := s.identifyGaps(ctx, state)
+		gaps, gapCost, err := s.identifyGaps(ctx, state)
+		if err != nil {
+			return nil, fmt.Errorf("identify gaps: %w", err)
+		}
 		totalCost.Add(gapCost)
 		state.Gaps = gaps
 
@@ -145,7 +158,10 @@ func (s *SearchAgent) SearchWithWorkerNum(ctx context.Context, goal string, pers
 		}
 
 		// Generate follow-up queries for gaps
-		newQueries, queriesCost := s.generateGapQueries(ctx, gaps)
+		newQueries, queriesCost, err := s.generateGapQueries(ctx, gaps)
+		if err != nil {
+			return nil, fmt.Errorf("generate gap queries: %w", err)
+		}
 		totalCost.Add(queriesCost)
 		state.Queries = newQueries
 	}
@@ -159,7 +175,7 @@ func (s *SearchAgent) SearchWithWorkerNum(ctx context.Context, goal string, pers
 }
 
 // generateQueries creates initial search queries based on the goal and perspective.
-func (s *SearchAgent) generateQueries(ctx context.Context, state *SearchState) ([]string, session.CostBreakdown) {
+func (s *SearchAgent) generateQueries(ctx context.Context, state *SearchState) ([]string, session.CostBreakdown, error) {
 	var questions string
 	var perspectiveName, perspectiveFocus string
 
@@ -190,25 +206,28 @@ Return JSON array of search queries: ["query1", "query2", ...]`,
 		{Role: "user", Content: prompt},
 	})
 	if err != nil {
-		return []string{state.Goal}, session.CostBreakdown{} // Use goal as query on error
+		if ctxErr := contextAwareError(ctx, err); ctxErr != nil {
+			return nil, session.CostBreakdown{}, ctxErr
+		}
+		return []string{state.Goal}, session.CostBreakdown{}, nil // Use goal as query on error
 	}
 
 	if len(resp.Choices) == 0 {
-		return []string{state.Goal}, session.CostBreakdown{}
+		return []string{state.Goal}, session.CostBreakdown{}, nil
 	}
 
 	queries := parseStringArray(resp.Choices[0].Message.Content)
 	cost := session.NewCostBreakdown(s.model, resp.Usage.PromptTokens, resp.Usage.CompletionTokens, resp.Usage.TotalTokens)
 
 	if len(queries) == 0 {
-		return []string{state.Goal}, cost
+		return []string{state.Goal}, cost, nil
 	}
 
-	return queries, cost
+	return queries, cost, nil
 }
 
 // executeSearches runs searches for each query and collects results.
-func (s *SearchAgent) executeSearches(ctx context.Context, queries []string) []string {
+func (s *SearchAgent) executeSearches(ctx context.Context, queries []string) ([]string, error) {
 	var results []string
 	for _, query := range queries {
 		result, err := s.tools.Execute(ctx, "search", map[string]interface{}{
@@ -216,17 +235,20 @@ func (s *SearchAgent) executeSearches(ctx context.Context, queries []string) []s
 			"count": float64(5),
 		})
 		if err != nil {
+			if ctxErr := contextAwareError(ctx, err); ctxErr != nil {
+				return nil, ctxErr
+			}
 			continue
 		}
 		results = append(results, result)
 	}
-	return results
+	return results, nil
 }
 
 // extractFacts uses LLM to extract factual claims from search results.
-func (s *SearchAgent) extractFacts(ctx context.Context, searchResults []string) ([]Fact, []string, session.CostBreakdown) {
+func (s *SearchAgent) extractFacts(ctx context.Context, searchResults []string) ([]Fact, []string, session.CostBreakdown, error) {
 	if len(searchResults) == 0 {
-		return nil, nil, session.CostBreakdown{}
+		return nil, nil, session.CostBreakdown{}, nil
 	}
 
 	combined := strings.Join(searchResults, "\n---\n")
@@ -246,11 +268,14 @@ Only include verifiable facts, not opinions. If no source URL is found, use "unk
 		{Role: "user", Content: prompt},
 	})
 	if err != nil {
-		return nil, nil, session.CostBreakdown{}
+		if ctxErr := contextAwareError(ctx, err); ctxErr != nil {
+			return nil, nil, session.CostBreakdown{}, ctxErr
+		}
+		return nil, nil, session.CostBreakdown{}, nil
 	}
 
 	if len(resp.Choices) == 0 {
-		return nil, nil, session.CostBreakdown{}
+		return nil, nil, session.CostBreakdown{}, nil
 	}
 
 	facts := parseFactsArray(resp.Choices[0].Message.Content)
@@ -259,13 +284,13 @@ Only include verifiable facts, not opinions. If no source URL is found, use "unk
 	// Extract sources from results using the tools package helper
 	sources := tools.ExtractURLs(combined)
 
-	return facts, sources, cost
+	return facts, sources, cost, nil
 }
 
 // identifyGaps analyzes gathered facts against the research goal to find knowledge gaps.
-func (s *SearchAgent) identifyGaps(ctx context.Context, state *SearchState) ([]string, session.CostBreakdown) {
+func (s *SearchAgent) identifyGaps(ctx context.Context, state *SearchState) ([]string, session.CostBreakdown, error) {
 	if len(state.Facts) == 0 {
-		return []string{"No facts gathered yet"}, session.CostBreakdown{}
+		return []string{"No facts gathered yet"}, session.CostBreakdown{}, nil
 	}
 
 	var factsSummary strings.Builder
@@ -296,23 +321,26 @@ Return empty array [] if no significant gaps.`, state.Goal, questions, factsSumm
 		{Role: "user", Content: prompt},
 	})
 	if err != nil {
-		return nil, session.CostBreakdown{}
+		if ctxErr := contextAwareError(ctx, err); ctxErr != nil {
+			return nil, session.CostBreakdown{}, ctxErr
+		}
+		return nil, session.CostBreakdown{}, nil
 	}
 
 	if len(resp.Choices) == 0 {
-		return nil, session.CostBreakdown{}
+		return nil, session.CostBreakdown{}, nil
 	}
 
 	gaps := parseStringArray(resp.Choices[0].Message.Content)
 	cost := session.NewCostBreakdown(s.model, resp.Usage.PromptTokens, resp.Usage.CompletionTokens, resp.Usage.TotalTokens)
 
-	return gaps, cost
+	return gaps, cost, nil
 }
 
 // generateGapQueries creates search queries to fill identified knowledge gaps.
-func (s *SearchAgent) generateGapQueries(ctx context.Context, gaps []string) ([]string, session.CostBreakdown) {
+func (s *SearchAgent) generateGapQueries(ctx context.Context, gaps []string) ([]string, session.CostBreakdown, error) {
 	if len(gaps) == 0 {
-		return nil, session.CostBreakdown{}
+		return nil, session.CostBreakdown{}, nil
 	}
 
 	prompt := fmt.Sprintf(`Generate search queries to fill these knowledge gaps:
@@ -326,27 +354,43 @@ Return JSON array of search queries: ["query1", "query2"]`, strings.Join(gaps, "
 		{Role: "user", Content: prompt},
 	})
 	if err != nil {
-		return gaps, session.CostBreakdown{} // Use gaps as queries directly on error
+		if ctxErr := contextAwareError(ctx, err); ctxErr != nil {
+			return nil, session.CostBreakdown{}, ctxErr
+		}
+		return gaps, session.CostBreakdown{}, nil // Use gaps as queries directly on error
 	}
 
 	if len(resp.Choices) == 0 {
-		return gaps, session.CostBreakdown{}
+		return gaps, session.CostBreakdown{}, nil
 	}
 
 	queries := parseStringArray(resp.Choices[0].Message.Content)
 	cost := session.NewCostBreakdown(s.model, resp.Usage.PromptTokens, resp.Usage.CompletionTokens, resp.Usage.TotalTokens)
 
 	if len(queries) == 0 {
-		return gaps, cost
+		return gaps, cost, nil
 	}
 
-	return queries, cost
+	return queries, cost, nil
 }
 
 // sufficientCoverage determines if we have enough facts and few enough gaps.
 func (s *SearchAgent) sufficientCoverage(state *SearchState) bool {
 	// Sufficient if we have at least 5 facts and less than 2 gaps
 	return len(state.Facts) >= 5 && len(state.Gaps) < 2
+}
+
+func contextAwareError(ctx context.Context, err error) error {
+	if err == nil {
+		return nil
+	}
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return ctxErr
+	}
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return err
+	}
+	return nil
 }
 
 // parseStringArray extracts a JSON string array from LLM response content.

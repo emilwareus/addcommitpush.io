@@ -54,7 +54,7 @@ type EventStore interface {
 // SessionFilters defines filters for querying sessions.
 type SessionFilters struct {
 	Status    string // Filter by status
-	Mode      string // Filter by mode (fast/deep)
+	Mode      string // Filter by mode (fast/storm)
 	Query     string // Filter by query substring
 	Limit     int    // Max results
 	Offset    int    // Pagination offset

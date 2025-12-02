@@ -62,7 +62,7 @@ const (
 type ResearchStartedData struct {
 	SessionID string
 	Query     string
-	Mode      string // "fast" or "deep"
+	Mode      string // "fast" or "storm"
 }
 
 // WorkerProgressData contains data for worker progress events

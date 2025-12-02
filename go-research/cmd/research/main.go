@@ -57,6 +57,7 @@ func main() {
 
 	// Register all command handlers (legacy)
 	allHandlers := handlers.RegisterAll()
+	commandDocs := handlers.CommandDocs()
 
 	// Register event-sourced handlers
 	esHandlers, err := handlers.CreateEventStoreHandlers(cfg.EventStoreDir)
@@ -67,7 +68,7 @@ func main() {
 	}
 
 	// Create REPL
-	r, err := repl.New(store, bus, cfg, allHandlers)
+	r, err := repl.New(store, bus, cfg, allHandlers, commandDocs)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error creating REPL: %v\n", err)
 		os.Exit(1)

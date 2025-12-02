@@ -6,7 +6,7 @@ import "time"
 type ResearchStartedEvent struct {
 	BaseEvent
 	Query  string         `json:"query"`
-	Mode   string         `json:"mode"` // "fast" or "deep"
+	Mode   string         `json:"mode"` // "fast" or "storm"
 	Config ResearchConfig `json:"config"`
 }
 

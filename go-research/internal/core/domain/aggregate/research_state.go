@@ -22,7 +22,7 @@ type ResearchState struct {
 
 	// Research configuration
 	Query  string
-	Mode   string // "fast" or "deep"
+	Mode   string // "fast" or "storm"
 	Config events.ResearchConfig
 
 	// Current status

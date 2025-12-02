@@ -17,19 +17,20 @@ import (
 
 // REPL is the interactive research shell
 type REPL struct {
-	router   *Router
-	store    *session.Store
-	bus      *events.Bus
-	renderer *Renderer
-	readline *readline.Instance
-	ctx      *Context
-	config   *config.Config
-	mu       sync.Mutex
-	running  bool // true when a handler is executing
+	router      *Router
+	store       *session.Store
+	bus         *events.Bus
+	renderer    *Renderer
+	readline    *readline.Instance
+	ctx         *Context
+	config      *config.Config
+	commandDocs []CommandDoc
+	mu          sync.Mutex
+	running     bool // true when a handler is executing
 }
 
 // New creates a new REPL instance
-func New(store *session.Store, bus *events.Bus, cfg *config.Config, handlers map[string]Handler) (*REPL, error) {
+func New(store *session.Store, bus *events.Bus, cfg *config.Config, handlers map[string]Handler, docs []CommandDoc) (*REPL, error) {
 	rl, err := readline.NewEx(&readline.Config{
 		Prompt:          "\033[36mresearch>\033[0m ",
 		HistoryFile:     cfg.HistoryFile,
@@ -42,11 +43,12 @@ func New(store *session.Store, bus *events.Bus, cfg *config.Config, handlers map
 	}
 
 	r := &REPL{
-		store:    store,
-		bus:      bus,
-		renderer: NewRenderer(os.Stdout),
-		readline: rl,
-		config:   cfg,
+		store:       store,
+		bus:         bus,
+		renderer:    NewRenderer(os.Stdout),
+		readline:    rl,
+		config:      cfg,
+		commandDocs: docs,
 	}
 
 	r.ctx = &Context{
@@ -71,6 +73,8 @@ func (r *REPL) Context() *Context {
 func (r *REPL) Run(ctx context.Context) error {
 	defer r.readline.Close()
 
+	r.renderer.Welcome(r.commandDocs)
+
 	// Try to restore last session
 	if sess, err := r.store.LoadLast(); err == nil && sess != nil {
 		r.ctx.Session = sess
@@ -81,8 +85,6 @@ func (r *REPL) Run(ctx context.Context) error {
 			len(sess.Sources),
 			sess.Cost.TotalCost,
 		)
-	} else {
-		r.renderer.Welcome()
 	}
 
 	// Subscribe to events for rendering

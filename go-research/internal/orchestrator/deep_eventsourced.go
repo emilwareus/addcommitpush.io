@@ -129,7 +129,7 @@ func (o *DeepOrchestratorES) loadOrCreateState(ctx context.Context, sessionID st
 	// Execute start command
 	event, err := state.Execute(aggregate.StartResearchCommand{
 		Query: query,
-		Mode:  "deep",
+		Mode:  "storm",
 		Config: domainEvents.ResearchConfig{
 			MaxWorkers: o.appConfig.MaxWorkers,
 		},

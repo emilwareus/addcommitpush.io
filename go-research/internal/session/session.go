@@ -13,8 +13,8 @@ import (
 type Mode string
 
 const (
-	ModeFast Mode = "fast"
-	ModeDeep Mode = "deep"
+	ModeFast  Mode = "fast"
+	ModeStorm Mode = "storm"
 )
 
 // SessionStatus represents the current state of a session
