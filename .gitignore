@@ -31,7 +31,8 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
+.env
+.env.local
 
 # vercel
 .vercel
@@ -44,3 +45,18 @@ TODO.md
 
 # temporary audio generation files
 .tmp-audio/
+outputs/sessions/.obsidian/app.json
+outputs/sessions/.obsidian/appearance.json
+outputs/sessions/.obsidian/core-plugins.json
+outputs/sessions/.obsidian/graph.json
+outputs/sessions/.obsidian/workspace.json
+outputs/sessions/deep research/.obsidian/app.json
+outputs/sessions/deep research/.obsidian/appearance.json
+outputs/sessions/deep research/.obsidian/core-plugins.json
+outputs/sessions/deep research/.obsidian/graph.json
+outputs/sessions/deep research/.obsidian/workspace.json
+deep-research-agent/data/car_price_prediction_.csv
+
+
+# 
+go-research/external_code/
