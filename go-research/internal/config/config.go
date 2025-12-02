@@ -15,9 +15,10 @@ type Config struct {
 	BraveAPIKey      string
 
 	// Paths
-	VaultPath   string
-	HistoryFile string
-	StateFile   string
+	VaultPath      string
+	HistoryFile    string
+	StateFile      string
+	EventStoreDir  string // Event-sourced storage directory
 
 	// Timeouts
 	WorkerTimeout  time.Duration
@@ -46,9 +47,10 @@ func Load() *Config {
 		OpenRouterAPIKey: os.Getenv("OPENROUTER_API_KEY"),
 		BraveAPIKey:      os.Getenv("BRAVE_API_KEY"),
 
-		VaultPath:   getEnvOrDefault("RESEARCH_VAULT", filepath.Join(home, "research-vault")),
-		HistoryFile: filepath.Join(home, ".research_history"),
-		StateFile:   filepath.Join(home, ".research_state"),
+		VaultPath:     getEnvOrDefault("RESEARCH_VAULT", filepath.Join(home, "research-vault")),
+		HistoryFile:   filepath.Join(home, ".research_history"),
+		StateFile:     filepath.Join(home, ".research_state"),
+		EventStoreDir: filepath.Join(home, ".research_events"),
 
 		WorkerTimeout:  30 * time.Minute,
 		RequestTimeout: 5 * time.Minute,

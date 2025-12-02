@@ -175,6 +175,15 @@ func (m *Manager) addCost(promptTokens, completionTokens, totalTokens int) {
 	m.mu.Unlock()
 }
 
+// addCostUnlocked adds cost without locking - caller must hold the lock.
+func (m *Manager) addCostUnlocked(promptTokens, completionTokens, totalTokens int) {
+	if promptTokens == 0 && completionTokens == 0 && totalTokens == 0 {
+		return
+	}
+	cost := session.NewCostBreakdown(m.model, promptTokens, completionTokens, totalTokens)
+	m.cost.Add(cost)
+}
+
 // GetSummaries returns a copy of the current summaries (for debugging/testing).
 func (m *Manager) GetSummaries() []Summary {
 	m.mu.RLock()

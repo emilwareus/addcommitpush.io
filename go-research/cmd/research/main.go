@@ -15,6 +15,18 @@ import (
 	"go-research/internal/session"
 )
 
+// mergeHandlers combines two handler maps, with b taking precedence.
+func mergeHandlers(a, b map[string]repl.Handler) map[string]repl.Handler {
+	result := make(map[string]repl.Handler)
+	for k, v := range a {
+		result[k] = v
+	}
+	for k, v := range b {
+		result[k] = v
+	}
+	return result
+}
+
 func main() {
 	cfg := config.Load()
 
@@ -43,8 +55,16 @@ func main() {
 	bus := events.NewBus(100)
 	defer bus.Close()
 
-	// Register all command handlers
+	// Register all command handlers (legacy)
 	allHandlers := handlers.RegisterAll()
+
+	// Register event-sourced handlers
+	esHandlers, err := handlers.CreateEventStoreHandlers(cfg.EventStoreDir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: failed to create event-sourced handlers: %v\n", err)
+	} else {
+		allHandlers = mergeHandlers(allHandlers, esHandlers)
+	}
 
 	// Create REPL
 	r, err := repl.New(store, bus, cfg, allHandlers)

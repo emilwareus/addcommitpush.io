@@ -73,7 +73,8 @@ func (m *Manager) DecideFolding(ctx context.Context) (FoldDirective, error) {
 		return FoldDirective{Type: FoldGranular, Rationale: "default (LLM error)"}, nil
 	}
 
-	m.addCost(resp.Usage.PromptTokens, resp.Usage.CompletionTokens, resp.Usage.TotalTokens)
+	// Use unlocked version since this is called from within Fold which holds the lock
+	m.addCostUnlocked(resp.Usage.PromptTokens, resp.Usage.CompletionTokens, resp.Usage.TotalTokens)
 
 	if len(resp.Choices) == 0 {
 		return FoldDirective{Type: FoldGranular, Rationale: "default (empty response)"}, nil
@@ -229,7 +230,8 @@ Consolidated overview:`, content)
 		return "", err
 	}
 
-	m.addCost(resp.Usage.PromptTokens, resp.Usage.CompletionTokens, resp.Usage.TotalTokens)
+	// Use unlocked version since this is called from within Fold which holds the lock
+	m.addCostUnlocked(resp.Usage.PromptTokens, resp.Usage.CompletionTokens, resp.Usage.TotalTokens)
 
 	if len(resp.Choices) == 0 {
 		return "", fmt.Errorf("empty response from LLM")
