@@ -59,6 +59,10 @@ func (v *Visualizer) Start() {
 		events.EventGapFillingStarted,
 		events.EventGapFillingProgress,
 		events.EventGapFillingComplete,
+		// STORM conversation events
+		events.EventConversationStarted,
+		events.EventConversationProgress,
+		events.EventConversationCompleted,
 	)
 
 	go func() {

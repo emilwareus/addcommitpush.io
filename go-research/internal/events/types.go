@@ -51,6 +51,11 @@ const (
 	EventGapFillingProgress      // Per-gap progress
 	EventGapFillingComplete      // Gap-filling done
 
+	// STORM conversation events
+	EventConversationStarted   // Starting a conversation for a perspective
+	EventConversationProgress  // Turn completed in a conversation
+	EventConversationCompleted // Conversation finished for a perspective
+
 	// Session events
 	EventSessionCreated
 	EventSessionLoaded
@@ -152,4 +157,29 @@ type GapFillingProgressData struct {
 	GapDesc     string  // Description of current gap
 	Status      string  // "searching", "processing", "complete", "skipped"
 	Progress    float64 // 0.0 to 1.0 progress
+}
+
+// ConversationStartedData contains data when a conversation begins
+type ConversationStartedData struct {
+	Perspective      string // Perspective name
+	Focus            string // Perspective focus area
+	TotalPerspectives int   // Total perspectives being processed
+	Index            int    // 0-based index of current perspective
+}
+
+// ConversationProgressData contains progress info for a conversation turn
+type ConversationProgressData struct {
+	Perspective string // Perspective name
+	Turn        int    // Current turn number (1-based)
+	MaxTurns    int    // Maximum turns configured
+	Question    string // Question asked in this turn
+	Sources     int    // Number of sources found
+}
+
+// ConversationCompletedData contains data when a conversation finishes
+type ConversationCompletedData struct {
+	Perspective string // Perspective name
+	TotalTurns  int    // Number of turns completed
+	FactsFound  int    // Number of facts extracted
+	Sources     int    // Number of unique sources
 }

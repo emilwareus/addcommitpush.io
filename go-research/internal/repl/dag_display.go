@@ -10,7 +10,9 @@ import (
 	"github.com/fatih/color"
 )
 
-// DAGDisplay renders a visual representation of the research plan and DAG
+// DAGDisplay renders a visual representation of the STORM research plan.
+// Note: Despite the name, STORM doesn't use a DAG - it uses sequential phases
+// with parallel conversations. This display shows the actual STORM flow.
 type DAGDisplay struct {
 	w io.Writer
 }
@@ -20,10 +22,10 @@ func NewDAGDisplay(w io.Writer) *DAGDisplay {
 	return &DAGDisplay{w: w}
 }
 
-// Render displays the research plan with a visual DAG representation
+// Render displays the STORM research plan with its actual flow
 func (d *DAGDisplay) Render(data events.PlanCreatedData) {
 	d.renderHeader(data.Topic)
-	d.renderDAG(len(data.Perspectives))
+	d.renderSTORMFlow(len(data.Perspectives))
 	d.renderPerspectives(data.Perspectives)
 	d.renderFooter()
 }
@@ -35,7 +37,7 @@ func (d *DAGDisplay) renderHeader(topic string) {
 
 	fmt.Fprintln(d.w)
 	boxColor.Fprintln(d.w, "╭──────────────────────────────────────────────────────────────────────────────╮")
-	headerColor.Fprintf(d.w, "│%s│\n", centerText("🔬 DEEP RESEARCH PLAN", 78))
+	headerColor.Fprintf(d.w, "│%s│\n", centerText("🔬 STORM RESEARCH PLAN", 78))
 	boxColor.Fprintln(d.w, "│                                                                              │")
 
 	// Truncate topic to fit
@@ -50,41 +52,36 @@ func (d *DAGDisplay) renderHeader(topic string) {
 	fmt.Fprintln(d.w)
 }
 
-func (d *DAGDisplay) renderDAG(perspectiveCount int) {
+// renderSTORMFlow renders the actual STORM phases (not a DAG)
+func (d *DAGDisplay) renderSTORMFlow(perspectiveCount int) {
 	dimColor := color.New(color.Faint)
-	nodeColor := color.New(color.FgHiWhite)
-	searchColor := color.New(color.FgHiYellow)
+	phaseColor := color.New(color.FgHiMagenta)
+	convColor := color.New(color.FgHiYellow)
 	analyzeColor := color.New(color.FgHiCyan)
 	synthColor := color.New(color.FgHiGreen)
 
-	// Render root node
-	d.renderCenteredNode(nodeColor, "ROOT", "Analysis", "○")
+	// Phase 1: DISCOVER
+	d.renderPhaseNode(phaseColor, "1. DISCOVER", "Perspectives")
+	dimColor.Fprintln(d.w, strings.Repeat(" ", 39)+"│")
 
-	// Render connector lines from root to search nodes
+	// Phase 2: CONVERSE (parallel conversations)
+	d.renderPhaseNode(convColor, "2. CONVERSE", "Parallel")
 	d.renderFanOut(perspectiveCount)
-
-	// Render search nodes in a row
-	d.renderSearchNodes(searchColor, perspectiveCount)
-
-	// Render connector lines from search nodes to validation
+	d.renderConversationNodes(convColor, perspectiveCount)
 	d.renderFanIn(perspectiveCount)
 
-	// Render validation node
-	d.renderCenteredNode(analyzeColor, "VALIDATE", "Cross-Check", "○")
+	// Phase 3: ANALYZE
+	d.renderPhaseNode(analyzeColor, "3. ANALYZE", "Validate Facts")
 	dimColor.Fprintln(d.w, strings.Repeat(" ", 39)+"│")
 
-	// Render gap-fill node
-	d.renderCenteredNode(analyzeColor, "FILL GAPS", "Gap Research", "○")
-	dimColor.Fprintln(d.w, strings.Repeat(" ", 39)+"│")
-
-	// Render synthesis node
-	d.renderCenteredNode(synthColor, "SYNTHESIZE", "Final Report", "○")
+	// Phase 4: SYNTHESIZE
+	d.renderPhaseNode(synthColor, "4. SYNTHESIZE", "Final Report")
 
 	fmt.Fprintln(d.w)
 }
 
-func (d *DAGDisplay) renderCenteredNode(c *color.Color, title, subtitle, icon string) {
-	boxWidth := 16
+func (d *DAGDisplay) renderPhaseNode(c *color.Color, title, subtitle string) {
+	boxWidth := 18
 	padding := (80 - boxWidth) / 2
 	padStr := strings.Repeat(" ", padding)
 
@@ -93,15 +90,16 @@ func (d *DAGDisplay) renderCenteredNode(c *color.Color, title, subtitle, icon st
 	// Top border
 	dimColor.Fprintf(d.w, "%s┌%s┐\n", padStr, strings.Repeat("─", boxWidth-2))
 
-	// Title line with icon
-	titleLine := fmt.Sprintf("%s %s", icon, title)
-	titlePad := boxWidth - 2 - len(titleLine)
+	// Title line
+	if len(title) > boxWidth-2 {
+		title = title[:boxWidth-2]
+	}
+	titlePad := boxWidth - 2 - len(title)
 	if titlePad < 0 {
 		titlePad = 0
-		titleLine = titleLine[:boxWidth-2]
 	}
 	dimColor.Fprintf(d.w, "%s│", padStr)
-	c.Fprintf(d.w, "%s%s", titleLine, strings.Repeat(" ", titlePad))
+	c.Fprintf(d.w, "%s%s", title, strings.Repeat(" ", titlePad))
 	dimColor.Fprintln(d.w, "│")
 
 	// Subtitle line
@@ -124,7 +122,7 @@ func (d *DAGDisplay) renderFanOut(count int) {
 
 	dimColor := color.New(color.Faint)
 
-	// Calculate total width needed for worker nodes
+	// Calculate total width needed for conversation nodes
 	nodeWidth := 14
 	spacing := 2
 	totalWidth := count*nodeWidth + (count-1)*spacing
@@ -134,7 +132,7 @@ func (d *DAGDisplay) renderFanOut(count int) {
 	}
 	centerPad := 39 // Center position for single pipe
 
-	// Single line down from root
+	// Single line down
 	dimColor.Fprintf(d.w, "%s│\n", strings.Repeat(" ", centerPad))
 
 	// Horizontal spread with connections
@@ -182,7 +180,7 @@ func (d *DAGDisplay) renderFanOut(count int) {
 	}
 }
 
-func (d *DAGDisplay) renderSearchNodes(c *color.Color, count int) {
+func (d *DAGDisplay) renderConversationNodes(c *color.Color, count int) {
 	if count <= 0 {
 		return
 	}
@@ -210,10 +208,10 @@ func (d *DAGDisplay) renderSearchNodes(c *color.Color, count int) {
 	}
 	dimColor.Fprintln(d.w, line.String())
 
-	// Worker labels
+	// Conversation labels
 	fmt.Fprint(d.w, strings.Repeat(" ", startPad))
 	for i := 0; i < count; i++ {
-		label := fmt.Sprintf("Worker %d", i+1)
+		label := fmt.Sprintf("Conv %d", i+1)
 		if len(label) > nodeWidth-2 {
 			label = label[:nodeWidth-2]
 		}
@@ -228,7 +226,7 @@ func (d *DAGDisplay) renderSearchNodes(c *color.Color, count int) {
 	}
 	fmt.Fprintln(d.w)
 
-	// Status line (initially all pending)
+	// Status line
 	fmt.Fprint(d.w, strings.Repeat(" ", startPad))
 	for i := 0; i < count; i++ {
 		status := "○ pending"
@@ -291,7 +289,7 @@ func (d *DAGDisplay) renderFanIn(count int) {
 		}
 		dimColor.Fprintln(d.w, vertLine.String())
 
-		// Horizontal merge with connections
+		// Horizontal merge
 		var line strings.Builder
 		line.WriteString(strings.Repeat(" ", startPad))
 
@@ -316,7 +314,7 @@ func (d *DAGDisplay) renderFanIn(count int) {
 		}
 		dimColor.Fprintln(d.w, line.String())
 
-		// Single line down to validation
+		// Single line down
 		dimColor.Fprintf(d.w, "%s│\n", strings.Repeat(" ", centerPad))
 	}
 }
@@ -333,7 +331,7 @@ func (d *DAGDisplay) renderPerspectives(perspectives []events.PerspectiveData) {
 	dimColor := color.New(color.Faint)
 
 	boxColor.Fprintln(d.w, "╭──────────────────────────────────────────────────────────────────────────────╮")
-	headerColor.Fprintf(d.w, "│  %-76s│\n", "PERSPECTIVES:")
+	headerColor.Fprintf(d.w, "│  %-76s│\n", "PERSPECTIVES (WikiWriter↔TopicExpert conversations):")
 	boxColor.Fprintln(d.w, "│                                                                              │")
 
 	for i, p := range perspectives {
@@ -365,7 +363,7 @@ func (d *DAGDisplay) renderPerspectives(perspectives []events.PerspectiveData) {
 func (d *DAGDisplay) renderFooter() {
 	dimColor := color.New(color.Faint)
 	fmt.Fprintln(d.w)
-	dimColor.Fprintln(d.w, centerText("Starting research workers...", 80))
+	dimColor.Fprintln(d.w, centerText("Starting STORM conversations...", 80))
 	fmt.Fprintln(d.w)
 }
 
@@ -379,4 +377,3 @@ func centerText(text string, width int) string {
 	rightPad := width - textLen - leftPad
 	return strings.Repeat(" ", leftPad) + text + strings.Repeat(" ", rightPad)
 }
-

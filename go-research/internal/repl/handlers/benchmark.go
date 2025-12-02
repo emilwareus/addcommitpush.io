@@ -85,9 +85,8 @@ func (h *BenchmarkHandler) getArchitecture(name string, ctx *repl.Context) archi
 	switch name {
 	case "storm":
 		return storm.New(storm.Config{
-			EventStorePath: ctx.Config.EventStoreDir,
-			AppConfig:      ctx.Config,
-			Bus:            ctx.Bus,
+			AppConfig: ctx.Config,
+			Bus:       ctx.Bus,
 		})
 	default:
 		// Try registry

@@ -1,17 +1,42 @@
 // Package storm implements the STORM (Synthesis of Topic Outlines through
 // Retrieval and Multi-perspective Question Asking) research architecture.
 //
-// STORM discovers multiple expert perspectives on a topic, then executes
-// parallel research from each perspective, followed by cross-validation
-// and synthesis into a comprehensive report.
+// STORM Flow:
 //
-// Architecture flow:
-//  1. Planning: Discover 3-5 expert perspectives via LLM
-//  2. DAG Construction: Build execution graph from perspectives
-//  3. Parallel Search: Each perspective searches and extracts facts
-//  4. Analysis: Cross-validate facts, detect contradictions, find gaps
-//  5. Gap Filling: Additional searches for missing information
-//  6. Synthesis: Generate structured report with citations
+//	┌─────────────────────────────────────────────────────────────────────────┐
+//	│  1. PERSPECTIVE DISCOVERY                                               │
+//	│     - Survey related topics via web search                              │
+//	│     - LLM identifies 3-5 expert perspectives                            │
+//	│     - Each gets: Name, Focus, Initial Questions                         │
+//	└─────────────────────────────────────────────────────────────────────────┘
+//	                                  │
+//	                                  ▼
+//	┌─────────────────────────────────────────────────────────────────────────┐
+//	│  2. CONVERSATION SIMULATION (parallel per perspective)                  │
+//	│     For each perspective:                                               │
+//	│       Loop until "Thank you for your help!":                            │
+//	│         a. WikiWriter asks question (based on persona)                  │
+//	│         b. TopicExpert converts question → search queries               │
+//	│         c. Execute web searches                                         │
+//	│         d. TopicExpert synthesizes answer with citations                │
+//	│         e. Record turn, repeat                                          │
+//	└─────────────────────────────────────────────────────────────────────────┘
+//	                                  │
+//	                                  ▼
+//	┌─────────────────────────────────────────────────────────────────────────┐
+//	│  3. CROSS-VALIDATION (Analysis)                                         │
+//	│     - Extract all facts from conversations                              │
+//	│     - Detect contradictions between perspectives                        │
+//	│     - Identify knowledge gaps                                           │
+//	└─────────────────────────────────────────────────────────────────────────┘
+//	                                  │
+//	                                  ▼
+//	┌─────────────────────────────────────────────────────────────────────────┐
+//	│  4. SYNTHESIS (Two-Phase Outline)                                       │
+//	│     a. Draft outline from conversation content                          │
+//	│     b. Refine outline for coherence                                     │
+//	│     c. Generate full report with inline citations                       │
+//	└─────────────────────────────────────────────────────────────────────────┘
 package storm
 
 import (
@@ -19,63 +44,38 @@ import (
 	"fmt"
 	"time"
 
-	"go-research/internal/adapters/storage/filesystem"
-	"go-research/internal/agents"
 	"go-research/internal/architectures"
 	"go-research/internal/architectures/catalog"
 	"go-research/internal/config"
-	"go-research/internal/core/domain/aggregate"
-	domainEvents "go-research/internal/core/domain/events"
-	"go-research/internal/core/ports"
 	"go-research/internal/events"
 	"go-research/internal/llm"
 	"go-research/internal/orchestrator"
-	"go-research/internal/session"
 	"go-research/internal/tools"
 )
 
-// Architecture implements the STORM research pattern.
+// Architecture implements the STORM research pattern using conversation simulation.
 type Architecture struct {
-	eventStore ports.EventStore
-	bus        *events.Bus
-	config     *config.Config
-	client     llm.ChatClient
-	tools      tools.ToolExecutor
+	bus    *events.Bus
+	config *config.Config
+	client llm.ChatClient
+	tools  tools.ToolExecutor
 }
 
 // Config holds configuration for the STORM architecture.
 type Config struct {
-	EventStorePath string
-	AppConfig      *config.Config
-	Bus            *events.Bus
-	Client         llm.ChatClient     // Optional: for testing
-	Tools          tools.ToolExecutor // Optional: for testing
+	AppConfig *config.Config
+	Bus       *events.Bus
+	Client    llm.ChatClient     // Optional: inject for testing
+	Tools     tools.ToolExecutor // Optional: inject for testing
 }
 
 // New creates a new STORM architecture instance.
 func New(cfg Config) *Architecture {
-	eventStore := filesystem.NewEventStore(cfg.EventStorePath)
-
-	var client llm.ChatClient
-	if cfg.Client != nil {
-		client = cfg.Client
-	} else {
-		client = llm.NewClient(cfg.AppConfig)
-	}
-
-	var toolExec tools.ToolExecutor
-	if cfg.Tools != nil {
-		toolExec = cfg.Tools
-	} else {
-		toolExec = tools.NewRegistry(cfg.AppConfig.BraveAPIKey)
-	}
-
 	return &Architecture{
-		eventStore: eventStore,
-		bus:        cfg.Bus,
-		config:     cfg.AppConfig,
-		client:     client,
-		tools:      toolExec,
+		bus:    cfg.Bus,
+		config: cfg.AppConfig,
+		client: cfg.Client,
+		tools:  cfg.Tools,
 	}
 }
 
@@ -86,29 +86,36 @@ func (a *Architecture) Name() string {
 
 // Description returns a human-readable description.
 func (a *Architecture) Description() string {
-	return "STORM: Multi-perspective research with parallel search, cross-validation, and synthesis"
+	return "STORM: Multi-perspective conversations with cross-validation and synthesis"
 }
 
 // SupportsResume indicates this architecture supports resuming interrupted sessions.
 func (a *Architecture) SupportsResume() bool {
-	return true
+	return false // Conversation-based STORM doesn't support resume yet
 }
 
-// Research executes STORM-style research for the given query.
+// Research executes the STORM research workflow:
+//  1. Discover perspectives (with related topic survey)
+//  2. Simulate WikiWriter↔TopicExpert conversations (parallel)
+//  3. Cross-validate facts and identify gaps
+//  4. Synthesize report with two-phase outline
 func (a *Architecture) Research(ctx context.Context, sessionID string, query string) (*architectures.Result, error) {
 	startTime := time.Now()
 
-	// Create the event-sourced orchestrator
-	orch := orchestrator.NewDeepOrchestratorES(
-		a.eventStore,
-		a.bus,
-		a.config,
-		orchestrator.WithESClient(a.client),
-		orchestrator.WithESTools(a.tools),
-	)
+	// Build orchestrator options
+	opts := []orchestrator.StormOrchestratorOption{}
+	if a.client != nil {
+		opts = append(opts, orchestrator.WithStormClient(a.client))
+	}
+	if a.tools != nil {
+		opts = append(opts, orchestrator.WithStormTools(a.tools))
+	}
 
-	// Execute research
-	state, err := orch.Research(ctx, sessionID, query)
+	// Create the STORM orchestrator (conversation-based)
+	orch := orchestrator.NewStormOrchestrator(a.bus, a.config, opts...)
+
+	// Execute the full STORM workflow
+	stormResult, err := orch.Research(ctx, query)
 	if err != nil {
 		return &architectures.Result{
 			SessionID: sessionID,
@@ -121,122 +128,69 @@ func (a *Architecture) Research(ctx context.Context, sessionID string, query str
 		}, err
 	}
 
-	// Convert to standard result
-	return a.stateToResult(state, query, startTime), nil
+	// Convert STORM result to architecture result
+	return a.convertResult(sessionID, stormResult, startTime), nil
 }
 
-// Resume continues an interrupted STORM research session.
+// Resume is not supported for conversation-based STORM.
 func (a *Architecture) Resume(ctx context.Context, sessionID string) (*architectures.Result, error) {
-	startTime := time.Now()
-
-	orch := orchestrator.NewDeepOrchestratorES(
-		a.eventStore,
-		a.bus,
-		a.config,
-		orchestrator.WithESClient(a.client),
-		orchestrator.WithESTools(a.tools),
-	)
-
-	state, err := orch.Resume(ctx, sessionID)
-	if err != nil {
-		return &architectures.Result{
-			SessionID: sessionID,
-			Status:    "failed",
-			Error:     err.Error(),
-			Metrics: architectures.Metrics{
-				Duration: time.Since(startTime),
-			},
-		}, err
-	}
-
-	return a.stateToResult(state, state.Query, startTime), nil
+	return nil, fmt.Errorf("resume not supported for conversation-based STORM")
 }
 
-// stateToResult converts the internal state to the standard Result format.
-func (a *Architecture) stateToResult(state *aggregate.ResearchState, query string, startTime time.Time) *architectures.Result {
+// convertResult transforms StormResult into the standard architectures.Result format.
+func (a *Architecture) convertResult(sessionID string, sr *orchestrator.StormResult, startTime time.Time) *architectures.Result {
 	result := &architectures.Result{
-		SessionID: state.ID,
-		Query:     query,
-		Status:    state.Status,
+		SessionID: sessionID,
+		Query:     sr.Topic,
+		Status:    "complete",
 		Metrics: architectures.Metrics{
 			Duration:    time.Since(startTime),
-			WorkerCount: len(state.Workers),
+			WorkerCount: len(sr.Perspectives),
+			Cost:        sr.Cost,
 		},
 	}
 
-	// Extract report if available
-	if state.Report != nil {
-		result.Report = state.Report.FullContent
-		result.Summary = state.Report.Summary
+	// Extract report
+	if sr.Report != nil {
+		result.Report = sr.Report.FullContent
+		result.Summary = sr.Report.Summary
 	}
 
-	// Collect facts and sources from all workers
-	var allFacts []agents.Fact
-	var allSources []string
-	sourceSet := make(map[string]bool)
-
-	for _, w := range state.Workers {
-		// Convert worker to result
+	// Convert conversations to worker results
+	for perspName, conv := range sr.Conversations {
 		workerResult := architectures.WorkerResult{
-			ID:          w.ID,
-			Perspective: w.Perspective,
-			Objective:   w.Objective,
-			Output:      w.Output,
-			Status:      w.Status,
-			Cost:        convertCost(w.Cost),
+			ID:          perspName,
+			Perspective: perspName,
+			Objective:   conv.Perspective.Focus,
+			Status:      "complete",
+			Cost:        conv.TotalCost,
 		}
 
-		// Collect facts
-		for _, f := range w.Facts {
-			fact := agents.Fact{
-				Content:    f.Content,
-				Source:     f.SourceURL,
-				Confidence: f.Confidence,
-			}
+		// Collect facts from conversation
+		for _, fact := range conv.Facts {
 			workerResult.Facts = append(workerResult.Facts, fact)
-			allFacts = append(allFacts, fact)
+			result.Facts = append(result.Facts, fact)
 		}
 
-		// Collect sources
-		for _, s := range w.Sources {
-			if !sourceSet[s.URL] {
-				sourceSet[s.URL] = true
-				allSources = append(allSources, s.URL)
-				workerResult.Sources = append(workerResult.Sources, s.URL)
+		// Collect sources from all turns
+		sourceSet := make(map[string]bool)
+		for _, turn := range conv.Turns {
+			for _, source := range turn.Sources {
+				if !sourceSet[source] {
+					sourceSet[source] = true
+					workerResult.Sources = append(workerResult.Sources, source)
+					result.Sources = append(result.Sources, source)
+				}
 			}
 		}
 
 		result.Workers = append(result.Workers, workerResult)
 	}
 
-	result.Facts = allFacts
-	result.Sources = allSources
-	result.Metrics.FactCount = len(allFacts)
-	result.Metrics.SourceCount = len(allSources)
-
-	// Aggregate cost
-	result.Metrics.Cost = convertCost(state.Cost)
+	result.Metrics.FactCount = len(result.Facts)
+	result.Metrics.SourceCount = len(result.Sources)
 
 	return result
-}
-
-// convertCost converts domain cost to session cost
-func convertCost(c interface{}) session.CostBreakdown {
-	// Handle different cost types
-	switch cost := c.(type) {
-	case session.CostBreakdown:
-		return cost
-	case domainEvents.CostBreakdown:
-		return session.CostBreakdown{
-			InputTokens:  cost.InputTokens,
-			OutputTokens: cost.OutputTokens,
-			TotalTokens:  cost.TotalTokens,
-			TotalCost:    cost.TotalCostUSD,
-		}
-	default:
-		// Return empty if type doesn't match
-		return session.CostBreakdown{}
-	}
 }
 
 // Ensure Architecture implements the interface
@@ -245,16 +199,15 @@ var _ architectures.Architecture = (*Architecture)(nil)
 func init() {
 	catalog.Register(catalog.Definition{
 		Name:           "storm",
-		Description:    "STORM: Multi-perspective research with parallel search, cross-validation, and synthesis",
-		SupportsResume: true,
+		Description:    "STORM: Multi-perspective conversations with cross-validation and synthesis",
+		SupportsResume: false,
 		Build: func(deps catalog.Dependencies) (architectures.Architecture, error) {
 			if deps.Config == nil {
 				return nil, fmt.Errorf("config is required to build storm architecture")
 			}
 			return New(Config{
-				EventStorePath: deps.Config.EventStoreDir,
-				AppConfig:      deps.Config,
-				Bus:            deps.Bus,
+				AppConfig: deps.Config,
+				Bus:       deps.Bus,
 			}), nil
 		},
 	})

@@ -19,30 +19,40 @@ const (
 
 // WorkerPanel represents a single worker's display area
 type WorkerPanel struct {
-	WorkerNum  int
-	Objective  string
-	Status     string // "starting", "thinking", "tool", "complete", "failed"
-	Thought    string // Current thought/reasoning (streamed)
-	ToolName   string // Current tool being called
-	Iteration  int
-	spinnerIdx int
+	WorkerNum     int
+	Objective     string
+	Status        string // "starting", "thinking", "tool", "complete", "failed"
+	Thought       string // Current thought/reasoning (streamed)
+	ToolName      string // Current tool being called
+	Iteration     int
+	spinnerIdx    int
+	// STORM conversation fields
+	Perspective   string // Perspective name (e.g., "Cryptographer")
+	Focus         string // Perspective focus
+	CurrentTurn   int    // Current conversation turn
+	MaxTurns      int    // Max turns configured
+	LastQuestion  string // Most recent question asked
+	SourcesFound  int    // Number of sources found so far
+	IsConversation bool  // True if this is a STORM conversation
 }
 
 // MultiWorkerDisplay manages multiple worker panels with live updates
 type MultiWorkerDisplay struct {
-	w           io.Writer
-	panels      map[int]*WorkerPanel
-	panelOrder  []int // Order of panels (by worker num)
-	mu          sync.Mutex
-	totalHeight int
-	started     bool
+	w               io.Writer
+	panels          map[int]*WorkerPanel
+	panelOrder      []int // Order of panels (by worker num)
+	perspectiveMap  map[string]int // Maps perspective name to panel number
+	mu              sync.Mutex
+	totalHeight     int
+	started         bool
 }
 
 // NewMultiWorkerDisplay creates a new multi-panel display
 func NewMultiWorkerDisplay(w io.Writer) *MultiWorkerDisplay {
 	return &MultiWorkerDisplay{
-		w:      w,
-		panels: make(map[int]*WorkerPanel),
+		w:              w,
+		panels:         make(map[int]*WorkerPanel),
+		perspectiveMap: make(map[string]int),
 	}
 }
 
@@ -208,6 +218,58 @@ func (d *MultiWorkerDisplay) HandleEvent(event events.Event) {
 			msg := fmt.Sprintf("Cost update [%s]: $%.4f (%d tok)", data.Scope, data.TotalCost, data.TotalTokens)
 			d.printStatusLine(cyan.Sprintf("💰 %s", msg))
 		}
+
+	// STORM Conversation Events
+	case events.EventConversationStarted:
+		if data, ok := event.Data.(events.ConversationStartedData); ok {
+			// Map perspective to panel (1-indexed)
+			panelNum := data.Index + 1
+			d.perspectiveMap[data.Perspective] = panelNum
+
+			if panel, exists := d.panels[panelNum]; exists {
+				panel.IsConversation = true
+				panel.Perspective = data.Perspective
+				panel.Focus = data.Focus
+				panel.Objective = data.Perspective // Use perspective as objective
+				panel.Status = "thinking"
+				panel.CurrentTurn = 0
+				panel.MaxTurns = 4 // Default
+				panel.Thought = fmt.Sprintf("Starting %s perspective...", data.Perspective)
+				d.updatePanel(panel)
+			}
+		}
+
+	case events.EventConversationProgress:
+		if data, ok := event.Data.(events.ConversationProgressData); ok {
+			if panelNum, exists := d.perspectiveMap[data.Perspective]; exists {
+				if panel, exists := d.panels[panelNum]; exists {
+					panel.CurrentTurn = data.Turn
+					panel.MaxTurns = data.MaxTurns
+					panel.SourcesFound += data.Sources
+					panel.LastQuestion = data.Question
+					panel.Status = "thinking"
+					// Show current question being asked
+					if len(data.Question) > 60 {
+						panel.Thought = fmt.Sprintf("Turn %d: %s...", data.Turn, data.Question[:60])
+					} else {
+						panel.Thought = fmt.Sprintf("Turn %d: %s", data.Turn, data.Question)
+					}
+					d.updatePanel(panel)
+				}
+			}
+		}
+
+	case events.EventConversationCompleted:
+		if data, ok := event.Data.(events.ConversationCompletedData); ok {
+			if panelNum, exists := d.perspectiveMap[data.Perspective]; exists {
+				if panel, exists := d.panels[panelNum]; exists {
+					panel.Status = "complete"
+					panel.Thought = fmt.Sprintf("Done: %d turns, %d facts, %d sources",
+						data.TotalTurns, data.FactsFound, data.Sources)
+					d.updatePanel(panel)
+				}
+			}
+		}
 	}
 }
 
@@ -270,17 +332,38 @@ func (d *MultiWorkerDisplay) buildPanelLines(panel *WorkerPanel) []string {
 	// Header line with status indicator
 	statusIcon, statusColor := d.getStatusIndicator(panel.Status)
 	iconWidth := visualLength(statusIcon)
-	// Calculate max objective length: total 78 - borders (3) - spaces/prefix (14) - icon
-	// " {icon} Worker N: {obj} " where prefix = " Worker N: " = 11, plus 2 spaces = 13
-	// But worker num can be 2 digits, so use 14 for safety
-	maxObjLen := 75 - 14 - iconWidth
-	objTrunc := truncateVisual(panel.Objective, maxObjLen)
-	if objTrunc == "" {
-		objTrunc = "Waiting..."
+
+	var headerText string
+	if panel.IsConversation {
+		// STORM conversation panel - show perspective name and turn progress
+		perspName := panel.Perspective
+		if perspName == "" {
+			perspName = "Perspective"
+		}
+		// Truncate perspective name if too long
+		if len(perspName) > 20 {
+			perspName = perspName[:17] + "..."
+		}
+		// Show turn progress if in progress
+		turnInfo := ""
+		if panel.CurrentTurn > 0 {
+			turnInfo = fmt.Sprintf(" [%d/%d]", panel.CurrentTurn, panel.MaxTurns)
+		}
+		maxPerspLen := 75 - 5 - iconWidth - len(turnInfo)
+		if len(perspName) > maxPerspLen {
+			perspName = perspName[:maxPerspLen-3] + "..."
+		}
+		headerText = fmt.Sprintf(" %s %s%s ", statusIcon, perspName, turnInfo)
+	} else {
+		// Original worker panel style
+		maxObjLen := 75 - 14 - iconWidth
+		objTrunc := truncateVisual(panel.Objective, maxObjLen)
+		if objTrunc == "" {
+			objTrunc = "Waiting..."
+		}
+		headerText = fmt.Sprintf(" %s Worker %d: %s ", statusIcon, panel.WorkerNum, objTrunc)
 	}
 
-	// Line 1: Header [Icon Worker N: Objective]
-	headerText := fmt.Sprintf(" %s Worker %d: %s ", statusIcon, panel.WorkerNum, objTrunc)
 	headerLen := visualLength(headerText)
 	padding := 75 - headerLen
 	if padding < 0 {
@@ -328,32 +411,43 @@ func (d *MultiWorkerDisplay) buildPanelLines(panel *WorkerPanel) []string {
 
 	// Line 4: Status/Action
 	var statusText string
-	switch panel.Status {
-	case "thinking":
-		statusText = fmt.Sprintf(" %s thinking... ", cyan.Sprint("•"))
-	case "tool":
-		statusText = fmt.Sprintf(" %s %s ", yellow.Sprint("→"), panel.ToolName)
-	case "complete":
-		statusText = fmt.Sprintf(" %s complete ", green.Sprint("✓"))
-	case "failed":
-		statusText = fmt.Sprintf(" %s failed ", red.Sprint("✗"))
-	default:
-		statusText = fmt.Sprintf(" %s waiting ", dim.Sprint("○"))
-	}
-
-	// Calculate padding for bottom line
 	var plainStatusText string
-	switch panel.Status {
-	case "thinking":
-		plainStatusText = " * thinking... "
-	case "tool":
-		plainStatusText = fmt.Sprintf(" -> %s ", panel.ToolName)
-	case "complete":
-		plainStatusText = " v complete "
-	case "failed":
-		plainStatusText = " x failed "
-	default:
-		plainStatusText = " o waiting "
+
+	if panel.IsConversation {
+		// STORM conversation status - show sources found
+		switch panel.Status {
+		case "thinking":
+			statusText = fmt.Sprintf(" %s interviewing... %d sources ", cyan.Sprint("💬"), panel.SourcesFound)
+			plainStatusText = fmt.Sprintf(" * interviewing... %d sources ", panel.SourcesFound)
+		case "complete":
+			statusText = fmt.Sprintf(" %s done %d sources ", green.Sprint("✓"), panel.SourcesFound)
+			plainStatusText = fmt.Sprintf(" v done %d sources ", panel.SourcesFound)
+		case "failed":
+			statusText = fmt.Sprintf(" %s failed ", red.Sprint("✗"))
+			plainStatusText = " x failed "
+		default:
+			statusText = fmt.Sprintf(" %s waiting ", dim.Sprint("○"))
+			plainStatusText = " o waiting "
+		}
+	} else {
+		// Original worker status
+		switch panel.Status {
+		case "thinking":
+			statusText = fmt.Sprintf(" %s thinking... ", cyan.Sprint("•"))
+			plainStatusText = " * thinking... "
+		case "tool":
+			statusText = fmt.Sprintf(" %s %s ", yellow.Sprint("→"), panel.ToolName)
+			plainStatusText = fmt.Sprintf(" -> %s ", panel.ToolName)
+		case "complete":
+			statusText = fmt.Sprintf(" %s complete ", green.Sprint("✓"))
+			plainStatusText = " v complete "
+		case "failed":
+			statusText = fmt.Sprintf(" %s failed ", red.Sprint("✗"))
+			plainStatusText = " x failed "
+		default:
+			statusText = fmt.Sprintf(" %s waiting ", dim.Sprint("○"))
+			plainStatusText = " o waiting "
+		}
 	}
 
 	statusLen := visualLength(plainStatusText)

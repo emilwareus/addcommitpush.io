@@ -2034,3 +2034,388 @@ func TestDeepOrchestratorContextCancellation(t *testing.T) {
 		t.Error("Expected error due to context cancellation")
 	}
 }
+
+// =============================================================================
+// E2E Tests: STORM Research Workflow (State-of-the-Art Implementation)
+// =============================================================================
+
+func TestStormOrchestratorE2EFullWorkflow(t *testing.T) {
+	cfg := testConfig()
+	defer os.RemoveAll(filepath.Dir(cfg.StateFile))
+
+	bus := events.NewBus(300)
+	defer bus.Close()
+
+	// Subscribe to key STORM events
+	eventCh := bus.Subscribe(
+		events.EventResearchStarted,
+		events.EventPlanCreated,
+		events.EventConversationStarted,
+		events.EventConversationCompleted,
+		events.EventAnalysisStarted,
+		events.EventAnalysisComplete,
+		events.EventSynthesisStarted,
+		events.EventSynthesisComplete,
+	)
+
+	// Mock responses for STORM workflow
+	// Provides many responses as fallback - mock will reuse last response if needed
+	mockLLM := NewMockLLMClient(
+		// Phase 1: Survey and Perspective Discovery
+		// 1. Survey query generation
+		`["AI agent overview", "AI agent architecture"]`,
+		// 2. Topic outline extraction from searches
+		`[{"topic": "AI Agents", "sections": ["Definition", "Architecture", "Applications"], "source": "https://example.com"}]`,
+		// 3. Perspective generation
+		`[{"name": "Technical Expert", "focus": "Technical details", "questions": ["How does it work?"]}]`,
+
+		// Phase 2: Conversations (including auto-added Basic Fact Writer = 2 total)
+		// Conversation 1 (Technical Expert)
+		`What are the core components?`,
+		`["core components query"]`,
+		`The system uses neural networks. [Source: https://tech.example.com]`,
+		`Thank you so much for your help!`,
+		`[{"content": "Uses neural networks", "source": "https://tech.example.com", "confidence": 0.9}]`,
+
+		// Conversation 2 (Basic Fact Writer - auto-added)
+		`What is the definition?`,
+		`["definition query"]`,
+		`An AI agent is autonomous software. [Source: https://wiki.example.com]`,
+		`Thank you so much for your help!`,
+		`[{"content": "AI agent is autonomous", "source": "https://wiki.example.com", "confidence": 0.85}]`,
+
+		// Phase 3: Analysis
+		`[{"content": "Uses neural networks", "validation_score": 0.9, "corroborated_by": []}]`,
+		`[]`, // Contradictions
+		`[]`, // Knowledge gaps
+
+		// Phase 4: Synthesis
+		`["Introduction", "Details", "Conclusion"]`,         // Draft outline
+		`["Introduction", "Technical", "Summary"]`,          // Refined outline
+		`Introduction to the topic.`,
+		`Technical details about the system.`,
+		`Summary and conclusions.`,
+	)
+
+	mockTools := NewMockToolExecutor()
+
+	// Create STORM orchestrator with mocks
+	orch := orchestrator.NewStormOrchestrator(bus, cfg,
+		orchestrator.WithStormClient(mockLLM),
+		orchestrator.WithStormTools(mockTools),
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	// Execute STORM research
+	result, err := orch.Research(ctx, "What are AI agents?")
+
+	// ==========================================================================
+	// Assertions - Focus on verifying the flow completed
+	// ==========================================================================
+
+	if err != nil {
+		t.Fatalf("STORM research failed: %v", err)
+	}
+
+	if result == nil {
+		t.Fatal("Expected result, got nil")
+	}
+
+	// Verify topic is set
+	if result.Topic != "What are AI agents?" {
+		t.Errorf("Expected topic to match query, got '%s'", result.Topic)
+	}
+
+	// Verify at least one perspective was discovered
+	// (may include auto-added Basic Fact Writer)
+	if len(result.Perspectives) < 1 {
+		t.Errorf("Expected at least 1 perspective, got %d", len(result.Perspectives))
+	}
+
+	// Verify conversations were conducted
+	if len(result.Conversations) == 0 {
+		t.Error("Expected conversations to be conducted")
+	}
+
+	// Verify report was generated
+	if result.Report == nil {
+		t.Fatal("Expected report to be generated")
+	}
+
+	if result.Report.FullContent == "" {
+		t.Error("Expected report to have content")
+	}
+
+	// Verify report has section headings
+	if !strings.Contains(result.Report.FullContent, "##") {
+		t.Error("Expected report to have section headings (##)")
+	}
+
+	// Verify cost tracking
+	if result.Cost.TotalTokens == 0 {
+		t.Error("Expected cost to be tracked")
+	}
+
+	// Verify duration tracking
+	if result.Duration <= 0 {
+		t.Error("Expected duration to be tracked")
+	}
+
+	// ==========================================================================
+	// Verify Events
+	// ==========================================================================
+
+	receivedEvents := make(map[events.EventType]int)
+	timeout := time.After(1 * time.Second)
+collectLoop:
+	for {
+		select {
+		case event := <-eventCh:
+			receivedEvents[event.Type]++
+		case <-timeout:
+			break collectLoop
+		}
+	}
+
+	// Verify key STORM events were emitted
+	requiredEvents := []events.EventType{
+		events.EventResearchStarted,
+		events.EventPlanCreated,
+		events.EventConversationStarted,
+		events.EventConversationCompleted,
+		events.EventAnalysisStarted,
+		events.EventAnalysisComplete,
+		events.EventSynthesisStarted,
+		events.EventSynthesisComplete,
+	}
+
+	for _, eventType := range requiredEvents {
+		if receivedEvents[eventType] == 0 {
+			t.Errorf("Expected event %v to be emitted", eventType)
+		}
+	}
+
+	// Verify at least 1 conversation event
+	if receivedEvents[events.EventConversationStarted] < 1 {
+		t.Errorf("Expected at least 1 ConversationStarted event, got %d",
+			receivedEvents[events.EventConversationStarted])
+	}
+
+	if receivedEvents[events.EventConversationCompleted] < 1 {
+		t.Errorf("Expected at least 1 ConversationCompleted event, got %d",
+			receivedEvents[events.EventConversationCompleted])
+	}
+}
+
+func TestStormOrchestratorE2EWithGapFilling(t *testing.T) {
+	cfg := testConfig()
+	defer os.RemoveAll(filepath.Dir(cfg.StateFile))
+
+	bus := events.NewBus(300)
+	defer bus.Close()
+
+	// Mock responses that include knowledge gaps triggering gap filling
+	mockLLM := NewMockLLMClient(
+		// Survey + Perspectives
+		`["query"]`,
+		`[]`,
+		`[
+			{"name": "Technical Expert", "focus": "Technical details", "questions": ["How?"]},
+			{"name": "Basic Fact Writer", "focus": "Fundamentals", "questions": ["What?"]}
+		]`,
+
+		// Conversations (2 perspectives)
+		`What are the key components?`,
+		`["component query"]`,
+		`The system has three main components: A, B, and C. [Source: https://tech.example.com]`,
+		`Thank you so much for your help!`,
+		`[{"content": "System has components A, B, C", "source": "https://tech.example.com", "confidence": 0.9}]`,
+
+		`What is the definition?`,
+		`["definition query"]`,
+		`It is a type of software system. [Source: https://wiki.example.com]`,
+		`Thank you so much for your help!`,
+		`[{"content": "It is a software system", "source": "https://wiki.example.com", "confidence": 0.85}]`,
+
+		// Analysis - with knowledge gap
+		`[
+			{"content": "System has components A, B, C", "validation_score": 0.9, "corroborated_by": []},
+			{"content": "It is a software system", "validation_score": 0.85, "corroborated_by": []}
+		]`,
+		`[]`, // No contradictions
+		`[{"description": "Missing information about performance benchmarks", "importance": 0.8, "suggested_queries": ["performance benchmarks"]}]`, // Knowledge gap
+
+		// Gap filling
+		`["performance benchmark query"]`,
+		`[{"content": "System handles 1M requests/sec", "source": "https://perf.example.com", "confidence": 0.88}]`,
+		`[]`,
+
+		// Synthesis
+		`["Section 1", "Section 2"]`,
+		`["Section 1", "Section 2", "Performance"]`,
+		`Content 1.`,
+		`Content 2.`,
+		`Performance content.`,
+	)
+
+	mockTools := NewMockToolExecutor()
+
+	orch := orchestrator.NewStormOrchestrator(bus, cfg,
+		orchestrator.WithStormClient(mockLLM),
+		orchestrator.WithStormTools(mockTools),
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	result, err := orch.Research(ctx, "Test with gap filling")
+
+	if err != nil {
+		t.Fatalf("STORM research failed: %v", err)
+	}
+
+	// Verify analysis identified gaps
+	if result.AnalysisResult == nil {
+		t.Fatal("Expected analysis result")
+	}
+
+	// Verify report was generated despite gap filling
+	if result.Report == nil || result.Report.FullContent == "" {
+		t.Error("Expected report to be generated")
+	}
+}
+
+func TestStormOrchestratorE2EContextCancellation(t *testing.T) {
+	cfg := testConfig()
+	defer os.RemoveAll(filepath.Dir(cfg.StateFile))
+
+	bus := events.NewBus(100)
+	defer bus.Close()
+
+	// Minimal responses
+	mockLLM := NewMockLLMClient(
+		`[{"name": "Expert", "focus": "Focus", "questions": ["Q"]}]`,
+	)
+
+	mockTools := NewMockToolExecutor()
+
+	orch := orchestrator.NewStormOrchestrator(bus, cfg,
+		orchestrator.WithStormClient(mockLLM),
+		orchestrator.WithStormTools(mockTools),
+	)
+
+	// Cancel immediately
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err := orch.Research(ctx, "Cancelled STORM research")
+
+	if err == nil {
+		t.Error("Expected error due to context cancellation")
+	}
+}
+
+func TestStormOrchestratorE2EEventSequence(t *testing.T) {
+	cfg := testConfig()
+	defer os.RemoveAll(filepath.Dir(cfg.StateFile))
+
+	bus := events.NewBus(200)
+	defer bus.Close()
+
+	// Track event sequence
+	eventCh := bus.Subscribe(
+		events.EventResearchStarted,
+		events.EventPlanCreated,
+		events.EventConversationStarted,
+		events.EventConversationCompleted,
+		events.EventAnalysisStarted,
+		events.EventAnalysisComplete,
+		events.EventSynthesisStarted,
+		events.EventSynthesisComplete,
+	)
+
+	mockLLM := NewMockLLMClient(
+		`["query"]`,
+		`[]`,
+		`[{"name": "Expert", "focus": "Focus", "questions": ["Q"]}]`,
+		`Thank you so much for your help!`,
+		`[]`,
+		`[]`, `[]`, `[]`,
+		`["Section"]`, `["Section"]`,
+		`Content.`,
+	)
+
+	mockTools := NewMockToolExecutor()
+
+	orch := orchestrator.NewStormOrchestrator(bus, cfg,
+		orchestrator.WithStormClient(mockLLM),
+		orchestrator.WithStormTools(mockTools),
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	_, err := orch.Research(ctx, "Test event sequence")
+	if err != nil {
+		t.Fatalf("Research failed: %v", err)
+	}
+
+	// Collect events in order
+	var eventSequence []events.EventType
+	timeout := time.After(500 * time.Millisecond)
+collectLoop:
+	for {
+		select {
+		case event := <-eventCh:
+			eventSequence = append(eventSequence, event.Type)
+		case <-timeout:
+			break collectLoop
+		}
+	}
+
+	// Verify event sequence is logical
+	// ResearchStarted should come first
+	if len(eventSequence) == 0 || eventSequence[0] != events.EventResearchStarted {
+		t.Error("Expected ResearchStarted to be first event")
+	}
+
+	// PlanCreated should come before conversations
+	planIdx := -1
+	convStartIdx := -1
+	for i, e := range eventSequence {
+		if e == events.EventPlanCreated && planIdx == -1 {
+			planIdx = i
+		}
+		if e == events.EventConversationStarted && convStartIdx == -1 {
+			convStartIdx = i
+		}
+	}
+
+	if planIdx >= convStartIdx && convStartIdx != -1 {
+		t.Error("Expected PlanCreated before ConversationStarted")
+	}
+
+	// Analysis should come before synthesis
+	analysisIdx := -1
+	synthesisIdx := -1
+	for i, e := range eventSequence {
+		if e == events.EventAnalysisComplete && analysisIdx == -1 {
+			analysisIdx = i
+		}
+		if e == events.EventSynthesisStarted && synthesisIdx == -1 {
+			synthesisIdx = i
+		}
+	}
+
+	if analysisIdx >= synthesisIdx && synthesisIdx != -1 {
+		t.Error("Expected AnalysisComplete before SynthesisStarted")
+	}
+
+	// SynthesisComplete should be last major event
+	lastIdx := len(eventSequence) - 1
+	if eventSequence[lastIdx] != events.EventSynthesisComplete {
+		t.Errorf("Expected SynthesisComplete to be last event, got %v", eventSequence[lastIdx])
+	}
+}
