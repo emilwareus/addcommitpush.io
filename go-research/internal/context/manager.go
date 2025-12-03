@@ -164,17 +164,6 @@ func (m *Manager) CostBreakdown() session.CostBreakdown {
 	return m.cost
 }
 
-func (m *Manager) addCost(promptTokens, completionTokens, totalTokens int) {
-	if promptTokens == 0 && completionTokens == 0 && totalTokens == 0 {
-		return
-	}
-	cost := session.NewCostBreakdown(m.model, promptTokens, completionTokens, totalTokens)
-
-	m.mu.Lock()
-	m.cost.Add(cost)
-	m.mu.Unlock()
-}
-
 // addCostUnlocked adds cost without locking - caller must hold the lock.
 func (m *Manager) addCostUnlocked(promptTokens, completionTokens, totalTokens int) {
 	if promptTokens == 0 && completionTokens == 0 && totalTokens == 0 {

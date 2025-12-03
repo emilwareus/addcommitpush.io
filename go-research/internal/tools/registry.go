@@ -36,6 +36,14 @@ func NewRegistry(braveAPIKey string) *Registry {
 	return r
 }
 
+// NewEmptyRegistry creates a new empty tool registry.
+// Tools can be added manually via Register().
+func NewEmptyRegistry() *Registry {
+	return &Registry{
+		tools: make(map[string]Tool),
+	}
+}
+
 // Register adds a tool to the registry
 func (r *Registry) Register(tool Tool) {
 	r.tools[tool.Name()] = tool

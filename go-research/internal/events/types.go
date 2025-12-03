@@ -61,6 +61,18 @@ const (
 	EventSessionLoaded
 	EventSessionSaved
 	EventSessionExpanded
+
+	// ThinkDeep Diffusion Events
+	EventDiffusionStarted        // Starting ThinkDeep diffusion research
+	EventDiffusionIterationStart // New iteration of diffusion loop
+	EventDraftRefined            // Draft report was refined
+	EventResearchDelegated       // Supervisor delegated to sub-researcher
+	EventSubResearcherStarted    // Sub-researcher began work
+	EventSubResearcherProgress   // Sub-researcher search/think progress
+	EventSubResearcherComplete   // Sub-researcher finished
+	EventDiffusionComplete       // Diffusion phase complete
+	EventFinalReportStarted      // Full optimization phase started
+	EventFinalReportComplete     // Final report generated
 )
 
 // ResearchStartedData contains data for research start events
@@ -182,4 +194,38 @@ type ConversationCompletedData struct {
 	TotalTurns  int    // Number of turns completed
 	FactsFound  int    // Number of facts extracted
 	Sources     int    // Number of unique sources
+}
+
+// DiffusionStartedData is emitted when ThinkDeep diffusion begins
+type DiffusionStartedData struct {
+	Topic         string
+	MaxIterations int
+}
+
+// DiffusionIterationData captures diffusion loop progress
+type DiffusionIterationData struct {
+	Iteration     int     // Current iteration (1-based)
+	MaxIterations int     // Max iterations configured
+	NotesCount    int     // Total compressed notes collected
+	DraftProgress float64 // 0.0-1.0 estimated draft completeness
+	Phase         string  // "research", "refine", "thinking"
+	Message       string  // Status message
+}
+
+// SubResearcherData captures sub-researcher activity
+type SubResearcherData struct {
+	Topic         string // Research topic
+	ResearcherNum int    // Sub-researcher number (for parallel)
+	Iteration     int    // Search iteration within sub-researcher
+	MaxIterations int    // Max searches
+	Status        string // "searching", "thinking", "compressing", "complete"
+	SourcesFound  int    // Number of sources found so far
+}
+
+// DraftRefinedData captures draft refinement events
+type DraftRefinedData struct {
+	Iteration       int     // Diffusion iteration
+	SectionsUpdated int     // Number of sections modified
+	NewSources      int     // New sources incorporated
+	Progress        float64 // Estimated progress (0.0-1.0)
 }

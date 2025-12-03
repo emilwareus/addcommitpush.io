@@ -120,8 +120,8 @@ func (h *BenchmarkHandler) printComparison(ctx *repl.Context, results map[string
 		ctx.Renderer.Info("Winners:")
 
 		var fastest, cheapest, mostFacts string
-		var fastestDur time.Duration = time.Hour * 24
-		var cheapestCost float64 = 1000000
+		fastestDur := time.Hour * 24
+		cheapestCost := float64(1000000)
 		var maxFacts int
 
 		for name, result := range results {

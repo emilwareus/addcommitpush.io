@@ -369,14 +369,6 @@ func TestDeepOrchestratorWithGapFilling(t *testing.T) {
 	}
 }
 
-func getMapKeys[K comparable, V any](m map[K]V) []K {
-	keys := make([]K, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	return keys
-}
-
 // TestDeepOrchestratorEmitsProgressEvents verifies all expected events are emitted
 // Uses 4 perspectives to test realistic event flow
 func TestDeepOrchestratorEmitsProgressEvents(t *testing.T) {

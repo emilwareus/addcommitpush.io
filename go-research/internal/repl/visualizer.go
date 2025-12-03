@@ -12,6 +12,7 @@ type Visualizer struct {
 	dagDisplay       *DAGDisplay
 	display          *MultiWorkerDisplay
 	analysisProgress *AnalysisProgressDisplay
+	diffusionDisplay *DiffusionDisplay
 	stopCh           chan struct{}
 	doneCh           chan struct{}
 	stopOnce         sync.Once
@@ -25,6 +26,7 @@ func NewVisualizer(ctx *Context) *Visualizer {
 		dagDisplay:       NewDAGDisplay(w),
 		display:          NewMultiWorkerDisplay(w),
 		analysisProgress: NewAnalysisProgressDisplay(w),
+		diffusionDisplay: NewDiffusionDisplay(w),
 		stopCh:           make(chan struct{}),
 		doneCh:           make(chan struct{}),
 	}
@@ -63,6 +65,17 @@ func (v *Visualizer) Start() {
 		events.EventConversationStarted,
 		events.EventConversationProgress,
 		events.EventConversationCompleted,
+		// ThinkDeep diffusion events
+		events.EventDiffusionStarted,
+		events.EventDiffusionIterationStart,
+		events.EventDraftRefined,
+		events.EventResearchDelegated,
+		events.EventSubResearcherStarted,
+		events.EventSubResearcherProgress,
+		events.EventSubResearcherComplete,
+		events.EventDiffusionComplete,
+		events.EventFinalReportStarted,
+		events.EventFinalReportComplete,
 	)
 
 	go func() {
@@ -84,8 +97,9 @@ func (v *Visualizer) Start() {
 					continue
 				}
 
-				// Route cross-validation and gap-filling events to the analysis progress display
+				// Route events to appropriate displays
 				switch event.Type {
+				// Cross-validation and gap-filling events
 				case events.EventCrossValidationStarted,
 					events.EventCrossValidationProgress,
 					events.EventCrossValidationComplete,
@@ -93,6 +107,36 @@ func (v *Visualizer) Start() {
 					events.EventGapFillingProgress,
 					events.EventGapFillingComplete:
 					v.analysisProgress.HandleEvent(event)
+
+				// ThinkDeep diffusion events
+				case events.EventDiffusionStarted:
+					if data, ok := event.Data.(events.DiffusionStartedData); ok {
+						v.diffusionDisplay.Render(data.Topic, data.MaxIterations)
+					}
+				case events.EventDiffusionIterationStart,
+					events.EventResearchDelegated,
+					events.EventSubResearcherStarted,
+					events.EventSubResearcherProgress,
+					events.EventSubResearcherComplete,
+					events.EventDraftRefined,
+					events.EventDiffusionComplete,
+					events.EventFinalReportStarted,
+					events.EventFinalReportComplete:
+					v.diffusionDisplay.HandleEvent(event)
+
+				// Route phase progress to diffusion display when it has phase data
+				case events.EventAnalysisProgress:
+					if data, ok := event.Data.(map[string]interface{}); ok {
+						if _, hasPhase := data["phase"]; hasPhase {
+							v.diffusionDisplay.HandlePhaseProgress(data)
+						} else {
+							v.analysisProgress.HandleEvent(event)
+						}
+					} else {
+						v.analysisProgress.HandleEvent(event)
+					}
+
+				// All other events go to worker display
 				default:
 					v.display.HandleEvent(event)
 				}

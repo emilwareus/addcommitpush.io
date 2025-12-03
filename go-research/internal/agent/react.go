@@ -157,7 +157,7 @@ func (r *React) Research(ctx context.Context, objective string) (session.WorkerC
 			errMsg := "empty response from LLM"
 			workerCtx.Error = &errMsg
 			workerCtx.Status = session.WorkerFailed
-			return workerCtx, fmt.Errorf(errMsg)
+			return workerCtx, fmt.Errorf("%s", errMsg)
 		}
 
 		// Estimate token usage (streaming doesn't provide usage stats directly)

@@ -158,10 +158,3 @@ func (h *ExpandHandler) runDeep(ctx *repl.Context, query string, sess *session.S
 
 	return nil
 }
-
-func truncate(s string, n int) string {
-	if len(s) <= n {
-		return s
-	}
-	return s[:n] + "..."
-}

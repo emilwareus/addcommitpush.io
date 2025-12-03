@@ -529,14 +529,6 @@ func (d *MultiWorkerDisplay) wrapText(text string, maxLen int) []string {
 	return lines
 }
 
-func truncateStr(s string, n int) string {
-	r := []rune(s)
-	if len(r) <= n {
-		return s
-	}
-	return string(r[:n]) + "..."
-}
-
 // truncateVisual truncates a string to fit within maxVisualWidth visual characters,
 // adding "..." suffix if truncated
 func truncateVisual(s string, maxVisualWidth int) string {
