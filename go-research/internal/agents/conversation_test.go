@@ -128,8 +128,8 @@ func TestConversationSimulatorWikiWriterAskFollowUp(t *testing.T) {
 
 func TestConversationSimulatorWikiWriterExitConditions(t *testing.T) {
 	tests := []struct {
-		name     string
-		response string
+		name       string
+		response   string
 		shouldExit bool
 	}{
 		{
@@ -392,9 +392,9 @@ func TestConversationSimulatorSimulateConversationMaxTurns(t *testing.T) {
 	responses := []string{}
 	for i := 0; i < 20; i++ {
 		responses = append(responses,
-			`What else can you tell me about this topic?`,         // WikiWriter question
-			`["search query"]`,                                      // Expert queries
-			`Here is more information about the topic.`,            // Expert answer
+			`What else can you tell me about this topic?`, // WikiWriter question
+			`["search query"]`,                            // Expert queries
+			`Here is more information about the topic.`,   // Expert answer
 		)
 	}
 	// Add fact extraction at the end

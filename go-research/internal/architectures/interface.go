@@ -34,22 +34,22 @@ type Architecture interface {
 // Result represents the output of a research session, standardized across architectures.
 type Result struct {
 	// Core output
-	SessionID   string
-	Query       string
-	Report      string
-	Summary     string
+	SessionID string
+	Query     string
+	Report    string
+	Summary   string
 
 	// Collected data
-	Facts       []agents.Fact
-	Sources     []string
-	Workers     []WorkerResult
+	Facts   []agents.Fact
+	Sources []string
+	Workers []WorkerResult
 
 	// Metrics for benchmarking
-	Metrics     Metrics
+	Metrics Metrics
 
 	// Status
-	Status      string // "complete", "failed", "cancelled"
-	Error       string
+	Status string // "complete", "failed", "cancelled"
+	Error  string
 }
 
 // WorkerResult represents output from a single research worker/perspective
@@ -68,32 +68,32 @@ type WorkerResult struct {
 // Metrics captures performance data for benchmarking architectures
 type Metrics struct {
 	// Timing
-	Duration        time.Duration
-	PlanningTime    time.Duration
-	SearchTime      time.Duration
-	AnalysisTime    time.Duration
-	SynthesisTime   time.Duration
+	Duration      time.Duration
+	PlanningTime  time.Duration
+	SearchTime    time.Duration
+	AnalysisTime  time.Duration
+	SynthesisTime time.Duration
 
 	// Token usage
-	Cost            session.CostBreakdown
+	Cost session.CostBreakdown
 
 	// Quality indicators
-	FactCount       int
-	SourceCount     int
-	WorkerCount     int
+	FactCount   int
+	SourceCount int
+	WorkerCount int
 
 	// Architecture-specific
-	Iterations      int  // For iterative architectures
-	ReflectionCount int  // For Reflexion-style
-	BranchCount     int  // For Tree-of-Thoughts
+	Iterations      int // For iterative architectures
+	ReflectionCount int // For Reflexion-style
+	BranchCount     int // For Tree-of-Thoughts
 }
 
 // BenchmarkResult compares results across multiple architectures
 type BenchmarkResult struct {
-	Query        string
-	Results      map[string]*Result // architecture name -> result
-	Comparison   Comparison
-	RunAt        time.Time
+	Query      string
+	Results    map[string]*Result // architecture name -> result
+	Comparison Comparison
+	RunAt      time.Time
 }
 
 // Comparison provides relative metrics between architectures

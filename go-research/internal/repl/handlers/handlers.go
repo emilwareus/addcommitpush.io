@@ -5,6 +5,7 @@ import (
 
 	"go-research/internal/architectures/catalog"
 	_ "go-research/internal/architectures/storm"
+	_ "go-research/internal/architectures/think_deep"
 	"go-research/internal/repl"
 )
 

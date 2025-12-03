@@ -19,32 +19,32 @@ const (
 
 // WorkerPanel represents a single worker's display area
 type WorkerPanel struct {
-	WorkerNum     int
-	Objective     string
-	Status        string // "starting", "thinking", "tool", "complete", "failed"
-	Thought       string // Current thought/reasoning (streamed)
-	ToolName      string // Current tool being called
-	Iteration     int
-	spinnerIdx    int
+	WorkerNum  int
+	Objective  string
+	Status     string // "starting", "thinking", "tool", "complete", "failed"
+	Thought    string // Current thought/reasoning (streamed)
+	ToolName   string // Current tool being called
+	Iteration  int
+	spinnerIdx int
 	// STORM conversation fields
-	Perspective   string // Perspective name (e.g., "Cryptographer")
-	Focus         string // Perspective focus
-	CurrentTurn   int    // Current conversation turn
-	MaxTurns      int    // Max turns configured
-	LastQuestion  string // Most recent question asked
-	SourcesFound  int    // Number of sources found so far
-	IsConversation bool  // True if this is a STORM conversation
+	Perspective    string // Perspective name (e.g., "Cryptographer")
+	Focus          string // Perspective focus
+	CurrentTurn    int    // Current conversation turn
+	MaxTurns       int    // Max turns configured
+	LastQuestion   string // Most recent question asked
+	SourcesFound   int    // Number of sources found so far
+	IsConversation bool   // True if this is a STORM conversation
 }
 
 // MultiWorkerDisplay manages multiple worker panels with live updates
 type MultiWorkerDisplay struct {
-	w               io.Writer
-	panels          map[int]*WorkerPanel
-	panelOrder      []int // Order of panels (by worker num)
-	perspectiveMap  map[string]int // Maps perspective name to panel number
-	mu              sync.Mutex
-	totalHeight     int
-	started         bool
+	w              io.Writer
+	panels         map[int]*WorkerPanel
+	panelOrder     []int          // Order of panels (by worker num)
+	perspectiveMap map[string]int // Maps perspective name to panel number
+	mu             sync.Mutex
+	totalHeight    int
+	started        bool
 }
 
 // NewMultiWorkerDisplay creates a new multi-panel display
@@ -527,14 +527,6 @@ func (d *MultiWorkerDisplay) wrapText(text string, maxLen int) []string {
 	}
 
 	return lines
-}
-
-func truncateStr(s string, n int) string {
-	r := []rune(s)
-	if len(r) <= n {
-		return s
-	}
-	return string(r[:n]) + "..."
 }
 
 // truncateVisual truncates a string to fit within maxVisualWidth visual characters,

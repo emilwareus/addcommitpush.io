@@ -52,11 +52,12 @@ func New(store *session.Store, bus *events.Bus, cfg *config.Config, handlers map
 	}
 
 	r.ctx = &Context{
-		Store:    store,
-		Bus:      bus,
-		Renderer: r.renderer,
-		Config:   cfg,
-		Obsidian: obsidian.NewWriter(cfg.VaultPath),
+		Store:       store,
+		Bus:         bus,
+		Renderer:    r.renderer,
+		Config:      cfg,
+		Obsidian:    obsidian.NewWriter(cfg.VaultPath),
+		CommandDocs: docs,
 	}
 
 	r.router = NewRouter(r.ctx, handlers)

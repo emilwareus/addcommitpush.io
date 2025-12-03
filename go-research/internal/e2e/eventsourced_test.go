@@ -124,7 +124,7 @@ func TestEventSourcedFullResearchWorkflow(t *testing.T) {
 		t.Errorf("Reconstructed query mismatch: %s", reconstructed.Query)
 	}
 
-		if reconstructed.Mode != "storm" {
+	if reconstructed.Mode != "storm" {
 		t.Errorf("Reconstructed mode mismatch: %s", reconstructed.Mode)
 	}
 
@@ -223,7 +223,7 @@ func TestEventSourcedStateReconstruction(t *testing.T) {
 		t.Errorf("Expected query 'test query', got '%s'", state.Query)
 	}
 
-		if state.Mode != "storm" {
+	if state.Mode != "storm" {
 		t.Errorf("Expected mode 'storm', got '%s'", state.Mode)
 	}
 

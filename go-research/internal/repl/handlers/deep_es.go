@@ -13,7 +13,6 @@ import (
 	"go-research/internal/repl"
 )
 
-
 // collectSourcesFromState extracts sources from the event-sourced state.
 func collectSourcesFromState(state *aggregate.ResearchState) []string {
 	sourceSet := make(map[string]bool)

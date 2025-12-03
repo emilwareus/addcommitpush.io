@@ -23,15 +23,15 @@ import (
 // - Analysis phase for cross-validation
 // - Structured report synthesis
 type StormOrchestrator struct {
-	bus                *events.Bus
-	appConfig          *config.Config
-	client             llm.ChatClient
-	contextMgr         *ctxmgr.Manager
-	perspectiveDiscov  *planning.PerspectiveDiscoverer
-	conversationSim    *agents.ConversationSimulator
-	analysisAgent      *agents.AnalysisAgent
-	synthesisAgent     *agents.SynthesisAgent
-	tools              tools.ToolExecutor
+	bus               *events.Bus
+	appConfig         *config.Config
+	client            llm.ChatClient
+	contextMgr        *ctxmgr.Manager
+	perspectiveDiscov *planning.PerspectiveDiscoverer
+	conversationSim   *agents.ConversationSimulator
+	analysisAgent     *agents.AnalysisAgent
+	synthesisAgent    *agents.SynthesisAgent
+	tools             tools.ToolExecutor
 }
 
 // StormOrchestratorOption allows configuring the STORM orchestrator
@@ -61,11 +61,11 @@ func NewStormOrchestrator(bus *events.Bus, cfg *config.Config, opts ...StormOrch
 	toolReg := tools.NewRegistry(cfg.BraveAPIKey)
 
 	o := &StormOrchestrator{
-		bus:            bus,
-		appConfig:      cfg,
-		client:         client,
-		contextMgr:     ctxmgr.New(client, ctxmgr.DefaultConfig()),
-		tools:          toolReg,
+		bus:        bus,
+		appConfig:  cfg,
+		client:     client,
+		contextMgr: ctxmgr.New(client, ctxmgr.DefaultConfig()),
+		tools:      toolReg,
 	}
 
 	// Initialize components that depend on tools being set

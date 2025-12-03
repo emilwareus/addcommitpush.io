@@ -15,10 +15,10 @@ type Config struct {
 	BraveAPIKey      string
 
 	// Paths
-	VaultPath      string
-	HistoryFile    string
-	StateFile      string
-	EventStoreDir  string // Event-sourced storage directory
+	VaultPath     string
+	HistoryFile   string
+	StateFile     string
+	EventStoreDir string // Event-sourced storage directory
 
 	// Timeouts
 	WorkerTimeout  time.Duration

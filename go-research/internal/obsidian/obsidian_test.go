@@ -370,7 +370,7 @@ func TestLoaderListSessionsNonExistentVault(t *testing.T) {
 		t.Fatalf("ListSessions should not error for non-existent vault: %v", err)
 	}
 
-	if sessions != nil && len(sessions) != 0 {
+	if len(sessions) != 0 {
 		t.Errorf("expected nil or empty sessions for non-existent vault, got %d", len(sessions))
 	}
 }

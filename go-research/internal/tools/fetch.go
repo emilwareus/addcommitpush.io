@@ -50,7 +50,7 @@ func (t *FetchTool) Execute(ctx context.Context, args map[string]interface{}) (s
 	if err != nil {
 		return "", fmt.Errorf("fetch failed: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("fetch error %d for %s", resp.StatusCode, urlStr)

@@ -244,7 +244,7 @@ func TestEventStore_LoadNonExistent(t *testing.T) {
 		t.Fatalf("LoadEvents should not error for non-existent: %v", err)
 	}
 
-	if events != nil && len(events) != 0 {
+	if len(events) != 0 {
 		t.Error("Expected empty/nil slice for non-existent aggregate")
 	}
 

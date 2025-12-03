@@ -216,7 +216,7 @@ func (o *DeepOrchestratorES) continueResearch(ctx context.Context, state *aggreg
 			TotalFacts: o.countTotalFacts(state),
 		})
 		if err == nil {
-			o.persistEvent(ctx, state, event)
+			_ = o.persistEvent(ctx, state, event)
 			o.publishUIEvent(event)
 		}
 		fallthrough
@@ -228,7 +228,7 @@ func (o *DeepOrchestratorES) continueResearch(ctx context.Context, state *aggreg
 		// Start synthesis phase
 		event, err := state.Execute(aggregate.StartSynthesisCommand{})
 		if err == nil {
-			o.persistEvent(ctx, state, event)
+			_ = o.persistEvent(ctx, state, event)
 			o.publishUIEvent(event)
 		}
 		fallthrough
@@ -249,7 +249,7 @@ func (o *DeepOrchestratorES) continueResearch(ctx context.Context, state *aggreg
 	event, _ := state.Execute(aggregate.CompleteResearchCommand{
 		Duration: time.Since(*state.StartedAt),
 	})
-	o.persistEvent(ctx, state, event)
+	_ = o.persistEvent(ctx, state, event)
 	o.publishUIEvent(event)
 
 	// Take snapshot every 20 events for faster future loads
@@ -436,8 +436,8 @@ func (o *DeepOrchestratorES) executeAnalysis(ctx context.Context, state *aggrega
 	validatedFacts := make([]domainEvents.ValidatedFact, len(result.ValidatedFacts))
 	for i, f := range result.ValidatedFacts {
 		validatedFacts[i] = domainEvents.ValidatedFact{
-			Content:        f.Fact.Content,
-			Confidence:     f.Fact.Confidence,
+			Content:        f.Content,
+			Confidence:     f.Confidence,
 			CorroboratedBy: f.CorroboratedBy,
 		}
 	}
@@ -657,7 +657,7 @@ func (o *DeepOrchestratorES) saveSnapshot(ctx context.Context, state *aggregate.
 		Timestamp:   time.Now(),
 		Data:        []byte(`{}`), // Placeholder
 	}
-	o.eventStore.SaveSnapshot(ctx, state.ID, snapshot)
+	_ = o.eventStore.SaveSnapshot(ctx, state.ID, snapshot)
 }
 
 // Helper functions

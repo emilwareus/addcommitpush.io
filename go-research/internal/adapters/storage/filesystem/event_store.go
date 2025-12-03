@@ -21,7 +21,7 @@ type EventStore struct {
 
 // NewEventStore creates a new filesystem-based event store.
 func NewEventStore(baseDir string) *EventStore {
-	os.MkdirAll(baseDir, 0755)
+	_ = os.MkdirAll(baseDir, 0755)
 	return &EventStore{baseDir: baseDir}
 }
 

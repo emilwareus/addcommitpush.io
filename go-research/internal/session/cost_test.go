@@ -13,6 +13,3 @@ func TestNewCostBreakdown(t *testing.T) {
 		t.Fatalf("expected total cost to be > 0, got %f", cost.TotalCost)
 	}
 }
-
-
-

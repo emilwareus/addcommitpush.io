@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"strings"
 
 	"go-research/internal/repl"
 )
@@ -40,25 +41,39 @@ type HelpHandler struct{}
 
 // Execute shows help information
 func (h *HelpHandler) Execute(ctx *repl.Context, args []string) error {
-	help := `
-Just type your question to start deep research!
-After research, type follow-up questions to expand.
+	if len(ctx.CommandDocs) == 0 {
+		ctx.Renderer.Info("No commands available.")
+		return nil
+	}
 
-Commands:
-  /fast <query>      - Quick single-worker research
-  /deep <query>      - Multi-worker deep research
-  /expand <text>     - Expand on current research
-  /sessions          - List all sessions
-  /load <id>         - Load a session
-  /new               - Clear session and start fresh
-  /workers           - Show workers in current session
-  /rerun <n>         - Re-run worker n
-  /recompile [text]  - Recompile report with optional instructions
-  /model [name]      - Show/set model
-  /verbose           - Toggle verbose output
-  /help              - Show this help
-  /quit              - Exit
-`
+	lines := []string{
+		"Just type your question to start research!",
+		"After research, type follow-up questions to expand.",
+		"",
+		"Commands:",
+	}
+
+	categoryOrder := make([]string, 0)
+	grouped := make(map[string][]repl.CommandDoc)
+	for _, doc := range ctx.CommandDocs {
+		grouped[doc.Category] = append(grouped[doc.Category], doc)
+		if len(grouped[doc.Category]) == 1 {
+			categoryOrder = append(categoryOrder, doc.Category)
+		}
+	}
+
+	for _, category := range categoryOrder {
+		if category == "" {
+			continue
+		}
+		lines = append(lines, fmt.Sprintf("%s:", category))
+		for _, doc := range grouped[category] {
+			lines = append(lines, fmt.Sprintf("  %s - %s", doc.Usage, doc.Description))
+		}
+		lines = append(lines, "")
+	}
+
+	help := strings.Join(lines, "\n")
 	ctx.Renderer.Info(help)
 	return nil
 }

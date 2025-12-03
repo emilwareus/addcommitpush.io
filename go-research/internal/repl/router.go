@@ -17,14 +17,15 @@ type Handler interface {
 
 // Context provides shared state to handlers
 type Context struct {
-	Session    *session.Session
-	Store      *session.Store
-	Bus        *events.Bus
-	Renderer   *Renderer
-	Config     *config.Config
-	Obsidian   *obsidian.Writer
-	RunContext context.Context    // Cancelable context for current operation
-	Cancel     context.CancelFunc // Cancel function to abort current operation
+	Session     *session.Session
+	Store       *session.Store
+	Bus         *events.Bus
+	Renderer    *Renderer
+	Config      *config.Config
+	Obsidian    *obsidian.Writer
+	CommandDocs []CommandDoc
+	RunContext  context.Context    // Cancelable context for current operation
+	Cancel      context.CancelFunc // Cancel function to abort current operation
 }
 
 // Router routes input to appropriate handlers
