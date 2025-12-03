@@ -25,9 +25,9 @@ type DialogueTurn struct {
 
 // ConversationResult contains the full dialogue for one perspective.
 type ConversationResult struct {
-	Perspective planning.Perspective `json:"perspective"`
-	Turns       []DialogueTurn       `json:"turns"`
-	Facts       []Fact               `json:"facts"` // Extracted from answers
+	Perspective planning.Perspective  `json:"perspective"`
+	Turns       []DialogueTurn        `json:"turns"`
+	Facts       []Fact                `json:"facts"` // Extracted from answers
 	TotalCost   session.CostBreakdown `json:"total_cost"`
 }
 

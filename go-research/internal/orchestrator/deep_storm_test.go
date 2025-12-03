@@ -182,10 +182,10 @@ func TestStormOrchestratorFullWorkflow(t *testing.T) {
 			{"name": "Basic Fact Writer", "focus": "Fundamentals", "questions": ["What is it?"]}
 		]`,
 		// Perspective 1 conversation
-		`What are the key technical components of AI agents?`, // WikiWriter Q1
-		`["AI agent architecture", "agent components"]`,        // Expert queries
-		`AI agents consist of perception, reasoning, and action modules. [Source: https://tech.example.com]`, // Expert answer
-		`Thank you so much for your help!`,                     // WikiWriter exit
+		`What are the key technical components of AI agents?`,                                                                            // WikiWriter Q1
+		`["AI agent architecture", "agent components"]`,                                                                                  // Expert queries
+		`AI agents consist of perception, reasoning, and action modules. [Source: https://tech.example.com]`,                             // Expert answer
+		`Thank you so much for your help!`,                                                                                               // WikiWriter exit
 		`[{"content": "AI agents have perception, reasoning, action modules", "source": "https://tech.example.com", "confidence": 0.9}]`, // Fact extraction
 		// Perspective 2 conversation
 		`What are the current market trends for AI agents?`,
@@ -208,7 +208,7 @@ func TestStormOrchestratorFullWorkflow(t *testing.T) {
 		`[]`, // Contradictions
 		`[]`, // Knowledge gaps
 		// Synthesis phase
-		`["Introduction", "Technical Architecture", "Market Analysis", "Conclusion"]`, // Draft outline
+		`["Introduction", "Technical Architecture", "Market Analysis", "Conclusion"]`,                     // Draft outline
 		`["Introduction", "What are AI Agents", "Technical Architecture", "Market Trends", "Conclusion"]`, // Refined outline
 		// Section writing (5 sections)
 		`This report examines AI agents from multiple expert perspectives.`,
@@ -469,7 +469,7 @@ func TestStormOrchestratorTwoPhaseOutline(t *testing.T) {
 		// Analysis
 		`[]`, `[]`, `[]`,
 		// Two-phase outline
-		`["Draft Section 1", "Draft Section 2"]`,               // Draft
+		`["Draft Section 1", "Draft Section 2"]`,                    // Draft
 		`["Refined Section 1", "Refined Section 2", "New Section"]`, // Refined
 		// Section writing
 		`Content 1.`,

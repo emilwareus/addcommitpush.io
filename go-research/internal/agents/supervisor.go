@@ -19,11 +19,11 @@ import (
 //
 // Original: multi_agent_supervisor.py in ThinkDepth.ai
 type SupervisorAgent struct {
-	client           llm.ChatClient
-	bus              *events.Bus
-	maxIterations    int
-	maxConcurrent    int
-	model            string
+	client        llm.ChatClient
+	bus           *events.Bus
+	maxIterations int
+	maxConcurrent int
+	model         string
 }
 
 // SupervisorConfig configures the supervisor agent behavior.

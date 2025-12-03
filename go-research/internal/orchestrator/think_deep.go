@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"go-research/internal/agents"
-	"go-research/internal/think_deep"
 	"go-research/internal/config"
 	"go-research/internal/events"
 	"go-research/internal/llm"
 	"go-research/internal/session"
+	"go-research/internal/think_deep"
 	"go-research/internal/tools"
 )
 
@@ -26,12 +26,12 @@ import (
 //
 // Original: research_agent_full.py in ThinkDepth.ai
 type ThinkDeepOrchestrator struct {
-	bus           *events.Bus
-	appConfig     *config.Config
-	client        llm.ChatClient
-	tools         tools.ToolExecutor
-	supervisor    *agents.SupervisorAgent
-	model         string
+	bus        *events.Bus
+	appConfig  *config.Config
+	client     llm.ChatClient
+	tools      tools.ToolExecutor
+	supervisor *agents.SupervisorAgent
+	model      string
 }
 
 // ThinkDeepConfig holds configuration for the ThinkDeep orchestrator.

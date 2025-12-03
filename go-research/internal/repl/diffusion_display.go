@@ -30,27 +30,27 @@ type SubResearcherPanel struct {
 
 // DiffusionDisplay renders ThinkDeep's iterative diffusion process
 type DiffusionDisplay struct {
-	w               io.Writer
-	mu              sync.Mutex
-	iteration       int
-	maxIterations   int
-	subResearchers  map[int]*SubResearcherPanel
+	w                 io.Writer
+	mu                sync.Mutex
+	iteration         int
+	maxIterations     int
+	subResearchers    map[int]*SubResearcherPanel
 	activeResearchers []int // Track order of active researchers
-	draftProgress   float64
-	phase           string
-	started         bool
-	lastIteration   int // Track to avoid duplicate headers
-	lastUpdate      time.Time
-	spinnerIdx      int
-	totalSources    int
-	phasesComplete  int // Track completed phases (0-4)
+	draftProgress     float64
+	phase             string
+	started           bool
+	lastIteration     int // Track to avoid duplicate headers
+	lastUpdate        time.Time
+	spinnerIdx        int
+	totalSources      int
+	phasesComplete    int // Track completed phases (0-4)
 }
 
 // NewDiffusionDisplay creates a new diffusion display renderer
 func NewDiffusionDisplay(w io.Writer) *DiffusionDisplay {
 	return &DiffusionDisplay{
-		w:              w,
-		subResearchers: make(map[int]*SubResearcherPanel),
+		w:                 w,
+		subResearchers:    make(map[int]*SubResearcherPanel),
 		activeResearchers: make([]int, 0),
 	}
 }

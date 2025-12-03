@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"go-research/internal/think_deep"
 	"go-research/internal/events"
 	"go-research/internal/llm"
 	"go-research/internal/session"
+	"go-research/internal/think_deep"
 	"go-research/internal/tools"
 )
 

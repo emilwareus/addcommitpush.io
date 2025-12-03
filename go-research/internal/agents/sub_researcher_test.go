@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	"go-research/internal/think_deep"
 	"go-research/internal/events"
+	"go-research/internal/think_deep"
 )
 
 func TestNewSubResearcherAgent(t *testing.T) {

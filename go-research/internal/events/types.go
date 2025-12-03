@@ -164,19 +164,19 @@ type CrossValidationProgressData struct {
 
 // GapFillingProgressData contains progress info for knowledge gap filling
 type GapFillingProgressData struct {
-	GapIndex    int     // Current gap index (0-based)
-	TotalGaps   int     // Total gaps to fill
-	GapDesc     string  // Description of current gap
-	Status      string  // "searching", "processing", "complete", "skipped"
-	Progress    float64 // 0.0 to 1.0 progress
+	GapIndex  int     // Current gap index (0-based)
+	TotalGaps int     // Total gaps to fill
+	GapDesc   string  // Description of current gap
+	Status    string  // "searching", "processing", "complete", "skipped"
+	Progress  float64 // 0.0 to 1.0 progress
 }
 
 // ConversationStartedData contains data when a conversation begins
 type ConversationStartedData struct {
-	Perspective      string // Perspective name
-	Focus            string // Perspective focus area
-	TotalPerspectives int   // Total perspectives being processed
-	Index            int    // 0-based index of current perspective
+	Perspective       string // Perspective name
+	Focus             string // Perspective focus area
+	TotalPerspectives int    // Total perspectives being processed
+	Index             int    // 0-based index of current perspective
 }
 
 // ConversationProgressData contains progress info for a conversation turn

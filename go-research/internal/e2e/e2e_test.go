@@ -2090,8 +2090,8 @@ func TestStormOrchestratorE2EFullWorkflow(t *testing.T) {
 		`[]`, // Knowledge gaps
 
 		// Phase 4: Synthesis
-		`["Introduction", "Details", "Conclusion"]`,         // Draft outline
-		`["Introduction", "Technical", "Summary"]`,          // Refined outline
+		`["Introduction", "Details", "Conclusion"]`, // Draft outline
+		`["Introduction", "Technical", "Summary"]`,  // Refined outline
 		`Introduction to the topic.`,
 		`Technical details about the system.`,
 		`Summary and conclusions.`,

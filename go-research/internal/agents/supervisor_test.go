@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"go-research/internal/think_deep"
 	"go-research/internal/events"
 	"go-research/internal/session"
+	"go-research/internal/think_deep"
 )
 
 func TestNewSupervisorAgent(t *testing.T) {
@@ -505,4 +505,3 @@ func TestSupervisorCoordinateContextCancellation(t *testing.T) {
 		}
 	}
 }
-
