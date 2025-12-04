@@ -1,12 +1,15 @@
 module go-research
 
-go 1.24.0
+go 1.24.1
 
 require (
 	github.com/chzyer/readline v1.5.1
 	github.com/fatih/color v1.16.0
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
+	github.com/ledongthuc/pdf v0.0.0-20250511090121-5959a4027728
+	github.com/montanaflynn/stats v0.7.1
+	github.com/nguyenthenguyen/docx v0.0.0-20230621112118-9c8e795a11db
 	golang.org/x/net v0.30.0
 	gopkg.in/yaml.v3 v3.0.1
 )
