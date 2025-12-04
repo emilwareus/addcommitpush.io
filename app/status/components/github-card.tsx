@@ -34,8 +34,8 @@ export function GitHubCard({ data }: GitHubCardProps) {
           </div>
         </div>
 
-        {/* Chart - Client Component - Always visible */}
-        <div className="flex flex-1 min-h-[200px] -ml-2">
+        {/* Chart - Server Rendered SVG */}
+        <div className="h-[200px] -ml-2">
           <GitHubChart data={data.commitsByDay} />
         </div>
       </CardContent>

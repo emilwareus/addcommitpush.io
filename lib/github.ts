@@ -131,32 +131,64 @@ interface GraphQLResponse {
   errors?: { message: string }[];
 }
 
+// Helper to delay execution
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 async function fetchGraphQL(
   token: string,
   query: string,
-  variables: Record<string, unknown>
+  variables: Record<string, unknown>,
+  retries = 3
 ): Promise<GraphQLResponse> {
-  const response = await fetch('https://api.github.com/graphql', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ query, variables }),
-  });
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
-  if (!response.ok) {
-    throw new Error(`GitHub API error: ${response.status}`);
+      const response = await fetch('https://api.github.com/graphql', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query, variables }),
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        if (response.status === 502 || response.status === 503 || response.status === 504) {
+          console.warn(`GitHub API ${response.status}, attempt ${attempt + 1}/${retries}`);
+          if (attempt < retries - 1) {
+            await delay(1000 * Math.pow(2, attempt)); // Exponential backoff
+            continue;
+          }
+        }
+        throw new Error(`GitHub API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      if (data.errors) {
+        console.error('GitHub GraphQL errors:', data.errors);
+        throw new Error('GitHub GraphQL query failed');
+      }
+
+      return data;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.warn(`GitHub API timeout, attempt ${attempt + 1}/${retries}`);
+        if (attempt < retries - 1) {
+          await delay(1000 * Math.pow(2, attempt));
+          continue;
+        }
+      }
+      throw error;
+    }
   }
 
-  const data = await response.json();
-
-  if (data.errors) {
-    console.error('GitHub GraphQL errors:', data.errors);
-    throw new Error('GitHub GraphQL query failed');
-  }
-
-  return data;
+  throw new Error('GitHub API failed after all retries');
 }
 
 interface PRNode {
@@ -200,6 +232,9 @@ async function fetchAllPRs(
     allPRs.push(...searchResults.nodes);
     hasNextPage = searchResults.pageInfo.hasNextPage;
     cursor = searchResults.pageInfo.endCursor;
+
+    // Small delay between paginated requests
+    if (hasNextPage) await delay(100);
   }
 
   return allPRs;
@@ -245,6 +280,9 @@ async function fetchAllIssues(
     allIssues.push(...searchResults.nodes);
     hasNextPage = searchResults.pageInfo.hasNextPage;
     cursor = searchResults.pageInfo.endCursor;
+
+    // Small delay between paginated requests
+    if (hasNextPage) await delay(100);
   }
 
   return allIssues;
@@ -304,6 +342,9 @@ async function fetchAllReviews(
 
     hasNextPage = searchResults.pageInfo.hasNextPage;
     cursor = searchResults.pageInfo.endCursor;
+
+    // Small delay between paginated requests
+    if (hasNextPage) await delay(100);
   }
 
   return allReviews;
@@ -390,31 +431,33 @@ async function fetchGitHubDataInternal(): Promise<GitHubStatusData> {
   const now = new Date();
   const oneYearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
 
-  const accountPromises = [];
+  // Fetch accounts sequentially to avoid overwhelming GitHub API
+  const accountsData: AccountData[] = [];
 
   if (PRIVATE_GITHUB_TOKEN && PRIVATE_GITHUB_USERNAME) {
-    accountPromises.push(
-      fetchAccountData(PRIVATE_GITHUB_TOKEN, PRIVATE_GITHUB_USERNAME, oneYearAgo, now, true)
+    console.log('[GitHub] Fetching data for private account...');
+    accountsData.push(
+      await fetchAccountData(PRIVATE_GITHUB_TOKEN, PRIVATE_GITHUB_USERNAME, oneYearAgo, now, true)
     );
   }
 
   if (OAIZ_GITHUB_TOKEN && OAIZ_GITHUB_USERNAME) {
-    accountPromises.push(
-      fetchAccountData(OAIZ_GITHUB_TOKEN, OAIZ_GITHUB_USERNAME, oneYearAgo, now, false)
+    console.log('[GitHub] Fetching data for OAIZ account...');
+    accountsData.push(
+      await fetchAccountData(OAIZ_GITHUB_TOKEN, OAIZ_GITHUB_USERNAME, oneYearAgo, now, false)
     );
   }
 
   if (YC_GITHUB_TOKEN && YC_GITHUB_USERNAME) {
-    accountPromises.push(
-      fetchAccountData(YC_GITHUB_TOKEN, YC_GITHUB_USERNAME, oneYearAgo, now, true)
+    console.log('[GitHub] Fetching data for YC account...');
+    accountsData.push(
+      await fetchAccountData(YC_GITHUB_TOKEN, YC_GITHUB_USERNAME, oneYearAgo, now, true)
     );
   }
 
-  if (accountPromises.length === 0) {
+  if (accountsData.length === 0) {
     throw new Error('No GitHub tokens configured');
   }
-
-  const accountsData = await Promise.all(accountPromises);
 
   console.log(`GitHub API: Fetched data from ${accountsData.length} account(s)`);
 

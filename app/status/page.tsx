@@ -3,7 +3,8 @@ import { getGitHubStatusData } from '@/lib/github';
 import { getLinearStatusData } from '@/lib/linear';
 import type { DayActivity } from '@/lib/github';
 import { StatusGrid } from './components/status-grid';
-import { StatusDashboard } from './status-dashboard';
+import { GitHubCard } from './components/github-card';
+import { SpotifyCard } from './components/spotify-card';
 
 // ISR: statically generate at build, revalidate every 4 hours (shared by all users)
 export const revalidate = 14400; // 4 hours in seconds
@@ -33,10 +34,15 @@ export const metadata = {
 };
 
 export default async function StatusPage() {
+  const fetchTime = new Date();
+  console.log('[Status Page] Fetching data at:', fetchTime.toISOString());
+
   const [githubData, linearData] = await Promise.all([
     getGitHubStatusData(),
     getLinearStatusData(),
   ]);
+
+  console.log('[Status Page] Data fetched successfully');
 
   // Combine Linear issues with GitHub issues
   const combinedIssuesByDay: DayActivity[] = githubData.issuesByDay.map((githubDay, index) => {
@@ -71,10 +77,26 @@ export default async function StatusPage() {
 
       <div className="mt-12">
         <h2 className="text-2xl font-bold mb-6">Current Activity</h2>
-        <StatusDashboard githubData={combinedData} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* GitHub Stats - Server Rendered, Cached */}
+          <div className="lg:col-span-2">
+            <GitHubCard data={combinedData} />
+          </div>
+
+          {/* Spotify Now Playing - Client Component */}
+          <div>
+            <SpotifyCard />
+          </div>
+        </div>
       </div>
 
-      <p className="text-sm text-muted-foreground mt-8">Last updated: Just now</p>
+      <p className="text-sm text-muted-foreground mt-8">
+        Server rendered at: {fetchTime.toLocaleString('en-US', { 
+          timeZone: 'Europe/Stockholm',
+          dateStyle: 'medium', 
+          timeStyle: 'long' 
+        })}
+      </p>
     </div>
   );
 }
