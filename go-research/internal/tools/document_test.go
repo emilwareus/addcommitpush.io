@@ -70,6 +70,20 @@ func TestDocumentReadTool_Execute_DetectsDOCX(t *testing.T) {
 	}
 }
 
+func TestDocumentReadTool_Execute_DetectsXLSX(t *testing.T) {
+	tool := NewDocumentReadTool()
+	_, err := tool.Execute(context.Background(), map[string]interface{}{
+		"path": "/nonexistent/file.xlsx",
+	})
+	if err == nil {
+		t.Error("expected error")
+	}
+	// XLSX tool returns "file not found" which proves correct routing
+	if !strings.Contains(err.Error(), "file not found") {
+		t.Errorf("expected 'file not found' error (proving XLSX routing), got: %v", err)
+	}
+}
+
 func TestDocumentReadTool_Execute_CaseInsensitiveExtension(t *testing.T) {
 	tool := NewDocumentReadTool()
 
@@ -87,5 +101,13 @@ func TestDocumentReadTool_Execute_CaseInsensitiveExtension(t *testing.T) {
 	})
 	if err == nil || !strings.Contains(err.Error(), "file not found") {
 		t.Error("expected DOCX tool to handle .DocX extension")
+	}
+
+	// Test uppercase XLSX
+	_, err = tool.Execute(context.Background(), map[string]interface{}{
+		"path": "/nonexistent/file.XLSX",
+	})
+	if err == nil || !strings.Contains(err.Error(), "file not found") {
+		t.Error("expected XLSX tool to handle .XLSX extension")
 	}
 }

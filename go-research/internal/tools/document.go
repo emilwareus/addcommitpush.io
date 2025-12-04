@@ -7,11 +7,12 @@ import (
 	"strings"
 )
 
-// DocumentReadTool reads documents of various formats (PDF, DOCX).
+// DocumentReadTool reads documents of various formats (PDF, DOCX, XLSX).
 // It auto-detects the format based on file extension.
 type DocumentReadTool struct {
 	pdfTool  *PDFReadTool
 	docxTool *DOCXReadTool
+	xlsxTool *XLSXReadTool
 }
 
 // NewDocumentReadTool creates a new document reading tool.
@@ -19,6 +20,7 @@ func NewDocumentReadTool() *DocumentReadTool {
 	return &DocumentReadTool{
 		pdfTool:  NewPDFReadTool(),
 		docxTool: NewDOCXReadTool(),
+		xlsxTool: NewXLSXReadTool(),
 	}
 }
 
@@ -27,7 +29,7 @@ func (t *DocumentReadTool) Name() string {
 }
 
 func (t *DocumentReadTool) Description() string {
-	return `Read and extract text from a document file (PDF or DOCX - auto-detected from extension).
+	return `Read and extract text from a document file (PDF, DOCX, XLSX - auto-detected from extension).
 Args: {"path": "/path/to/document.pdf"}`
 }
 
@@ -44,7 +46,9 @@ func (t *DocumentReadTool) Execute(ctx context.Context, args map[string]interfac
 		return t.pdfTool.Execute(ctx, args)
 	case ".docx":
 		return t.docxTool.Execute(ctx, args)
+	case ".xlsx":
+		return t.xlsxTool.Execute(ctx, args)
 	default:
-		return "", fmt.Errorf("unsupported file format: %s (supported: .pdf, .docx)", ext)
+		return "", fmt.Errorf("unsupported file format: %s (supported: .pdf, .docx, .xlsx)", ext)
 	}
 }

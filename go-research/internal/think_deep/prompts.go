@@ -113,8 +113,9 @@ You have access to the following tools:
 2. **fetch**: For fetching content from a specific URL
    Usage: <tool name="fetch">{"url": "https://example.com"}</tool>
 
-3. **read_document**: For reading PDF or DOCX documents
+3. **read_document**: For reading documents (PDF, DOCX, XLSX)
    Usage: <tool name="read_document">{"path": "/path/to/document.pdf"}</tool>
+   Supports: PDF files, DOCX (Word) files, and XLSX (Excel) files
 
 4. **analyze_csv**: For analyzing CSV data files (EDA, statistics, column analysis)
    Usage: <tool name="analyze_csv">{"path": "/path/to/data.csv", "goal": "what to look for"}</tool>

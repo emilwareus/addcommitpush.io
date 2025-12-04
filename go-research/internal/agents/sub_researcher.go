@@ -171,7 +171,21 @@ func (r *SubResearcherAgent) researchWithIteration(ctx context.Context, topic st
 				result = fmt.Sprintf("Reflection recorded: %s", truncateForLog(reflection, 100))
 
 			default:
-				result = fmt.Sprintf("Unknown tool: %s", tc.Tool)
+				// Execute any other tool from the registry (read_document, analyze_csv, fetch, etc.)
+				r.emitProgress(researcherNum, diffusionIteration, fmt.Sprintf("using %s", tc.Tool), len(state.RawNotes), topic)
+				toolResult, toolErr := r.tools.Execute(ctx, tc.Tool, tc.Args)
+				if toolErr != nil {
+					if ctxErr := ctx.Err(); ctxErr != nil {
+						return nil, ctxErr
+					}
+					result = fmt.Sprintf("Tool error (%s): %v", tc.Tool, toolErr)
+				} else {
+					result = toolResult
+					// Add to raw notes if it's a data-gathering tool (not think)
+					if tc.Tool != "think" {
+						state.AddRawNote(toolResult)
+					}
+				}
 			}
 
 			// Add tool result to conversation
