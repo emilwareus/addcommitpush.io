@@ -56,21 +56,18 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const postContent = await (async () => {
     switch (slug) {
       case 'recruiting-engineers-as-a-startup': {
-        const { RecruitingEngineersContent } = await import(
-          '@/components/blog-posts/recruiting-engineers-as-a-startup'
-        );
+        const { RecruitingEngineersContent } =
+          await import('@/components/blog-posts/recruiting-engineers-as-a-startup');
         return <RecruitingEngineersContent />;
       }
       case 'saas-zero-to-one-hindsight': {
-        const { SaasZeroToOneHindsightContent } = await import(
-          '@/components/blog-posts/saas-zero-to-one-hindsight'
-        );
+        const { SaasZeroToOneHindsightContent } =
+          await import('@/components/blog-posts/saas-zero-to-one-hindsight');
         return <SaasZeroToOneHindsightContent />;
       }
       case 'context-engineering-claude-code': {
-        const { ContextEngineeringClaudeCodeContent } = await import(
-          '@/components/blog-posts/context-engineering-claude-code'
-        );
+        const { ContextEngineeringClaudeCodeContent } =
+          await import('@/components/blog-posts/context-engineering-claude-code');
         return <ContextEngineeringClaudeCodeContent />;
       }
       default:

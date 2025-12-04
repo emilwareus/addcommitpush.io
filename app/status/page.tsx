@@ -89,14 +89,6 @@ export default async function StatusPage() {
           </div>
         </div>
       </div>
-
-      <p className="text-sm text-muted-foreground mt-8">
-        Server rendered at: {fetchTime.toLocaleString('en-US', { 
-          timeZone: 'Europe/Stockholm',
-          dateStyle: 'medium', 
-          timeStyle: 'long' 
-        })}
-      </p>
     </div>
   );
 }

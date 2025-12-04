@@ -12,12 +12,12 @@ export function GitHubChart({ data }: GitHubChartProps) {
   const chartHeight = height - padding.top - padding.bottom;
 
   const maxCount = Math.max(...data.map((d) => d.count), 1);
-  const barWidth = Math.max(1, (chartWidth / data.length) - 1);
+  const barWidth = Math.max(1, chartWidth / data.length - 1);
 
   // Get month labels
   const monthLabels: { x: number; label: string }[] = [];
   const seenMonths = new Set<string>();
-  
+
   data.forEach((day, i) => {
     const date = new Date(day.date);
     const monthKey = `${date.getFullYear()}-${date.getMonth()}`;
@@ -48,7 +48,7 @@ export function GitHubChart({ data }: GitHubChartProps) {
         stroke="oklch(0.7 0.14 195)"
         strokeWidth={1}
       />
-      
+
       {/* Y-axis ticks and labels */}
       {yTicks.map((tick) => {
         const y = height - padding.bottom - (tick / maxCount) * chartHeight;

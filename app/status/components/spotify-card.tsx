@@ -73,7 +73,10 @@ export function SpotifyCard() {
   }, [isRateLimited]);
 
   // Handle rate limiting
-  const rateLimitError = error && ((error as SpotifyError).status === 429 || (error as SpotifyError).data?.error === 'rate_limit');
+  const rateLimitError =
+    error &&
+    ((error as SpotifyError).status === 429 ||
+      (error as SpotifyError).data?.error === 'rate_limit');
 
   if (rateLimitError || isRateLimited) {
     return (
