@@ -5,7 +5,6 @@ import {
   BlogLink,
   Figure,
   Terminal,
-  TerminalCommand,
 } from '@/components/custom';
 import { AudioPlayer } from '@/components/audio-player';
 
@@ -62,7 +61,7 @@ export function ContextEngineeringClaudeCodeContent() {
         <p>
           You have already spent more on AI coding tools the last 6 months than any other tools in
           your 10-year coding career. You have done a few passes on the CLAUDE.md file, used a few
-          MCP tools, but realized this didn't speed you up as much as you wished.
+          MCP tools, but realized this didn&apos;t speed you up as much as you wished.
         </p>
 
         <br />
@@ -239,7 +238,7 @@ export function ContextEngineeringClaudeCodeContent() {
           The key is constraint: each agent does one job well and returns only what the next phase
           needs. The sub-agent can fail, hit 404 pages, forget which directory it is in, etc., and
           all that noise will not pollute the main context. It just outputs clean, summarized
-          findings to the main agent that doesn't need to know about all the failed file reads.
+          findings to the main agent that doesn&apos;t need to know about all the failed file reads.
         </p>
 
         <div className="not-prose my-10 overflow-x-auto rounded-lg border border-border p-2">
@@ -377,7 +376,7 @@ export function ContextEngineeringClaudeCodeContent() {
         <Terminal>{`/research_codebase`}</Terminal>
 
         <p>
-          The command will prompt you with "what would you like to research?". Provide a detailed
+          The command will prompt you with &quot;what would you like to research?&quot; Provide a detailed
           prompt like:
         </p>
 
@@ -393,14 +392,14 @@ Follow @frontend/ARCHITECTURE.md guidelines and patterns.`}
 
         <p>
           This generates a research document with file references, target architecture, and
-          critically—a "What not to do" section that helps guide Claude in the right direction
+          critically—a &quot;What not to do&quot; section that helps guide Claude in the right direction
           without detours.
         </p>
 
         <p>
           <strong>Important:</strong> Review the research document closely. Check if it found all
           relevant files, if the target architecture looks reasonable, and if you agree with the
-          "what not to do" section. In about 50% of cases, I edit these sections manually using
+          &quot;what not to do&quot; section. In about 50% of cases, I edit these sections manually using
           Cursor with a powerful model or by editing the file directly.
         </p>
 
@@ -414,16 +413,16 @@ Follow @frontend/ARCHITECTURE.md guidelines and patterns.`}
 
         <BlogHeading level={3}>Step 2: Planning</BlogHeading>
 
-        <p>Once you're happy with the research, create a plan:</p>
+        <p>Once you&apos;re happy with the research, create a plan:</p>
 
         <Terminal>
           {`/create_plan create a plan for @PATH_TO_RESEARCH. ADDITIONAL_INSTRUCTIONS`}
         </Terminal>
 
         <p>
-          Additional instructions might include: "make it 4 phases", "make sure to add e2e tests in
-          the frontend to the plan", etc. You can also add "think deeply" for higher accuracy (but
-          avoid "ultrathink"—it's a token burner that uses the main context to explore).
+          Additional instructions might include: &quot;make it 4 phases&quot;, &quot;make sure to add e2e tests in
+          the frontend to the plan&quot;, etc. You can also add &quot;think deeply&quot; for higher accuracy (but
+          avoid &quot;ultrathink&quot;—it&apos;s a token burner that uses the main context to explore).
         </p>
 
         <p>
@@ -463,7 +462,7 @@ Follow @frontend/ARCHITECTURE.md guidelines and patterns.`}
         <p>
           Repeat this loop for each phase until all phases are complete, then run a final validation
           on the full plan. I typically review the code between iterations to ensure it makes sense
-          and guide the AI if needed. Aim for "working software" in each phase—tests should pass and
+          and guide the AI if needed. Aim for &quot;working software&quot; in each phase—tests should pass and
           there should be no lint errors. The validation step will catch missing interface
           implementations and run your linters.
         </p>
@@ -483,12 +482,12 @@ Follow @frontend/ARCHITECTURE.md guidelines and patterns.`}
 
         <p>
           In my experience, this flow completely 1-shots (after research/plan refinements) 2-5 such
-          features per day. I run up to 3 in parallel—one "big hairy" problem and two simpler, more
+          features per day. I run up to 3 in parallel—one &quot;big hairy&quot; problem and two simpler, more
           straightforward ones.
         </p>
 
         <p>
-          In the future, I want to make this a "linear workflow" where humans gather information
+          In the future, I want to make this a &quot;linear workflow&quot; where humans gather information
           into Linear issues (the initial research prompts), and moving issues into different phases
           would auto-trigger different steps, creating PRs with research docs, etc.
         </p>
@@ -496,8 +495,8 @@ Follow @frontend/ARCHITECTURE.md guidelines and patterns.`}
         <BlogHeading level={2}>Codebase Requirements</BlogHeading>
 
         <p>
-          I don't think this will work well in all settings and codebases. The right type of
-          "mid/mid+" size problems is the right fit. The better your codebase is, the better code AI
+          I don&apos;t think this will work well in all settings and codebases. The right type of
+          &quot;mid/mid+&quot; size problems is the right fit. The better your codebase is, the better code AI
           will write. Just like in boomer-coding, quality compounds into velocity over time, and
           tech debt snowballs to a turd, but with AI the effects of this have increased. Prioritize
           solving your tech debt!
@@ -507,9 +506,9 @@ Follow @frontend/ARCHITECTURE.md guidelines and patterns.`}
 
         <p>
           Also, in my experience, language matters... in TS/JS you can loop in 20+ different ways or
-          chain useEffects in magical ways to create foot-cannons... if Cloudflare can't properly
+          chain useEffects in magical ways to create foot-cannons... if Cloudflare can&apos;t properly
           use useEffect... are you sure our PhD-level next token predictors can? I actually like a
-          lot of things about TS, but too many variations confuse the AI. In my "big" codebase I'm
+          lot of things about TS, but too many variations confuse the AI. In my &quot;big&quot; codebase I&apos;m
           working on our backend is built in Go, and Claude/Cursor are simply fantastic there!
           Simplicity = clarity = less hallucination = higher velocity. This is at least the state
           late 2025, in a year or so... who knows.
@@ -522,8 +521,8 @@ Follow @frontend/ARCHITECTURE.md guidelines and patterns.`}
           proper commands and guidance. Starting with a research and planning phase to create .md
           files that clearly set HIGH-value context is a great way to get more accurate results from
           Claude Code. Running multiple SpecDD flows at the same time... like spinning plates, is
-          the new name of the game in some codebases. This maybe takes out a bit of the old "fun"
-          about developing, but I'm mostly excited about user value and winning in the market, which
+          the new name of the game in some codebases. This maybe takes out a bit of the old &quot;fun&quot;
+          about developing, but I&apos;m mostly excited about user value and winning in the market, which
           is more fun than polishing a stone.
         </p>
       </div>

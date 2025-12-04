@@ -17,6 +17,11 @@ interface SpotifyResponse {
   error?: string;
 }
 
+interface SpotifyError {
+  status: number;
+  data: SpotifyResponse;
+}
+
 const fetcher = async (url: string): Promise<SpotifyResponse> => {
   const response = await fetch(url);
 
@@ -42,7 +47,7 @@ export function SpotifyCard() {
   const { data, error, isLoading } = useSWR<SpotifyResponse>('/api/spotify', fetcher, {
     refreshInterval: isRateLimited ? 0 : 10000, // Disable polling when rate limited
     revalidateOnFocus: !isRateLimited, // Disable revalidation when rate limited
-    onError: (err: any) => {
+    onError: (err: SpotifyError) => {
       // Check if error is rate limit (429)
       if (err?.status === 429 || err?.data?.error === 'rate_limit') {
         setIsRateLimited(true);
@@ -68,7 +73,7 @@ export function SpotifyCard() {
   }, [isRateLimited]);
 
   // Handle rate limiting
-  const rateLimitError = error && (error.status === 429 || error.data?.error === 'rate_limit');
+  const rateLimitError = error && ((error as SpotifyError).status === 429 || (error as SpotifyError).data?.error === 'rate_limit');
 
   if (rateLimitError || isRateLimited) {
     return (
