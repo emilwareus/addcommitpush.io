@@ -26,6 +26,7 @@ type Context struct {
 	CommandDocs []CommandDoc
 	RunContext  context.Context    // Cancelable context for current operation
 	Cancel      context.CancelFunc // Cancel function to abort current operation
+	Classifier  *QueryClassifier   // LLM-based query classifier for intent routing
 }
 
 // Router routes input to appropriate handlers
@@ -56,19 +57,45 @@ func (r *Router) Route(input string) (Handler, []string, error) {
 		return r.routeCommand(parsed)
 	}
 
-	// Natural language: if session exists, expand; otherwise start storm research
-	if r.ctx.Session != nil {
-		handler, ok := r.handlers["expand"]
-		if !ok {
-			return nil, nil, fmt.Errorf("expand handler not registered")
+	// Check if session has actual research content (not just a blank session)
+	hasResearchContent := r.ctx.Session != nil && r.ctx.Session.Report != ""
+
+	// Natural language with session that has content - classify intent using LLM
+	if hasResearchContent && r.ctx.Classifier != nil {
+		sessionSummary := r.ctx.Session.Query
+		intent, err := r.ctx.Classifier.Classify(r.ctx.RunContext, parsed.RawText, true, sessionSummary)
+		if err == nil {
+			switch intent.Type {
+			case IntentQuestion:
+				if handler, ok := r.handlers["question"]; ok {
+					return handler, []string{parsed.RawText}, nil
+				}
+			case IntentExpand:
+				if handler, ok := r.handlers["expand"]; ok {
+					args := []string{parsed.RawText}
+					if intent.Topic != "" {
+						args = []string{intent.Topic}
+					}
+					return handler, args, nil
+				}
+			case IntentResearch:
+				// Use think_deep for new research (better quality than storm)
+				if handler, ok := r.handlers["think_deep"]; ok {
+					return handler, []string{parsed.RawText}, nil
+				}
+			}
 		}
-		return handler, []string{parsed.RawText}, nil
+		// On classification error, fall through to default expand behavior for sessions with content
+		handler, ok := r.handlers["expand"]
+		if ok {
+			return handler, []string{parsed.RawText}, nil
+		}
 	}
 
-	// No session - use storm as default research handler
-	handler, ok := r.handlers["storm"]
+	// No session OR empty session - use think_deep as default research handler
+	handler, ok := r.handlers["think_deep"]
 	if !ok {
-		return nil, nil, fmt.Errorf("no default research handler registered (storm)")
+		return nil, nil, fmt.Errorf("no default research handler registered (think_deep)")
 	}
 	return handler, []string{parsed.RawText}, nil
 }

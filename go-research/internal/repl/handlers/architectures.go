@@ -62,7 +62,14 @@ func (h *ArchitectureCommandHandler) Execute(ctx *repl.Context, args []string) e
 	}
 
 	query := strings.Join(args, " ")
-	sess := session.New(query, session.ModeStorm)
+
+	// Set mode based on architecture name
+	mode := session.ModeStorm
+	if h.definition.Name == "think_deep" {
+		mode = session.ModeThinkDeep
+	}
+
+	sess := session.New(query, mode)
 	ctx.Session = sess
 
 	ctx.Renderer.ResearchStarting(sess.ID, fmt.Sprintf("%s architecture", h.definition.Name))
@@ -88,6 +95,21 @@ func (h *ArchitectureCommandHandler) Execute(ctx *repl.Context, args []string) e
 	sess.Cost = result.Metrics.Cost
 	sess.Status = session.StatusComplete
 
+	// Convert SubInsights to session Insights for persistence and QA access
+	if len(result.SubInsights) > 0 {
+		sess.Insights = make([]session.Insight, 0, len(result.SubInsights))
+		for _, subIns := range result.SubInsights {
+			sess.Insights = append(sess.Insights, session.Insight{
+				Title:       subIns.Title,
+				Finding:     subIns.Finding,
+				Implication: subIns.Implication,
+				Confidence:  subIns.Confidence,
+				Sources:     []string{subIns.SourceURL},
+				WorkerID:    fmt.Sprintf("sub-researcher-%d", subIns.ResearcherNum),
+			})
+		}
+	}
+
 	if err := ctx.Store.Save(sess); err != nil {
 		ctx.Renderer.Error(fmt.Errorf("save session: %w", err))
 	}
@@ -100,11 +122,21 @@ func (h *ArchitectureCommandHandler) Execute(ctx *repl.Context, args []string) e
 
 	var obsidianLink string
 	var reportPath string
-	if err := ctx.Obsidian.Write(sess); err != nil {
-		ctx.Renderer.Error(fmt.Errorf("save to obsidian: %w", err))
+	// Use WriteWithInsights if SubInsights are available, otherwise use standard Write
+	if len(result.SubInsights) > 0 {
+		if err := ctx.Obsidian.WriteWithInsights(sess, result.SubInsights); err != nil {
+			ctx.Renderer.Error(fmt.Errorf("save to obsidian: %w", err))
+		} else {
+			reportPath = ctx.Obsidian.GetReportPath(sess)
+			obsidianLink = fmt.Sprintf("obsidian://open?path=%s", url.QueryEscape(reportPath))
+		}
 	} else {
-		reportPath = ctx.Obsidian.GetReportPath(sess)
-		obsidianLink = fmt.Sprintf("obsidian://open?path=%s", url.QueryEscape(reportPath))
+		if err := ctx.Obsidian.Write(sess); err != nil {
+			ctx.Renderer.Error(fmt.Errorf("save to obsidian: %w", err))
+		} else {
+			reportPath = ctx.Obsidian.GetReportPath(sess)
+			obsidianLink = fmt.Sprintf("obsidian://open?path=%s", url.QueryEscape(reportPath))
+		}
 	}
 
 	ctx.Renderer.ResearchComplete(

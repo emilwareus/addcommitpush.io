@@ -32,6 +32,9 @@ type ThinkDeepOrchestrator struct {
 	tools      tools.ToolExecutor
 	supervisor *agents.SupervisorAgent
 	model      string
+
+	// Injection context for expansion workflows
+	injectionContext *think_deep.InjectionContext
 }
 
 // ThinkDeepConfig holds configuration for the ThinkDeep orchestrator.
@@ -82,6 +85,14 @@ func WithThinkDeepTools(toolExec tools.ToolExecutor) ThinkDeepOption {
 	}
 }
 
+// WithInjectionContext provides prior context for expansion workflows.
+// This enables the orchestrator to build upon existing research findings.
+func WithInjectionContext(ctx *think_deep.InjectionContext) ThinkDeepOption {
+	return func(o *ThinkDeepOrchestrator) {
+		o.injectionContext = ctx
+	}
+}
+
 // NewThinkDeepOrchestrator creates a new ThinkDeep-style research orchestrator.
 func NewThinkDeepOrchestrator(bus *events.Bus, cfg *config.Config, opts ...ThinkDeepOption) *ThinkDeepOrchestrator {
 	client := llm.NewClient(cfg)
@@ -127,6 +138,9 @@ type ThinkDeepResult struct {
 	// FinalReport is the fully optimized final output
 	FinalReport string
 
+	// SubInsights contains all structured insights captured during diffusion
+	SubInsights []think_deep.SubInsight
+
 	// Cost tracks total token usage
 	Cost session.CostBreakdown
 
@@ -159,6 +173,11 @@ func (o *ThinkDeepOrchestrator) Research(ctx context.Context, query string) (*Th
 		return nil, fmt.Errorf("generate research brief: %w", err)
 	}
 	totalCost.Add(briefCost)
+
+	// Apply injection context to enhance brief for expansion workflows
+	if o.injectionContext != nil {
+		researchBrief = o.enhanceBriefForExpansion(researchBrief)
+	}
 
 	o.emitPhaseProgress("brief", "Research brief generated")
 
@@ -234,6 +253,7 @@ func (o *ThinkDeepOrchestrator) Research(ctx context.Context, query string) (*Th
 		Notes:         supervisorResult.Notes,
 		DraftReport:   supervisorResult.DraftReport,
 		FinalReport:   finalReport,
+		SubInsights:   supervisorResult.SubInsights,
 		Cost:          totalCost,
 		Duration:      time.Since(startTime),
 	}, nil
@@ -414,6 +434,59 @@ func (o *ThinkDeepOrchestrator) emitPhaseProgress(phase, message string) {
 			"message": message,
 		},
 	})
+}
+
+// enhanceBriefForExpansion modifies the research brief to focus on expansion.
+// It adds context about existing research to guide sub-researchers toward new insights.
+func (o *ThinkDeepOrchestrator) enhanceBriefForExpansion(brief string) string {
+	if o.injectionContext == nil {
+		return brief
+	}
+
+	var enhanced strings.Builder
+	enhanced.WriteString(brief)
+	enhanced.WriteString("\n\n## Expansion Context\n\n")
+
+	if o.injectionContext.ExpansionTopic != "" {
+		enhanced.WriteString(fmt.Sprintf("This is a follow-up research expanding on: %s\n\n", o.injectionContext.ExpansionTopic))
+	}
+
+	if len(o.injectionContext.PreviousFindings) > 0 {
+		enhanced.WriteString("### Known Findings (do not re-research these):\n")
+		limit := len(o.injectionContext.PreviousFindings)
+		if limit > 10 {
+			limit = 10
+		}
+		for _, finding := range o.injectionContext.PreviousFindings[:limit] {
+			enhanced.WriteString(fmt.Sprintf("- %s\n", finding))
+		}
+		enhanced.WriteString("\n")
+	}
+
+	if len(o.injectionContext.KnownGaps) > 0 {
+		enhanced.WriteString("### Known Gaps (prioritize these):\n")
+		for _, gap := range o.injectionContext.KnownGaps {
+			enhanced.WriteString(fmt.Sprintf("- %s\n", gap))
+		}
+		enhanced.WriteString("\n")
+	}
+
+	if len(o.injectionContext.VisitedURLs) > 0 {
+		enhanced.WriteString(fmt.Sprintf("### Previously Visited Sources (%d URLs - avoid revisiting):\n", len(o.injectionContext.VisitedURLs)))
+		limit := len(o.injectionContext.VisitedURLs)
+		if limit > 5 {
+			limit = 5
+		}
+		for _, url := range o.injectionContext.VisitedURLs[:limit] {
+			enhanced.WriteString(fmt.Sprintf("- %s\n", url))
+		}
+		if len(o.injectionContext.VisitedURLs) > 5 {
+			enhanced.WriteString(fmt.Sprintf("- ... and %d more\n", len(o.injectionContext.VisitedURLs)-5))
+		}
+		enhanced.WriteString("\n")
+	}
+
+	return enhanced.String()
 }
 
 // deduplicateFindings removes notes with entirely redundant URLs.

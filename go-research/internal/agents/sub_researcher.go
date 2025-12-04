@@ -75,6 +75,9 @@ type SubResearcherResult struct {
 	// VisitedURLs contains all URLs visited during this research session
 	VisitedURLs []string
 
+	// Insights contains structured insights extracted from search results
+	Insights []think_deep.SubInsight
+
 	// Cost tracks token usage for this sub-researcher run
 	Cost session.CostBreakdown
 }
@@ -192,6 +195,9 @@ func (r *SubResearcherAgent) researchWithIteration(ctx context.Context, topic st
 	// Count unique sources and extract visited URLs
 	sourceCount, visitedURLs := countUniqueSourcesAndURLs(state.RawNotes)
 
+	// Extract structured insights from search results
+	insights := extractInsightsFromSearchResults(topic, state.RawNotes, researcherNum, diffusionIteration)
+
 	r.emitProgress(researcherNum, diffusionIteration, "complete", sourceCount, topic)
 
 	return &SubResearcherResult{
@@ -199,6 +205,7 @@ func (r *SubResearcherAgent) researchWithIteration(ctx context.Context, topic st
 		RawNotes:           state.RawNotes,
 		SourcesFound:       sourceCount,
 		VisitedURLs:        visitedURLs,
+		Insights:           insights,
 		Cost:               totalCost,
 	}, nil
 }
@@ -298,4 +305,100 @@ func truncateForLog(s string, maxLen int) string {
 		return s
 	}
 	return s[:maxLen] + "..."
+}
+
+// extractInsightsFromSearchResults extracts structured insights from search results.
+// It parses the raw search results and creates SubInsight structures for each
+// distinct finding with source attribution.
+func extractInsightsFromSearchResults(topic string, rawNotes []string, researcherNum int, iteration int) []think_deep.SubInsight {
+	var insights []think_deep.SubInsight
+	insightNum := 0
+
+	// URL extraction regex
+	urlRegex := regexp.MustCompile(`URL:\s*(https?://[^\s]+)`)
+	// Title extraction regex (looks for Title: or ## patterns)
+	titleRegex := regexp.MustCompile(`(?:Title:|##)\s*(.+?)(?:\n|$)`)
+	// Snippet/content extraction regex
+	snippetRegex := regexp.MustCompile(`(?:Snippet:|Content:)\s*(.+?)(?:\n\n|$)`)
+
+	for _, note := range rawNotes {
+		// Extract URL from this note
+		urlMatches := urlRegex.FindStringSubmatch(note)
+		sourceURL := ""
+		if len(urlMatches) > 1 {
+			sourceURL = strings.TrimSpace(urlMatches[1])
+		}
+
+		// Extract title
+		titleMatches := titleRegex.FindStringSubmatch(note)
+		title := ""
+		if len(titleMatches) > 1 {
+			title = strings.TrimSpace(titleMatches[1])
+		}
+
+		// Extract snippet/content for the finding
+		snippetMatches := snippetRegex.FindStringSubmatch(note)
+		finding := ""
+		if len(snippetMatches) > 1 {
+			finding = strings.TrimSpace(snippetMatches[1])
+		}
+
+		// If we couldn't extract structured content, use truncated raw note
+		if finding == "" && len(note) > 0 {
+			finding = truncateForLog(note, 500)
+		}
+
+		// Only create insight if we have meaningful content
+		if finding == "" {
+			continue
+		}
+
+		insightNum++
+		insight := think_deep.SubInsight{
+			ID:            fmt.Sprintf("insight-%03d", insightNum),
+			Topic:         topic,
+			Title:         title,
+			Finding:       finding,
+			Implication:   "", // Will be filled by synthesis later
+			SourceURL:     sourceURL,
+			SourceContent: truncateForLog(note, 1000),
+			Confidence:    calculateConfidence(sourceURL, finding),
+			Iteration:     iteration,
+			ResearcherNum: researcherNum,
+			Timestamp:     time.Now(),
+		}
+
+		insights = append(insights, insight)
+	}
+
+	return insights
+}
+
+// calculateConfidence estimates confidence score based on source quality indicators.
+func calculateConfidence(sourceURL, finding string) float64 {
+	confidence := 0.5 // Base confidence
+
+	// Higher confidence for well-known domains
+	trustedDomains := []string{
+		"wikipedia.org", "github.com", "arxiv.org", "nature.com",
+		"science.org", "ieee.org", "acm.org", "gov", "edu",
+	}
+	for _, domain := range trustedDomains {
+		if strings.Contains(sourceURL, domain) {
+			confidence += 0.2
+			break
+		}
+	}
+
+	// Higher confidence for longer, more detailed findings
+	if len(finding) > 200 {
+		confidence += 0.1
+	}
+
+	// Cap at 1.0
+	if confidence > 1.0 {
+		confidence = 1.0
+	}
+
+	return confidence
 }

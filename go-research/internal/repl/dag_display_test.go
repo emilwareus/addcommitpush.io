@@ -46,8 +46,8 @@ func TestDAGDisplay_Render_ThreePerspectives(t *testing.T) {
 	if len(output) == 0 {
 		t.Error("expected non-empty output")
 	}
-	if !bytes.Contains(buf.Bytes(), []byte("STORM RESEARCH PLAN")) {
-		t.Error("expected header to contain 'STORM RESEARCH PLAN'")
+	if !bytes.Contains(buf.Bytes(), []byte("STORM Research")) {
+		t.Error("expected header to contain 'STORM Research'")
 	}
 	if !bytes.Contains(buf.Bytes(), []byte("Conv 1")) {
 		t.Error("expected output to contain 'Conv 1'")
@@ -61,8 +61,8 @@ func TestDAGDisplay_Render_ThreePerspectives(t *testing.T) {
 	if !bytes.Contains(buf.Bytes(), []byte("Academic Researcher")) {
 		t.Error("expected output to contain 'Academic Researcher'")
 	}
-	if !bytes.Contains(buf.Bytes(), []byte("PERSPECTIVES")) {
-		t.Error("expected output to contain 'PERSPECTIVES'")
+	if !bytes.Contains(buf.Bytes(), []byte("Perspectives:")) {
+		t.Error("expected output to contain 'Perspectives:'")
 	}
 	// Check for STORM phases
 	if !bytes.Contains(buf.Bytes(), []byte("1. DISCOVER")) {

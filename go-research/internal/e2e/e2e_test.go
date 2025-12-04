@@ -184,13 +184,13 @@ func TestRouterNaturalLanguageGoesToStormWithoutSession(t *testing.T) {
 	ctx := &repl.Context{Store: store, Bus: bus, Config: cfg, Renderer: repl.NewRenderer(&bytes.Buffer{})}
 	router := repl.NewRouter(ctx, handlers.RegisterAll())
 
-	// Without a session, natural language should go to storm
+	// Without a session, natural language should go to think_deep (default research)
 	handler, args, err := router.Route("What is the ReAct pattern?")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
 	if handler == nil {
-		t.Error("Expected storm handler for natural language without session")
+		t.Error("Expected think_deep handler for natural language without session")
 	}
 	if len(args) != 1 || args[0] != "What is the ReAct pattern?" {
 		t.Errorf("Expected full text as single arg, got: %v", args)

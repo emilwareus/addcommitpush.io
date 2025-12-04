@@ -28,6 +28,7 @@ func RegisterAll() map[string]repl.Handler {
 
 	add("fast", &FastHandler{}, "/fast <query>", "Quick single-worker research", repl.CommandCategoryAgents)
 	add("expand", &ExpandHandler{}, "/expand <text>", "Expand on current research", repl.CommandCategoryWorkflow)
+	add("question", &QuestionHandler{}, "/question <query>", "Ask about existing research", repl.CommandCategoryWorkflow)
 	add("sessions", &SessionsHandler{}, "/sessions", "List all sessions", repl.CommandCategorySessions)
 	add("load", &LoadHandler{}, "/load <id>", "Load a previous session", repl.CommandCategorySessions)
 	add("new", &NewHandler{}, "/new", "Clear session and start fresh", repl.CommandCategorySessions)

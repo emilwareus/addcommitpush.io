@@ -11,6 +11,7 @@ import (
 	"github.com/chzyer/readline"
 	"go-research/internal/config"
 	"go-research/internal/events"
+	"go-research/internal/llm"
 	"go-research/internal/obsidian"
 	"go-research/internal/session"
 )
@@ -58,6 +59,12 @@ func New(store *session.Store, bus *events.Bus, cfg *config.Config, handlers map
 		Config:      cfg,
 		Obsidian:    obsidian.NewWriter(cfg.VaultPath),
 		CommandDocs: docs,
+	}
+
+	// Initialize classifier if configured
+	if cfg.ClassifierModel != "" {
+		client := llm.NewClient(cfg)
+		r.ctx.Classifier = NewQueryClassifier(client, cfg.ClassifierModel)
 	}
 
 	r.router = NewRouter(r.ctx, handlers)

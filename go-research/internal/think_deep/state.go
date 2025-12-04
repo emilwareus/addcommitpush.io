@@ -8,9 +8,47 @@ package think_deep
 import (
 	"regexp"
 	"strings"
+	"time"
 
 	"go-research/internal/llm"
 )
+
+// SubInsight represents a single research finding extracted from search results.
+// Granularity: one insight per search result with extracted findings.
+type SubInsight struct {
+	// ID is a unique identifier (e.g., "insight-001")
+	ID string
+
+	// Topic is the research topic from supervisor delegation
+	Topic string
+
+	// Title is a short title summarizing the insight
+	Title string
+
+	// Finding is the factual finding extracted
+	Finding string
+
+	// Implication is what this means for the research question
+	Implication string
+
+	// SourceURL is the URL this insight was extracted from
+	SourceURL string
+
+	// SourceContent is the relevant excerpt from source (truncated)
+	SourceContent string
+
+	// Confidence is a 0-1 confidence score
+	Confidence float64
+
+	// Iteration is the diffusion iteration when captured
+	Iteration int
+
+	// ResearcherNum is which sub-researcher found this
+	ResearcherNum int
+
+	// Timestamp is when the insight was captured
+	Timestamp time.Time
+}
 
 // SupervisorState manages the lead researcher's coordination of the diffusion
 // process. The supervisor orchestrates sub-researchers and maintains the
@@ -42,6 +80,9 @@ type SupervisorState struct {
 	// VisitedURLs tracks all URLs that have been searched/fetched to enable deduplication.
 	// This prevents redundant fetching of the same source across sub-researchers.
 	VisitedURLs map[string]bool
+
+	// SubInsights contains all insights captured during diffusion from sub-researchers
+	SubInsights []SubInsight
 }
 
 // ResearcherState manages individual sub-researcher state during focused
@@ -80,6 +121,7 @@ func NewSupervisorState(researchBrief string) *SupervisorState {
 		DraftReport:   "",
 		Iterations:    0,
 		VisitedURLs:   make(map[string]bool),
+		SubInsights:   make([]SubInsight, 0),
 	}
 }
 
@@ -153,6 +195,21 @@ func (s *SupervisorState) GetVisitedURLs() []string {
 		urls = append(urls, url)
 	}
 	return urls
+}
+
+// AddSubInsight adds a sub-insight captured from sub-researcher results.
+func (s *SupervisorState) AddSubInsight(insight SubInsight) {
+	s.SubInsights = append(s.SubInsights, insight)
+}
+
+// AddSubInsights adds multiple sub-insights from sub-researcher results.
+func (s *SupervisorState) AddSubInsights(insights []SubInsight) {
+	s.SubInsights = append(s.SubInsights, insights...)
+}
+
+// GetSubInsights returns all captured sub-insights.
+func (s *SupervisorState) GetSubInsights() []SubInsight {
+	return s.SubInsights
 }
 
 // AddRawNote adds a raw search result to the researcher state.
