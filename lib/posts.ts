@@ -35,6 +35,16 @@ const posts: Post[] = [
     readTime: '10 min read',
   },
   {
+    title: 'Diffusion Deep Research: How ThinkDepth.ai Beat OpenAI',
+    slug: 'diffusion-deep-research',
+    description:
+      'How test-time diffusion and self-balancing agents achieve state-of-the-art research report generation.',
+    publishedAt: '2025-12-05',
+    tags: ['ai', 'agents', 'research', 'deep-research'],
+    cover: '/posts/diffusion-deep-research/cover-optimized.webp',
+    readTime: '15 min read',
+  },
+  {
     title: 'Advanced Context Engineering with Claude Code',
     slug: 'context-engineering-claude-code',
     description:
