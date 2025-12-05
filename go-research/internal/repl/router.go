@@ -145,6 +145,8 @@ func (r *Router) routeCommand(parsed ParsedInput) (Handler, []string, error) {
 		cmd = "new"
 	case "w", "workers":
 		cmd = "workers"
+	case "ctx", "context":
+		cmd = "context"
 	case "r", "rerun":
 		cmd = "rerun"
 	case "rc", "recompile":

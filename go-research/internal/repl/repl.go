@@ -9,12 +9,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/chzyer/readline"
 	"go-research/internal/config"
 	"go-research/internal/events"
 	"go-research/internal/llm"
 	"go-research/internal/obsidian"
 	"go-research/internal/session"
+
+	"github.com/chzyer/readline"
 )
 
 // REPL is the interactive research shell
@@ -83,18 +84,6 @@ func (r *REPL) Run(ctx context.Context) error {
 	defer r.readline.Close()
 
 	r.renderer.Welcome(r.commandDocs)
-
-	// Try to restore last session
-	if sess, err := r.store.LoadLast(); err == nil && sess != nil {
-		r.ctx.Session = sess
-		r.renderer.SessionRestored(
-			sess.ID,
-			sess.Query,
-			len(sess.Workers),
-			len(sess.Sources),
-			sess.Cost.TotalCost,
-		)
-	}
 
 	// Subscribe to events for rendering
 	eventCh := r.bus.Subscribe(
@@ -184,6 +173,10 @@ func (r *REPL) Run(ctx context.Context) error {
 			r.ctx.Cancel = nil
 			r.ctx.CancelReason = ""
 			r.mu.Unlock()
+
+			// Capture context error BEFORE calling cancel(), otherwise runCtx.Err()
+			// will always return context.Canceled after cancel() is called
+			contextErr := runCtx.Err()
 			cancel() // Clean up context
 
 			if execErr != nil {
@@ -193,11 +186,11 @@ func (r *REPL) Run(ctx context.Context) error {
 					return nil
 				}
 				// Check for cancellation
-				if execErr == context.Canceled || runCtx.Err() == context.Canceled {
+				if execErr == context.Canceled || contextErr == context.Canceled {
 					// Determine the cancellation reason
 					reason := cancelReason
 					if reason == "" {
-						if runCtx.Err() == context.DeadlineExceeded {
+						if contextErr == context.DeadlineExceeded {
 							reason = events.CancelReasonTimeout
 						} else {
 							reason = events.CancelReasonUnknown
