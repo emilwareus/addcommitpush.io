@@ -59,6 +59,9 @@ func (t *XLSXReadTool) Execute(ctx context.Context, args map[string]interface{})
 	}
 
 	var b strings.Builder
+	// Header with source traceability information
+	b.WriteString(fmt.Sprintf("Read document: %s\n", path))
+	b.WriteString(fmt.Sprintf("Document type: Excel Workbook (XLSX)\n"))
 	b.WriteString(fmt.Sprintf("Workbook: %s\n", filepath.Base(path)))
 	b.WriteString(fmt.Sprintf("Total sheets: %d\n\n", len(sheets)))
 
@@ -145,3 +148,4 @@ func formatXLSXRow(row []string, maxCols int) string {
 
 	return line
 }
+

@@ -73,6 +73,25 @@ const (
 	EventDiffusionComplete       // Diffusion phase complete
 	EventFinalReportStarted      // Full optimization phase started
 	EventFinalReportComplete     // Final report generated
+
+	// Cancellation event
+	EventResearchCancelled // Research was cancelled with a reason
+)
+
+// CancelReason indicates why research was cancelled
+type CancelReason string
+
+const (
+	// CancelReasonUserInterrupt means the user pressed Ctrl+C
+	CancelReasonUserInterrupt CancelReason = "user_interrupt"
+	// CancelReasonTimeout means the research exceeded the time limit
+	CancelReasonTimeout CancelReason = "timeout"
+	// CancelReasonParentCancelled means the parent context was cancelled
+	CancelReasonParentCancelled CancelReason = "parent_cancelled"
+	// CancelReasonShutdown means the system is shutting down
+	CancelReasonShutdown CancelReason = "shutdown"
+	// CancelReasonUnknown means the cancellation reason could not be determined
+	CancelReasonUnknown CancelReason = "unknown"
 )
 
 // ResearchStartedData contains data for research start events
@@ -228,4 +247,13 @@ type DraftRefinedData struct {
 	SectionsUpdated int     // Number of sections modified
 	NewSources      int     // New sources incorporated
 	Progress        float64 // Estimated progress (0.0-1.0)
+}
+
+// ResearchCancelledData captures why research was cancelled
+type ResearchCancelledData struct {
+	SessionID string       // Session that was cancelled
+	Query     string       // Original query
+	Reason    CancelReason // Why it was cancelled
+	Phase     string       // Phase when cancelled (brief, draft, diffuse, finalize)
+	Message   string       // Human-readable cancellation message
 }

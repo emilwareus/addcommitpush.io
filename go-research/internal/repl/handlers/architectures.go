@@ -86,6 +86,10 @@ func (h *ArchitectureCommandHandler) Execute(ctx *repl.Context, args []string) e
 	viz.Stop()
 
 	if err != nil {
+		// Check if it was a timeout and set the cancel reason appropriately
+		if runCtx.Err() == context.DeadlineExceeded {
+			ctx.CancelReason = events.CancelReasonTimeout
+		}
 		sess.Status = session.StatusFailed
 		return fmt.Errorf("%s research failed: %w", h.definition.Name, err)
 	}

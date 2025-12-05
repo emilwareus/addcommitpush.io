@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/chzyer/readline"
 	"go-research/internal/config"
@@ -124,8 +125,8 @@ func (r *REPL) Run(ctx context.Context) error {
 		for range sigCh {
 			r.mu.Lock()
 			if r.running && r.ctx.Cancel != nil {
-				r.renderer.Info("\n⚠ Cancelling research...")
-				r.ctx.Cancel()
+				r.renderer.Info("\n⚠ Cancelling research (user interrupt)...")
+				r.ctx.CancelWithReason(events.CancelReasonUserInterrupt)
 			}
 			r.mu.Unlock()
 		}
@@ -144,8 +145,8 @@ func (r *REPL) Run(ctx context.Context) error {
 					// Ctrl+C pressed at prompt - check if running
 					r.mu.Lock()
 					if r.running && r.ctx.Cancel != nil {
-						r.renderer.Info("\n⚠ Cancelling research...")
-						r.ctx.Cancel()
+						r.renderer.Info("\n⚠ Cancelling research (user interrupt)...")
+						r.ctx.CancelWithReason(events.CancelReasonUserInterrupt)
 					}
 					r.mu.Unlock()
 					continue
@@ -169,6 +170,7 @@ func (r *REPL) Run(ctx context.Context) error {
 			runCtx, cancel := context.WithCancel(ctx)
 			r.ctx.RunContext = runCtx
 			r.ctx.Cancel = cancel
+			r.ctx.CancelReason = "" // Reset cancel reason for new execution
 
 			r.mu.Lock()
 			r.running = true
@@ -178,7 +180,9 @@ func (r *REPL) Run(ctx context.Context) error {
 
 			r.mu.Lock()
 			r.running = false
+			cancelReason := r.ctx.CancelReason
 			r.ctx.Cancel = nil
+			r.ctx.CancelReason = ""
 			r.mu.Unlock()
 			cancel() // Clean up context
 
@@ -190,12 +194,63 @@ func (r *REPL) Run(ctx context.Context) error {
 				}
 				// Check for cancellation
 				if execErr == context.Canceled || runCtx.Err() == context.Canceled {
-					r.renderer.Info("Research cancelled.")
+					// Determine the cancellation reason
+					reason := cancelReason
+					if reason == "" {
+						if runCtx.Err() == context.DeadlineExceeded {
+							reason = events.CancelReasonTimeout
+						} else {
+							reason = events.CancelReasonUnknown
+						}
+					}
+
+					// Emit cancellation event with reason
+					r.emitCancellation(reason)
+
+					// Log the cancellation with reason
+					r.renderer.Info(fmt.Sprintf("Research cancelled: %s", r.formatCancelReason(reason)))
 					continue
 				}
 				r.renderer.Error(execErr)
 			}
 		}
+	}
+}
+
+// emitCancellation publishes a cancellation event with the given reason.
+func (r *REPL) emitCancellation(reason events.CancelReason) {
+	var sessionID, query string
+	if r.ctx.Session != nil {
+		sessionID = r.ctx.Session.ID
+		query = r.ctx.Session.Query
+	}
+
+	r.bus.Publish(events.Event{
+		Type:      events.EventResearchCancelled,
+		Timestamp: time.Now(),
+		Data: events.ResearchCancelledData{
+			SessionID: sessionID,
+			Query:     query,
+			Reason:    reason,
+			Phase:     "unknown", // Could be enhanced to track current phase
+			Message:   r.formatCancelReason(reason),
+		},
+	})
+}
+
+// formatCancelReason returns a human-readable description of the cancellation reason.
+func (r *REPL) formatCancelReason(reason events.CancelReason) string {
+	switch reason {
+	case events.CancelReasonUserInterrupt:
+		return "user pressed Ctrl+C"
+	case events.CancelReasonTimeout:
+		return "operation timed out"
+	case events.CancelReasonParentCancelled:
+		return "parent operation was cancelled"
+	case events.CancelReasonShutdown:
+		return "system is shutting down"
+	default:
+		return "unknown reason (this is a bug - please report)"
 	}
 }
 

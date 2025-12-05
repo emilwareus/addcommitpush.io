@@ -106,6 +106,10 @@ func (h *ExpandHandler) runFast(ctx *repl.Context, query string, sess *session.S
 	sess.Status = session.StatusRunning
 	workerCtx, err := reactAgent.Research(runCtx, query)
 	if err != nil {
+		// Check if it was a timeout and set the cancel reason appropriately
+		if runCtx.Err() == context.DeadlineExceeded {
+			ctx.CancelReason = events.CancelReasonTimeout
+		}
 		sess.Status = session.StatusFailed
 		return fmt.Errorf("research failed: %w", err)
 	}
@@ -144,6 +148,10 @@ func (h *ExpandHandler) runDeep(ctx *repl.Context, query string, sess *session.S
 	viz.Stop()
 
 	if err != nil {
+		// Check if it was a timeout and set the cancel reason appropriately
+		if runCtx.Err() == context.DeadlineExceeded {
+			ctx.CancelReason = events.CancelReasonTimeout
+		}
 		sess.Status = session.StatusFailed
 		return fmt.Errorf("research failed: %w", err)
 	}
@@ -193,6 +201,10 @@ func (h *ExpandHandler) runThinkDeep(ctx *repl.Context, query string, sess *sess
 	viz.Stop()
 
 	if err != nil {
+		// Check if it was a timeout and set the cancel reason appropriately
+		if runCtx.Err() == context.DeadlineExceeded {
+			ctx.CancelReason = events.CancelReasonTimeout
+		}
 		sess.Status = session.StatusFailed
 		return fmt.Errorf("research failed: %w", err)
 	}

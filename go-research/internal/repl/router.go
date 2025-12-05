@@ -17,16 +17,43 @@ type Handler interface {
 
 // Context provides shared state to handlers
 type Context struct {
-	Session     *session.Session
-	Store       *session.Store
-	Bus         *events.Bus
-	Renderer    *Renderer
-	Config      *config.Config
-	Obsidian    *obsidian.Writer
-	CommandDocs []CommandDoc
-	RunContext  context.Context    // Cancelable context for current operation
-	Cancel      context.CancelFunc // Cancel function to abort current operation
-	Classifier  *QueryClassifier   // LLM-based query classifier for intent routing
+	Session      *session.Session
+	Store        *session.Store
+	Bus          *events.Bus
+	Renderer     *Renderer
+	Config       *config.Config
+	Obsidian     *obsidian.Writer
+	CommandDocs  []CommandDoc
+	RunContext   context.Context      // Cancelable context for current operation
+	Cancel       context.CancelFunc   // Cancel function to abort current operation
+	CancelReason events.CancelReason  // Reason for cancellation (set before calling Cancel)
+	Classifier   *QueryClassifier     // LLM-based query classifier for intent routing
+}
+
+// CancelWithReason cancels the current operation with a specific reason.
+// This must be called instead of Cancel() directly to track cancellation reasons.
+func (c *Context) CancelWithReason(reason events.CancelReason) {
+	if c.Cancel == nil {
+		return
+	}
+	c.CancelReason = reason
+	c.Cancel()
+}
+
+// GetCancelReason returns the reason for cancellation, attempting to infer it
+// if not explicitly set.
+func (c *Context) GetCancelReason() events.CancelReason {
+	if c.CancelReason != "" {
+		return c.CancelReason
+	}
+	if c.RunContext == nil {
+		return events.CancelReasonUnknown
+	}
+	// Try to infer from context error
+	if c.RunContext.Err() == context.DeadlineExceeded {
+		return events.CancelReasonTimeout
+	}
+	return events.CancelReasonUnknown
 }
 
 // Router routes input to appropriate handlers
