@@ -8,9 +8,118 @@ package think_deep
 import (
 	"regexp"
 	"strings"
+	"time"
 
 	"go-research/internal/llm"
 )
+
+// SourceType indicates the type of source that provided the insight
+type SourceType string
+
+const (
+	SourceTypeWeb      SourceType = "web"
+	SourceTypeDocument SourceType = "document"
+	SourceTypeAPI      SourceType = "api"
+	SourceTypeFile     SourceType = "file"
+)
+
+// SourceReference contains detailed information about a source for traceability
+type SourceReference struct {
+	// URL is the source URL (for web sources)
+	URL string `json:"url,omitempty"`
+
+	// FilePath is the local file path (for document sources)
+	FilePath string `json:"file_path,omitempty"`
+
+	// Type indicates what kind of source this is
+	Type SourceType `json:"type"`
+
+	// Title is the source title or filename
+	Title string `json:"title,omitempty"`
+
+	// RawContent is the full raw content fetched from the source
+	RawContent string `json:"raw_content,omitempty"`
+
+	// RelevantExcerpt is the specific excerpt relevant to the insight
+	RelevantExcerpt string `json:"relevant_excerpt,omitempty"`
+
+	// FetchedAt is when the source was fetched
+	FetchedAt time.Time `json:"fetched_at"`
+
+	// ContentHash is a hash of the raw content for deduplication
+	ContentHash string `json:"content_hash,omitempty"`
+}
+
+// DataPoint represents a specific piece of data extracted from a source
+type DataPoint struct {
+	// Label describes what this data point represents
+	Label string `json:"label"`
+
+	// Value is the actual data value
+	Value string `json:"value"`
+
+	// Context provides surrounding context for the data point
+	Context string `json:"context,omitempty"`
+
+	// SourceRef links to the source this was extracted from
+	SourceRef string `json:"source_ref,omitempty"`
+}
+
+// SubInsight represents a single research finding extracted from search results.
+// Granularity: one insight per search result with extracted findings.
+// Enhanced to support full traceability and rich data capture.
+type SubInsight struct {
+	// ID is a unique identifier (e.g., "insight-001")
+	ID string `json:"id"`
+
+	// Topic is the research topic from supervisor delegation
+	Topic string `json:"topic"`
+
+	// Title is a short title summarizing the insight
+	Title string `json:"title"`
+
+	// Finding is the factual finding extracted
+	Finding string `json:"finding"`
+
+	// Implication is what this means for the research question
+	Implication string `json:"implication,omitempty"`
+
+	// SourceURL is the URL this insight was extracted from (primary source)
+	SourceURL string `json:"source_url,omitempty"`
+
+	// SourceContent is the relevant excerpt from source (truncated)
+	SourceContent string `json:"source_content,omitempty"`
+
+	// Sources contains all source references with full traceability
+	Sources []SourceReference `json:"sources,omitempty"`
+
+	// DataPoints contains specific data extracted supporting the finding
+	DataPoints []DataPoint `json:"data_points,omitempty"`
+
+	// AnalysisChain describes how this insight was derived
+	AnalysisChain []string `json:"analysis_chain,omitempty"`
+
+	// RelatedInsightIDs links to other insights that corroborate this finding
+	RelatedInsightIDs []string `json:"related_insight_ids,omitempty"`
+
+	// Confidence is a 0-1 confidence score
+	Confidence float64 `json:"confidence"`
+
+	// Iteration is the diffusion iteration when captured
+	Iteration int `json:"iteration"`
+
+	// ResearcherNum is which sub-researcher found this
+	ResearcherNum int `json:"researcher_num"`
+
+	// Timestamp is when the insight was captured
+	Timestamp time.Time `json:"timestamp"`
+
+	// ToolUsed indicates which tool produced this insight (search, fetch, read_document, etc.)
+	ToolUsed string `json:"tool_used,omitempty"`
+
+	// QueryUsed is the search query or tool arguments that produced this insight
+	QueryUsed string `json:"query_used,omitempty"`
+}
 
 // SupervisorState manages the lead researcher's coordination of the diffusion
 // process. The supervisor orchestrates sub-researchers and maintains the
@@ -42,6 +151,9 @@ type SupervisorState struct {
 	// VisitedURLs tracks all URLs that have been searched/fetched to enable deduplication.
 	// This prevents redundant fetching of the same source across sub-researchers.
 	VisitedURLs map[string]bool
+
+	// SubInsights contains all insights captured during diffusion from sub-researchers
+	SubInsights []SubInsight
 }
 
 // ResearcherState manages individual sub-researcher state during focused
@@ -80,6 +192,7 @@ func NewSupervisorState(researchBrief string) *SupervisorState {
 		DraftReport:   "",
 		Iterations:    0,
 		VisitedURLs:   make(map[string]bool),
+		SubInsights:   make([]SubInsight, 0),
 	}
 }
 
@@ -153,6 +266,21 @@ func (s *SupervisorState) GetVisitedURLs() []string {
 		urls = append(urls, url)
 	}
 	return urls
+}
+
+// AddSubInsight adds a sub-insight captured from sub-researcher results.
+func (s *SupervisorState) AddSubInsight(insight SubInsight) {
+	s.SubInsights = append(s.SubInsights, insight)
+}
+
+// AddSubInsights adds multiple sub-insights from sub-researcher results.
+func (s *SupervisorState) AddSubInsights(insights []SubInsight) {
+	s.SubInsights = append(s.SubInsights, insights...)
+}
+
+// GetSubInsights returns all captured sub-insights.
+func (s *SupervisorState) GetSubInsights() []SubInsight {
+	return s.SubInsights
 }
 
 // AddRawNote adds a raw search result to the researcher state.

@@ -32,23 +32,24 @@ func (d *DAGDisplay) Render(data events.PlanCreatedData) {
 
 func (d *DAGDisplay) renderHeader(topic string) {
 	headerColor := color.New(color.FgHiCyan, color.Bold)
-	boxColor := color.New(color.FgCyan)
 	topicColor := color.New(color.FgWhite)
+	dimColor := color.New(color.Faint)
 
 	fmt.Fprintln(d.w)
-	boxColor.Fprintln(d.w, "╭──────────────────────────────────────────────────────────────────────────────╮")
-	headerColor.Fprintf(d.w, "│%s│\n", centerText("🔬 STORM RESEARCH PLAN", 78))
-	boxColor.Fprintln(d.w, "│                                                                              │")
+	headerColor.Fprintln(d.w, "🔬 STORM Research")
+	dimColor.Fprintln(d.w, strings.Repeat("─", 40))
 
-	// Truncate topic to fit
-	maxTopicLen := 68
-	displayTopic := topic
+	// Display topic (truncate if needed)
+	maxTopicLen := 70
+	displayTopic := strings.TrimSpace(topic)
+	if displayTopic == "" {
+		displayTopic = "(no topic)"
+	}
 	if len(displayTopic) > maxTopicLen {
 		displayTopic = displayTopic[:maxTopicLen-3] + "..."
 	}
-	topicLine := fmt.Sprintf("  Topic: %s", displayTopic)
-	topicColor.Fprintf(d.w, "│%-78s│\n", topicLine)
-	boxColor.Fprintln(d.w, "╰──────────────────────────────────────────────────────────────────────────────╯")
+	dimColor.Fprint(d.w, "Topic: ")
+	topicColor.Fprintln(d.w, displayTopic)
 	fmt.Fprintln(d.w)
 }
 
@@ -324,46 +325,46 @@ func (d *DAGDisplay) renderPerspectives(perspectives []events.PerspectiveData) {
 		return
 	}
 
-	boxColor := color.New(color.FgCyan)
 	headerColor := color.New(color.FgHiCyan, color.Bold)
 	nameColor := color.New(color.FgHiYellow)
-	focusColor := color.New(color.FgWhite)
+	focusColor := color.New(color.FgWhite, color.Faint)
 	dimColor := color.New(color.Faint)
 
-	boxColor.Fprintln(d.w, "╭──────────────────────────────────────────────────────────────────────────────╮")
-	headerColor.Fprintf(d.w, "│  %-76s│\n", "PERSPECTIVES (WikiWriter↔TopicExpert conversations):")
-	boxColor.Fprintln(d.w, "│                                                                              │")
+	// Simple header
+	headerColor.Fprintln(d.w, "  Perspectives:")
+	fmt.Fprintln(d.w)
 
 	for i, p := range perspectives {
-		// Truncate name and focus to fit
+		// Truncate name smartly (keep it readable)
 		name := p.Name
-		if len(name) > 20 {
-			name = name[:17] + "..."
+		maxNameLen := 28
+		if len(name) > maxNameLen {
+			name = name[:maxNameLen-3] + "..."
 		}
 
+		// Truncate focus to fit on line
 		focus := p.Focus
-		maxFocusLen := 48
+		maxFocusLen := 60
 		if len(focus) > maxFocusLen {
 			focus = focus[:maxFocusLen-3] + "..."
 		}
 
-		// Format: "  1. Name                 ─ Focus..."
-		numStr := fmt.Sprintf("%d.", i+1)
-		dimColor.Fprint(d.w, "│  ")
-		dimColor.Fprintf(d.w, "%-3s", numStr)
-		nameColor.Fprintf(d.w, "%-20s", name)
-		dimColor.Fprint(d.w, " ─ ")
-		focusColor.Fprintf(d.w, "%-50s", focus)
-		dimColor.Fprintln(d.w, "│")
+		// Format: "  1. Name"
+		//         "     Focus description..."
+		dimColor.Fprintf(d.w, "  %d. ", i+1)
+		nameColor.Fprintln(d.w, name)
+		fmt.Fprint(d.w, "     ")
+		focusColor.Fprintln(d.w, focus)
+		if i < len(perspectives)-1 {
+			fmt.Fprintln(d.w) // Space between perspectives
+		}
 	}
-
-	boxColor.Fprintln(d.w, "╰──────────────────────────────────────────────────────────────────────────────╯")
+	fmt.Fprintln(d.w)
 }
 
 func (d *DAGDisplay) renderFooter() {
 	dimColor := color.New(color.Faint)
-	fmt.Fprintln(d.w)
-	dimColor.Fprintln(d.w, centerText("Starting STORM conversations...", 80))
+	dimColor.Fprintln(d.w, strings.Repeat("─", 40))
 	fmt.Fprintln(d.w)
 }
 

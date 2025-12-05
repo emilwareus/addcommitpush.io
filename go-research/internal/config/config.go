@@ -30,7 +30,8 @@ type Config struct {
 	MaxWorkers    int
 
 	// Model
-	Model string
+	Model           string
+	ClassifierModel string // Fast model for query classification (e.g., claude-3-haiku)
 
 	// Verbose mode
 	Verbose bool
@@ -59,7 +60,8 @@ func Load() *Config {
 		MaxTokens:     50000,
 		MaxWorkers:    5,
 
-		Model: "alibaba/tongyi-deepresearch-30b-a3b",
+		Model:           "alibaba/tongyi-deepresearch-30b-a3b",
+		ClassifierModel: getEnvOrDefault("CLASSIFIER_MODEL", "anthropic/claude-3-haiku"),
 
 		Verbose: os.Getenv("RESEARCH_VERBOSE") == "true",
 	}

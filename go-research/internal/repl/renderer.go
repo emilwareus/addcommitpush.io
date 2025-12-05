@@ -188,7 +188,7 @@ func (r *Renderer) SessionRestored(sessionID string, query string, workerCount i
 // SessionCleared shows that the session was cleared
 func (r *Renderer) SessionCleared(oldSessionID string) {
 	green.Fprintf(r.w, "✓ Session cleared: %s\n", oldSessionID)
-	cyan.Fprintln(r.w, "  Ready for new research. Type a question or use /storm <query>")
+	cyan.Fprintln(r.w, "  Ready for new research. Type a question to start.")
 }
 
 func truncate(s string, n int) string {
@@ -462,4 +462,14 @@ type WorkerDisplay struct {
 	Objective   string
 	Status      string
 	SourceCount int
+}
+
+// Answer displays an answer from the QA handler
+func (r *Renderer) Answer(answer string) {
+	fmt.Fprintln(r.w)
+	bold.Fprintln(r.w, "Answer:")
+	fmt.Fprintln(r.w, strings.Repeat("─", 60))
+	fmt.Fprintln(r.w, answer)
+	fmt.Fprintln(r.w, strings.Repeat("─", 60))
+	fmt.Fprintln(r.w)
 }

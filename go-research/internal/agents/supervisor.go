@@ -79,6 +79,9 @@ type SupervisorResult struct {
 	// IterationsUsed is the number of diffusion iterations completed
 	IterationsUsed int
 
+	// SubInsights contains all structured insights captured during diffusion
+	SubInsights []think_deep.SubInsight
+
 	// Cost tracks token usage for the supervisor
 	Cost session.CostBreakdown
 }
@@ -195,6 +198,7 @@ func (s *SupervisorAgent) Coordinate(
 		RawNotes:       state.RawNotes,
 		DraftReport:    state.DraftReport,
 		IterationsUsed: state.Iterations,
+		SubInsights:    state.GetSubInsights(),
 		Cost:           totalCost,
 	}, nil
 }
@@ -294,6 +298,8 @@ func (s *SupervisorAgent) executeConductResearch(
 	}
 	// Track visited URLs for deduplication
 	state.AddVisitedURLs(result.VisitedURLs)
+	// Accumulate insights from sub-researcher
+	state.AddSubInsights(result.Insights)
 
 	// Track costs
 	totalCost.Add(result.Cost)
@@ -410,6 +416,8 @@ func (s *SupervisorAgent) executeParallelResearch(
 			}
 			// Track visited URLs for deduplication
 			state.AddVisitedURLs(res.subResult.VisitedURLs)
+			// Accumulate insights from sub-researcher
+			state.AddSubInsights(res.subResult.Insights)
 			totalCost.Add(res.subResult.Cost)
 		}
 

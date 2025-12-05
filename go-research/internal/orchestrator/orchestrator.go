@@ -125,6 +125,7 @@ func (o *Orchestrator) Research(ctx context.Context, query string) (*Result, err
 		Data: events.PlanCreatedData{
 			WorkerCount: len(tasks),
 			Complexity:  complexity,
+			Topic:       query,
 		},
 	})
 

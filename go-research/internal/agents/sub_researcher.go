@@ -75,6 +75,9 @@ type SubResearcherResult struct {
 	// VisitedURLs contains all URLs visited during this research session
 	VisitedURLs []string
 
+	// Insights contains structured insights extracted from search results
+	Insights []think_deep.SubInsight
+
 	// Cost tracks token usage for this sub-researcher run
 	Cost session.CostBreakdown
 }
@@ -168,7 +171,21 @@ func (r *SubResearcherAgent) researchWithIteration(ctx context.Context, topic st
 				result = fmt.Sprintf("Reflection recorded: %s", truncateForLog(reflection, 100))
 
 			default:
-				result = fmt.Sprintf("Unknown tool: %s", tc.Tool)
+				// Execute any other tool from the registry (read_document, analyze_csv, fetch, etc.)
+				r.emitProgress(researcherNum, diffusionIteration, fmt.Sprintf("using %s", tc.Tool), len(state.RawNotes), topic)
+				toolResult, toolErr := r.tools.Execute(ctx, tc.Tool, tc.Args)
+				if toolErr != nil {
+					if ctxErr := ctx.Err(); ctxErr != nil {
+						return nil, ctxErr
+					}
+					result = fmt.Sprintf("Tool error (%s): %v", tc.Tool, toolErr)
+				} else {
+					result = toolResult
+					// Add to raw notes if it's a data-gathering tool (not think)
+					if tc.Tool != "think" {
+						state.AddRawNote(toolResult)
+					}
+				}
 			}
 
 			// Add tool result to conversation
@@ -192,6 +209,9 @@ func (r *SubResearcherAgent) researchWithIteration(ctx context.Context, topic st
 	// Count unique sources and extract visited URLs
 	sourceCount, visitedURLs := countUniqueSourcesAndURLs(state.RawNotes)
 
+	// Extract structured insights from search results
+	insights := extractInsightsFromSearchResults(topic, state.RawNotes, researcherNum, diffusionIteration)
+
 	r.emitProgress(researcherNum, diffusionIteration, "complete", sourceCount, topic)
 
 	return &SubResearcherResult{
@@ -199,6 +219,7 @@ func (r *SubResearcherAgent) researchWithIteration(ctx context.Context, topic st
 		RawNotes:           state.RawNotes,
 		SourcesFound:       sourceCount,
 		VisitedURLs:        visitedURLs,
+		Insights:           insights,
 		Cost:               totalCost,
 	}, nil
 }
@@ -298,4 +319,315 @@ func truncateForLog(s string, maxLen int) string {
 		return s
 	}
 	return s[:maxLen] + "..."
+}
+
+// extractInsightsFromSearchResults extracts structured insights from search results.
+// It parses the raw search results and creates SubInsight structures for each
+// distinct finding with source attribution.
+// Enhanced to extract individual sources from search result blocks and capture
+// tool usage, query context, and full source references.
+func extractInsightsFromSearchResults(topic string, rawNotes []string, researcherNum int, iteration int) []think_deep.SubInsight {
+	var insights []think_deep.SubInsight
+	insightNum := 0
+
+	for _, note := range rawNotes {
+		// Try to split by SOURCE markers (search results typically have multiple sources)
+		sourceBlocks := splitIntoSourceBlocks(note)
+
+		if len(sourceBlocks) == 0 {
+			// No source blocks found, treat entire note as one insight
+			sourceBlocks = []sourceBlock{{content: note}}
+		}
+
+		for _, block := range sourceBlocks {
+			insightNum++
+			insight := createInsightFromBlock(block, topic, insightNum, researcherNum, iteration, note)
+			if insight != nil {
+				insights = append(insights, *insight)
+			}
+		}
+	}
+
+	return insights
+}
+
+// sourceBlock represents a parsed source from search results
+type sourceBlock struct {
+	url     string
+	title   string
+	summary string
+	content string
+}
+
+// splitIntoSourceBlocks parses search result text into individual source blocks.
+// Search results typically have format:
+// --- SOURCE N: Title ---
+// URL: https://...
+// SUMMARY: ...
+func splitIntoSourceBlocks(note string) []sourceBlock {
+	var blocks []sourceBlock
+
+	// Pattern to match source blocks: "--- SOURCE N: Title ---" or "SOURCE N:"
+	sourcePattern := regexp.MustCompile(`(?i)(?:---\s*)?SOURCE\s*\d+:?\s*([^-\n]*?)(?:\s*---)?`)
+	urlPattern := regexp.MustCompile(`URL:\s*(https?://[^\s\n]+)`)
+	summaryPattern := regexp.MustCompile(`(?i)SUMMARY:\s*(.+?)(?:\n\n|\n---|\z)`)
+	titlePattern := regexp.MustCompile(`(?:Title:|##)\s*(.+?)(?:\n|$)`)
+
+	// Split by SOURCE markers
+	parts := sourcePattern.Split(note, -1)
+	titles := sourcePattern.FindAllStringSubmatch(note, -1)
+
+	for i, part := range parts {
+		if strings.TrimSpace(part) == "" {
+			continue
+		}
+
+		block := sourceBlock{content: part}
+
+		// Extract title from the marker
+		if i > 0 && i-1 < len(titles) && len(titles[i-1]) > 1 {
+			block.title = strings.TrimSpace(titles[i-1][1])
+		}
+
+		// Extract URL
+		if urlMatch := urlPattern.FindStringSubmatch(part); len(urlMatch) > 1 {
+			block.url = strings.TrimSpace(urlMatch[1])
+		}
+
+		// Extract summary
+		if summaryMatch := summaryPattern.FindStringSubmatch(part); len(summaryMatch) > 1 {
+			block.summary = strings.TrimSpace(summaryMatch[1])
+		}
+
+		// If no title from marker, try to extract from content
+		if block.title == "" {
+			if titleMatch := titlePattern.FindStringSubmatch(part); len(titleMatch) > 1 {
+				block.title = strings.TrimSpace(titleMatch[1])
+			}
+		}
+
+		// Only add if we have meaningful content
+		if block.url != "" || block.summary != "" || len(strings.TrimSpace(part)) > 50 {
+			blocks = append(blocks, block)
+		}
+	}
+
+	// If no blocks extracted, try to extract individual URLs and their surrounding content
+	if len(blocks) == 0 {
+		urlMatches := urlPattern.FindAllStringSubmatchIndex(note, -1)
+		for i, match := range urlMatches {
+			if len(match) < 4 {
+				continue
+			}
+
+			url := note[match[2]:match[3]]
+			// Get content around the URL (100 chars before, 500 after)
+			start := match[0] - 100
+			if start < 0 {
+				start = 0
+			}
+			end := match[3] + 500
+			if end > len(note) {
+				end = len(note)
+			}
+			// Don't overlap with next URL
+			if i+1 < len(urlMatches) && end > urlMatches[i+1][0] {
+				end = urlMatches[i+1][0]
+			}
+
+			content := note[start:end]
+			blocks = append(blocks, sourceBlock{
+				url:     url,
+				content: content,
+			})
+		}
+	}
+
+	return blocks
+}
+
+// createInsightFromBlock creates a SubInsight from a parsed source block
+func createInsightFromBlock(block sourceBlock, topic string, insightNum int, researcherNum int, iteration int, fullNote string) *think_deep.SubInsight {
+	// Determine the finding text
+	finding := block.summary
+	if finding == "" {
+		finding = truncateForLog(block.content, 500)
+	}
+
+	// Skip if no meaningful content
+	if finding == "" || len(strings.TrimSpace(finding)) < 20 {
+		return nil
+	}
+
+	// Extract tool and query from the note if present
+	toolUsed, queryUsed := extractToolContext(fullNote)
+
+	// Determine source type based on tool used or content
+	sourceType := think_deep.SourceTypeWeb
+	if toolUsed == "read_document" || toolUsed == "read_xlsx" || toolUsed == "analyze_csv" {
+		sourceType = think_deep.SourceTypeDocument
+	} else if toolUsed == "fetch" {
+		sourceType = think_deep.SourceTypeWeb
+	} else if strings.Contains(fullNote, "Read document:") || strings.Contains(fullNote, "Workbook:") {
+		sourceType = think_deep.SourceTypeDocument
+	}
+
+	// Create source reference with full content
+	var sources []think_deep.SourceReference
+	if block.url != "" {
+		sources = append(sources, think_deep.SourceReference{
+			URL:             block.url,
+			Type:            sourceType,
+			Title:           block.title,
+			RelevantExcerpt: block.summary,
+			RawContent:      block.content,
+			FetchedAt:       time.Now(),
+		})
+	} else if sourceType == think_deep.SourceTypeDocument && queryUsed != "" {
+		// For document sources, create a file-based source reference
+		sources = append(sources, think_deep.SourceReference{
+			FilePath:        queryUsed,
+			Type:            sourceType,
+			Title:           block.title,
+			RelevantExcerpt: block.summary,
+			RawContent:      block.content,
+			FetchedAt:       time.Now(),
+		})
+	}
+
+	// Generate title if not present
+	title := block.title
+	if title == "" && block.url != "" {
+		// Use domain as title
+		title = extractDomain(block.url)
+	}
+	if title == "" && sourceType == think_deep.SourceTypeDocument && queryUsed != "" {
+		// Use filename as title for documents
+		parts := strings.Split(queryUsed, "/")
+		if len(parts) > 0 {
+			title = parts[len(parts)-1]
+		}
+	}
+	if title == "" {
+		title = truncateForLog(finding, 60)
+	}
+
+	// Create analysis chain showing derivation
+	analysisChain := []string{
+		fmt.Sprintf("Research topic: %s", truncateForLog(topic, 100)),
+	}
+	if toolUsed != "" {
+		analysisChain = append(analysisChain, fmt.Sprintf("Tool used: %s", toolUsed))
+	}
+	if queryUsed != "" {
+		if sourceType == think_deep.SourceTypeDocument {
+			analysisChain = append(analysisChain, fmt.Sprintf("Document analyzed: %s", queryUsed))
+		} else {
+			analysisChain = append(analysisChain, fmt.Sprintf("Query: %s", queryUsed))
+		}
+	}
+	if block.url != "" {
+		analysisChain = append(analysisChain, fmt.Sprintf("Source retrieved: %s", block.url))
+	}
+	analysisChain = append(analysisChain, "Finding extracted from source content")
+
+	// For document sources, use file path as source URL for tracking
+	sourceURL := block.url
+	if sourceURL == "" && sourceType == think_deep.SourceTypeDocument && queryUsed != "" {
+		sourceURL = "file://" + queryUsed
+	}
+
+	return &think_deep.SubInsight{
+		ID:            fmt.Sprintf("insight-%03d", insightNum),
+		Topic:         topic,
+		Title:         title,
+		Finding:       finding,
+		Implication:   "", // Will be filled by synthesis later
+		SourceURL:     sourceURL,
+		SourceContent: block.content,
+		Sources:       sources,
+		AnalysisChain: analysisChain,
+		ToolUsed:      toolUsed,
+		QueryUsed:     queryUsed,
+		Confidence:    calculateConfidence(sourceURL, finding),
+		Iteration:     iteration,
+		ResearcherNum: researcherNum,
+		Timestamp:     time.Now(),
+	}
+}
+
+// extractToolContext extracts tool name and query from the note context
+func extractToolContext(note string) (tool string, query string) {
+	// Try to detect search queries
+	searchPattern := regexp.MustCompile(`(?i)Search results for:\s*(.+?)(?:\n|$)`)
+	if match := searchPattern.FindStringSubmatch(note); len(match) > 1 {
+		return "search", strings.TrimSpace(match[1])
+	}
+
+	// Try to detect fetch operations
+	fetchPattern := regexp.MustCompile(`(?i)Fetched from:\s*(https?://[^\s]+)`)
+	if match := fetchPattern.FindStringSubmatch(note); len(match) > 1 {
+		return "fetch", strings.TrimSpace(match[1])
+	}
+
+	// Try to detect document reads (matches "Read document: /path/to/file")
+	docPattern := regexp.MustCompile(`(?i)Read document:\s*(.+?)(?:\n|$)`)
+	if match := docPattern.FindStringSubmatch(note); len(match) > 1 {
+		return "read_document", strings.TrimSpace(match[1])
+	}
+
+	// Try to detect XLSX reads
+	xlsxPattern := regexp.MustCompile(`(?i)Workbook:\s*(.+?)(?:\n|$)`)
+	if match := xlsxPattern.FindStringSubmatch(note); len(match) > 1 {
+		return "read_xlsx", strings.TrimSpace(match[1])
+	}
+
+	// Try to detect CSV analysis
+	csvPattern := regexp.MustCompile(`(?i)CSV Analysis:\s*(.+?)(?:\n|$)`)
+	if match := csvPattern.FindStringSubmatch(note); len(match) > 1 {
+		return "analyze_csv", strings.TrimSpace(match[1])
+	}
+
+	return "", ""
+}
+
+// extractDomain extracts the domain from a URL for use as a title
+func extractDomain(urlStr string) string {
+	// Simple extraction - just get host
+	if strings.HasPrefix(urlStr, "http") {
+		parts := strings.Split(urlStr, "/")
+		if len(parts) >= 3 {
+			return parts[2]
+		}
+	}
+	return ""
+}
+
+// calculateConfidence estimates confidence score based on source quality indicators.
+func calculateConfidence(sourceURL, finding string) float64 {
+	confidence := 0.5 // Base confidence
+
+	// Higher confidence for well-known domains
+	trustedDomains := []string{
+		"wikipedia.org", "github.com", "arxiv.org", "nature.com",
+		"science.org", "ieee.org", "acm.org", "gov", "edu",
+	}
+	for _, domain := range trustedDomains {
+		if strings.Contains(sourceURL, domain) {
+			confidence += 0.2
+			break
+		}
+	}
+
+	// Higher confidence for longer, more detailed findings
+	if len(finding) > 200 {
+		confidence += 0.1
+	}
+
+	// Cap at 1.0
+	if confidence > 1.0 {
+		confidence = 1.0
+	}
+
+	return confidence
 }

@@ -392,3 +392,4 @@ For more technical details, see:
 - **[ThinkDepth.ai GitHub](https://github.com/thinkdepthai/Deep_Research)** - Reference Python implementation
 - **[DeepResearch Bench](https://github.com/Ayanami0730/deep_research_bench)** - Evaluation benchmark
 - **[Self-Balancing Agentic AI](https://paichunlin.substack.com/p/self-balancing-agentic-ai-test-time)** - Algorithm deep-dive
+- **[Google: Deep-Researcher with Test-Time Diffusion](https://research.google/blog/deep-researcher-with-test-time-diffusion/)** - Google Research blog post

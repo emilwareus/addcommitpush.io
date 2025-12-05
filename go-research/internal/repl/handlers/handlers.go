@@ -28,10 +28,12 @@ func RegisterAll() map[string]repl.Handler {
 
 	add("fast", &FastHandler{}, "/fast <query>", "Quick single-worker research", repl.CommandCategoryAgents)
 	add("expand", &ExpandHandler{}, "/expand <text>", "Expand on current research", repl.CommandCategoryWorkflow)
+	add("question", &QuestionHandler{}, "/question <query>", "Ask about existing research", repl.CommandCategoryWorkflow)
 	add("sessions", &SessionsHandler{}, "/sessions", "List all sessions", repl.CommandCategorySessions)
 	add("load", &LoadHandler{}, "/load <id>", "Load a previous session", repl.CommandCategorySessions)
 	add("new", &NewHandler{}, "/new", "Clear session and start fresh", repl.CommandCategorySessions)
 	add("workers", &WorkersHandler{}, "/workers", "Show worker status", repl.CommandCategoryWorkflow)
+	add("context", &ContextHandler{}, "/context [-v]", "Show context window statistics and content", repl.CommandCategoryWorkflow)
 	add("rerun", &RerunHandler{}, "/rerun <id>", "Rerun a previous query", repl.CommandCategorySessions)
 	add("recompile", &RecompileHandler{}, "/recompile", "Hot reload the agent", repl.CommandCategorySettings)
 	add("verbose", &VerboseHandler{}, "/verbose on|off", "Toggle verbose mode", repl.CommandCategorySettings)

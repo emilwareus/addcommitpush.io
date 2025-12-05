@@ -50,33 +50,37 @@ import (
 	"go-research/internal/events"
 	"go-research/internal/llm"
 	"go-research/internal/orchestrator"
+	"go-research/internal/think_deep"
 	"go-research/internal/tools"
 )
 
 // Architecture implements the ThinkDepth Self-Balancing Test-Time Diffusion
 // research pattern using iterative refinement.
 type Architecture struct {
-	bus    *events.Bus
-	config *config.Config
-	client llm.ChatClient
-	tools  tools.ToolExecutor
+	bus              *events.Bus
+	config           *config.Config
+	client           llm.ChatClient
+	tools            tools.ToolExecutor
+	injectionContext *think_deep.InjectionContext
 }
 
 // Config holds configuration for the ThinkDeep architecture.
 type Config struct {
-	AppConfig *config.Config
-	Bus       *events.Bus
-	Client    llm.ChatClient     // Optional: inject for testing
-	Tools     tools.ToolExecutor // Optional: inject for testing
+	AppConfig        *config.Config
+	Bus              *events.Bus
+	Client           llm.ChatClient             // Optional: inject for testing
+	Tools            tools.ToolExecutor         // Optional: inject for testing
+	InjectionContext *think_deep.InjectionContext // Optional: prior context for expansion
 }
 
 // New creates a new ThinkDeep architecture instance.
 func New(cfg Config) *Architecture {
 	return &Architecture{
-		bus:    cfg.Bus,
-		config: cfg.AppConfig,
-		client: cfg.Client,
-		tools:  cfg.Tools,
+		bus:              cfg.Bus,
+		config:           cfg.AppConfig,
+		client:           cfg.Client,
+		tools:            cfg.Tools,
+		injectionContext: cfg.InjectionContext,
 	}
 }
 
@@ -95,6 +99,12 @@ func (a *Architecture) SupportsResume() bool {
 	return false
 }
 
+// SetInjectionContext sets the context for expansion workflows.
+// This allows building upon existing research findings.
+func (a *Architecture) SetInjectionContext(ctx *think_deep.InjectionContext) {
+	a.injectionContext = ctx
+}
+
 // Research executes the ThinkDeep research workflow:
 //  1. Brief generation - Transform query to detailed research brief
 //  2. Initial draft - Generate draft from model's knowledge
@@ -110,6 +120,9 @@ func (a *Architecture) Research(ctx context.Context, sessionID string, query str
 	}
 	if a.tools != nil {
 		opts = append(opts, orchestrator.WithThinkDeepTools(a.tools))
+	}
+	if a.injectionContext != nil {
+		opts = append(opts, orchestrator.WithInjectionContext(a.injectionContext))
 	}
 
 	// Create the ThinkDeep orchestrator
@@ -141,11 +154,12 @@ func (a *Architecture) Resume(ctx context.Context, sessionID string) (*architect
 // convertResult transforms ThinkDeepResult into the standard architectures.Result format.
 func (a *Architecture) convertResult(sessionID string, tdr *orchestrator.ThinkDeepResult, startTime time.Time) *architectures.Result {
 	result := &architectures.Result{
-		SessionID: sessionID,
-		Query:     tdr.Query,
-		Report:    tdr.FinalReport,
-		Summary:   tdr.ResearchBrief,
-		Status:    "complete",
+		SessionID:   sessionID,
+		Query:       tdr.Query,
+		Report:      tdr.FinalReport,
+		Summary:     tdr.ResearchBrief,
+		SubInsights: tdr.SubInsights,
+		Status:      "complete",
 		Metrics: architectures.Metrics{
 			Duration:   time.Since(startTime),
 			Cost:       tdr.Cost,
@@ -153,10 +167,20 @@ func (a *Architecture) convertResult(sessionID string, tdr *orchestrator.ThinkDe
 		},
 	}
 
-	// Extract sources from notes (compressed research findings)
-	// Each note may contain inline citations that we could parse
-	// For now, we track the iteration count as a proxy for research depth
-	result.Metrics.FactCount = len(tdr.Notes)
+	// Extract sources from SubInsights
+	sourceSet := make(map[string]bool)
+	for _, insight := range tdr.SubInsights {
+		if insight.SourceURL != "" {
+			sourceSet[insight.SourceURL] = true
+		}
+	}
+	for url := range sourceSet {
+		result.Sources = append(result.Sources, url)
+	}
+
+	// Use insight count for quality metrics
+	result.Metrics.FactCount = len(tdr.SubInsights)
+	result.Metrics.SourceCount = len(result.Sources)
 
 	return result
 }

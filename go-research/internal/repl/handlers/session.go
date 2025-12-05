@@ -71,7 +71,7 @@ func (h *NewHandler) Execute(ctx *repl.Context, args []string) error {
 	ctx.Session = sess
 
 	ctx.Renderer.Info(fmt.Sprintf("✓ New session created: %s", sess.ID))
-	ctx.Renderer.Info("  Ready. Type a question or use /storm <query> to start.")
+	ctx.Renderer.Info("  Ready. Type a question to start research.")
 
 	return nil
 }

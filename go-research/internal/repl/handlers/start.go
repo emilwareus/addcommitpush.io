@@ -62,6 +62,10 @@ func (h *FastHandler) Execute(ctx *repl.Context, args []string) error {
 	sess.Status = session.StatusRunning
 	workerCtx, err := reactAgent.Research(runCtx, query)
 	if err != nil {
+		// Check if it was a timeout and set the cancel reason appropriately
+		if runCtx.Err() == context.DeadlineExceeded {
+			ctx.CancelReason = events.CancelReasonTimeout
+		}
 		sess.Status = session.StatusFailed
 		return fmt.Errorf("research failed: %w", err)
 	}

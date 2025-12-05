@@ -19,6 +19,7 @@ import (
 	"go-research/internal/repl"
 	"go-research/internal/repl/handlers"
 	"go-research/internal/session"
+	"go-research/internal/tools"
 )
 
 // =============================================================================
@@ -184,13 +185,13 @@ func TestRouterNaturalLanguageGoesToStormWithoutSession(t *testing.T) {
 	ctx := &repl.Context{Store: store, Bus: bus, Config: cfg, Renderer: repl.NewRenderer(&bytes.Buffer{})}
 	router := repl.NewRouter(ctx, handlers.RegisterAll())
 
-	// Without a session, natural language should go to storm
+	// Without a session, natural language should go to think_deep (default research)
 	handler, args, err := router.Route("What is the ReAct pattern?")
 	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
 	if handler == nil {
-		t.Error("Expected storm handler for natural language without session")
+		t.Error("Expected think_deep handler for natural language without session")
 	}
 	if len(args) != 1 || args[0] != "What is the ReAct pattern?" {
 		t.Errorf("Expected full text as single arg, got: %v", args)
@@ -530,6 +531,102 @@ func TestFastResearchMultipleTools(t *testing.T) {
 		if !containsString(result.Sources, src) {
 			t.Fatalf("Expected source %s to be recorded, got %v", src, result.Sources)
 		}
+	}
+}
+
+// To run this Excel-focused scenario manually (non-interactive):
+//
+//	go test -run TestFastResearchWorkflow_AnalyzesExcelDataset -timeout 20m ./internal/e2e -v
+func TestFastResearchWorkflow_AnalyzesExcelDataset(t *testing.T) {
+	cfg := testConfig()
+	defer os.RemoveAll(filepath.Dir(cfg.StateFile))
+
+	excelPath := datasetPath(t)
+	if _, err := os.Stat(excelPath); os.IsNotExist(err) {
+		t.Skipf("sample Excel dataset not found at %s", excelPath)
+	}
+
+	bus := events.NewBus(100)
+	defer bus.Close()
+
+	mockLLM := NewMockLLMClient(
+		fmt.Sprintf(`I should review Statistics Sweden's labor data to answer the immigration and employment question.
+<tool name="read_document">{"path": "%s"}</tool>`, excelPath),
+		`<answer>
+Sweden's AM0401U1 dataset shows that unemployed inrikesfödda men (15-24) dropped from 52.7k in 2005 to around 57.3k in 2024 after a pandemic spike.
+It also highlights 71.8k unemployed in 25-54 age group during 2005, underscoring generational challenges.
+These figures indicate that newcomers still face barriers in integration programs, so policymakers plan targeted employment guarantees.
+</answer>`,
+	)
+
+	registry := tools.NewEmptyRegistry()
+	registry.Register(tools.NewDocumentReadTool())
+
+	agentCfg := agent.DefaultConfig(cfg)
+	agentCfg.Client = mockLLM
+	agentCfg.Tools = registry
+
+	reactAgent := agent.NewReact(agentCfg, bus)
+
+	ctx := context.Background()
+	result, err := reactAgent.Research(ctx, "How is Sweden handling immigration and employment integration using the Stats Sweden AM0401U1 dataset?")
+	if err != nil {
+		t.Fatalf("Research failed: %v", err)
+	}
+
+	if result.Status != session.WorkerComplete {
+		t.Fatalf("Expected worker to complete, got %v", result.Status)
+	}
+
+	if len(result.ToolCalls) != 1 {
+		t.Fatalf("Expected exactly one tool call, got %d", len(result.ToolCalls))
+	}
+
+	call := result.ToolCalls[0]
+	if call.Tool != "read_document" {
+		t.Fatalf("Expected read_document tool call, got %s", call.Tool)
+	}
+
+	toolPreview := call.Result
+	if len(toolPreview) > 200 {
+		toolPreview = toolPreview[:200]
+	}
+
+	if !strings.Contains(call.Result, "Arbetslösa 15-74 år") {
+		t.Fatalf("Expected tool output to include dataset heading, got: %s", toolPreview)
+	}
+
+	if !strings.Contains(call.Result, "52.7") || !strings.Contains(call.Result, "71.8") {
+		t.Fatalf("Expected tool output to include numeric data (52.7, 71.8), got: %s", toolPreview)
+	}
+
+	if !strings.Contains(result.FinalOutput, "52.7") {
+		t.Fatalf("Expected final answer to mention extracted figures, got: %s", result.FinalOutput)
+	}
+}
+
+func datasetPath(t *testing.T) string {
+	t.Helper()
+	root := repoRoot(t)
+	return filepath.Join(root, "internal", "data", "AM0401U1_20251204-100847.xlsx")
+}
+
+func repoRoot(t *testing.T) string {
+	t.Helper()
+	dir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd failed: %v", err)
+	}
+
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			t.Fatalf("go.mod not found from %s", dir)
+		}
+		dir = parent
 	}
 }
 

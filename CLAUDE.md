@@ -267,3 +267,9 @@ export default async function PostPage({ params }) {
 - Guidance on concise `CLAUDE.md` files — see community write-ups like the Apidog "Claude.md" overview for keeping this file focused and high-signal
 
 Keep this document up to date as the source of truth for how this blog is structured and extended.
+
+
+
+# Thoughts:
+
+All thoughs (even in sub-projects) should be in thoughts/shared/ (root), not in the sub projects.

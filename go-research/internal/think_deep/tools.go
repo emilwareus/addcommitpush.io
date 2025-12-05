@@ -244,7 +244,7 @@ func SupervisorToolRegistry(
 }
 
 // SubResearcherToolRegistry creates a tool registry for sub-researcher agents.
-// This includes search (with optional summarization), fetch, and think tools.
+// This includes search (with optional summarization), fetch, document reading, CSV analysis, and think tools.
 // If client is provided, search results will include LLM-generated summaries of page content.
 func SubResearcherToolRegistry(braveAPIKey string, client ...llm.ChatClient) *tools.Registry {
 	registry := tools.NewEmptyRegistry()
@@ -259,6 +259,12 @@ func SubResearcherToolRegistry(braveAPIKey string, client ...llm.ChatClient) *to
 
 	// Add fetch tool (for direct URL fetching if needed)
 	registry.Register(tools.NewFetchTool())
+
+	// Add document reading tools
+	registry.Register(tools.NewDocumentReadTool())
+
+	// Add CSV analysis tool
+	registry.Register(tools.NewCSVAnalysisTool())
 
 	// Add think tool for reflection
 	registry.Register(&ThinkTool{})
