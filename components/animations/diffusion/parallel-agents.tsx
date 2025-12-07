@@ -32,32 +32,69 @@ export function ParallelAgents({ className }: ParallelAgentsProps) {
   const isInView = useInView(ref, { margin: '-10% 0px -10% 0px', amount: 0.2 });
   const [isPlaying, setIsPlaying] = useState(true);
   const [stage, setStage] = useState<'assign' | 'research' | 'collect' | 'refine' | 'decide'>('assign');
+  const lastStageRef = useRef<typeof stage>('assign');
+  const startRef = useRef<number | null>(null);
+  const pausedElapsedRef = useRef(0);
+  const rafRef = useRef<number | null>(null);
 
-  // Animation sequence: assign → research (parallel) → collect → refine → decide → loop
+  // Fixed-duration animation timeline using requestAnimationFrame to avoid drift/jitter.
   useEffect(() => {
-    if (!isInView || !isPlaying) return;
-
-    const stages: Array<{ stage: typeof stage; duration: number }> = [
+    const timeline: Array<{ stage: typeof stage; duration: number }> = [
       { stage: 'assign', duration: 2000 },
-      { stage: 'research', duration: 3000 }, // All agents active simultaneously
-      { stage: 'collect', duration: 2000 },
-      { stage: 'refine', duration: 2500 },
-      { stage: 'decide', duration: 2000 },
+      { stage: 'research', duration: 2800 },
+      { stage: 'collect', duration: 1800 },
+      { stage: 'refine', duration: 2200 },
+      { stage: 'decide', duration: 1800 },
     ];
+    const totalDuration = timeline.reduce((acc, item) => acc + item.duration, 0);
 
-    let currentIndex = 0;
-    const advance = () => {
-      if (currentIndex >= stages.length) {
-        currentIndex = 0;
+    const stop = () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
       }
-      const current = stages[currentIndex];
-      setStage(current.stage);
-      currentIndex++;
-      setTimeout(advance, current.duration);
     };
 
-    const timeout = setTimeout(advance, 500);
-    return () => clearTimeout(timeout);
+    if (!isInView || !isPlaying) {
+      if (startRef.current !== null) {
+        const now = performance.now();
+        pausedElapsedRef.current = (now - startRef.current) % totalDuration;
+      }
+      startRef.current = null;
+      stop();
+      return;
+    }
+
+    startRef.current = performance.now() - pausedElapsedRef.current;
+
+    const tick = () => {
+      if (startRef.current === null) return;
+      const now = performance.now();
+      const elapsed = (now - startRef.current) % totalDuration;
+
+      let accumulated = 0;
+      let nextStage: typeof stage = timeline[timeline.length - 1].stage;
+      for (const item of timeline) {
+        accumulated += item.duration;
+        if (elapsed < accumulated) {
+          nextStage = item.stage;
+          break;
+        }
+      }
+
+      if (nextStage !== lastStageRef.current) {
+        lastStageRef.current = nextStage;
+        setStage(nextStage);
+      }
+
+      rafRef.current = requestAnimationFrame(tick);
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+
+    return () => {
+      stop();
+    };
   }, [isInView, isPlaying]);
 
   // Helper functions for opacity/visibility states

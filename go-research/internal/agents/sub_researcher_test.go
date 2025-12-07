@@ -5,8 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"go-research/internal/architectures/think_deep/runtime"
 	"go-research/internal/events"
-	"go-research/internal/think_deep"
 )
 
 func TestNewSubResearcherAgent(t *testing.T) {
@@ -347,7 +347,7 @@ func TestFilterThinkToolCalls(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := think_deep.FilterThinkToolCalls(tt.input)
+			result := runtime.FilterThinkToolCalls(tt.input)
 
 			for _, s := range tt.contains {
 				if !strings.Contains(result, s) {

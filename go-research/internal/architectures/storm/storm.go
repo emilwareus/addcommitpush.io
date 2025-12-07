@@ -49,7 +49,6 @@ import (
 	"go-research/internal/config"
 	"go-research/internal/events"
 	"go-research/internal/llm"
-	"go-research/internal/orchestrator"
 	"go-research/internal/tools"
 )
 
@@ -59,6 +58,7 @@ type Architecture struct {
 	config *config.Config
 	client llm.ChatClient
 	tools  tools.ToolExecutor
+	loop   *StormLoop
 }
 
 // Config holds configuration for the STORM architecture.
@@ -71,12 +71,21 @@ type Config struct {
 
 // New creates a new STORM architecture instance.
 func New(cfg Config) *Architecture {
-	return &Architecture{
+	a := &Architecture{
 		bus:    cfg.Bus,
 		config: cfg.AppConfig,
 		client: cfg.Client,
 		tools:  cfg.Tools,
 	}
+	opts := []StormLoopOption{}
+	if cfg.Client != nil {
+		opts = append(opts, WithStormClient(cfg.Client))
+	}
+	if cfg.Tools != nil {
+		opts = append(opts, WithStormTools(cfg.Tools))
+	}
+	a.loop = NewStormLoop(cfg.Bus, cfg.AppConfig, opts...)
+	return a
 }
 
 // Name returns the architecture identifier.
@@ -102,20 +111,19 @@ func (a *Architecture) SupportsResume() bool {
 func (a *Architecture) Research(ctx context.Context, sessionID string, query string) (*architectures.Result, error) {
 	startTime := time.Now()
 
-	// Build orchestrator options
-	opts := []orchestrator.StormOrchestratorOption{}
-	if a.client != nil {
-		opts = append(opts, orchestrator.WithStormClient(a.client))
+	if a.loop == nil {
+		opts := []StormLoopOption{}
+		if a.client != nil {
+			opts = append(opts, WithStormClient(a.client))
+		}
+		if a.tools != nil {
+			opts = append(opts, WithStormTools(a.tools))
+		}
+		a.loop = NewStormLoop(a.bus, a.config, opts...)
 	}
-	if a.tools != nil {
-		opts = append(opts, orchestrator.WithStormTools(a.tools))
-	}
-
-	// Create the STORM orchestrator (conversation-based)
-	orch := orchestrator.NewStormOrchestrator(a.bus, a.config, opts...)
 
 	// Execute the full STORM workflow
-	stormResult, err := orch.Research(ctx, query)
+	stormResult, err := a.loop.Research(ctx, query)
 	if err != nil {
 		return &architectures.Result{
 			SessionID: sessionID,
@@ -138,7 +146,7 @@ func (a *Architecture) Resume(ctx context.Context, sessionID string) (*architect
 }
 
 // convertResult transforms StormResult into the standard architectures.Result format.
-func (a *Architecture) convertResult(sessionID string, sr *orchestrator.StormResult, startTime time.Time) *architectures.Result {
+func (a *Architecture) convertResult(sessionID string, sr *StormResult, startTime time.Time) *architectures.Result {
 	result := &architectures.Result{
 		SessionID: sessionID,
 		Query:     sr.Topic,

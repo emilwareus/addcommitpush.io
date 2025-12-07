@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
+	"go-research/internal/architectures/think_deep/runtime"
 	"go-research/internal/events"
 	"go-research/internal/session"
-	"go-research/internal/think_deep"
 )
 
 func TestNewSupervisorAgent(t *testing.T) {
@@ -421,7 +421,7 @@ func TestSupervisorHasResearchComplete(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			calls := think_deep.ParseToolCalls(tt.content)
+			calls := runtime.ParseToolCalls(tt.content)
 			result := agent.hasResearchComplete(calls)
 			if result != tt.expected {
 				t.Errorf("expected %v, got %v", tt.expected, result)

@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
+	"go-research/internal/architectures/think_deep/runtime"
 	"go-research/internal/events"
 	"go-research/internal/llm"
 	"go-research/internal/session"
-	"go-research/internal/think_deep"
 )
 
 // SupervisorAgent coordinates ThinkDeep research using the diffusion algorithm.
@@ -80,7 +80,7 @@ type SupervisorResult struct {
 	IterationsUsed int
 
 	// SubInsights contains all structured insights captured during diffusion
-	SubInsights []think_deep.SubInsight
+	SubInsights []runtime.SubInsight
 
 	// Cost tracks token usage for the supervisor
 	Cost session.CostBreakdown
@@ -99,7 +99,7 @@ func (s *SupervisorAgent) Coordinate(
 	initialDraft string,
 	subResearcher SubResearcherCallback,
 ) (*SupervisorResult, error) {
-	state := think_deep.NewSupervisorState(researchBrief)
+	state := runtime.NewSupervisorState(researchBrief)
 	state.UpdateDraft(initialDraft)
 
 	var totalCost session.CostBreakdown
@@ -107,7 +107,7 @@ func (s *SupervisorAgent) Coordinate(
 
 	// Build system prompt once
 	date := time.Now().Format("2006-01-02")
-	systemPrompt := think_deep.LeadResearcherPrompt(date, s.maxConcurrent, s.maxIterations)
+	systemPrompt := runtime.LeadResearcherPrompt(date, s.maxConcurrent, s.maxIterations)
 
 	for state.Iterations < s.maxIterations {
 		state.IncrementIteration()
@@ -139,7 +139,7 @@ func (s *SupervisorAgent) Coordinate(
 		state.AddMessage(llm.Message{Role: "assistant", Content: content})
 
 		// Parse tool calls from response
-		toolCalls := think_deep.ParseToolCalls(content)
+		toolCalls := runtime.ParseToolCalls(content)
 
 		// Check for research completion
 		if s.hasResearchComplete(toolCalls) {
@@ -152,8 +152,8 @@ func (s *SupervisorAgent) Coordinate(
 		}
 
 		// Separate conduct_research calls from other tools for parallel execution
-		var conductResearchCalls []think_deep.ToolCallParsed
-		var otherCalls []think_deep.ToolCallParsed
+		var conductResearchCalls []runtime.ToolCallParsed
+		var otherCalls []runtime.ToolCallParsed
 		for _, tc := range toolCalls {
 			if tc.Tool == "conduct_research" {
 				conductResearchCalls = append(conductResearchCalls, tc)
@@ -204,7 +204,7 @@ func (s *SupervisorAgent) Coordinate(
 }
 
 // buildMessages constructs the message list for the LLM call.
-func (s *SupervisorAgent) buildMessages(systemPrompt string, state *think_deep.SupervisorState) []llm.Message {
+func (s *SupervisorAgent) buildMessages(systemPrompt string, state *runtime.SupervisorState) []llm.Message {
 	messages := []llm.Message{
 		{Role: "system", Content: systemPrompt},
 	}
@@ -239,8 +239,8 @@ Analyze the current state and decide next action. Use the diffusion algorithm:
 // executeToolCall executes a single tool call and returns the result.
 func (s *SupervisorAgent) executeToolCall(
 	ctx context.Context,
-	tc think_deep.ToolCallParsed,
-	state *think_deep.SupervisorState,
+	tc runtime.ToolCallParsed,
+	state *runtime.SupervisorState,
 	subResearcher SubResearcherCallback,
 	researcherNum *int,
 	totalCost *session.CostBreakdown,
@@ -268,8 +268,8 @@ func (s *SupervisorAgent) executeToolCall(
 // executeConductResearch delegates to a sub-researcher and accumulates findings.
 func (s *SupervisorAgent) executeConductResearch(
 	ctx context.Context,
-	tc think_deep.ToolCallParsed,
-	state *think_deep.SupervisorState,
+	tc runtime.ToolCallParsed,
+	state *runtime.SupervisorState,
 	subResearcher SubResearcherCallback,
 	researcherNum *int,
 	totalCost *session.CostBreakdown,
@@ -312,8 +312,8 @@ func (s *SupervisorAgent) executeConductResearch(
 // Limited to s.maxConcurrent parallel goroutines using a semaphore.
 func (s *SupervisorAgent) executeParallelResearch(
 	ctx context.Context,
-	calls []think_deep.ToolCallParsed,
-	state *think_deep.SupervisorState,
+	calls []runtime.ToolCallParsed,
+	state *runtime.SupervisorState,
 	subResearcher SubResearcherCallback,
 	researcherNum *int,
 	totalCost *session.CostBreakdown,
@@ -341,7 +341,7 @@ func (s *SupervisorAgent) executeParallelResearch(
 		wg.Add(1)
 		currentNum := researcherNums[i]
 
-		go func(idx int, toolCall think_deep.ToolCallParsed, resNum int) {
+		go func(idx int, toolCall runtime.ToolCallParsed, resNum int) {
 			defer wg.Done()
 
 			// Acquire semaphore
@@ -430,7 +430,7 @@ func (s *SupervisorAgent) executeParallelResearch(
 // executeRefineDraft refines the draft report with accumulated findings.
 func (s *SupervisorAgent) executeRefineDraft(
 	ctx context.Context,
-	state *think_deep.SupervisorState,
+	state *runtime.SupervisorState,
 	totalCost *session.CostBreakdown,
 ) (string, error) {
 	if len(state.Notes) == 0 {
@@ -443,7 +443,7 @@ func (s *SupervisorAgent) executeRefineDraft(
 	findings := strings.Join(state.Notes, "\n\n---\n\n")
 
 	// Generate refinement prompt
-	prompt := think_deep.RefineDraftPrompt(state.ResearchBrief, state.DraftReport, findings)
+	prompt := runtime.RefineDraftPrompt(state.ResearchBrief, state.DraftReport, findings)
 
 	resp, err := s.client.Chat(ctx, []llm.Message{
 		{Role: "user", Content: prompt},
@@ -470,7 +470,7 @@ func (s *SupervisorAgent) executeRefineDraft(
 }
 
 // hasResearchComplete checks if the research_complete tool was called.
-func (s *SupervisorAgent) hasResearchComplete(calls []think_deep.ToolCallParsed) bool {
+func (s *SupervisorAgent) hasResearchComplete(calls []runtime.ToolCallParsed) bool {
 	for _, call := range calls {
 		if call.Tool == "research_complete" {
 			return true
@@ -480,7 +480,7 @@ func (s *SupervisorAgent) hasResearchComplete(calls []think_deep.ToolCallParsed)
 }
 
 // emitIterationEvent emits a diffusion iteration event.
-func (s *SupervisorAgent) emitIterationEvent(state *think_deep.SupervisorState, phase string) {
+func (s *SupervisorAgent) emitIterationEvent(state *runtime.SupervisorState, phase string) {
 	if s.bus == nil {
 		return
 	}
@@ -526,7 +526,7 @@ func (s *SupervisorAgent) emitDelegationEvent(topic string, researcherNum, itera
 }
 
 // emitDraftRefinedEvent emits an event when the draft is refined.
-func (s *SupervisorAgent) emitDraftRefinedEvent(state *think_deep.SupervisorState) {
+func (s *SupervisorAgent) emitDraftRefinedEvent(state *runtime.SupervisorState) {
 	if s.bus == nil {
 		return
 	}

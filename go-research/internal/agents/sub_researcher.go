@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"go-research/internal/architectures/think_deep/runtime"
 	"go-research/internal/events"
 	"go-research/internal/llm"
 	"go-research/internal/session"
-	"go-research/internal/think_deep"
 	"go-research/internal/tools"
 )
 
@@ -76,7 +76,7 @@ type SubResearcherResult struct {
 	VisitedURLs []string
 
 	// Insights contains structured insights extracted from search results
-	Insights []think_deep.SubInsight
+	Insights []runtime.SubInsight
 
 	// Cost tracks token usage for this sub-researcher run
 	Cost session.CostBreakdown
@@ -94,12 +94,12 @@ func (r *SubResearcherAgent) Research(ctx context.Context, topic string, researc
 
 // researchWithIteration performs research with a specific diffusion iteration context.
 func (r *SubResearcherAgent) researchWithIteration(ctx context.Context, topic string, researcherNum int, diffusionIteration int) (*SubResearcherResult, error) {
-	state := think_deep.NewResearcherState(topic)
+	state := runtime.NewResearcherState(topic)
 	var totalCost session.CostBreakdown
 
 	// Build system prompt
 	date := time.Now().Format("2006-01-02")
-	systemPrompt := think_deep.ResearchAgentPrompt(date)
+	systemPrompt := runtime.ResearchAgentPrompt(date)
 
 	// Initialize conversation
 	messages := []llm.Message{
@@ -134,7 +134,7 @@ func (r *SubResearcherAgent) researchWithIteration(ctx context.Context, topic st
 		messages = append(messages, llm.Message{Role: "assistant", Content: content})
 
 		// Parse tool calls
-		toolCalls := think_deep.ParseToolCalls(content)
+		toolCalls := runtime.ParseToolCalls(content)
 
 		// If no tool calls, research is complete
 		if len(toolCalls) == 0 {
@@ -228,7 +228,7 @@ func (r *SubResearcherAgent) researchWithIteration(ctx context.Context, topic st
 // It preserves ALL search results verbatim while filtering out think_tool calls.
 func (r *SubResearcherAgent) compressResearch(ctx context.Context, topic string, messages []llm.Message) (string, session.CostBreakdown, error) {
 	date := time.Now().Format("2006-01-02")
-	compressPrompt := think_deep.CompressResearchPrompt(date, topic)
+	compressPrompt := runtime.CompressResearchPrompt(date, topic)
 
 	// Build compression context from messages
 	var researchContent strings.Builder
@@ -241,7 +241,7 @@ func (r *SubResearcherAgent) compressResearch(ctx context.Context, topic string,
 		}
 
 		// Filter out think tool calls and their results
-		content := think_deep.FilterThinkToolCalls(m.Content)
+		content := runtime.FilterThinkToolCalls(m.Content)
 		if strings.TrimSpace(content) == "" {
 			continue
 		}
@@ -326,8 +326,8 @@ func truncateForLog(s string, maxLen int) string {
 // distinct finding with source attribution.
 // Enhanced to extract individual sources from search result blocks and capture
 // tool usage, query context, and full source references.
-func extractInsightsFromSearchResults(topic string, rawNotes []string, researcherNum int, iteration int) []think_deep.SubInsight {
-	var insights []think_deep.SubInsight
+func extractInsightsFromSearchResults(topic string, rawNotes []string, researcherNum int, iteration int) []runtime.SubInsight {
+	var insights []runtime.SubInsight
 	insightNum := 0
 
 	for _, note := range rawNotes {
@@ -447,7 +447,7 @@ func splitIntoSourceBlocks(note string) []sourceBlock {
 }
 
 // createInsightFromBlock creates a SubInsight from a parsed source block
-func createInsightFromBlock(block sourceBlock, topic string, insightNum int, researcherNum int, iteration int, fullNote string) *think_deep.SubInsight {
+func createInsightFromBlock(block sourceBlock, topic string, insightNum int, researcherNum int, iteration int, fullNote string) *runtime.SubInsight {
 	// Determine the finding text
 	finding := block.summary
 	if finding == "" {
@@ -463,19 +463,19 @@ func createInsightFromBlock(block sourceBlock, topic string, insightNum int, res
 	toolUsed, queryUsed := extractToolContext(fullNote)
 
 	// Determine source type based on tool used or content
-	sourceType := think_deep.SourceTypeWeb
+	sourceType := runtime.SourceTypeWeb
 	if toolUsed == "read_document" || toolUsed == "read_xlsx" || toolUsed == "analyze_csv" {
-		sourceType = think_deep.SourceTypeDocument
+		sourceType = runtime.SourceTypeDocument
 	} else if toolUsed == "fetch" {
-		sourceType = think_deep.SourceTypeWeb
+		sourceType = runtime.SourceTypeWeb
 	} else if strings.Contains(fullNote, "Read document:") || strings.Contains(fullNote, "Workbook:") {
-		sourceType = think_deep.SourceTypeDocument
+		sourceType = runtime.SourceTypeDocument
 	}
 
 	// Create source reference with full content
-	var sources []think_deep.SourceReference
+	var sources []runtime.SourceReference
 	if block.url != "" {
-		sources = append(sources, think_deep.SourceReference{
+		sources = append(sources, runtime.SourceReference{
 			URL:             block.url,
 			Type:            sourceType,
 			Title:           block.title,
@@ -483,9 +483,9 @@ func createInsightFromBlock(block sourceBlock, topic string, insightNum int, res
 			RawContent:      block.content,
 			FetchedAt:       time.Now(),
 		})
-	} else if sourceType == think_deep.SourceTypeDocument && queryUsed != "" {
+	} else if sourceType == runtime.SourceTypeDocument && queryUsed != "" {
 		// For document sources, create a file-based source reference
-		sources = append(sources, think_deep.SourceReference{
+		sources = append(sources, runtime.SourceReference{
 			FilePath:        queryUsed,
 			Type:            sourceType,
 			Title:           block.title,
@@ -501,7 +501,7 @@ func createInsightFromBlock(block sourceBlock, topic string, insightNum int, res
 		// Use domain as title
 		title = extractDomain(block.url)
 	}
-	if title == "" && sourceType == think_deep.SourceTypeDocument && queryUsed != "" {
+	if title == "" && sourceType == runtime.SourceTypeDocument && queryUsed != "" {
 		// Use filename as title for documents
 		parts := strings.Split(queryUsed, "/")
 		if len(parts) > 0 {
@@ -520,7 +520,7 @@ func createInsightFromBlock(block sourceBlock, topic string, insightNum int, res
 		analysisChain = append(analysisChain, fmt.Sprintf("Tool used: %s", toolUsed))
 	}
 	if queryUsed != "" {
-		if sourceType == think_deep.SourceTypeDocument {
+		if sourceType == runtime.SourceTypeDocument {
 			analysisChain = append(analysisChain, fmt.Sprintf("Document analyzed: %s", queryUsed))
 		} else {
 			analysisChain = append(analysisChain, fmt.Sprintf("Query: %s", queryUsed))
@@ -533,11 +533,11 @@ func createInsightFromBlock(block sourceBlock, topic string, insightNum int, res
 
 	// For document sources, use file path as source URL for tracking
 	sourceURL := block.url
-	if sourceURL == "" && sourceType == think_deep.SourceTypeDocument && queryUsed != "" {
+	if sourceURL == "" && sourceType == runtime.SourceTypeDocument && queryUsed != "" {
 		sourceURL = "file://" + queryUsed
 	}
 
-	return &think_deep.SubInsight{
+	return &runtime.SubInsight{
 		ID:            fmt.Sprintf("insight-%03d", insightNum),
 		Topic:         topic,
 		Title:         title,

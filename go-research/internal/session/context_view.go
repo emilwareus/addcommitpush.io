@@ -4,36 +4,36 @@ import (
 	"fmt"
 	"strings"
 
-	"go-research/internal/think_deep"
+	"go-research/internal/architectures/think_deep/runtime"
 )
 
 // ContextSnapshot contains statistics and raw context for a session
 type ContextSnapshot struct {
 	// Session metadata
-	SessionID      string
-	Mode           Mode
-	Status         SessionStatus
-	Query          string
-	
+	SessionID string
+	Mode      Mode
+	Status    SessionStatus
+	Query     string
+
 	// Statistics
-	ReportLength   int
-	SourcesCount   int
-	InsightsCount  int
-	WorkersCount   int
+	ReportLength    int
+	SourcesCount    int
+	InsightsCount   int
+	WorkersCount    int
 	IterationsCount int
-	ToolCallsCount int
-	Cost           CostBreakdown
-	
+	ToolCallsCount  int
+	Cost            CostBreakdown
+
 	// Token estimates
 	EstimatedTokens int
 	MaxTokens       int
-	
+
 	// Think-deep specific
-	HasThinkDeepContext bool
-	ThinkDeepFindings   int
+	HasThinkDeepContext  bool
+	ThinkDeepFindings    int
 	ThinkDeepVisitedURLs int
 	ThinkDeepHasReport   bool
-	
+
 	// Raw context string
 	RawContext string
 }
@@ -43,26 +43,26 @@ func BuildContextSnapshot(sess *Session, store *Store, maxTokens int) (*ContextS
 	if sess == nil {
 		return nil, fmt.Errorf("no active session")
 	}
-	
+
 	snapshot := &ContextSnapshot{
-		SessionID:      sess.ID,
-		Mode:           sess.Mode,
-		Status:         sess.Status,
-		Query:          sess.Query,
-		ReportLength:   len(sess.Report),
-		SourcesCount:   len(sess.Sources),
-		InsightsCount:  len(sess.Insights),
-		WorkersCount:   len(sess.Workers),
-		Cost:           sess.Cost,
+		SessionID:     sess.ID,
+		Mode:          sess.Mode,
+		Status:        sess.Status,
+		Query:         sess.Query,
+		ReportLength:  len(sess.Report),
+		SourcesCount:  len(sess.Sources),
+		InsightsCount: len(sess.Insights),
+		WorkersCount:  len(sess.Workers),
+		Cost:          sess.Cost,
 		MaxTokens:     maxTokens,
 	}
-	
+
 	// Count iterations and tool calls across all workers
 	for _, worker := range sess.Workers {
 		snapshot.IterationsCount += len(worker.Iterations)
 		snapshot.ToolCallsCount += len(worker.ToolCalls)
 	}
-	
+
 	// Build raw context based on mode
 	if sess.Mode == ModeThinkDeep {
 		// For think_deep, build injection context like expand handler does
@@ -76,18 +76,18 @@ func BuildContextSnapshot(sess *Session, store *Store, maxTokens int) (*ContextS
 		// For fast/storm, use continuation context
 		snapshot.RawContext = BuildContinuationContext(sess)
 	}
-	
+
 	// Estimate tokens (rough approximation: chars/4)
 	snapshot.EstimatedTokens = estimateTokens(snapshot.RawContext)
-	
+
 	return snapshot, nil
 }
 
 // buildInjectionContextForSnapshot builds injection context from session chain
 // Similar to ExpandHandler.buildInjectionContext but doesn't need expansion topic
-func buildInjectionContextForSnapshot(sess *Session, store *Store) *think_deep.InjectionContext {
-	injection := think_deep.NewInjectionContext()
-	
+func buildInjectionContextForSnapshot(sess *Session, store *Store) *runtime.InjectionContext {
+	injection := runtime.NewInjectionContext()
+
 	// Walk session chain and accumulate context
 	current := sess
 	for current != nil {
@@ -95,17 +95,17 @@ func buildInjectionContextForSnapshot(sess *Session, store *Store) *think_deep.I
 		for _, ins := range current.Insights {
 			injection.AddFinding(ins.Finding)
 		}
-		
+
 		// Accumulate sources as visited URLs
 		for _, src := range current.Sources {
 			injection.AddVisitedURL(src)
 		}
-		
+
 		// Keep existing report for context
 		if injection.ExistingReport == "" && current.Report != "" {
 			injection.SetExistingReport(current.Report)
 		}
-		
+
 		// Walk to parent
 		if current.ParentID == nil {
 			break
@@ -116,18 +116,18 @@ func buildInjectionContextForSnapshot(sess *Session, store *Store) *think_deep.I
 		}
 		current = parent
 	}
-	
+
 	return injection
 }
 
 // serializeInjectionContext converts injection context to readable string
-func serializeInjectionContext(injection *think_deep.InjectionContext) string {
+func serializeInjectionContext(injection *runtime.InjectionContext) string {
 	var sb strings.Builder
-	
+
 	if injection.ExpansionTopic != "" {
 		sb.WriteString(fmt.Sprintf("Expansion topic: %s\n\n", injection.ExpansionTopic))
 	}
-	
+
 	if injection.ExistingReport != "" {
 		sb.WriteString("Existing report:\n")
 		report := injection.ExistingReport
@@ -137,7 +137,7 @@ func serializeInjectionContext(injection *think_deep.InjectionContext) string {
 		sb.WriteString(report)
 		sb.WriteString("\n\n")
 	}
-	
+
 	if len(injection.PreviousFindings) > 0 {
 		sb.WriteString("Previous findings:\n")
 		for _, finding := range injection.PreviousFindings {
@@ -145,7 +145,7 @@ func serializeInjectionContext(injection *think_deep.InjectionContext) string {
 		}
 		sb.WriteString("\n")
 	}
-	
+
 	if len(injection.ValidatedFacts) > 0 {
 		sb.WriteString("Validated facts:\n")
 		for _, fact := range injection.ValidatedFacts {
@@ -153,7 +153,7 @@ func serializeInjectionContext(injection *think_deep.InjectionContext) string {
 		}
 		sb.WriteString("\n")
 	}
-	
+
 	if len(injection.VisitedURLs) > 0 {
 		sb.WriteString("Visited URLs:\n")
 		limit := len(injection.VisitedURLs)
@@ -168,7 +168,7 @@ func serializeInjectionContext(injection *think_deep.InjectionContext) string {
 		}
 		sb.WriteString("\n")
 	}
-	
+
 	if len(injection.KnownGaps) > 0 {
 		sb.WriteString("Known gaps:\n")
 		for _, gap := range injection.KnownGaps {
@@ -176,7 +176,7 @@ func serializeInjectionContext(injection *think_deep.InjectionContext) string {
 		}
 		sb.WriteString("\n")
 	}
-	
+
 	if len(injection.RelatedTopics) > 0 {
 		sb.WriteString("Related topics:\n")
 		for _, topic := range injection.RelatedTopics {
@@ -184,7 +184,7 @@ func serializeInjectionContext(injection *think_deep.InjectionContext) string {
 		}
 		sb.WriteString("\n")
 	}
-	
+
 	return sb.String()
 }
 

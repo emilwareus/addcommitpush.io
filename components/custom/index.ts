@@ -7,3 +7,4 @@ export { Callout } from './callout';
 export { Figure } from './figure';
 export { Terminal } from './terminal';
 export { TerminalCommand } from './terminal-command';
+export { Prompt } from './prompt';

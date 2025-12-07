@@ -8,6 +8,7 @@ import {
   Figure,
   Callout,
   Terminal,
+  Prompt,
 } from '@/components/custom';
 import {
   DiffusionOverview,
@@ -36,34 +37,63 @@ export function DiffusionDeepResearchContent() {
         className="mb-12"
       />
 
-      <p className="text-lg italic border-l-4 border-secondary pl-4 my-8">
-        Diffusion Deep Research represents a fundamental architectural shift in how AI systems
-        approach complex research tasks. Rather than generating research reports in a single pass,
-        this approach models the entire research process as a <strong>diffusion process</strong>—starting
-        with a &ldquo;noisy&rdquo; initial draft and iteratively &ldquo;denoising&rdquo; it through
-        cycles of information retrieval, reasoning, and revision. This post provides a comprehensive
-        technical overview of the architecture, its theoretical foundations, and a complete Go
-        implementation you can use today.
-      </p>
+      <div className="space-y-6">
+        <p>
+          Remember back in school when you had one of those infamous and dreaded group projects (I
+          kinda liked them)...
+        </p>
+        <p>
+          At least a few times you probably tried the "parallel" way of working, optimizing for a bit
+          less collaboration and each participant owning one segment of the report. Off you go! Each
+          person for themselves writing extensive backgrounds, history, theory, or whatever segments
+          you decided on. Then you meet up 3 hours before the deadline to "glue the report"
+          together—how did that turn out?
+        </p>
+        <div>
+          <p className="mb-3">The result was probably:</p>
+          <BlogList variant="unordered">
+            <BlogListItem>Repetitive</BlogListItem>
+            <BlogListItem>Inconsistent</BlogListItem>
+            <BlogListItem>Different tone of voice per segment</BlogListItem>
+            <BlogListItem>Vastly different quality per segment</BlogListItem>
+            <BlogListItem>Not the grade you hoped for</BlogListItem>
+          </BlogList>
+        </div>
+        <p>
+          It turns out, when we construct our AI research agents like this (plan -&gt; parallel
+          research -&gt; glue research into report), we get the same problem! When no context of the
+          "evolving report" is shared across sub-agents, we get a fragmented ball of mud.
+        </p>
+        <p>
+          These sequential and isolated group projects/research agents have their perks, like high
+          level of autonomy and parallelism... but there are probably better ways to do it.
+        </p>
 
-      <Callout variant="info">
-        <strong>TL;DR:</strong> Start with a noisy draft from model knowledge only. Denoise through
-        iterative web research. Stop when findings—not the draft—are complete. This discipline is
-        what achieved #1 on DeepResearch Bench.
-      </Callout>
-
-      <BlogHeading level={2}>Who is this for?</BlogHeading>
-      <BlogList variant="unordered">
-        <BlogListItem>
-          Builders shipping research-heavy features who need reliable citations and depth.
-        </BlogListItem>
-        <BlogListItem>
-          Agent developers trying to squeeze more from parallel sub-agents without context collapse.
-        </BlogListItem>
-        <BlogListItem>
-          Anyone benchmarking against RACE + FACT who wants to understand why diffusion wins on insight.
-        </BlogListItem>
-      </BlogList>
+        <BlogHeading level={2}>Diffusion Deep Research</BlogHeading>
+        <p>
+          Think of diffusion agent models like brainstorming, but instead of everyone writing their
+          own part in isolation and building a Frankenstein report, the research spreads and overlaps
+          as it evolves within the team. Ideas for each segment are not isolated, as not one person
+          owns each segment.
+        </p>
+        <p>
+          The team starts off by writing a draft, only based on their internal knowledge. Typically
+          in bullet point format with clear notes about missing references, knowledge gaps, outdated
+          information, and uncertainty.
+        </p>
+        <p>
+          The students prioritize these knowledge gaps together and research different perspectives
+          of those gaps (in parallel isolation) and add them back to the report in an iterative
+          manner as a group. Gradually the draft evolves into an iteratively better report, filling
+          gaps and enriching knowledge. The draft grows to become the final report. In each writing
+          step, the students have a clear process for transforming rich knowledge into a concise
+          report that fits into the whole story they are trying to tell.
+        </p>
+        <p>
+          To me, this makes a lot more sense! I'll explore the implementation details of text
+          diffusion in this blog post. Enjoy!
+        </p>
+      </div>
 
       <BlogHeading level={2}>Why diffusion for research?</BlogHeading>
 
@@ -184,9 +214,9 @@ Dₙ = U(Dₙ₋₁, R(Dₙ₋₁))`}
 
       <DraftDenoising className="my-10" />
 
-      <BlogHeading level={2}>Core architecture: five phases</BlogHeading>
+      <BlogHeading level={2}>Core architecture: four phases</BlogHeading>
       <p>
-        The implementation consists of five primary phases, orchestrated through a state machine:
+        The implementation consists of four primary phases, orchestrated through a state machine:
       </p>
 
       <BlogHeading level={3}>Phase 1: Research brief generation</BlogHeading>
@@ -229,8 +259,10 @@ Dₙ = U(Dₙ₋₁, R(Dₙ₋₁))`}
         the Go implementation:
       </p>
 
-      <Terminal className="my-6">
-{`<Diffusion Algorithm>
+      <Prompt
+        label="Diffusion Algorithm"
+        className="my-6"
+        value={`<Diffusion Algorithm>
 1. generate the next research questions to address gaps in the draft report
 2. **conduct_research**: retrieve external information to provide concrete delta for denoising
 3. **refine_draft**: remove "noise" (imprecision, incompleteness) from the draft report
@@ -240,7 +272,7 @@ Dₙ = U(Dₙ₋₁, R(Dₙ₋₁))`}
    collected. You know the research findings are complete by running conduct_research tool
    to generate diverse research questions to see if you cannot find any new findings.
 </Diffusion Algorithm>`}
-      </Terminal>
+      />
 
       <Callout variant="warning">
         <strong>Critical distinction:</strong> Research completion is determined by findings completeness,
@@ -262,8 +294,10 @@ Dₙ = U(Dₙ₋₁, R(Dₙ₋₁))`}
         and scaling rules:
       </p>
 
-      <Terminal className="my-4 text-xs">
-{`You are a research supervisor. Your job is to conduct research by calling the
+      <Prompt
+        label="Lead Researcher Prompt"
+        className="my-4"
+        value={`You are a research supervisor. Your job is to conduct research by calling the
 "conduct_research" tool and refine the draft report by calling "refine_draft"
 tool based on your new research findings.
 
@@ -289,15 +323,17 @@ tool based on your new research findings.
 **Important**: When calling conduct_research, provide complete standalone instructions -
 sub-agents can't see other agents' work
 </Scaling Rules>`}
-      </Terminal>
+      />
 
       <BlogHeading level={3}>Sub-researcher prompt</BlogHeading>
       <p>
         Each sub-agent operates with isolated context and strict iteration limits:
       </p>
 
-      <Terminal className="my-4 text-xs">
-{`You are a research assistant conducting research on the user's input topic.
+      <Prompt
+        label="Sub-Researcher Prompt"
+        className="my-4"
+        value={`You are a research assistant conducting research on the user's input topic.
 
 <Hard Limits>
 **Tool Call Budgets** (Prevent excessive searching):
@@ -318,7 +354,7 @@ After each search tool call, use think to analyze the results:
 - Do I have enough to answer the question comprehensively?
 - Should I search more or provide my answer?
 </Show Your Thinking>`}
-      </Terminal>
+      />
 
       <BlogHeading level={3}>Research compression prompt</BlogHeading>
       <p>
@@ -326,8 +362,10 @@ After each search tool call, use think to analyze the results:
         preserving ALL information verbatim:
       </p>
 
-      <Terminal className="my-4 text-xs">
-{`You are a research assistant that has conducted research on a topic. Your job is now
+      <Prompt
+        label="Research Compression Prompt"
+        className="my-4"
+        value={`You are a research assistant that has conducted research on a topic. Your job is now
 to clean up the findings, but preserve all of the relevant statements and information.
 
 <Tool Call Filtering>
@@ -346,15 +384,17 @@ to clean up the findings, but preserve all of the relevant statements and inform
 Critical: Any information even remotely relevant must be preserved verbatim
 (don't rewrite, summarize, or paraphrase it).
 </Guidelines>`}
-      </Terminal>
+      />
 
       <BlogHeading level={3}>Final report prompt (with quality rules)</BlogHeading>
       <p>
         The final synthesis applies both Insightfulness and Helpfulness rules:
       </p>
 
-      <Terminal className="my-4 text-xs">
-{`<Insightfulness Rules>
+      <Prompt
+        label="Final Report Prompt"
+        className="my-4"
+        value={`<Insightfulness Rules>
 - Granular breakdown - Does the response have granular breakdown of topics
   and their specific causes and specific impacts?
 - Detailed mapping table - Does the response have a detailed table mapping
@@ -376,7 +416,7 @@ Critical: Any information even remotely relevant must be preserved verbatim
 - IMPORTANT: Number sources sequentially without gaps (1,2,3,4...)
 - Citations are extremely important - users rely on these
 </Citation Rules>`}
-      </Terminal>
+      />
 
       <BlogHeading level={2}>Self-balancing: two-stage gap closing</BlogHeading>
       <p>

@@ -1,0 +1,34 @@
+# Intro
+
+Remember back in school when you had one of those infamous and dreaded group projects (I kinda liked them)... 
+at least a few times you probably tried the "parrallel" way of working, optimizing for a bit less colaboration and each participant owning one segment of the report. 
+Off you go! Each person for themselves writing extencive backgrounds, history, theory, or whatever sgements you decided on. Then you meet up 3 hours before the deadline to 
+"glue the report" together... how did that turn out? 
+The result was probably:
+- Repetetive
+- Inconsistant
+- Different tone of voice per segment
+- Vastly different quality per segement
+- No the grade you hoped for
+
+
+It turns out, when we construct our AI research agents like this (plan -> parrallel research -> glue research into report), we get the same problem! When no context of the "evolving report" is shared accross sub-agents, 
+we get a fragmentet ball of mudd.
+
+These sequantial and isolated group projects/research agents have their percs, like high level of autonomy and parrelelism... but there are porbably better ways to do it. 
+
+# Diffusion Deep Research
+
+Think of diffusion agents models like brainstorming, but instead of everyone writing their own part in isolation and building a Frankenstein report, 
+the research spreads and overlaps as it evolves within the team. Ideas for each segemnt are not isolated, as not one person owns each segemnt.
+
+The team starts off by writing a draft, only based on their internal knowledge. 
+Typically in bullet point format with clear notes about missing references, knowledge gaps, outdated information, and uncertanty.
+
+The studens prioritizes these knowledge gaps together and researches different perspectives of those gaps (in parrallel isolation) and adds them back to the report in an iterative manner as a group. 
+Gradually evolving the draft to an itterativly better report, filling gaps and enriching knowledge. The draft grows to become the final report. In each writing step, the students have a clear process 
+for transforming rich knowledge into a consise report that fits into the whole story they are trying to tell. 
+
+To me, this makes a lot more sense! I'll explore the implementation details of text deffusion in this blogpost. Enjoy!
+
+

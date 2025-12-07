@@ -9,10 +9,10 @@ import (
 	"testing"
 	"time"
 
+	"go-research/internal/architectures/think_deep/runtime"
 	"go-research/internal/config"
 	"go-research/internal/events"
 	"go-research/internal/llm"
-	"go-research/internal/think_deep"
 	"go-research/internal/tools"
 
 	"github.com/joho/godotenv"
@@ -63,9 +63,12 @@ func TestSubResearcher_UsesDocumentReaderOnAMDataset(t *testing.T) {
 	}
 
 	dataset := datasetPath(t)
+	if _, err := os.Stat(dataset); err != nil {
+		t.Skipf("AM dataset not present locally (%s): %v", dataset, err)
+	}
 
 	client := llm.NewClient(cfg)
-	registry := think_deep.SubResearcherToolRegistry(cfg.BraveAPIKey, client)
+	registry := runtime.SubResearcherToolRegistry(cfg.BraveAPIKey, client)
 	loggingRegistry := &loggingToolExecutor{exec: registry}
 
 	bus := events.NewBus(32)
