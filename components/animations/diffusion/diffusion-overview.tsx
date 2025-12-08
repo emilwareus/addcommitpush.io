@@ -47,13 +47,12 @@ export function DiffusionOverview({ className }: DiffusionOverviewProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { margin: '-20% 0px -20% 0px', amount: 0.3 });
   const [index, setIndex] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
   const [charIndex, setCharIndex] = useState(0);
   const [loopStep, setLoopStep] = useState(0);
 
   // Phase advance with custom dwell times per phase
   useEffect(() => {
-    if (!isInView || !isPlaying) return;
+    if (!isInView) return;
     const duration = phaseDurations[index] ?? 3200;
     const id = setTimeout(() => {
       setIndex((prev) => (prev + 1) % phases.length);
@@ -61,7 +60,7 @@ export function DiffusionOverview({ className }: DiffusionOverviewProps) {
       setLoopStep(0);
     }, duration);
     return () => clearTimeout(id);
-  }, [isInView, isPlaying, index]);
+  }, [isInView, index]);
 
   const isLoopPhase = phases[index]?.isLoop;
 
@@ -74,7 +73,7 @@ export function DiffusionOverview({ className }: DiffusionOverviewProps) {
   }, [isLoopPhase]);
 
   useEffect(() => {
-    if (!isInView || !isPlaying || !isLoopPhase) return;
+    if (!isInView || !isLoopPhase) return;
     const id = setInterval(() => {
       setLoopStep((prev) => {
         const next = (prev + 1) % diffusionLoopStages.length;
@@ -83,17 +82,16 @@ export function DiffusionOverview({ className }: DiffusionOverviewProps) {
       });
     }, loopStageDuration);
     return () => clearInterval(id);
-  }, [isInView, isPlaying, isLoopPhase]);
+  }, [isInView, isLoopPhase]);
 
   useEffect(() => {
-    if (!isPlaying) return;
     const active = phases[index];
     const activeText = active.isLoop ? diffusionLoopStages[loopStep] : active.text;
     const id = setInterval(() => {
       setCharIndex((p) => (p >= activeText.length ? activeText.length : p + 3));
     }, 35);
     return () => clearInterval(id);
-  }, [index, loopStep, isPlaying]);
+  }, [index, loopStep]);
 
   return (
     <div
@@ -108,13 +106,6 @@ export function DiffusionOverview({ className }: DiffusionOverviewProps) {
           <p className="text-xs uppercase tracking-widest text-secondary">Diffusion Overview</p>
           <h3 className="text-lg font-semibold">4-phase pipeline</h3>
         </div>
-        <button
-          type="button"
-          onClick={() => setIsPlaying((p) => !p)}
-          className="text-sm text-secondary hover:text-primary"
-        >
-          {isPlaying ? 'Pause' : 'Play'}
-        </button>
       </div>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-4">

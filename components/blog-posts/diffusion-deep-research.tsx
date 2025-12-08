@@ -25,16 +25,20 @@ function GoCode({ code }: { code: string }) {
     <Highlight theme={themes.vsDark} code={code.trim()} language="go">
       {({ className, style, tokens, getLineProps, getTokenProps }) => (
         <pre
-          className={`${className} rounded-lg border border-border/40 bg-muted/40 p-4 overflow-x-auto font-normal`}
+          className={`${className} mt-5 mb-7 rounded-lg border border-border/40 bg-muted/40 p-4 overflow-x-auto font-normal`}
           style={{ ...style, fontFamily: 'inherit', fontSize: 'inherit', lineHeight: 'inherit' }}
         >
-          {tokens.map((line, i) => (
-            <div key={i} {...getLineProps({ line, key: i })}>
-              {line.map((token, key) => (
-                <span key={key} {...getTokenProps({ token, key })} />
-              ))}
-            </div>
-          ))}
+          {tokens.map((line, lineIndex) => {
+            const lineProps = getLineProps({ line });
+            return (
+              <div key={lineIndex} {...lineProps}>
+                {line.map((token, tokenIndex) => {
+                  const tokenProps = getTokenProps({ token });
+                  return <span key={tokenIndex} {...tokenProps} />;
+                })}
+              </div>
+            );
+          })}
         </pre>
       )}
     </Highlight>
@@ -156,6 +160,62 @@ export function DiffusionDeepResearchContent() {
 
       <DiffusionOverview className="my-10" />
 
+      <BlogHeading level={2}>Core architecture: four phases</BlogHeading>
+      <p>
+        The implementation consists of four primary phases, orchestrated through a state machine:
+      </p>
+
+      <BlogHeading level={3}>Phase 1: Research brief generation</BlogHeading>
+      <p>
+        Transform the user query into a detailed research brief with sources, constraints, and scope.
+        This ensures all downstream research is grounded in explicit requirements.
+      </p>
+
+      <BlogHeading level={3}>Phase 2: Initial draft generation</BlogHeading>
+      <p>
+        Generate a draft from the LLM&apos;s <strong>internal knowledge only</strong>—no external
+        information retrieval yet. This is the &ldquo;noisy&rdquo; initial state that provides structure
+        to guide subsequent research. It may contain outdated or incomplete information, and that&apos;s
+        intentional.
+      </p>
+
+      <BlogHeading level={3}>Phase 3: Diffusion loop (supervisor subgraph)</BlogHeading>
+      <p>
+        The core innovation. Each iteration follows four steps:
+      </p>
+      <BlogList variant="ordered">
+        <BlogListItem>Generate research questions to address <strong>gaps</strong> in the draft</BlogListItem>
+        <BlogListItem><code>conduct_research</code>: Retrieve external info for &ldquo;denoising&rdquo;</BlogListItem>
+        <BlogListItem><code>refine_draft</code>: Remove &ldquo;noise&rdquo; (imprecision, incompleteness) from draft</BlogListItem>
+        <BlogListItem>Assess: Are findings comprehensive? (NOT draft appearance!)</BlogListItem>
+      </BlogList>
+
+      <BlogHeading level={3}>Phase 4: Final report generation</BlogHeading>
+      <p>
+        Apply quality optimization with Insightfulness + Helpfulness rules. Deduplicate findings by URL,
+        add granular breakdowns, detailed mapping tables, nuanced discussion, and proper citations.
+      </p>
+
+      <BlogHeading level={2}>Core algorithm overview</BlogHeading>
+      <p>
+        The core innovation is the <strong>Self-Balancing Test-Time Diffusion</strong> algorithm,
+        encoded directly in the supervisor&apos;s system prompt. Here is the exact algorithm from
+        the Go implementation:
+      </p>
+
+      <p className="text-sm text-muted-foreground">
+        The full diffusion algorithm prompt is available as a collapsible block in the code walkthrough
+        below.
+      </p>
+
+      <Callout variant="warning">
+        <strong>Critical distinction:</strong> Research completion is determined by findings completeness,
+        not by how polished the draft looks. Even if the draft appears complete, continue researching
+        until diverse queries stop yielding new facts.
+      </Callout>
+
+      <DiffusionLoopStep className="my-10" />
+
       <BlogHeading level={2}>Theoretical foundations</BlogHeading>
 
       <BlogHeading level={3}>Classical diffusion models</BlogHeading>
@@ -167,6 +227,14 @@ export function DiffusionDeepResearchContent() {
       </p>
       <p>
         <strong>Reverse Diffusion:</strong> Learn to denoise step by step: <code>xₜ → xₜ₋₁ → ... → x₁ → x₀ (clean data)</code>
+      </p>
+
+      <br />
+
+      <p>For you guys that and walked the fields of Machine Learning, 
+        this feels like an autoencoder but that goes to complete noise 
+        instead of a low-dimensional latent space representation (that still actually means something). 
+        With key differences of course.. (for another blog post)
       </p>
 
       <BlogHeading level={3}>Adaptation to research</BlogHeading>
@@ -210,95 +278,27 @@ export function DiffusionDeepResearchContent() {
         brings the report closer to ground truth.
       </p>
 
-      <BlogHeading level={3}>Mathematical formulation</BlogHeading>
-      <p>Let:</p>
+      <p>The process terminates when (in priority order):</p>
       <BlogList variant="unordered">
-        <BlogListItem><code>D₀</code> = Initial draft (from LLM training data only)</BlogListItem>
-        <BlogListItem><code>Dₜ</code> = Draft at iteration t</BlogListItem>
-        <BlogListItem><code>R(Dₜ)</code> = Research function that identifies gaps and retrieves information</BlogListItem>
-        <BlogListItem><code>U(Dₜ, R(Dₜ))</code> = Update function that incorporates research into draft</BlogListItem>
+        <BlogListItem>Gap-closed: Diverse queries yield no new findings.</BlogListItem>
+        <BlogListItem>Iteration cap: Hard stop at 15 supervisor iterations.</BlogListItem>
+        <BlogListItem>
+          Supervisor override: Allowed only with rationale tied to evidence coverage.
+        </BlogListItem>
       </BlogList>
 
-      <p>The diffusion process becomes:</p>
-      <Terminal className="my-4">
-{`D₁ = U(D₀, R(D₀))
-D₂ = U(D₁, R(D₁))
-...
-Dₙ = U(Dₙ₋₁, R(Dₙ₋₁))`}
-      </Terminal>
-
-      <p>The process terminates when:</p>
-      <BlogList variant="unordered">
-        <BlogListItem><code>R(Dₜ)</code> returns no new information (information gap closed)</BlogListItem>
-        <BlogListItem>Maximum iterations reached (hard limit: 15)</BlogListItem>
-        <BlogListItem>Supervisor determines research is comprehensive</BlogListItem>
-      </BlogList>
+      <Callout variant="warning">
+        <strong>Guardrails:</strong> Require citations for new facts (drop uncited claims), retry failed
+        tool calls once then mark as a gap, and deduplicate by URL before synthesis. Completion is about
+        evidence coverage, not draft polish.
+      </Callout>
 
       <DraftDenoising className="my-10" />
 
-      <BlogHeading level={2}>Core architecture: four phases</BlogHeading>
+      <BlogHeading level={2}>Diffusion loop (core)</BlogHeading>
       <p>
-        The implementation consists of four primary phases, orchestrated through a state machine:
-      </p>
-
-      <BlogHeading level={3}>Phase 1: Research brief generation</BlogHeading>
-      <p>
-        Transform the user query into a detailed research brief with sources, constraints, and scope.
-        This ensures all downstream research is grounded in explicit requirements.
-      </p>
-
-      <BlogHeading level={3}>Phase 2: Initial draft generation</BlogHeading>
-      <p>
-        Generate a draft from the LLM&apos;s <strong>internal knowledge only</strong>—no external
-        information retrieval yet. This is the &ldquo;noisy&rdquo; initial state that provides structure
-        to guide subsequent research. It may contain outdated or incomplete information, and that&apos;s
-        intentional.
-      </p>
-
-      <BlogHeading level={3}>Phase 3: Diffusion loop (supervisor subgraph)</BlogHeading>
-      <p>
-        The core innovation. Each iteration follows four steps:
-      </p>
-      <BlogList variant="ordered">
-        <BlogListItem>Generate research questions to address <strong>gaps</strong> in the draft</BlogListItem>
-        <BlogListItem><code>conduct_research</code>: Retrieve external info for &ldquo;denoising&rdquo;</BlogListItem>
-        <BlogListItem><code>refine_draft</code>: Remove &ldquo;noise&rdquo; (imprecision, incompleteness) from draft</BlogListItem>
-        <BlogListItem>Assess: Are findings comprehensive? (NOT draft appearance!)</BlogListItem>
-      </BlogList>
-
-      <BlogHeading level={3}>Phase 4: Final report generation</BlogHeading>
-      <p>
-        Apply quality optimization with Insightfulness + Helpfulness rules. Deduplicate findings by URL,
-        add granular breakdowns, detailed mapping tables, nuanced discussion, and proper citations.
-      </p>
-
-      <ParallelAgents className="my-10" />
-
-      <BlogHeading level={2}>The diffusion algorithm</BlogHeading>
-      <p>
-        The core innovation is the <strong>Self-Balancing Test-Time Diffusion</strong> algorithm,
-        encoded directly in the supervisor&apos;s system prompt. Here is the exact algorithm from
-        the Go implementation:
-      </p>
-
-      <p className="text-sm text-muted-foreground">
-        The full diffusion algorithm prompt is available as a collapsible block in the code walkthrough
-        below.
-      </p>
-
-      <Callout variant="warning">
-        <strong>Critical distinction:</strong> Research completion is determined by findings completeness,
-        not by how polished the draft looks. Even if the draft appears complete, continue researching
-        until diverse queries stop yielding new facts.
-      </Callout>
-
-      <DiffusionLoopStep className="my-10" />
-
-      <BlogHeading level={2}>How the diffusion loop actually runs (real code)</BlogHeading>
-      <p>
-        Let&apos;s walk through the <strong>complete implementation</strong> step by step. The diffusion
-        algorithm has four distinct phases, and the code maps directly to these phases. Understanding
-        this code is the key to implementing your own diffusion research system.
+        A walkthrough of how the supervisor and sub-agents iterate, including prompts, parallel
+        fan-out, and final synthesis.
       </p>
 
       <BlogHeading level={3}>Phase 1 &amp; 2: Brief and initial draft generation</BlogHeading>
@@ -353,7 +353,7 @@ func (o *AgentLoop) Research(ctx context.Context, query string) (*LoopResult, er
         `}
       />
 
-      <BlogHeading level={3}>Phase 3: The diffusion loop (where the magic happens)</BlogHeading>
+      <BlogHeading level={3}>Phase 3: Supervisor diffusion loop</BlogHeading>
       <p>
         This is the heart of the algorithm. The supervisor runs an iterative loop that:
       </p>
@@ -618,11 +618,13 @@ sub-agents can't see other agents' work
         </div>
       </details>
 
-      <BlogHeading level={3}>The parallel research fan-out</BlogHeading>
+      <BlogHeading level={3}>Parallel research fan-out</BlogHeading>
       <p>
         When the supervisor receives multiple <code>conduct_research</code> calls in one response,
-        they execute <strong>in parallel</strong>. This is where goroutines and channels come in:
+        they execute <strong>in parallel</strong> (maxConcurrent defaults to 3). If a batch is still
+        running, avoid issuing a new fan-out to reduce thrash/backpressure.
       </p>
+      <ParallelAgents className="my-10" />
       <GoCode
         code={`
 // ============================================================================
@@ -1051,7 +1053,7 @@ func (o *AgentLoop) generateFinalReport(
         along the way. This is why the loop checks findings completeness, not draft polish.
       </Callout>
 
-      <BlogHeading level={2}>Self-balancing: two-stage gap closing</BlogHeading>
+      <BlogHeading level={2}>Gap closing &amp; context</BlogHeading>
       <p>
         The algorithm explicitly separates <strong>information gap closing</strong> from{' '}
         <strong>generation gap closing</strong>:
@@ -1086,7 +1088,7 @@ func (o *AgentLoop) generateFinalReport(
         <BlogListItem>Generates final deliverable with proper citations</BlogListItem>
       </BlogList>
 
-      <BlogHeading level={2}>Context engineering considerations</BlogHeading>
+      <BlogHeading level={3}>Context engineering considerations</BlogHeading>
       <p>
         Long-horizon research tasks face several context challenges. The diffusion approach
         addresses each systematically:
@@ -1156,6 +1158,11 @@ Can contradict itself         Conflicts resolved each iteration`}
 
       <BlogHeading level={2}>Benchmark performance (RACE + FACT)</BlogHeading>
       <p>
+        RACE (report quality) and FACT (citation quality) are the primary DeepResearch Bench lenses:
+        RACE judges coverage, insight, instruction-following, and readability; FACT scores citation
+        accuracy and effective citations.
+      </p>
+      <p>
         <BlogLink href="https://huggingface.co/spaces/muset-ai/DeepResearch-Bench-Leaderboard">
           DeepResearch Bench
         </BlogLink>{' '}
@@ -1216,21 +1223,45 @@ Can contradict itself         Conflicts resolved each iteration`}
         </BlogListItem>
       </BlogList>
 
-      <BlogHeading level={2}>Configuration reference</BlogHeading>
+      <BlogHeading level={2}>Test it out?</BlogHeading>
+
+      <p className="text-sm text-muted-foreground">
+        I implemented a version of this in go in the blog repository, in: <code>/go-research</code>. It expects API keys and runs a REPL with
+        multiple architectures, including <code>/think_deep</code> (diffusion), <code>/storm</code>,
+        and <code>/fast</code> (just a simple ReAct agent). It is not finished software and can execute ai generated code in your environment... :)
+        At your own risk!
+      </p>
+      <br />
+      <p className="text-sm">
+        Browse the code: <BlogLink href="https://github.com/emilwareus/addcommitpush.io/tree/main/go-research/internal/architectures/think_deep">
+          Go implementation (think_deep)
+        </BlogLink>
+        <br />
+        CLI with multiple architectures: <BlogLink href="https://github.com/emilwareus/addcommitpush.io/tree/main/go-research">
+          Go Research
+        </BlogLink>
+      </p>
 
       <Terminal className="my-4">
-{`// Supervisor Configuration
-maxResearcherIterations := 15  // Total supervisor tool calls
-maxConcurrentResearchers := 3  // Parallel sub-agents
+{`# Env (required)
+OPENROUTER_API_KEY=sk-or-...
+BRAVE_API_KEY=sk-brave-...
 
-// Sub-Researcher Configuration
-// Simple queries: 2-3 search calls max
-// Complex queries: up to 5 search calls max
-// Always stop after 5 if can't find sources
+# Optional
+RESEARCH_VAULT=~/research-vault     # Obsidian-compatible vault path
+RESEARCH_VERBOSE=true               # Verbose REPL logs
 
-// Search Configuration
-maxResultsPerQuery := 3
-includeRawContent := true  // For summarization`}
+# Run (from repo root)
+cd go-research
+cp .env.example .env   # optional template; env vars still required
+OPENROUTER_API_KEY=... BRAVE_API_KEY=... go run ./cmd/research
+
+# In the REPL (architectures are commands):
+#   /think_deep <query>   # diffusion/self-balancing
+#   /storm <query>        # STORM multi-perspective
+#   /fast <query>         # single-worker quick pass
+#   /architectures        # list available
+#   /help                 # all commands`}
       </Terminal>
 
       <BlogHeading level={2}>Practical takeaways</BlogHeading>
@@ -1266,6 +1297,10 @@ includeRawContent := true  // For summarization`}
       </BlogList>
 
       <BlogHeading level={2}>References and further reading</BlogHeading>
+      <p className="text-base font-semibold text-secondary">
+        Acknowledgment: Paichun Lin — seminal work on self-balancing agentic AI and text-time
+        diffusion directly inspired this implementation. Well done!
+      </p>
       <BlogList variant="unordered">
         <BlogListItem>
           <BlogLink href="https://research.google/blog/deep-researcher-with-test-time-diffusion/">
@@ -1289,7 +1324,7 @@ includeRawContent := true  // For summarization`}
         </BlogListItem>
         <BlogListItem>
           <BlogLink href="https://github.com/thinkdepthai/Deep_Research">
-            ThinkDepth.ai Open Source Reference Implementation (Python)
+            ThinkDepth.ai Open Source Reference Implementation - Python. (Thanks for the open source and innovations! I learned a lot from it.)
           </BlogLink>
         </BlogListItem>
         <BlogListItem>
@@ -1297,14 +1332,12 @@ includeRawContent := true  // For summarization`}
             Richard Sutton: The Bitter Lesson (2019)
           </BlogLink>
         </BlogListItem>
+        <BlogListItem> 
+          <BlogLink href="https://github.com/emilwareus/addcommitpush.io/tree/main/go-research/internal/architectures/think_deep">
+            My implementation of the ThinkDepth.ai architecture in Go
+          </BlogLink>
+        </BlogListItem>
       </BlogList>
-
-      <Callout variant="tip">
-        <strong>Bottom line:</strong> Treat research like diffusion—iterate, denoise with citations,
-        and stop only when new searches stop yielding new facts. That discipline is what moved the
-        needle on DeepResearch Bench, and it translates directly to shipping credible research-backed
-        features.
-      </Callout>
     </div>
   );
 }

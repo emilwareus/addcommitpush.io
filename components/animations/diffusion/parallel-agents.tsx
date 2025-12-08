@@ -30,11 +30,9 @@ const agents = [
 export function ParallelAgents({ className }: ParallelAgentsProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { margin: '-10% 0px -10% 0px', amount: 0.2 });
-  const [isPlaying, setIsPlaying] = useState(true);
   const [stage, setStage] = useState<'assign' | 'research' | 'collect' | 'refine' | 'decide'>('assign');
   const lastStageRef = useRef<typeof stage>('assign');
   const startRef = useRef<number | null>(null);
-  const pausedElapsedRef = useRef(0);
   const rafRef = useRef<number | null>(null);
 
   // Fixed-duration animation timeline using requestAnimationFrame to avoid drift/jitter.
@@ -55,17 +53,13 @@ export function ParallelAgents({ className }: ParallelAgentsProps) {
       }
     };
 
-    if (!isInView || !isPlaying) {
-      if (startRef.current !== null) {
-        const now = performance.now();
-        pausedElapsedRef.current = (now - startRef.current) % totalDuration;
-      }
+    if (!isInView) {
       startRef.current = null;
       stop();
       return;
     }
 
-    startRef.current = performance.now() - pausedElapsedRef.current;
+    startRef.current = performance.now();
 
     const tick = () => {
       if (startRef.current === null) return;
@@ -95,7 +89,7 @@ export function ParallelAgents({ className }: ParallelAgentsProps) {
     return () => {
       stop();
     };
-  }, [isInView, isPlaying]);
+  }, [isInView]);
 
   // Helper functions for opacity/visibility states
   const getSupervisorOpacity = () => {
@@ -181,13 +175,6 @@ export function ParallelAgents({ className }: ParallelAgentsProps) {
           <p className="text-xs uppercase tracking-widest text-secondary">Parallel Sub-Agents</p>
           <h3 className="text-lg font-semibold">Supervisor coordinates up to 3 research threads</h3>
         </div>
-        <button
-          type="button"
-          onClick={() => setIsPlaying((p) => !p)}
-          className="text-sm text-secondary hover:text-primary"
-        >
-          {isPlaying ? 'Pause' : 'Play'}
-        </button>
       </div>
 
       {/* Flow Diagram */}

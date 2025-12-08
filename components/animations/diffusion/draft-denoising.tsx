@@ -43,27 +43,22 @@ interface DraftDenoisingProps {
 export function DraftDenoising({ className }: DraftDenoisingProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { amount: 0.35 });
-  const [progress, setProgress] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [stageIndex, setStageIndex] = useState(0);
+  const [iteration, setIteration] = useState(1);
 
   useEffect(() => {
-    if (!isInView || !isPlaying) return;
-    const id = setInterval(() => {
-      setProgress((p) => (p >= 1 ? 0 : Math.min(1, p + 0.08)));
-    }, 500);
-    return () => clearInterval(id);
-  }, [isInView, isPlaying]);
+    if (!isInView) return;
+    const isAtEnd = iteration >= 15;
+    const delay = isAtEnd ? 5000 : 700; // 5s hold on 15/15 before restarting
 
-  useEffect(() => {
-    if (!isInView || !isPlaying) return;
-    const id = setInterval(() => {
-      setStageIndex((p) => (p + 1) % stages.length);
-    }, 2200);
-    return () => clearInterval(id);
-  }, [isInView, isPlaying]);
+    const id = setTimeout(
+      () => setIteration((prev) => (prev >= 15 ? 1 : prev + 1)),
+      delay,
+    );
+    return () => clearTimeout(id);
+  }, [isInView, iteration]);
 
-  const iteration = Math.round(progress * 15);
+  const progress = Math.min(iteration / 15, 1);
+  const stageIndex = Math.min(2, Math.floor((iteration - 1) / 5)); // 1-5, 6-10, 11-15
   const stage = stages[stageIndex];
 
   return (
@@ -79,13 +74,6 @@ export function DraftDenoising({ className }: DraftDenoisingProps) {
           <p className="text-xs uppercase tracking-widest text-secondary">Draft Denoising</p>
           <h3 className="text-lg font-semibold">Noisy → clean report</h3>
         </div>
-        <button
-          type="button"
-          onClick={() => setIsPlaying((p) => !p)}
-          className="text-sm text-secondary hover:text-primary"
-        >
-          {isPlaying ? 'Pause' : 'Play'}
-        </button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
