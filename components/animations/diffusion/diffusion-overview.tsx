@@ -63,14 +63,18 @@ export function DiffusionOverview({ className }: DiffusionOverviewProps) {
     return () => clearTimeout(id);
   }, [isInView, isPlaying, index]);
 
+  const isLoopPhase = phases[index]?.isLoop;
+
   // Loop sub-steps advance slower than phase change so all three are visible
   useEffect(() => {
-    if (!isInView || !isPlaying) return;
-    // only run loop sub-steps when on diffusion loop phase
-    if (!phases[index]?.isLoop) {
+    if (!isLoopPhase) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoopStep(0);
-      return;
     }
+  }, [isLoopPhase]);
+
+  useEffect(() => {
+    if (!isInView || !isPlaying || !isLoopPhase) return;
     const id = setInterval(() => {
       setLoopStep((prev) => {
         const next = (prev + 1) % diffusionLoopStages.length;
@@ -79,7 +83,7 @@ export function DiffusionOverview({ className }: DiffusionOverviewProps) {
       });
     }, loopStageDuration);
     return () => clearInterval(id);
-  }, [isInView, isPlaying, index]);
+  }, [isInView, isPlaying, isLoopPhase]);
 
   useEffect(() => {
     if (!isPlaying) return;

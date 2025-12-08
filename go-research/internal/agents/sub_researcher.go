@@ -30,15 +30,16 @@ type SubResearcherAgent struct {
 
 // SubResearcherConfig configures the sub-researcher agent behavior.
 type SubResearcherConfig struct {
-	// MaxIterations is the maximum number of search iterations.
-	// Simple queries: 2-3, complex queries: up to 5
+	// MaxIterations is a safety limit for the maximum number of search iterations.
+	// The actual iteration limit is controlled by the prompt (2-3 for simple, 5 for complex).
+	// This is a fallback to prevent runaway loops if the LLM ignores prompt instructions.
 	MaxIterations int
 }
 
 // DefaultSubResearcherConfig returns sensible defaults for sub-researcher configuration.
 func DefaultSubResearcherConfig() SubResearcherConfig {
 	return SubResearcherConfig{
-		MaxIterations: 5,
+		MaxIterations: 20,
 	}
 }
 
@@ -50,7 +51,7 @@ func NewSubResearcherAgent(
 	cfg SubResearcherConfig,
 ) *SubResearcherAgent {
 	if cfg.MaxIterations == 0 {
-		cfg.MaxIterations = 5
+		cfg.MaxIterations = 20
 	}
 	return &SubResearcherAgent{
 		client:        client,

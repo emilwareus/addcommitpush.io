@@ -18,6 +18,28 @@ import {
   RACEMetrics,
   DiffusionLoopStep,
 } from '@/components/animations/diffusion';
+import { Highlight, themes } from 'prism-react-renderer';
+
+function GoCode({ code }: { code: string }) {
+  return (
+    <Highlight theme={themes.vsDark} code={code.trim()} language="go">
+      {({ className, style, tokens, getLineProps, getTokenProps }) => (
+        <pre
+          className={`${className} rounded-lg border border-border/40 bg-muted/40 p-4 overflow-x-auto font-normal`}
+          style={{ ...style, fontFamily: 'inherit', fontSize: 'inherit', lineHeight: 'inherit' }}
+        >
+          {tokens.map((line, i) => (
+            <div key={i} {...getLineProps({ line, key: i })}>
+              {line.map((token, key) => (
+                <span key={key} {...getTokenProps({ token, key })} />
+              ))}
+            </div>
+          ))}
+        </pre>
+      )}
+    </Highlight>
+  );
+}
 
 export function DiffusionDeepResearchContent() {
   return (
@@ -43,10 +65,10 @@ export function DiffusionDeepResearchContent() {
           kinda liked them)...
         </p>
         <p>
-          At least a few times you probably tried the "parallel" way of working, optimizing for a bit
+          At least a few times you probably tried the &ldquo;parallel&rdquo; way of working, optimizing for a bit
           less collaboration and each participant owning one segment of the report. Off you go! Each
           person for themselves writing extensive backgrounds, history, theory, or whatever segments
-          you decided on. Then you meet up 3 hours before the deadline to "glue the report"
+          you decided on. Then you meet up 3 hours before the deadline to &ldquo;glue the report&rdquo;
           together—how did that turn out?
         </p>
         <div>
@@ -62,7 +84,7 @@ export function DiffusionDeepResearchContent() {
         <p>
           It turns out, when we construct our AI research agents like this (plan -&gt; parallel
           research -&gt; glue research into report), we get the same problem! When no context of the
-          "evolving report" is shared across sub-agents, we get a fragmented ball of mud.
+          &ldquo;evolving report&rdquo; is shared across sub-agents, we get a fragmented ball of mud.
         </p>
         <p>
           These sequential and isolated group projects/research agents have their perks, like high
@@ -90,7 +112,7 @@ export function DiffusionDeepResearchContent() {
           report that fits into the whole story they are trying to tell.
         </p>
         <p>
-          To me, this makes a lot more sense! I'll explore the implementation details of text
+          To me, this makes a lot more sense! I&apos;ll explore the implementation details of text
           diffusion in this blog post. Enjoy!
         </p>
       </div>
@@ -259,20 +281,10 @@ Dₙ = U(Dₙ₋₁, R(Dₙ₋₁))`}
         the Go implementation:
       </p>
 
-      <Prompt
-        label="Diffusion Algorithm"
-        className="my-6"
-        value={`<Diffusion Algorithm>
-1. generate the next research questions to address gaps in the draft report
-2. **conduct_research**: retrieve external information to provide concrete delta for denoising
-3. **refine_draft**: remove "noise" (imprecision, incompleteness) from the draft report
-4. **research_complete**: complete research only based on conduct_research tool's findings'
-   completeness. it should not be based on the draft report. even if the draft report looks
-   complete, you should continue doing the research until all the research findings are
-   collected. You know the research findings are complete by running conduct_research tool
-   to generate diverse research questions to see if you cannot find any new findings.
-</Diffusion Algorithm>`}
-      />
+      <p className="text-sm text-muted-foreground">
+        The full diffusion algorithm prompt is available as a collapsible block in the code walkthrough
+        below.
+      </p>
 
       <Callout variant="warning">
         <strong>Critical distinction:</strong> Research completion is determined by findings completeness,
@@ -282,22 +294,301 @@ Dₙ = U(Dₙ₋₁, R(Dₙ₋₁))`}
 
       <DiffusionLoopStep className="my-10" />
 
-      <BlogHeading level={2}>Implementation: the real prompts</BlogHeading>
+      <BlogHeading level={2}>How the diffusion loop actually runs (real code)</BlogHeading>
       <p>
-        Below are the actual prompts from the Go implementation. Understanding these is crucial for
-        implementing your own diffusion research system.
+        Let&apos;s walk through the <strong>complete implementation</strong> step by step. The diffusion
+        algorithm has four distinct phases, and the code maps directly to these phases. Understanding
+        this code is the key to implementing your own diffusion research system.
       </p>
 
-      <BlogHeading level={3}>Lead researcher (supervisor) prompt</BlogHeading>
+      <BlogHeading level={3}>Phase 1 &amp; 2: Brief and initial draft generation</BlogHeading>
       <p>
-        This prompt orchestrates the entire diffusion loop. Note the explicit algorithm, hard limits,
-        and scaling rules:
+        The entry point is <code>AgentLoop.Research</code>. This function orchestrates all four phases
+        of the diffusion algorithm. The first two phases are straightforward LLM calls:
       </p>
+      <GoCode
+        code={`
+// ============================================================================
+// go-research/internal/architectures/think_deep/loop.go
+// ============================================================================
+// AgentLoop.Research is the main entry point for the diffusion algorithm.
+// It orchestrates all four phases: brief → draft → diffusion → final report.
 
-      <Prompt
-        label="Lead Researcher Prompt"
-        className="my-4"
-        value={`You are a research supervisor. Your job is to conduct research by calling the
+func (o *AgentLoop) Research(ctx context.Context, query string) (*LoopResult, error) {
+    startTime := time.Now()
+
+    // ========================================================================
+    // PHASE 1: BRIEF GENERATION
+    // ========================================================================
+    // Transform the raw user query into a structured research brief.
+    // The brief defines:
+    //   - The core research question
+    //   - Key sub-questions to explore
+    //   - Expected deliverables and scope
+    //   - Success criteria for the research
+    //
+    // This is a single LLM call using TransformToResearchBriefPrompt().
+    // The brief serves as the "north star" for all subsequent research.
+
+    researchBrief, _, _ := o.generateResearchBrief(ctx, query)
+
+    // ========================================================================
+    // PHASE 2: INITIAL DRAFT GENERATION (the "noisy" starting state)
+    // ========================================================================
+    // Generate the first draft using ONLY the LLM's training data.
+    // This is the "noisy" initial state in diffusion terminology.
+    //
+    // The draft is intentionally imperfect - it contains:
+    //   - Outdated information (training data cutoff)
+    //   - Gaps marked with "[NEEDS RESEARCH]" placeholders
+    //   - Uncertain claims that need verification
+    //   - Incomplete sections that need expansion
+    //
+    // This "noise" will be "denoised" through iterative research.
+
+    initialDraft, _, _ := o.generateInitialDraft(ctx, researchBrief)
+
+    // ... continues to Phase 3 and 4 below
+}
+        `}
+      />
+
+      <BlogHeading level={3}>Phase 3: The diffusion loop (where the magic happens)</BlogHeading>
+      <p>
+        This is the heart of the algorithm. The supervisor runs an iterative loop that:
+      </p>
+      <BlogList variant="ordered">
+        <BlogListItem>Analyzes gaps in the current draft</BlogListItem>
+        <BlogListItem>Delegates research tasks to sub-agents (in parallel)</BlogListItem>
+        <BlogListItem>Incorporates findings back into the draft</BlogListItem>
+        <BlogListItem>Repeats until research is complete (not when draft looks good!)</BlogListItem>
+      </BlogList>
+      <GoCode
+        code={`
+// ============================================================================
+// PHASE 3: THE DIFFUSION LOOP
+// ============================================================================
+// This is where iterative "denoising" happens. The supervisor coordinates
+// multiple sub-researchers to fill gaps in the draft.
+//
+// Key insight: The loop continues until RESEARCH FINDINGS are complete,
+// NOT until the draft looks polished. This prevents premature termination.
+
+func (o *AgentLoop) Research(ctx context.Context, query string) (*LoopResult, error) {
+    // ... Phase 1 & 2 above ...
+
+    // ========================================================================
+    // PHASE 3: SUPERVISOR COORDINATION (DIFFUSION LOOP)
+    // ========================================================================
+    // The supervisor.Coordinate() function runs the actual diffusion loop.
+    // It takes:
+    //   - researchBrief: the research objectives
+    //   - initialDraft: the "noisy" starting state
+    //   - o.executeSubResearch: a callback that spawns sub-researchers
+    //
+    // The callback pattern allows the supervisor to delegate research
+    // without knowing the implementation details of sub-researchers.
+
+    supervisorResult, _ := o.supervisor.Coordinate(
+        ctx,
+        researchBrief,
+        initialDraft,
+        o.executeSubResearch,  // <-- This callback spawns parallel sub-agents
+    )
+
+    // supervisorResult now contains:
+    //   - Notes: compressed research findings from all sub-researchers
+    //   - DraftReport: the iteratively refined draft
+    //   - SubInsights: structured insights with source URLs
+    //   - IterationsUsed: how many diffusion iterations ran
+    //   - Cost: total token usage across all agents
+
+    // ... continues to Phase 4 below
+}
+        `}
+      />
+
+      <details className="my-4">
+        <summary className="cursor-pointer text-sm font-semibold text-secondary">
+          Show prompt: Diffusion algorithm (supervisor loop)
+        </summary>
+        <div className="mt-3">
+          <Prompt
+            label="Diffusion Algorithm Prompt"
+            className="my-0"
+            value={`<Diffusion Algorithm>
+1. generate the next research questions to address gaps in the draft report
+2. **conduct_research**: retrieve external information to provide concrete delta for denoising
+3. **refine_draft**: remove "noise" (imprecision, incompleteness) from the draft report
+4. **research_complete**: complete research only based on conduct_research tool's findings'
+   completeness. it should not be based on the draft report. even if the draft report looks
+   complete, you should continue doing the research until all the research findings are
+   collected. You know the research findings are complete by running conduct_research tool
+   to generate diverse research questions to see if you cannot find any new findings.
+</Diffusion Algorithm>`}
+          />
+        </div>
+      </details>
+
+      <BlogHeading level={3}>Inside the supervisor: the actual diffusion iteration</BlogHeading>
+      <p>
+        Now let&apos;s look inside <code>SupervisorAgent.Coordinate</code> to see the actual loop.
+        This is where tool calls are parsed, parallelism is handled, and the draft evolves:
+      </p>
+      <GoCode
+        code={`
+// ============================================================================
+// go-research/internal/agents/supervisor.go
+// ============================================================================
+// SupervisorAgent.Coordinate runs the diffusion loop. Each iteration:
+//   1. Builds context (system prompt + current draft + accumulated notes)
+//   2. Asks the LLM what to do next (returns tool calls)
+//   3. Executes tool calls (research in parallel, refinement sequentially)
+//   4. Checks if research is complete
+//   5. If not complete, loop back to step 1
+
+func (s *SupervisorAgent) Coordinate(
+    ctx context.Context,
+    researchBrief string,
+    initialDraft string,
+    subResearcher SubResearcherCallback,  // Callback to spawn sub-agents
+) (*SupervisorResult, error) {
+
+    // Initialize state - this tracks the evolving draft and accumulated notes
+    state := runtime.NewSupervisorState(researchBrief)
+    state.UpdateDraft(initialDraft)
+
+    // Build the system prompt once (includes the diffusion algorithm instructions)
+    date := time.Now().Format("2006-01-02")
+    systemPrompt := runtime.LeadResearcherPrompt(date, s.maxConcurrent, s.maxIterations)
+
+    // ========================================================================
+    // THE DIFFUSION LOOP
+    // ========================================================================
+    // This loop is bounded by maxIterations (default: 15) but will exit early
+    // when the LLM calls "research_complete" tool.
+
+    for state.Iterations < s.maxIterations {
+        state.IncrementIteration()
+
+        // ====================================================================
+        // STEP 1: BUILD CONTEXT FOR THIS ITERATION
+        // ====================================================================
+        // Each iteration sends the LLM:
+        //   - System prompt with diffusion algorithm
+        //   - Current research brief
+        //   - Current draft (evolving with each iteration)
+        //   - Count of accumulated research notes
+        //   - Conversation history (prior tool calls and results)
+        //
+        // This is the KEY to diffusion: context grows with each iteration!
+
+        messages := s.buildMessages(systemPrompt, state)
+
+        // ====================================================================
+        // STEP 2: ASK LLM WHAT TO DO NEXT
+        // ====================================================================
+        resp, _ := s.client.Chat(ctx, messages)
+        content := resp.Choices[0].Message.Content
+
+        // ====================================================================
+        // STEP 3: PARSE TOOL CALLS FROM LLM RESPONSE
+        // ====================================================================
+        // The LLM responds with XML-style tool calls like:
+        //   <tool name="conduct_research">{"research_topic": "..."}</tool>
+        //   <tool name="refine_draft">{}</tool>
+        //   <tool name="research_complete">{}</tool>
+
+        toolCalls := runtime.ParseToolCalls(content)
+
+        // Check for research completion FIRST
+        if s.hasResearchComplete(toolCalls) {
+            break  // Exit the loop - research is done!
+        }
+
+        // If no tool calls, the model decided to stop
+        if len(toolCalls) == 0 {
+            break
+        }
+
+        // ====================================================================
+        // STEP 4: SPLIT TOOL CALLS BY TYPE
+        // ====================================================================
+        // This is where parallelism is set up:
+        //   - conduct_research calls → run in PARALLEL (separate goroutines)
+        //   - think/refine_draft calls → run SEQUENTIALLY
+
+        var conductResearchCalls []runtime.ToolCallParsed
+        var otherCalls []runtime.ToolCallParsed
+
+        for _, tc := range toolCalls {
+            if tc.Tool == "conduct_research" {
+                conductResearchCalls = append(conductResearchCalls, tc)
+            } else {
+                otherCalls = append(otherCalls, tc)
+            }
+        }
+
+        // Execute sequential tools first (think, refine_draft)
+        var toolResults []string
+        for _, tc := range otherCalls {
+            result, _ := s.executeToolCall(ctx, tc, state, ...)
+            toolResults = append(toolResults, result)
+        }
+
+        // ====================================================================
+        // STEP 5: EXECUTE RESEARCH IN PARALLEL
+        // ====================================================================
+        // This is the parallel fan-out! Each conduct_research call spawns
+        // a separate sub-agent in its own goroutine.
+
+        if len(conductResearchCalls) > 0 {
+            researchResults, err := s.executeParallelResearch(
+                ctx,
+                conductResearchCalls,
+                state,
+                subResearcher,  // <-- The callback that creates sub-agents
+                &researcherNum,
+                &totalCost,
+            )
+            toolResults = append(toolResults, researchResults...)
+        }
+
+        // ====================================================================
+        // STEP 6: ADD RESULTS TO CONVERSATION HISTORY
+        // ====================================================================
+        // Tool results are added as a "user" message so the LLM sees them
+        // in the next iteration. This is how context accumulates!
+
+        state.AddMessage(llm.Message{
+            Role:    "user",
+            Content: strings.Join(toolResults, "\\n\\n---\\n\\n"),
+        })
+
+        // Loop continues to next iteration...
+    }
+
+    // Return the final state after all iterations
+    return &SupervisorResult{
+        Notes:          state.Notes,
+        DraftReport:    state.DraftReport,
+        IterationsUsed: state.Iterations,
+        SubInsights:    state.GetSubInsights(),
+        Cost:           totalCost,
+    }, nil
+}
+        `}
+      />
+
+      <details className="my-4">
+        <summary className="cursor-pointer text-sm font-semibold text-secondary">
+          Show prompt: Lead researcher (supervisor)
+        </summary>
+        <div className="mt-3">
+          <Prompt
+            label="Lead Researcher Prompt"
+            className="my-0"
+            value={`You are a research supervisor. Your job is to conduct research by calling the
 "conduct_research" tool and refine the draft report by calling "refine_draft"
 tool based on your new research findings.
 
@@ -323,17 +614,263 @@ tool based on your new research findings.
 **Important**: When calling conduct_research, provide complete standalone instructions -
 sub-agents can't see other agents' work
 </Scaling Rules>`}
+          />
+        </div>
+      </details>
+
+      <BlogHeading level={3}>The parallel research fan-out</BlogHeading>
+      <p>
+        When the supervisor receives multiple <code>conduct_research</code> calls in one response,
+        they execute <strong>in parallel</strong>. This is where goroutines and channels come in:
+      </p>
+      <GoCode
+        code={`
+// ============================================================================
+// go-research/internal/agents/supervisor.go
+// ============================================================================
+// executeParallelResearch fans out multiple research tasks to goroutines.
+// Each sub-researcher runs independently with its own:
+//   - Tool registry (search, fetch, read_document, analyze_csv, think)
+//   - Conversation context (isolated from other sub-agents)
+//   - Iteration budget (max 5 search calls)
+
+func (s *SupervisorAgent) executeParallelResearch(
+    ctx context.Context,
+    calls []runtime.ToolCallParsed,        // Multiple conduct_research calls
+    state *runtime.SupervisorState,
+    subResearcher SubResearcherCallback,   // Callback to spawn each agent
+    researcherNum *int,
+    totalCost *session.CostBreakdown,
+) ([]string, error) {
+
+    // Channel to collect results from all goroutines
+    type researchResult struct {
+        index     int
+        resultStr string
+        insights  []runtime.SubInsight
+        cost      session.CostBreakdown
+        err       error
+    }
+    resultsChan := make(chan researchResult, len(calls))
+
+    // WaitGroup to track when all goroutines complete
+    var wg sync.WaitGroup
+
+    // ========================================================================
+    // FAN OUT: Spawn one goroutine per conduct_research call
+    // ========================================================================
+    for idx, toolCall := range calls {
+        wg.Add(1)
+
+        go func(index int, tc runtime.ToolCallParsed, resNum int) {
+            defer wg.Done()
+
+            // Extract the research topic from the tool call
+            topic, ok := tc.Args["research_topic"].(string)
+            if !ok {
+                resultsChan <- researchResult{
+                    index: index,
+                    err:   errors.New("missing research_topic"),
+                }
+                return
+            }
+
+            // ================================================================
+            // THIS IS WHERE THE SUB-AGENT IS SPAWNED
+            // ================================================================
+            // subResearcher is a callback to AgentLoop.executeSubResearch()
+            // which creates a new SubResearcherAgent with its own tools.
+
+            result, err := subResearcher(ctx, topic, resNum, state.Iterations)
+
+            resultsChan <- researchResult{
+                index:     index,
+                resultStr: result.CompressedResearch,  // Findings as text
+                insights:  result.Insights,            // Structured insights
+                cost:      result.Cost,
+                err:       err,
+            }
+        }(idx, toolCall, *researcherNum)
+
+        *researcherNum++  // Increment for next sub-agent ID
+    }
+
+    // ========================================================================
+    // WAIT FOR ALL GOROUTINES TO COMPLETE
+    // ========================================================================
+    wg.Wait()
+    close(resultsChan)
+
+    // ========================================================================
+    // AGGREGATE RESULTS
+    // ========================================================================
+    var toolResultStrings []string
+    for res := range resultsChan {
+        if res.err != nil {
+            toolResultStrings = append(toolResultStrings,
+                fmt.Sprintf("Research error: %v", res.err))
+            continue
+        }
+
+        // Add findings to supervisor state
+        state.AddNote(res.resultStr)
+        state.AddSubInsights(res.insights)
+        totalCost.Add(res.cost)
+
+        toolResultStrings = append(toolResultStrings,
+            fmt.Sprintf("Research findings:\\n%s", res.resultStr))
+    }
+
+    return toolResultStrings, nil
+}
+        `}
       />
 
-      <BlogHeading level={3}>Sub-researcher prompt</BlogHeading>
+      <BlogHeading level={3}>What each sub-researcher actually does</BlogHeading>
       <p>
-        Each sub-agent operates with isolated context and strict iteration limits:
+        Each sub-researcher is a complete agent with its own tool loop. It receives only the topic
+        (no visibility into other agents&apos; work) and runs its own search/analysis cycle:
       </p>
+      <GoCode
+        code={`
+// ============================================================================
+// go-research/internal/architectures/think_deep/loop.go
+// ============================================================================
+// executeSubResearch is the callback passed to the supervisor.
+// It creates a new sub-agent with isolated tools and context.
 
-      <Prompt
-        label="Sub-Researcher Prompt"
-        className="my-4"
-        value={`You are a research assistant conducting research on the user's input topic.
+func (o *AgentLoop) executeSubResearch(
+    ctx context.Context,
+    topic string,              // The research question from supervisor
+    researcherNum int,         // Unique ID for this sub-agent
+    diffusionIteration int,    // Which supervisor iteration spawned this
+) (*agents.SubResearcherResult, error) {
+
+    // ========================================================================
+    // BUILD DEDICATED TOOL REGISTRY
+    // ========================================================================
+    // Each sub-agent gets its own set of tools:
+    //   - search: Web search via Brave API
+    //   - fetch: Fetch and summarize a specific URL
+    //   - read_document: Read PDF, DOCX, XLSX files
+    //   - analyze_csv: Statistical analysis of CSV data
+    //   - think: Internal reflection (preserved in conversation)
+
+    subTools := runtime.SubResearcherToolRegistry(
+        o.appConfig.BraveAPIKey,
+        o.client,  // LLM client for summarization within tools
+    )
+
+    // ========================================================================
+    // CREATE THE SUB-AGENT
+    // ========================================================================
+    // The agent has:
+    //   - Its own conversation context (cannot see other agents)
+    //   - Strict iteration limits (max 5 search calls)
+    //   - Event bus for progress updates
+
+    subResearcher := agents.NewSubResearcherAgent(
+        o.client,
+        subTools,
+        o.bus,
+        agents.DefaultSubResearcherConfig(),  // maxIterations: 5
+    )
+
+    // ========================================================================
+    // RUN THE SUB-AGENT'S OWN LOOP
+    // ========================================================================
+    // The sub-agent runs its own tool-calling loop:
+    //   1. Receive topic as initial message
+    //   2. Call think to plan search strategy
+    //   3. Call search/fetch/read_document to gather info
+    //   4. Call think to assess what's missing
+    //   5. Repeat until confident or budget exhausted
+    //   6. Compress findings and return
+
+    return subResearcher.Research(ctx, topic, researcherNum)
+}
+
+// ============================================================================
+// go-research/internal/agents/sub_researcher.go
+// ============================================================================
+// SubResearcherAgent.Research runs the actual search/analysis loop.
+
+func (a *SubResearcherAgent) Research(
+    ctx context.Context,
+    topic string,
+    researcherNum int,
+) (*SubResearcherResult, error) {
+
+    // Build system prompt with search instructions and limits
+    systemPrompt := runtime.ResearchAgentPrompt(time.Now().Format("2006-01-02"))
+
+    messages := []llm.Message{
+        {Role: "system", Content: systemPrompt},
+        {Role: "user", Content: topic},  // The research question
+    }
+
+    // ========================================================================
+    // THE SUB-AGENT'S TOOL LOOP
+    // ========================================================================
+    for iterations := 0; iterations < a.maxIterations; iterations++ {
+        resp, _ := a.client.Chat(ctx, messages)
+        content := resp.Choices[0].Message.Content
+
+        // Parse and execute tool calls (search, fetch, think, etc.)
+        toolCalls := runtime.ParseToolCalls(content)
+
+        if len(toolCalls) == 0 {
+            break  // Agent decided to stop searching
+        }
+
+        // Execute each tool and collect results
+        var results []string
+        for _, tc := range toolCalls {
+            result, _ := a.tools.Execute(ctx, tc.Tool, tc.Args)
+            results = append(results, result)
+
+            // Track visited URLs for deduplication
+            if tc.Tool == "fetch" {
+                if url, ok := tc.Args["url"].(string); ok {
+                    a.visitedURLs[url] = true
+                }
+            }
+        }
+
+        // Add results to conversation
+        messages = append(messages, llm.Message{
+            Role:    "user",
+            Content: strings.Join(results, "\\n---\\n"),
+        })
+    }
+
+    // ========================================================================
+    // COMPRESS FINDINGS
+    // ========================================================================
+    // Before returning, compress the research into a structured format
+    // while preserving ALL information verbatim.
+
+    compressed, _ := a.compressResearch(ctx, messages)
+
+    return &SubResearcherResult{
+        CompressedResearch: compressed,
+        RawNotes:          rawNotes,
+        Insights:          extractedInsights,
+        Cost:              totalCost,
+    }, nil
+}
+        `}
+      />
+
+      <details className="my-4">
+        <summary className="cursor-pointer text-sm font-semibold text-secondary">
+          Show prompt: Sub-researcher (tool loop)
+        </summary>
+        <div className="mt-3">
+          <Prompt
+            label="Sub-Researcher Prompt"
+            className="my-0"
+            value={`You are a research assistant conducting research on the user's input topic.
 
 <Hard Limits>
 **Tool Call Budgets** (Prevent excessive searching):
@@ -354,18 +891,19 @@ After each search tool call, use think to analyze the results:
 - Do I have enough to answer the question comprehensively?
 - Should I search more or provide my answer?
 </Show Your Thinking>`}
-      />
+          />
+        </div>
+      </details>
 
-      <BlogHeading level={3}>Research compression prompt</BlogHeading>
-      <p>
-        Before returning to the supervisor, each sub-agent&apos;s findings are compressed while
-        preserving ALL information verbatim:
-      </p>
-
-      <Prompt
-        label="Research Compression Prompt"
-        className="my-4"
-        value={`You are a research assistant that has conducted research on a topic. Your job is now
+      <details className="my-4">
+        <summary className="cursor-pointer text-sm font-semibold text-secondary">
+          Show prompt: Research compression (sub-agent → supervisor)
+        </summary>
+        <div className="mt-3">
+          <Prompt
+            label="Research Compression Prompt"
+            className="my-0"
+            value={`You are a research assistant that has conducted research on a topic. Your job is now
 to clean up the findings, but preserve all of the relevant statements and information.
 
 <Tool Call Filtering>
@@ -384,17 +922,103 @@ to clean up the findings, but preserve all of the relevant statements and inform
 Critical: Any information even remotely relevant must be preserved verbatim
 (don't rewrite, summarize, or paraphrase it).
 </Guidelines>`}
+          />
+        </div>
+      </details>
+
+      <BlogHeading level={3}>Phase 4: Final report synthesis</BlogHeading>
+      <p>
+        After the diffusion loop completes, the final phase synthesizes everything into a polished
+        report. This applies the Insightfulness + Helpfulness quality rules:
+      </p>
+      <GoCode
+        code={`
+// ============================================================================
+// PHASE 4: FINAL REPORT GENERATION
+// ============================================================================
+// After diffusion completes, generate the final polished report.
+// This phase:
+//   1. Deduplicates findings by URL (avoid citing same source twice)
+//   2. Applies Insightfulness rules (granular breakdown, mapping tables)
+//   3. Applies Helpfulness rules (proper citations, markdown formatting)
+
+func (o *AgentLoop) Research(ctx context.Context, query string) (*LoopResult, error) {
+    // ... Phase 1, 2, 3 above ...
+
+    // ========================================================================
+    // PHASE 4: FINAL REPORT
+    // ========================================================================
+    // Combine the refined draft with all accumulated research findings
+    // to produce the final deliverable.
+
+    finalReport, reportCost, err := o.generateFinalReport(
+        ctx,
+        researchBrief,
+        supervisorResult,  // Contains draft + notes + insights
+    )
+
+    return &LoopResult{
+        Query:         query,
+        ResearchBrief: researchBrief,
+        Notes:         supervisorResult.Notes,
+        DraftReport:   supervisorResult.DraftReport,
+        FinalReport:   finalReport,
+        SubInsights:   supervisorResult.SubInsights,
+        Cost:          totalCost,
+        Duration:      time.Since(startTime),
+    }, nil
+}
+
+// generateFinalReport applies quality rules and deduplication
+func (o *AgentLoop) generateFinalReport(
+    ctx context.Context,
+    brief string,
+    supervisor *agents.SupervisorResult,
+) (string, session.CostBreakdown, error) {
+
+    // ========================================================================
+    // DEDUPLICATE FINDINGS BY URL
+    // ========================================================================
+    // Multiple sub-agents may have found the same sources.
+    // Remove notes that contain only URLs we've already seen.
+
+    deduplicatedNotes := o.deduplicateFindings(supervisor.Notes)
+    findings := strings.Join(deduplicatedNotes, "\\n\\n---\\n\\n")
+
+    // ========================================================================
+    // APPLY QUALITY RULES VIA PROMPT
+    // ========================================================================
+    // FinalReportPrompt includes:
+    //   - Insightfulness rules (granular breakdown, mapping tables)
+    //   - Helpfulness rules (citations, markdown, structure)
+    //   - All accumulated research findings
+    //   - The refined draft from diffusion
+
+    prompt := runtime.FinalReportPrompt(
+        brief,
+        findings,
+        supervisor.DraftReport,
+        time.Now().Format("2006-01-02"),
+    )
+
+    resp, _ := o.client.Chat(ctx, []llm.Message{
+        {Role: "user", Content: prompt},
+    })
+
+    return resp.Choices[0].Message.Content, cost, nil
+}
+        `}
       />
 
-      <BlogHeading level={3}>Final report prompt (with quality rules)</BlogHeading>
-      <p>
-        The final synthesis applies both Insightfulness and Helpfulness rules:
-      </p>
-
-      <Prompt
-        label="Final Report Prompt"
-        className="my-4"
-        value={`<Insightfulness Rules>
+      <details className="my-4">
+        <summary className="cursor-pointer text-sm font-semibold text-secondary">
+          Show prompt: Final report (quality rules)
+        </summary>
+        <div className="mt-3">
+          <Prompt
+            label="Final Report Prompt"
+            className="my-0"
+            value={`<Insightfulness Rules>
 - Granular breakdown - Does the response have granular breakdown of topics
   and their specific causes and specific impacts?
 - Detailed mapping table - Does the response have a detailed table mapping
@@ -416,7 +1040,16 @@ Critical: Any information even remotely relevant must be preserved verbatim
 - IMPORTANT: Number sources sequentially without gaps (1,2,3,4...)
 - Citations are extremely important - users rely on these
 </Citation Rules>`}
-      />
+          />
+        </div>
+      </details>
+
+      <Callout variant="info">
+        <strong>The key insight:</strong> Unlike traditional pipelines that generate content in one pass,
+        diffusion builds the report iteratively. Each supervisor iteration sees the <em>current</em> draft
+        and <em>accumulated</em> research, allowing the system to self-correct and fill gaps it discovers
+        along the way. This is why the loop checks findings completeness, not draft polish.
+      </Callout>
 
       <BlogHeading level={2}>Self-balancing: two-stage gap closing</BlogHeading>
       <p>

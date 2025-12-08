@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { cn } from "@/lib/utils";
-import { Users, Search, ArrowDown, ArrowRight, FilePenLine, CheckCircle2, Repeat2 } from "lucide-react";
+import { Users, Search, ArrowDown, FilePenLine, CheckCircle2, Repeat2 } from "lucide-react";
 
 interface ParallelAgentsProps {
   className?: string;
