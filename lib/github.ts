@@ -613,10 +613,10 @@ async function fetchGitHubDataInternal(): Promise<GitHubStatusData> {
   };
 }
 
-// Add persistent caching with 1-hour TTL
+// Short cache to smooth out bursts; ISR handles freshness
 const getCachedGitHubData = unstable_cache(fetchGitHubDataInternal, ['github-status-data'], {
   tags: ['github-api'],
-  revalidate: 3600 * 12, // 12 hours in seconds
+  revalidate: 600, // 10 minutes in seconds
 });
 
 export const getGitHubStatusData = getCachedGitHubData;

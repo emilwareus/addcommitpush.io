@@ -183,10 +183,10 @@ export async function fetchLinearDataInternal(): Promise<LinearStatusData> {
   };
 }
 
-// Add persistent caching with 12-hour TTL
+// Short cache to smooth out bursts; ISR handles freshness
 const getCachedLinearData = unstable_cache(fetchLinearDataInternal, ['linear-status-data'], {
   tags: ['linear-api'],
-  revalidate: 3600 * 12, // 12 hours in seconds
+  revalidate: 600, // 10 minutes in seconds
 });
 
 // Add request-level deduplication
