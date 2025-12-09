@@ -28,8 +28,8 @@ export function DiffusionLoopStep({ className }: DiffusionLoopStepProps) {
       <Terminal className="my-4">
 {`think:
   reflection: |
-    Missing eval gates for Anthropic; need incidents 2024–2025;
-    compare red-team cadence across labs.`}
+    Uptime claims are vague; need Cloudflare outage history and SLA terms (2023–2025).
+    Compare public incident reports vs. status page claims.`}
       </Terminal>
       <p>
         Expected: 3–5 targeted questions, each mapped to a draft gap with scope/priority notes.
@@ -43,8 +43,8 @@ export function DiffusionLoopStep({ className }: DiffusionLoopStepProps) {
       <Terminal className="my-4">
 {`ConductResearch:
   research_topic: |
-    Find primary sources on Anthropic Constitutional AI eval gates (2023–2025).
-    Return: URLs, quotes, incident summaries.`}
+    Collect primary sources on Cloudflare outages and SLA/uptime guarantees (2023–2025).
+    Return: URLs, outage timelines, SLA terms, and any compensations offered.`}
       </Terminal>
       <p>
         Expected: cited findings (URLs + quotes) per sub-agent, deduped URLs, short summaries.
