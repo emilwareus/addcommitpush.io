@@ -268,8 +268,6 @@ export default async function PostPage({ params }) {
 
 Keep this document up to date as the source of truth for how this blog is structured and extended.
 
-
-
 # Thoughts:
 
 All thoughs (even in sub-projects) should be in thoughts/shared/ (root), not in the sub projects.

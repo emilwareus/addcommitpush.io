@@ -46,11 +46,10 @@ import (
 
 	"go-research/internal/architectures"
 	"go-research/internal/architectures/catalog"
+	"go-research/internal/architectures/think_deep/runtime"
 	"go-research/internal/config"
 	"go-research/internal/events"
 	"go-research/internal/llm"
-	"go-research/internal/orchestrator"
-	"go-research/internal/think_deep"
 	"go-research/internal/tools"
 )
 
@@ -61,27 +60,42 @@ type Architecture struct {
 	config           *config.Config
 	client           llm.ChatClient
 	tools            tools.ToolExecutor
-	injectionContext *think_deep.InjectionContext
+	injectionContext *runtime.InjectionContext
+	loop             *AgentLoop
 }
 
 // Config holds configuration for the ThinkDeep architecture.
 type Config struct {
 	AppConfig        *config.Config
 	Bus              *events.Bus
-	Client           llm.ChatClient             // Optional: inject for testing
-	Tools            tools.ToolExecutor         // Optional: inject for testing
-	InjectionContext *think_deep.InjectionContext // Optional: prior context for expansion
+	Client           llm.ChatClient            // Optional: inject for testing
+	Tools            tools.ToolExecutor        // Optional: inject for testing
+	InjectionContext *runtime.InjectionContext // Optional: prior context for expansion
 }
 
 // New creates a new ThinkDeep architecture instance.
 func New(cfg Config) *Architecture {
-	return &Architecture{
+	a := &Architecture{
 		bus:              cfg.Bus,
 		config:           cfg.AppConfig,
 		client:           cfg.Client,
 		tools:            cfg.Tools,
 		injectionContext: cfg.InjectionContext,
 	}
+
+	opts := []LoopOption{}
+	if cfg.Client != nil {
+		opts = append(opts, WithLoopClient(cfg.Client))
+	}
+	if cfg.Tools != nil {
+		opts = append(opts, WithLoopTools(cfg.Tools))
+	}
+	if cfg.InjectionContext != nil {
+		opts = append(opts, WithInjectionContext(cfg.InjectionContext))
+	}
+
+	a.loop = NewAgentLoop(cfg.Bus, cfg.AppConfig, opts...)
+	return a
 }
 
 // Name returns the architecture identifier.
@@ -101,8 +115,12 @@ func (a *Architecture) SupportsResume() bool {
 
 // SetInjectionContext sets the context for expansion workflows.
 // This allows building upon existing research findings.
-func (a *Architecture) SetInjectionContext(ctx *think_deep.InjectionContext) {
+func (a *Architecture) SetInjectionContext(ctx *runtime.InjectionContext) {
 	a.injectionContext = ctx
+	// Update loop with new context
+	if a.loop != nil {
+		a.loop.injectionContext = ctx
+	}
 }
 
 // Research executes the ThinkDeep research workflow:
@@ -113,23 +131,22 @@ func (a *Architecture) SetInjectionContext(ctx *think_deep.InjectionContext) {
 func (a *Architecture) Research(ctx context.Context, sessionID string, query string) (*architectures.Result, error) {
 	startTime := time.Now()
 
-	// Build orchestrator options
-	opts := []orchestrator.ThinkDeepOption{}
-	if a.client != nil {
-		opts = append(opts, orchestrator.WithThinkDeepClient(a.client))
+	if a.loop == nil {
+		opts := []LoopOption{}
+		if a.client != nil {
+			opts = append(opts, WithLoopClient(a.client))
+		}
+		if a.tools != nil {
+			opts = append(opts, WithLoopTools(a.tools))
+		}
+		if a.injectionContext != nil {
+			opts = append(opts, WithInjectionContext(a.injectionContext))
+		}
+		a.loop = NewAgentLoop(a.bus, a.config, opts...)
 	}
-	if a.tools != nil {
-		opts = append(opts, orchestrator.WithThinkDeepTools(a.tools))
-	}
-	if a.injectionContext != nil {
-		opts = append(opts, orchestrator.WithInjectionContext(a.injectionContext))
-	}
-
-	// Create the ThinkDeep orchestrator
-	orch := orchestrator.NewThinkDeepOrchestrator(a.bus, a.config, opts...)
 
 	// Execute the full ThinkDeep workflow
-	thinkDeepResult, err := orch.Research(ctx, query)
+	thinkDeepResult, err := a.loop.Research(ctx, query)
 	if err != nil {
 		return &architectures.Result{
 			SessionID: sessionID,
@@ -151,8 +168,8 @@ func (a *Architecture) Resume(ctx context.Context, sessionID string) (*architect
 	return nil, fmt.Errorf("resume not supported for ThinkDepth")
 }
 
-// convertResult transforms ThinkDeepResult into the standard architectures.Result format.
-func (a *Architecture) convertResult(sessionID string, tdr *orchestrator.ThinkDeepResult, startTime time.Time) *architectures.Result {
+// convertResult transforms LoopResult into the standard architectures.Result format.
+func (a *Architecture) convertResult(sessionID string, tdr *LoopResult, startTime time.Time) *architectures.Result {
 	result := &architectures.Result{
 		SessionID:   sessionID,
 		Query:       tdr.Query,

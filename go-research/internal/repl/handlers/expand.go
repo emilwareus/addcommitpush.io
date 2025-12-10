@@ -9,11 +9,11 @@ import (
 
 	"go-research/internal/agent"
 	think_deep_arch "go-research/internal/architectures/think_deep"
+	"go-research/internal/architectures/think_deep/runtime"
 	"go-research/internal/events"
 	"go-research/internal/orchestrator"
 	"go-research/internal/repl"
 	"go-research/internal/session"
-	"go-research/internal/think_deep"
 )
 
 // ExpandHandler handles /expand and natural language follow-ups
@@ -239,8 +239,8 @@ func (h *ExpandHandler) runThinkDeep(ctx *repl.Context, query string, sess *sess
 }
 
 // buildInjectionContext creates an injection context from the session chain.
-func (h *ExpandHandler) buildInjectionContext(ctx *repl.Context, expansionTopic string) *think_deep.InjectionContext {
-	injection := think_deep.NewInjectionContext()
+func (h *ExpandHandler) buildInjectionContext(ctx *repl.Context, expansionTopic string) *runtime.InjectionContext {
+	injection := runtime.NewInjectionContext()
 	injection.SetExpansionTopic(expansionTopic)
 
 	// Walk session chain and accumulate context

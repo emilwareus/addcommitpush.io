@@ -4,7 +4,7 @@ researcher: Claude
 git_commit: 86dca03ec2e572219e7ffd1612e60a4aae8331ef
 branch: feat/custom-deep-research
 repository: addcommitpush.io
-topic: "Go Deep Research Agent Architecture"
+topic: 'Go Deep Research Agent Architecture'
 tags: [architecture, golang, deep-research, interactive-cli, multi-agent]
 status: complete
 last_updated: 2025-11-22
@@ -34,14 +34,14 @@ This document defines the architecture for a Go-based deep research agent that r
 
 ## Core Requirements
 
-| Requirement | Description |
-|-------------|-------------|
-| Fast Research | Single worker, quick turnaround for simple queries |
-| Deep Research | Multi-worker parallel execution for complex queries |
-| Obsidian Integration | Markdown vault with YAML frontmatter, linked notes |
-| Session Management | Persist, load, continue, expand sessions |
-| Interactive Mode | REPL with `/commands`, natural follow-ups route to expand |
-| Streaming Output | Real-time feedback as workers progress |
+| Requirement          | Description                                               |
+| -------------------- | --------------------------------------------------------- |
+| Fast Research        | Single worker, quick turnaround for simple queries        |
+| Deep Research        | Multi-worker parallel execution for complex queries       |
+| Obsidian Integration | Markdown vault with YAML frontmatter, linked notes        |
+| Session Management   | Persist, load, continue, expand sessions                  |
+| Interactive Mode     | REPL with `/commands`, natural follow-ups route to expand |
+| Streaming Output     | Real-time feedback as workers progress                    |
 
 ---
 
@@ -2010,21 +2010,21 @@ func getEnvOrDefault(key, def string) string {
 
 ## Command Reference
 
-| Command | Alias | Description |
-|---------|-------|-------------|
-| `/fast <query>` | `/f` | Single-worker quick research |
-| `/deep <query>` | `/d` | Multi-worker deep research |
-| `/expand <text>` | `/e` | Expand on current session |
-| `/sessions` | `/s` | List all saved sessions |
-| `/load <id>` | `/l` | Load a specific session |
-| `/workers` | `/w` | Show workers in current session |
-| `/rerun <n>` | `/r` | Re-run worker n |
-| `/recompile [text]` | `/rc` | Recompile report with optional instructions |
-| `/model` | | Show/change current model |
-| `/verbose` | `/v` | Toggle verbose output |
-| `/help` | `/h`, `/?` | Show help |
-| `/quit` | `/q` | Exit REPL |
-| `<text>` | | Follow-up question (routes to expand) |
+| Command             | Alias      | Description                                 |
+| ------------------- | ---------- | ------------------------------------------- |
+| `/fast <query>`     | `/f`       | Single-worker quick research                |
+| `/deep <query>`     | `/d`       | Multi-worker deep research                  |
+| `/expand <text>`    | `/e`       | Expand on current session                   |
+| `/sessions`         | `/s`       | List all saved sessions                     |
+| `/load <id>`        | `/l`       | Load a specific session                     |
+| `/workers`          | `/w`       | Show workers in current session             |
+| `/rerun <n>`        | `/r`       | Re-run worker n                             |
+| `/recompile [text]` | `/rc`      | Recompile report with optional instructions |
+| `/model`            |            | Show/change current model                   |
+| `/verbose`          | `/v`       | Toggle verbose output                       |
+| `/help`             | `/h`, `/?` | Show help                                   |
+| `/quit`             | `/q`       | Exit REPL                                   |
+| `<text>`            |            | Follow-up question (routes to expand)       |
 
 ---
 
@@ -2109,6 +2109,7 @@ func getEnvOrDefault(key, def string) string {
 ## Implementation Phases
 
 ### Phase 1: Core Infrastructure
+
 - [ ] Project structure and go.mod
 - [ ] Configuration loading
 - [ ] LLM client (OpenRouter + Alibaba model)
@@ -2116,6 +2117,7 @@ func getEnvOrDefault(key, def string) string {
 - [ ] Basic terminal renderer
 
 ### Phase 2: Agent & Tools
+
 - [ ] Search tool (Brave API)
 - [ ] Fetch tool (web scraping)
 - [ ] Tool registry
@@ -2123,6 +2125,7 @@ func getEnvOrDefault(key, def string) string {
 - [ ] Answer detection and extraction
 
 ### Phase 3: Orchestration
+
 - [ ] Query complexity analysis
 - [ ] Task decomposition planner
 - [ ] Worker pool with goroutines
@@ -2130,6 +2133,7 @@ func getEnvOrDefault(key, def string) string {
 - [ ] Cost tracking
 
 ### Phase 4: Session Management
+
 - [ ] Session data structures
 - [ ] In-memory store
 - [ ] JSON persistence
@@ -2137,6 +2141,7 @@ func getEnvOrDefault(key, def string) string {
 - [ ] Context building for continuation
 
 ### Phase 5: Obsidian Integration
+
 - [ ] Vault directory structure
 - [ ] Worker markdown files
 - [ ] Report files with versions
@@ -2144,6 +2149,7 @@ func getEnvOrDefault(key, def string) string {
 - [ ] YAML frontmatter
 
 ### Phase 6: Interactive REPL
+
 - [ ] Readline integration
 - [ ] Command parser
 - [ ] Router (command vs text)
@@ -2152,6 +2158,7 @@ func getEnvOrDefault(key, def string) string {
 - [ ] Session restore on startup
 
 ### Phase 7: Polish
+
 - [ ] Streaming output
 - [ ] Progress indicators
 - [ ] Error handling
@@ -2183,17 +2190,22 @@ Minimal dependencies - no heavy frameworks. The LLM client uses stdlib `net/http
 ## Open Questions
 
 1. **Streaming vs Batched**: Should final synthesis stream to terminal or batch?
- - Streaming. Try to use streaming APIs when interacting with LLMs, I want it to feel responsive to users. 
+
+- Streaming. Try to use streaming APIs when interacting with LLMs, I want it to feel responsive to users.
+
 2. **Insight Extraction**: Keep separate LLM call (Python uses Claude) or same model?
- - No, same model for everything. but centralize the configuration of what model I use for what parts. so it is easy to change. but same model (alibaba/tongyi-deepresearch-30b-a3b) for everything now for simplicity.
+
+- No, same model for everything. but centralize the configuration of what model I use for what parts. so it is easy to change. but same model (alibaba/tongyi-deepresearch-30b-a3b) for everything now for simplicity.
+
 3. **Search Provider**: Brave only, or add fallback to DuckDuckGo?
- - Brave only
+
+- Brave only
+
 4. **State File Format**: JSON sufficient, or use SQLite for complex queries?
- - JSON to begin with. 
 
+- JSON to begin with.
 
-ALSO, no fallback logic whatsoever. fallback logic is strictly forbidding. IMPORTANT! NO FALLBACK LOGIC EVER!
----
+## ALSO, no fallback logic whatsoever. fallback logic is strictly forbidding. IMPORTANT! NO FALLBACK LOGIC EVER!
 
 ## References
 

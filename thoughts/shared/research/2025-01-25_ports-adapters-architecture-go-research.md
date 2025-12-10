@@ -4,7 +4,7 @@ researcher: Claude
 git_commit: 0e487a7ff2dd4eb9aa690ac395e828f8324014aa
 branch: feat/custom-deep-research
 repository: addcommitpush.io
-topic: "Ports/Adapters Architecture for go-research Agent"
+topic: 'Ports/Adapters Architecture for go-research Agent'
 tags: [research, architecture, hexagonal, ports-adapters, go-research, refactoring]
 status: complete
 last_updated: 2025-01-25
@@ -22,6 +22,7 @@ last_updated_by: Claude
 ## Research Question
 
 How to refactor the go-research deep research agent to separate:
+
 1. The agent core from the CLI (REPL)
 2. The agent core from storage (sessions, reports, insights)
 3. Enable swappable frontends (CLI first, web/API later)
@@ -66,24 +67,26 @@ go-research/
 
 ### 1.2 Current Coupling Points
 
-| Component | Coupling Level | Issues |
-|-----------|---------------|--------|
-| Event Bus | **Low** | Clean pub/sub, already abstracted |
-| LLM Client | **Low** | Has `ChatClient` interface |
-| Tool Executor | **Low** | Has `ToolExecutor` interface |
-| CLI/REPL | **Medium** | Direct orchestrator instantiation in handlers |
-| Storage | **High** | Session struct is both domain AND storage schema |
-| Obsidian | **Medium** | VaultWriter interface exists but limited |
+| Component     | Coupling Level | Issues                                           |
+| ------------- | -------------- | ------------------------------------------------ |
+| Event Bus     | **Low**        | Clean pub/sub, already abstracted                |
+| LLM Client    | **Low**        | Has `ChatClient` interface                       |
+| Tool Executor | **Low**        | Has `ToolExecutor` interface                     |
+| CLI/REPL      | **Medium**     | Direct orchestrator instantiation in handlers    |
+| Storage       | **High**       | Session struct is both domain AND storage schema |
+| Obsidian      | **Medium**     | VaultWriter interface exists but limited         |
 
 ### 1.3 Key Discoveries
 
 **Strong Points:**
+
 - `llm.ChatClient` interface already exists (`internal/llm/client.go:19-25`)
 - `tools.ToolExecutor` interface already exists (`internal/tools/registry.go:16-19`)
 - Event bus enables loose coupling for progress updates
 - Options pattern used for dependency injection in orchestrators
 
 **Weak Points:**
+
 - `Session` struct conflates domain model and storage schema
 - Handlers directly instantiate orchestrators (`handlers/start.go:57`, `145`)
 - Result→Session transformation logic lives in handlers
@@ -1217,6 +1220,7 @@ func main() {
 3. No functional changes - existing code continues to work
 
 **Files to Create**:
+
 - `internal/core/ports/research.go`
 - `internal/core/ports/storage.go`
 - `internal/core/ports/llm.go`
@@ -1224,6 +1228,7 @@ func main() {
 - `internal/core/ports/events.go`
 
 **Verification**:
+
 ```go
 // Compile-time interface compliance
 var _ ports.LLMProvider = (*llm.Client)(nil)
@@ -1239,6 +1244,7 @@ var _ ports.ToolExecutor = (*tools.Registry)(nil)
 3. Update storage adapters to use entity types internally
 
 **Key Changes**:
+
 - `Session` (domain) has no `json` tags
 - `SessionEntity` (storage) has `json` tags
 - Mapping functions `toEntity()` / `toDomain()` in storage adapters
@@ -1252,6 +1258,7 @@ var _ ports.ToolExecutor = (*tools.Registry)(nil)
 3. Move orchestration logic from handlers to services
 
 **Key Changes**:
+
 - Handlers become thin adapters calling services
 - Services own all business logic
 - Services depend only on ports

@@ -19,8 +19,7 @@ const headingVariants = cva('font-bold text-balance scroll-mt-20', {
 });
 
 export interface BlogHeadingProps
-  extends React.HTMLAttributes<HTMLHeadingElement>,
-    VariantProps<typeof headingVariants> {
+  extends React.HTMLAttributes<HTMLHeadingElement>, VariantProps<typeof headingVariants> {
   level: 1 | 2 | 3 | 4 | 5 | 6;
 }
 

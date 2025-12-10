@@ -4,7 +4,7 @@ researcher: Claude
 git_commit: 6a32cb5cc41e10a32999f565d10ca639bbecc06c
 branch: main
 repository: addcommitpush.io/go-research
-topic: "Interactive CLI Agentic Research Experience"
+topic: 'Interactive CLI Agentic Research Experience'
 tags: [research, cli, interactive, obsidian, think_deep, storm, agents]
 status: complete
 last_updated: 2025-12-03
@@ -22,6 +22,7 @@ last_updated_by: Claude
 ## Research Question
 
 Design an interactive CLI experience for deep research where:
+
 1. Users can invoke different research modes (fast, storm, think_deep)
 2. Sessions maintain context about written reports (outputs only, not full agent context)
 3. Smart mode selection based on query complexity
@@ -32,12 +33,14 @@ Design an interactive CLI experience for deep research where:
 ## Summary
 
 The current go-research CLI has strong foundations for an interactive agentic experience. The architecture supports:
+
 - Session management with versioning and parent tracking
 - Event-driven visualization of research progress
 - Existing `/expand` handler for follow-up queries
 - Obsidian integration for persistence (though sub-insights not yet saved)
 
 The proposed "Claude Code-style" interactive experience requires:
+
 1. A **Chat Router** that intelligently routes queries to appropriate agents
 2. **Session Context Manager** that maintains report summaries without full agent state
 3. **Expand Knowledge Pipeline** with injection points into each agent architecture
@@ -48,18 +51,21 @@ The proposed "Claude Code-style" interactive experience requires:
 ### 1. Current Architecture Analysis
 
 #### Entry Points (`cmd/research/main.go:51-52`)
+
 ```go
 vaultWriter := obsidian.NewWriter(cfg.VaultPath)
 store.SetVaultWriter(vaultWriter)
 ```
 
 The CLI initializes with:
+
 - Session store (filesystem-based JSON)
 - Event bus for real-time visualization
 - Obsidian vault writer for human-readable output
 - REPL with command router
 
 #### Router Intelligence (`internal/repl/router.go:59-74`)
+
 ```go
 // Natural language: if session exists, expand; otherwise start storm research
 if r.ctx.Session != nil {
@@ -72,6 +78,7 @@ return handler, []string{parsed.RawText}, nil
 ```
 
 **Current behavior**:
+
 - Commands (`/fast`, `/deep`, `/expand`) → explicit routing
 - Natural language WITH session → `/expand` handler
 - Natural language WITHOUT session → `/storm` handler
@@ -79,6 +86,7 @@ return handler, []string{parsed.RawText}, nil
 **Gap**: No smart mode selection or chat/QA detection.
 
 #### Expand Handler (`internal/repl/handlers/expand.go:32-55`)
+
 ```go
 // Build continuation context from previous session
 continuationCtx := session.BuildContinuationContext(ctx.Session)
@@ -93,6 +101,7 @@ newSess := ctx.Session.NewVersion()
 ```
 
 **Current behavior**:
+
 - Builds context from previous session (report + sources)
 - Creates versioned session with parent link
 - Runs research with injected context
@@ -104,15 +113,16 @@ newSess := ctx.Session.NewVersion()
 
 #### ThinkDeep Injection Points (`internal/orchestrator/think_deep.go`)
 
-| Stage | Line | Injection Opportunity |
-|-------|------|----------------------|
-| Research Brief | 264 | Inject domain knowledge, previous findings |
-| Initial Draft | 284 | Inject existing report as baseline |
-| Supervisor Context | `supervisor.go:209` | Add `<Previous Research>` section |
-| Sub-Researcher | `sub_researcher.go:102` | Inject visited URLs, known facts |
-| Final Report | 312 | Add style guidelines, structure template |
+| Stage              | Line                    | Injection Opportunity                      |
+| ------------------ | ----------------------- | ------------------------------------------ |
+| Research Brief     | 264                     | Inject domain knowledge, previous findings |
+| Initial Draft      | 284                     | Inject existing report as baseline         |
+| Supervisor Context | `supervisor.go:209`     | Add `<Previous Research>` section          |
+| Sub-Researcher     | `sub_researcher.go:102` | Inject visited URLs, known facts           |
+| Final Report       | 312                     | Add style guidelines, structure template   |
 
 **Key insight**: ThinkDeep's `SupervisorState` already tracks:
+
 - `Notes []string` - compressed findings
 - `RawNotes []string` - raw search results
 - `VisitedURLs map[string]bool` - deduplication
@@ -121,14 +131,15 @@ These can be pre-populated for "expand" workflows.
 
 #### STORM Injection Points (`internal/orchestrator/deep_storm.go`)
 
-| Stage | Line | Injection Opportunity |
-|-------|------|----------------------|
-| Perspective Discovery | 124 | Inject known perspectives, skip survey |
-| Conversation Simulation | 159 | Inject previous conversations as context |
-| Cross-Validation | 192 | Inject validated facts from previous run |
-| Synthesis | 230 | Inject previous outline, sections |
+| Stage                   | Line | Injection Opportunity                    |
+| ----------------------- | ---- | ---------------------------------------- |
+| Perspective Discovery   | 124  | Inject known perspectives, skip survey   |
+| Conversation Simulation | 159  | Inject previous conversations as context |
+| Cross-Validation        | 192  | Inject validated facts from previous run |
+| Synthesis               | 230  | Inject previous outline, sections        |
 
 **Key insight**: STORM produces rich intermediate artifacts:
+
 - `[]Perspective` - expert viewpoints
 - `map[string]*ConversationResult` - full dialogue transcripts
 - `*AnalysisResult` - validated facts, contradictions, gaps
@@ -169,6 +180,7 @@ const (
 ```
 
 **Classification Logic**:
+
 1. No session → `IntentResearch`
 2. Question about report content → `IntentQuestion`
 3. "Expand on X", "Tell me more about Y" → `IntentExpand`
@@ -302,6 +314,7 @@ type InjectionContext struct {
 ```
 
 **ThinkDeep Expansion Flow**:
+
 ```go
 func (h *ExpandKnowledgeHandler) expandWithThinkDeep(
     ctx *repl.Context,
@@ -338,6 +351,7 @@ func (h *ExpandKnowledgeHandler) expandWithThinkDeep(
 Current gap: `internal/obsidian/writer.go` creates `insights/` directory but never populates it.
 
 **Proposed structure**:
+
 ```
 <vault-path>/
 └── <session-id>/
@@ -505,33 +519,39 @@ research> /fast Who invented transformers?
 ### 6. Implementation Roadmap
 
 #### Phase 1: Sub-Insight Capture (think_deep)
+
 - [ ] Add `SubInsights []SubInsight` to `SupervisorState`
 - [ ] Capture insights in `executeParallelResearch`
 - [ ] Return insights in `ThinkDeepResult`
 - [ ] Update Obsidian writer to save insights
 
 #### Phase 2: Session Context Manager
+
 - [ ] Create `SessionContext` struct
 - [ ] Implement `ExtractContext(session) SessionContext`
 - [ ] Add context to session store
 
 #### Phase 3: Question Handler
+
 - [ ] Create `QuestionHandler`
 - [ ] Implement `buildQAContext`
 - [ ] Add expansion suggestion logic
 
 #### Phase 4: Smart Router
+
 - [ ] Create `QueryClassifier` interface
 - [ ] Implement LLM-based classifier
 - [ ] Update `Router` to use classifier
 
 #### Phase 5: Expand Knowledge Pipeline
+
 - [ ] Create `InjectionContext` struct
 - [ ] Implement ThinkDeep injection options
 - [ ] Implement STORM injection options
 - [ ] Create merge logic for expanded sessions
 
 #### Phase 6: Enhanced Obsidian
+
 - [ ] Implement research-notes structure
 - [ ] Add source index with quality scores
 - [ ] Create bi-directional links between insights

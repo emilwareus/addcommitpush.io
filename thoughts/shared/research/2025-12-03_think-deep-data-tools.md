@@ -4,7 +4,7 @@ researcher: Claude
 git_commit: 6a32cb5cc41e10a32999f565d10ca639bbecc06c
 branch: main
 repository: addcommitpush.io/go-research
-topic: "Data Analysis and File Reading Tools for ThinkDeep Agent"
+topic: 'Data Analysis and File Reading Tools for ThinkDeep Agent'
 tags: [research, think_deep, tools, data_analysis, eda, pdf, csv, pickle]
 status: complete
 last_updated: 2025-12-03
@@ -39,6 +39,7 @@ The design should mirror the existing `search` → `ContentSummarizer` pattern w
 ### 1. Current Tool Architecture
 
 **Tool Interface** (`internal/tools/registry.go:9-13`):
+
 ```go
 type Tool interface {
     Name() string
@@ -48,6 +49,7 @@ type Tool interface {
 ```
 
 **ToolExecutor Interface** (`internal/tools/registry.go:15-19`):
+
 ```go
 type ToolExecutor interface {
     Execute(ctx context.Context, name string, args map[string]interface{}) (string, error)
@@ -56,6 +58,7 @@ type ToolExecutor interface {
 ```
 
 **Key Pattern - Search with Optional Summarization** (`internal/tools/search.go`):
+
 - `SearchTool` performs basic web search
 - Optional `ContentSummarizer` enhances results with LLM-generated summaries
 - This pattern is directly applicable to data analysis tools
@@ -63,6 +66,7 @@ type ToolExecutor interface {
 ### 2. Sub-Researcher Agent Pattern
 
 The `SubResearcherAgent` (`internal/agents/sub_researcher.go:23-29`) demonstrates how to create a focused agent that:
+
 - Has access to specific tools (search, think)
 - Executes an iterative loop with hard limits
 - Compresses findings for the supervisor
@@ -75,6 +79,7 @@ This pattern can be adapted for a `DataAnalysisAgent` sub-researcher.
 #### 3.1 Data Analysis Tools
 
 **CSVAnalysisTool** - For CSV/tabular data:
+
 ```go
 // internal/tools/csv_analysis.go
 
@@ -101,6 +106,7 @@ func (t *CSVAnalysisTool) Execute(ctx context.Context, args map[string]interface
 ```
 
 **PickleAnalysisTool** - For Python pickle files:
+
 ```go
 // internal/tools/pickle_analysis.go
 
@@ -123,6 +129,7 @@ func (t *PickleAnalysisTool) Execute(ctx context.Context, args map[string]interf
 ```
 
 **GoalDirectedEDATool** - High-level EDA orchestrator:
+
 ```go
 // internal/tools/eda.go
 
@@ -142,6 +149,7 @@ Args: {"path": "/path/to/data", "goal": "research question or hypothesis to expl
 #### 3.2 Document Reading Tools
 
 **PDFReadTool** - For PDF documents:
+
 ```go
 // internal/tools/pdf.go
 
@@ -165,6 +173,7 @@ func (t *PDFReadTool) Execute(ctx context.Context, args map[string]interface{}) 
 ```
 
 **DOCXReadTool** - For Word documents:
+
 ```go
 // internal/tools/docx.go
 
@@ -180,6 +189,7 @@ func (t *DOCXReadTool) Description() string {
 ```
 
 **PPTXReadTool** - For PowerPoint:
+
 ```go
 // internal/tools/pptx.go
 
@@ -195,6 +205,7 @@ func (t *PPTXReadTool) Description() string {
 ```
 
 **GenericDocumentReadTool** - Auto-detect format:
+
 ```go
 // internal/tools/document.go
 
@@ -259,6 +270,7 @@ func (a *DataAnalystAgent) Analyze(ctx context.Context, dataPath string, goal st
 ```
 
 **Data Analyst Prompt** (new file: `internal/think_deep/data_prompts.go`):
+
 ```go
 func DataAnalystPrompt(date, dataDescription string) string {
     return fmt.Sprintf(`You are a data analyst conducting exploratory data analysis. Today is %s.
@@ -344,6 +356,7 @@ Args: {"data_path": "/path/to/data", "goal": "analysis objective"}`
 ```
 
 Supervisor prompt update (`internal/think_deep/prompts.go`):
+
 ```go
 // Add to LeadResearcherPrompt:
 
@@ -359,28 +372,34 @@ Supervisor prompt update (`internal/think_deep/prompts.go`):
 For implementing these tools in Go:
 
 **CSV Processing:**
+
 - `encoding/csv` (stdlib) - Basic CSV reading
 - `github.com/go-gota/gota` - DataFrame operations, statistics
 
 **Pickle Files:**
+
 - Python subprocess approach (safest)
 - `github.com/nlpodyssey/spago` has some pickle support
 
 **PDF Extraction:**
+
 - `github.com/pdfcpu/pdfcpu` - Pure Go, good extraction
 - `github.com/unidoc/unipdf` - Commercial, more features
 
 **Office Documents:**
+
 - `github.com/unidoc/unioffice` - DOCX, XLSX, PPTX
 - `github.com/nguyenthenguyen/docx` - Simpler DOCX-only
 
 **Statistics:**
+
 - `gonum.org/v1/gonum/stat` - Statistical functions
 - `github.com/montanaflynn/stats` - Descriptive statistics
 
 ### 7. Implementation Roadmap
 
 **Phase 1: Document Reading Tools**
+
 - [ ] Implement `PDFReadTool` with pdfcpu
 - [ ] Implement `DOCXReadTool` with unioffice
 - [ ] Implement `PPTXReadTool` with unioffice
@@ -388,22 +407,26 @@ For implementing these tools in Go:
 - [ ] Add to SubResearcherToolRegistry
 
 **Phase 2: Basic Data Analysis Tools**
+
 - [ ] Implement `CSVAnalysisTool` with gota
 - [ ] Add basic statistics: shape, dtypes, missing values, summary stats
 - [ ] Add correlation analysis
 - [ ] Create LLM-enhanced interpretation mode
 
 **Phase 3: Goal-Directed EDA**
+
 - [ ] Create `GoalDirectedEDATool` with LLM planning
 - [ ] Implement iterative analysis loop
 - [ ] Add hypothesis testing support
 
 **Phase 4: Data Analyst Sub-Agent** (optional)
+
 - [ ] Create `DataAnalystAgent` following SubResearcherAgent pattern
 - [ ] Implement `conduct_data_analysis` supervisor tool
 - [ ] Update supervisor prompt with new capability
 
 **Phase 5: Pickle Support** (optional)
+
 - [ ] Implement Python subprocess bridge for pickle inspection
 - [ ] Add sandbox/security measures
 - [ ] Create `PickleAnalysisTool`
@@ -427,6 +450,7 @@ For implementing these tools in Go:
 2. **Optional LLM Enhancement**: Like `SearchTool.SetSummarizer()`, data tools should work standalone but optionally leverage LLM for deeper analysis
 
 3. **Event Bus Integration**: For long-running analysis, emit progress events:
+
    ```go
    bus.Publish(events.Event{
        Type:      events.EventDataAnalysisProgress,

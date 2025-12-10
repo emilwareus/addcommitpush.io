@@ -45,6 +45,15 @@ const posts: Post[] = [
     readTime: '10 min read',
     audioUrl: '/posts/context-engineering-claude-code/audio.mp3',
   },
+  {
+    title: 'Diffusion Deep Research',
+    slug: 'diffusion-deep-research',
+    description: 'How diffusion can be used to create a deep research report.',
+    publishedAt: '2025-12-05',
+    tags: ['ai', 'agents', 'research', 'deep-research'],
+    cover: '/posts/diffusion-deep-research/cover-optimized.webp',
+    readTime: '15 min read',
+  },
 ];
 
 export function getAllPosts(): Post[] {

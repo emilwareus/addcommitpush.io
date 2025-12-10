@@ -4,7 +4,7 @@ researcher: Claude
 git_commit: 389794cff579752d9f38f5df80b0da22ab1c6e24
 branch: feat/custom-deep-research
 repository: addcommitpush.io
-topic: "Event-Sourced Adapter-Based Storage Architecture for Interruptible Agents"
+topic: 'Event-Sourced Adapter-Based Storage Architecture for Interruptible Agents'
 tags: [research, architecture, event-sourcing, storage, adapters, interruptible-agents, go-research]
 status: complete
 last_updated: 2025-12-01
@@ -22,6 +22,7 @@ last_updated_by: Claude
 ## Research Question
 
 How to move storage to an adapter-based system that:
+
 1. Mirrors state with extra information (metadata, timestamps, audit trail)
 2. Keeps "memory" that can be paused and restored from any point (interruptible agent)
 3. Allows the agent to pick up work where it left off
@@ -46,23 +47,23 @@ The architecture uses a **port/adapter pattern** for pluggable storage backends,
 
 ### 1.1 Current Architecture Problems
 
-| Problem | Current State | Impact |
-|---------|--------------|--------|
-| **No State Persistence** | State is local variables in `Research()` | Cannot resume interrupted research |
-| **No Event Log** | Events are fire-and-forget | Cannot replay or audit state changes |
-| **Direct State Mutation** | `plan.DAG.SetStatus()` mutates directly | No history, no undo capability |
-| **Session-Centric Storage** | Only saves complete sessions | Partial progress lost on failure |
-| **Tight Storage Coupling** | JSON filesystem hardcoded | Cannot swap backends easily |
+| Problem                     | Current State                            | Impact                               |
+| --------------------------- | ---------------------------------------- | ------------------------------------ |
+| **No State Persistence**    | State is local variables in `Research()` | Cannot resume interrupted research   |
+| **No Event Log**            | Events are fire-and-forget               | Cannot replay or audit state changes |
+| **Direct State Mutation**   | `plan.DAG.SetStatus()` mutates directly  | No history, no undo capability       |
+| **Session-Centric Storage** | Only saves complete sessions             | Partial progress lost on failure     |
+| **Tight Storage Coupling**  | JSON filesystem hardcoded                | Cannot swap backends easily          |
 
 ### 1.2 Key Files to Transform
 
-| File | Current Role | New Role |
-|------|--------------|----------|
-| `internal/events/bus.go` | Fire-and-forget pub/sub | Event bus + persistence trigger |
-| `internal/events/types.go` | UI progress events | Domain events (state changes) |
-| `internal/session/session.go` | Domain + storage conflated | Pure domain aggregate |
-| `internal/session/store.go` | Direct JSON persistence | Event store + projection |
-| `internal/orchestrator/deep.go` | Stateless coordinator | State machine with event sourcing |
+| File                            | Current Role               | New Role                          |
+| ------------------------------- | -------------------------- | --------------------------------- |
+| `internal/events/bus.go`        | Fire-and-forget pub/sub    | Event bus + persistence trigger   |
+| `internal/events/types.go`      | UI progress events         | Domain events (state changes)     |
+| `internal/session/session.go`   | Domain + storage conflated | Pure domain aggregate             |
+| `internal/session/store.go`     | Direct JSON persistence    | Event store + projection          |
+| `internal/orchestrator/deep.go` | Stateless coordinator      | State machine with event sourcing |
 
 ---
 
@@ -180,10 +181,10 @@ The architecture uses a **port/adapter pattern** for pluggable storage backends,
 
 The system needs two categories of events:
 
-| Category | Purpose | Persistence | Examples |
-|----------|---------|-------------|----------|
-| **Domain Events** | State changes (facts) | YES - Event Store | `ResearchStarted`, `WorkerCompleted`, `ReportGenerated` |
-| **Progress Events** | UI updates (ephemeral) | NO - Fire-and-forget | `LLMChunk`, `ToolCall`, `Progress` |
+| Category            | Purpose                | Persistence          | Examples                                                |
+| ------------------- | ---------------------- | -------------------- | ------------------------------------------------------- |
+| **Domain Events**   | State changes (facts)  | YES - Event Store    | `ResearchStarted`, `WorkerCompleted`, `ReportGenerated` |
+| **Progress Events** | UI updates (ephemeral) | NO - Fire-and-forget | `LLMChunk`, `ToolCall`, `Progress`                      |
 
 ### 3.2 Domain Event Definitions
 
@@ -2294,23 +2295,23 @@ func main() {
 
 ### Benefits
 
-| Benefit | How It's Achieved |
-|---------|-------------------|
-| **Interruptibility** | State persisted after every event |
-| **Resumability** | Replay events to reconstruct state |
-| **Audit Trail** | Every change is an immutable event |
-| **Pluggable Storage** | Port/adapter pattern for backends |
-| **Time Travel** | Replay to any point in history |
-| **Multiple Projections** | Same events → Obsidian, DB, API |
+| Benefit                  | How It's Achieved                  |
+| ------------------------ | ---------------------------------- |
+| **Interruptibility**     | State persisted after every event  |
+| **Resumability**         | Replay events to reconstruct state |
+| **Audit Trail**          | Every change is an immutable event |
+| **Pluggable Storage**    | Port/adapter pattern for backends  |
+| **Time Travel**          | Replay to any point in history     |
+| **Multiple Projections** | Same events → Obsidian, DB, API    |
 
 ### Trade-offs
 
-| Trade-off | Mitigation |
-|-----------|------------|
-| Storage overhead | Snapshots reduce replay cost |
-| Complexity | Clear command/event separation |
+| Trade-off            | Mitigation                            |
+| -------------------- | ------------------------------------- |
+| Storage overhead     | Snapshots reduce replay cost          |
+| Complexity           | Clear command/event separation        |
 | Eventual consistency | Inline projections for critical paths |
-| Event versioning | Schema evolution strategy needed |
+| Event versioning     | Schema evolution strategy needed      |
 
 ---
 
@@ -2333,6 +2334,7 @@ func main() {
 ## Sources
 
 ### Event Sourcing References
+
 - [Event Sourcing pattern - Azure Architecture Center](https://learn.microsoft.com/en-us/azure/architecture/patterns/event-sourcing)
 - [Event Sourcing pattern - AWS Prescriptive Guidance](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/event-sourcing.html)
 - [Event Sourcing - Martin Fowler](https://martinfowler.com/eaaDev/EventSourcing.html)
@@ -2340,10 +2342,12 @@ func main() {
 - [Snapshots in Event Sourcing - Kurrent](https://www.kurrent.io/blog/snapshots-in-event-sourcing)
 
 ### Domain Events References
+
 - [Domain Events vs. Event Sourcing - INNOQ](https://www.innoq.com/en/blog/2019/01/domain-events-versus-event-sourcing/)
 - [Domain Events vs. Integration Events - Cesar de la Torre](https://devblogs.microsoft.com/cesardelatorre/domain-events-vs-integration-events-in-domain-driven-design-and-microservices-architectures/)
 
 ### Go Implementation References
+
 - [hallgren/eventsourcing - GitHub](https://github.com/hallgren/eventsourcing)
 - [Event Sourcing in Go: From Zero to Production - Serge Skoredin](https://skoredin.pro/blog/golang/event-sourcing-go)
 - [Simplifying Event Sourcing in Golang - TheFabric.IO](https://www.thefabric.io/blog/simplifying-event-sourcing-in-golang)
@@ -2351,6 +2355,7 @@ func main() {
 - [Implementing pluggable backends in Go - Justin Azoff](https://justin.azoff.dev/blog/implementing-pluggable-backends-in-go/)
 
 ### Patterns and Best Practices
+
 - [CQRS Best Practices - GitHub](https://github.com/slashdotdash/cqrs-best-practices)
 - [Guide to Projections and Read Models - Event-Driven.io](https://event-driven.io/en/projections_and_read_models_in_event_driven_architecture/)
 - [Saga Pattern in Distributed Transactions - Rost Glukhov](https://www.glukhov.org/post/2025/11/saga-transactions-in-microservices/)

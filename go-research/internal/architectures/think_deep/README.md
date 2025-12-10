@@ -41,7 +41,7 @@ User Query: "Compare AI safety approaches of OpenAI, Anthropic, and DeepMind"
 |     |Sub-Res #1 |   |Sub-Res #2 |   |Sub-Res #3 |  <- Parallel execution    |
 |     |"OpenAI    |   |"Anthropic |   |"DeepMind  |                           |
 |     | safety"   |   | approach" |   | research" |                           |
-|     +-----------+   +-----------+   +-----------+                           | 
+|     +-----------+   +-----------+   +-----------+                           |
 |            \             |             /                                    |
 |             \            |            /                                     |
 |              v           v           v                                      |
@@ -150,6 +150,7 @@ Instead of a single pass, ThinkDeep treats the initial draft as a **"noisy" stat
 ### Completion Criteria
 
 The supervisor calls `research_complete` when:
+
 - Research findings are comprehensive (NOT when the draft "looks good")
 - Diverse research questions no longer yield new findings
 - Maximum iterations reached (hard limit: 15)
@@ -172,6 +173,7 @@ The supervisor calls `research_complete` when:
 ```
 
 **Key Guidelines:**
+
 - Maximize specificity without inventing preferences
 - Handle unstated dimensions as open considerations
 - Distinguish research scope from user preferences
@@ -217,6 +219,7 @@ This draft serves as the starting point that gets iteratively refined.
 ```
 
 **Scaling Rules:**
+
 - Simple fact-finding: 1 sub-agent
 - Comparisons: 1 sub-agent per element (e.g., 3 companies = 3 sub-agents)
 - Maximum 3 concurrent sub-researchers
@@ -255,16 +258,16 @@ This draft serves as the starting point that gets iteratively refined.
 
 ## Key Files
 
-| Component | File | Purpose |
-|-----------|------|---------|
-| **Orchestrator** | `internal/orchestrator/think_deep.go` | 4-phase workflow coordination |
-| **Supervisor Agent** | `internal/agents/supervisor.go` | Diffusion loop, parallel research |
-| **Sub-Researcher Agent** | `internal/agents/sub_researcher.go` | Focused search with limits |
-| **State Definitions** | `internal/think_deep/state.go` | SupervisorState, ResearcherState |
-| **Prompts** | `internal/think_deep/prompts.go` | All prompt templates |
-| **Tools** | `internal/think_deep/tools.go` | Tool parsing and execution |
-| **Content Summarizer** | `internal/tools/summarizer.go` | LLM-based page summarization |
-| **Search Tool** | `internal/tools/search.go` | Brave API with summarization |
+| Component                | File                                  | Purpose                           |
+| ------------------------ | ------------------------------------- | --------------------------------- |
+| **Orchestrator**         | `internal/orchestrator/think_deep.go` | 4-phase workflow coordination     |
+| **Supervisor Agent**     | `internal/agents/supervisor.go`       | Diffusion loop, parallel research |
+| **Sub-Researcher Agent** | `internal/agents/sub_researcher.go`   | Focused search with limits        |
+| **State Definitions**    | `internal/think_deep/state.go`        | SupervisorState, ResearcherState  |
+| **Prompts**              | `internal/think_deep/prompts.go`      | All prompt templates              |
+| **Tools**                | `internal/think_deep/tools.go`        | Tool parsing and execution        |
+| **Content Summarizer**   | `internal/tools/summarizer.go`        | LLM-based page summarization      |
+| **Search Tool**          | `internal/tools/search.go`            | Brave API with summarization      |
 
 ---
 
@@ -272,19 +275,19 @@ This draft serves as the starting point that gets iteratively refined.
 
 ### Supervisor Tools
 
-| Tool | Purpose | Usage |
-|------|---------|-------|
-| `conduct_research` | Delegate to sub-researcher | `{"research_topic": "Detailed paragraph..."}` |
-| `refine_draft` | Incorporate findings into draft | `{}` |
-| `think` | Strategic reflection | `{"reflection": "..."}` |
-| `research_complete` | Signal completion | `{}` |
+| Tool                | Purpose                         | Usage                                         |
+| ------------------- | ------------------------------- | --------------------------------------------- |
+| `conduct_research`  | Delegate to sub-researcher      | `{"research_topic": "Detailed paragraph..."}` |
+| `refine_draft`      | Incorporate findings into draft | `{}`                                          |
+| `think`             | Strategic reflection            | `{"reflection": "..."}`                       |
+| `research_complete` | Signal completion               | `{}`                                          |
 
 ### Sub-Researcher Tools
 
-| Tool | Purpose | Usage |
-|------|---------|-------|
-| `search` | Web search via Brave API | `{"query": "search terms"}` |
-| `think` | Analyze results, plan next | `{"reflection": "..."}` |
+| Tool     | Purpose                    | Usage                       |
+| -------- | -------------------------- | --------------------------- |
+| `search` | Web search via Brave API   | `{"query": "search terms"}` |
+| `think`  | Analyze results, plan next | `{"reflection": "..."}`     |
 
 ---
 
@@ -381,6 +384,7 @@ This implementation is based on the **Self-Balancing Test-Time Diffusion Deep Re
 Special thanks to **Paichun Lin** ([@paichunjimlin](https://www.linkedin.com/in/paichunjimlin), Stanford CS) for developing and open-sourcing this approach. ThinkDepth.ai achieved #1 ranking on [DeepResearch Bench](https://huggingface.co/spaces/muset-ai/DeepResearch-Bench-Leaderboard) when it was released, outperforming Google Gemini 2.5 Pro, OpenAI Deep Research, and Anthropic Claude Deep Research.
 
 For more technical details, see:
+
 - [Self-Balancing Agentic AI Blog Post](https://paichunlin.substack.com/p/self-balancing-agentic-ai-test-time)
 - [ThinkDepth.ai GitHub Repository](https://github.com/thinkdepthai/Deep_Research)
 

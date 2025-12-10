@@ -4,8 +4,18 @@ researcher: Emil Wareus
 git_commit: 6a27b87a0b5c98277f9e2c7f1fb3348e5edadc17
 branch: feat/custom-deep-research
 repository: addcommitpush.io
-topic: "Interactive Research CLI Mode Architecture - REPL for Deep Research Agent"
-tags: [research, deep-research-agent, cli, repl, interactive-mode, session-management, prompt-toolkit, user-experience]
+topic: 'Interactive Research CLI Mode Architecture - REPL for Deep Research Agent'
+tags:
+  [
+    research,
+    deep-research-agent,
+    cli,
+    repl,
+    interactive-mode,
+    session-management,
+    prompt-toolkit,
+    user-experience,
+  ]
 status: complete
 last_updated: 2025-11-21
 last_updated_by: Emil Wareus
@@ -34,6 +44,7 @@ Through comprehensive parallel research across the codebase and external resourc
 - ✅ Rich terminal output with progress indicators
 
 **What's Missing**:
+
 - ❌ REPL/interactive prompt loop
 - ❌ In-memory active session state manager
 - ❌ Natural language command parser
@@ -82,6 +93,7 @@ def cli() -> None:
 ```
 
 **Existing Commands**:
+
 1. **`research`** (`cli.py:74-159`) - Single-agent research
 2. **`multi`** (`cli.py:178-239`) - Multi-agent parallel research
 3. **`expand`** (`cli.py:242-355`) - Expand specific worker from session
@@ -90,6 +102,7 @@ def cli() -> None:
 6. **`list-workers`** (`cli.py:552-650`) - Show workers for specific session
 
 **Async Execution Pattern** (used by all commands):
+
 ```python
 def command_name(...):
     async def _async_implementation():
@@ -135,6 +148,7 @@ class WorkerFullContext:
 ```
 
 **Critical Feature**: `WorkerFullContext` stores **both** full output and compressed summary. This dual storage enables:
+
 - Full context for human review and continuation
 - Compressed summaries for LLM synthesis
 - Complete audit trail of tool usage
@@ -177,6 +191,7 @@ class ResearchSession:
 #### Orchestrator Execution Flow (`orchestrator.py:69-136`)
 
 **Session Initialization** (`orchestrator.py:72-85`):
+
 ```python
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 session_hash = abs(hash(query)) % 1000000
@@ -195,11 +210,13 @@ self.session = ResearchSession(
 ```
 
 **LangGraph Workflow**:
+
 ```
 START → analyze → plan → [worker₁, worker₂, ...] → synthesize → END
 ```
 
 **Worker Spawning** (`orchestrator.py:378-383`):
+
 ```python
 def _spawn_workers(self, state: ResearchState) -> list[Send]:
     sends = [Send("worker", {"task": task}) for task in state["sub_tasks"]]
@@ -209,6 +226,7 @@ def _spawn_workers(self, state: ResearchState) -> list[Send]:
 LangGraph's `Send` API enables **dynamic parallel worker execution** - workers run concurrently and populate results as they complete.
 
 **Context Capture** (`orchestrator.py:419-445`):
+
 ```python
 # After worker completes
 if self.session and hasattr(worker, "full_context") and worker.full_context:
@@ -241,12 +259,14 @@ if self.session and hasattr(worker, "full_context") and worker.full_context:
 #### Progress Display (`utils/live_progress.py:24-201`)
 
 **LiveProgress System**:
+
 - Uses Rich library's `Live` display with 4Hz refresh
 - Thread-safe with `threading.RLock()`
 - Protocol-based design (`ProgressCallback` protocol)
 - Displays worker table with real-time status updates
 
 **Example Output**:
+
 ```
 🔍 Multi-agent research: What are Swedish housing prices?
 
@@ -273,6 +293,7 @@ Recent Activity
 #### Obsidian Vault Structure
 
 **Directory Layout**:
+
 ```
 outputs/obsidian/
 ├── session_20250120_142530_abc123/
@@ -291,12 +312,13 @@ outputs/obsidian/
 ```
 
 **Session MOC Frontmatter** (`writer.py:92-106`):
+
 ```yaml
 ---
 type: research_session
 session_id: session_20250120_142530_abc123
 version: 1
-query: "What are Swedish housing prices?"
+query: 'What are Swedish housing prices?'
 status: completed
 created_at: 2025-01-20T14:25:00Z
 updated_at: 2025-01-20T14:45:00Z
@@ -304,7 +326,7 @@ model: anthropic/claude-3.5-sonnet
 complexity: 0.75
 num_workers: 3
 total_cost: 0.0234
-parent_session: session_20250120_142530_abc123_v1  # For v2+
+parent_session: session_20250120_142530_abc123_v1 # For v2+
 tags: [sweden, housing, economics]
 ---
 ```
@@ -314,6 +336,7 @@ tags: [sweden, housing, economics]
 #### Session Loading (`loader.py:19-65`)
 
 **Load Flow**:
+
 1. Locate session file at `{vault_path}/{session_id}/session.md`
 2. Parse YAML frontmatter and markdown body
 3. Reconstruct `ResearchSession` object from frontmatter
@@ -323,6 +346,7 @@ tags: [sweden, housing, economics]
 7. Aggregate unique sources across all workers
 
 **Example Usage**:
+
 ```python
 loader = SessionLoader(vault_path="outputs/obsidian")
 session = loader.load_session("session_20250120_142530_abc123", version=1)
@@ -337,6 +361,7 @@ print(session.workers[0].final_output)  # Full uncompressed output
 #### Worker Full Context Preservation (`writer.py:141-183`)
 
 **What Gets Stored**:
+
 - **ReAct iterations**: Full thought-action-observation loops
 - **Tool calls**: All invocations with arguments, results, duration
 - **Final output**: Complete uncompressed worker output
@@ -344,12 +369,13 @@ print(session.workers[0].final_output)  # Full uncompressed output
 - **Sources**: All accessed URLs
 
 **Worker Note Template** (`templates.py:85-144`):
+
 ```markdown
 ---
 type: worker
 session_id: session_abc123
 task_id: task_1
-objective: "Research Swedish housing prices"
+objective: 'Research Swedish housing prices'
 status: completed
 tool_calls: 15
 cost: 0.0245
@@ -360,19 +386,23 @@ cost: 0.0245
 ## Research Process (ReAct Loop)
 
 ### Iteration 1
+
 **Thought**: I need to find recent data on Swedish housing prices
 **Actions**:
+
 - `search(query="swedish housing prices 2024")`
   - Success: true
   - Duration: 2.3s
-**Observation**: Found 10 results including SCB statistics
+    **Observation**: Found 10 results including SCB statistics
 
 [... all iterations preserved ...]
 
 ## Final Output
+
 [Full uncompressed output - 5000+ words]
 
 ## Compressed Summary
+
 [2000-token summary for synthesis]
 ```
 
@@ -381,6 +411,7 @@ cost: 0.0245
 #### Session Versioning Pattern (`cli.py:332-338`)
 
 **Expand Command Creates v2**:
+
 ```python
 # Load parent session
 parent_session = loader.load_session(session_id, version)
@@ -399,6 +430,7 @@ result = await orchestrator.research(expansion_query)
 ```
 
 **Versioning Strategy**:
+
 - **Same session_id** across versions (e.g., `session_20250120_142530_abc123`)
 - **Incremented version** (1, 2, 3...)
 - **Parent reference** format: `{session_id}_v{version}`
@@ -416,6 +448,7 @@ result = await orchestrator.research(expansion_query)
 **Official Documentation**: https://python-prompt-toolkit.readthedocs.io/en/master/
 
 **Core Features**:
+
 - Native asyncio support (version 3.0+)
 - Built-in history management via `PromptSession`
 - Syntax highlighting using Pygments lexers
@@ -424,6 +457,7 @@ result = await orchestrator.research(expansion_query)
 - Multi-line editing support
 
 **Async REPL Pattern**:
+
 ```python
 from prompt_toolkit.patch_stdout import patch_stdout
 from prompt_toolkit.shortcuts import PromptSession
@@ -439,6 +473,7 @@ async def interactive_shell():
 ```
 
 **Auto-completion Example**:
+
 ```python
 from prompt_toolkit.completion import NestedCompleter
 
@@ -462,12 +497,14 @@ session = PromptSession(completer=completer)
 ```
 
 **Key Features for Interactive Research CLI**:
+
 - `patch_stdout()` context manager prevents async output from corrupting prompt
 - `prompt_async()` method integrates with asyncio event loop
 - `ThreadedCompleter` wrapper for expensive completion operations
 - Command history persisted to `~/.research_history`
 
 **Production Examples**:
+
 - **IPython** - Uses prompt_toolkit for terminal REPL
 - **ptpython** - Enhanced Python REPL built on prompt_toolkit
 - **AWS CLI tools** - Interactive mode implementations
@@ -477,6 +514,7 @@ session = PromptSession(completer=completer)
 **Repository**: https://github.com/python-cmd2/cmd2
 
 **Comparison**:
+
 - ✅ Out-of-the-box tab completion, history, scripting
 - ✅ Minimal development effort
 - ❌ Limited async support (GitHub Issue #764)
@@ -487,6 +525,7 @@ session = PromptSession(completer=completer)
 #### Command Parsing Patterns
 
 **shlex + argparse Integration**:
+
 ```python
 import shlex
 import argparse
@@ -516,12 +555,14 @@ except argparse.ArgumentError as e:
 ```
 
 **Natural Language Patterns**:
+
 - Tokenize → intent classification → entity extraction → argparse
 - Support aliases: `start`/`new`/`begin`, `continue`/`resume`, `exit`/`quit`
 
 #### Async State Management
 
 **aiomonitor Pattern** (https://aiomonitor.aio-libs.org/):
+
 ```python
 import aiomonitor
 import asyncio
@@ -535,6 +576,7 @@ with aiomonitor.start_monitor(loop, locals=locals):
 ```
 
 **State Injection Strategy**:
+
 - Maintain `active_session: ResearchSession | None` in REPL context
 - Inject into REPL namespace for debugging
 - Update on session start/switch/complete
@@ -542,6 +584,7 @@ with aiomonitor.start_monitor(loop, locals=locals):
 #### Progress Display During Long Operations
 
 **Rich Progress Integration**:
+
 ```python
 from rich.progress import Progress
 from rich.console import Console
@@ -559,6 +602,7 @@ async def start_research(query: str):
 ```
 
 **tqdm with asyncio**:
+
 ```python
 import tqdm.asyncio
 
@@ -573,12 +617,14 @@ await tqdm.asyncio.gather(*worker_tasks, desc="Workers")
 #### Component Overview
 
 **New Components** (to be implemented):
+
 1. **REPL Shell** - `prompt_toolkit` based interactive loop
 2. **SessionManager** - In-memory active session tracking
 3. **CommandParser** - Natural language → action mapping
 4. **ContextManager** - Prepare continuation context from previous sessions
 
 **Existing Components** (reuse):
+
 - `LeadResearcher` (orchestrator) - Research execution
 - `ObsidianWriter` - Session persistence
 - `SessionLoader` - Session loading
@@ -587,12 +633,14 @@ await tqdm.asyncio.gather(*worker_tasks, desc="Workers")
 #### SessionManager Class (New)
 
 **Responsibilities**:
+
 - Track active session in memory
 - Session lifecycle (start/pause/resume/stop)
 - Sync with ObsidianWriter/Loader
 - Context preparation for continuations
 
 **Interface**:
+
 ```python
 class SessionManager:
     def __init__(self, vault_path: str = "outputs/obsidian"):
@@ -642,11 +690,13 @@ class SessionManager:
 #### CommandParser Class (New)
 
 **Responsibilities**:
+
 - Parse user input into commands
 - Support aliases and natural language
 - Extract arguments and validate
 
 **Interface**:
+
 ```python
 class CommandParser:
     def __init__(self):
@@ -712,6 +762,7 @@ class CommandParser:
 #### Interactive REPL Loop (New)
 
 **Main Loop**:
+
 ```python
 async def interactive_repl():
     """Main interactive REPL for research CLI."""
@@ -796,6 +847,7 @@ async def interactive_repl():
 #### Command Implementations
 
 **Start Command**:
+
 ```python
 async def cmd_start(
     manager: SessionManager,
@@ -838,6 +890,7 @@ async def cmd_start(
 ```
 
 **Continue Command**:
+
 ```python
 async def cmd_continue(
     manager: SessionManager,
@@ -880,6 +933,7 @@ async def cmd_continue(
 ```
 
 **Status Command**:
+
 ```python
 async def cmd_status(manager: SessionManager, console: Console) -> None:
     """Show active session status."""
@@ -915,6 +969,7 @@ async def cmd_status(manager: SessionManager, console: Console) -> None:
 ```
 
 **List Sessions Command**:
+
 ```python
 async def cmd_list(
     manager: SessionManager,
@@ -979,6 +1034,7 @@ async def cmd_list(
 #### Context Preparation for Continuation
 
 **Compression Strategy**:
+
 ```python
 def _build_continuation_context(session: ResearchSession) -> str:
     """Build compressed context from previous session for continuation.
@@ -1009,6 +1065,7 @@ def _build_continuation_context(session: ResearchSession) -> str:
 ```
 
 **Alternative: Include Full Worker Context**:
+
 ```python
 def _build_full_continuation_context(session: ResearchSession, worker_id: str) -> str:
     """Include full worker output for deep continuation."""
@@ -1041,6 +1098,7 @@ SOURCES:
 **Goal**: Basic REPL loop with command parsing
 
 **Tasks**:
+
 1. Add `prompt_toolkit` dependency to `pyproject.toml`
 2. Create `src/deep_research/repl/` module
 3. Implement `CommandParser` class
@@ -1051,6 +1109,7 @@ SOURCES:
 **Deliverable**: Interactive shell that accepts commands but doesn't execute research yet
 
 **Validation**:
+
 ```bash
 $ deep-research interactive
 research> start What is quantum computing?
@@ -1063,6 +1122,7 @@ research> exit
 **Goal**: In-memory session tracking and lifecycle
 
 **Tasks**:
+
 1. Implement `SessionManager` class
 2. Integrate with `ObsidianWriter` and `SessionLoader`
 3. Implement `start` command with full research execution
@@ -1073,6 +1133,7 @@ research> exit
 **Deliverable**: Can start research sessions and track active session
 
 **Validation**:
+
 ```bash
 research> start What is quantum computing?
 [... research executes with live progress ...]
@@ -1091,6 +1152,7 @@ Cost: $0.45
 **Goal**: Enable continuation and expansion
 
 **Tasks**:
+
 1. Implement `continue` command
 2. Implement context compression from previous session
 3. Implement `expand` command for worker-specific expansion
@@ -1100,6 +1162,7 @@ Cost: $0.45
 **Deliverable**: Can continue previous sessions with new queries
 
 **Validation**:
+
 ```bash
 research> continue How does quantum computing relate to AI?
 [Loads v1 context, creates v2, executes research]
@@ -1116,6 +1179,7 @@ research> expand --worker task_1 "Research specific quantum algorithms"
 **Goal**: Track and switch between multiple sessions
 
 **Tasks**:
+
 1. Implement session stack in `SessionManager`
 2. Implement `switch` command
 3. Implement `reset` command
@@ -1126,6 +1190,7 @@ research> expand --worker task_1 "Research specific quantum algorithms"
 **Deliverable**: Can manage multiple concurrent sessions
 
 **Validation**:
+
 ```bash
 research> list sessions
 Session ID                          | Version | Query
@@ -1144,6 +1209,7 @@ research> continue Analyze price trends in Malmö
 **Goal**: Production-ready UX
 
 **Tasks**:
+
 1. Implement rich auto-completion with context-aware suggestions
 2. Add cost estimation before starting research
 3. Implement `export` command (to notebook, PDF)
@@ -1155,6 +1221,7 @@ research> continue Analyze price trends in Malmö
 **Deliverable**: Polished, production-ready interactive CLI
 
 **Validation**:
+
 - Auto-completion suggests session IDs when typing `switch`
 - Help text shows examples for each command
 - Keyboard shortcuts work as expected
@@ -1167,6 +1234,7 @@ research> continue Analyze price trends in Malmö
 #### Async REPL Architecture
 
 **Key Pattern**: Nested event loops
+
 ```python
 async def interactive_repl():
     # Outer loop: REPL prompt
@@ -1185,6 +1253,7 @@ async def interactive_repl():
 #### Command Aliases
 
 **Natural Language Support**:
+
 - `start` / `new` / `begin`
 - `continue` / `resume`
 - `exit` / `quit` / `q`
@@ -1192,6 +1261,7 @@ async def interactive_repl():
 - `reset` / `clear`
 
 **Implementation**:
+
 ```python
 start = subparsers.add_parser('start', aliases=['new', 'begin'])
 ```
@@ -1199,6 +1269,7 @@ start = subparsers.add_parser('start', aliases=['new', 'begin'])
 #### Session State Persistence
 
 **On REPL Start**:
+
 ```python
 state_file = Path.home() / ".deep_research_state"
 if state_file.exists():
@@ -1210,6 +1281,7 @@ if state_file.exists():
 ```
 
 **On Session Change**:
+
 ```python
 state_file.write_text(json.dumps({
     "last_session_id": session.session_id,
@@ -1220,6 +1292,7 @@ state_file.write_text(json.dumps({
 #### Auto-completion for Session IDs
 
 **Dynamic Completer**:
+
 ```python
 def build_completer(manager: SessionManager) -> Completer:
     """Build dynamic completer with session IDs."""
@@ -1256,6 +1329,7 @@ def build_completer(manager: SessionManager) -> Completer:
 **Decision**: Use `prompt_toolkit`
 
 **Rationale**:
+
 - ✅ Native async support (critical for long-running research)
 - ✅ Used by production tools (IPython, ptpython, AWS CLI)
 - ✅ Rich customization (styling, completion, history)
@@ -1269,12 +1343,14 @@ def build_completer(manager: SessionManager) -> Completer:
 **Decision**: SessionManager maintains active session in memory, syncs with vault
 
 **Rationale**:
+
 - Vault (Obsidian) is **slow** for querying (file I/O)
 - In-memory tracking enables fast `status` and `switch` commands
 - Vault remains single source of truth (SSOT) - memory is cache
 - Sync on session start/complete/switch
 
 **Alternative Considered**: Load from vault every time
+
 - **Rejected**: Too slow, would block REPL responsiveness
 
 #### Continuation Context Size
@@ -1282,16 +1358,19 @@ def build_completer(manager: SessionManager) -> Completer:
 **Decision**: Compress context to ~50k tokens (insights + report summary)
 
 **Rationale**:
+
 - Full session context can be 500k-5M tokens (all workers, tool calls)
 - LLM context limits (200k for Claude 3.5 Sonnet)
 - Balance: Enough context for coherent continuation, not overwhelming
 - Full context available in vault for human review
 
 **Strategy**:
+
 - Include: Original query, insights (10 max), report summary (2000 chars), worker count, source count
 - Exclude: Full worker outputs, all tool calls, full sources
 
 **Alternative**: Include full worker outputs
+
 - **Rejected**: Would hit token limits with 5+ workers
 
 #### Session ID Reuse for Versions
@@ -1299,12 +1378,14 @@ def build_completer(manager: SessionManager) -> Completer:
 **Decision**: Same session_id across versions (e.g., `session_20250121_120000_abc123`)
 
 **Rationale**:
+
 - ✅ Clear lineage (all versions in same directory)
 - ✅ Easy to find related research
 - ✅ Graph view shows version chain
 - ✅ Simplifies session switching (don't need to remember v2 ID)
 
 **Alternative**: UUID per version
+
 - **Rejected**: Loses relationship between versions, harder to navigate
 
 #### Command vs Natural Language Parsing
@@ -1312,12 +1393,14 @@ def build_completer(manager: SessionManager) -> Completer:
 **Decision**: Structured commands with aliases (not full natural language)
 
 **Rationale**:
+
 - ✅ Predictable, unambiguous
 - ✅ Faster to implement
 - ✅ Tab completion works
 - ✅ Easier to document
 
 **Natural Language**: Could add later with LLM-based intent parsing
+
 - Example: "Continue my last session" → parse → `continue`
 
 ---
@@ -1367,21 +1450,25 @@ def build_completer(manager: SessionManager) -> Completer:
 #### Design Patterns
 
 **Repository Pattern**:
+
 - `SessionLoader` - Read operations
 - `ObsidianWriter` - Write operations
 - Separation of concerns
 
 **Protocol Pattern** (`ProgressCallback`):
+
 - `NoOpProgress` - Quiet mode
 - `LiveProgress` - Rich display
 - Pluggable progress implementations
 
 **State Machine** (LangGraph):
+
 - analyze → plan → workers → synthesize
 - Already supports parallel execution
 - Ready for REPL integration
 
 **Context Manager** (`LiveProgress`):
+
 - Clean setup/teardown
 - Exception-safe resource management
 - Integrates with Rich `Live`
@@ -1393,7 +1480,9 @@ def build_completer(manager: SessionManager) -> Completer:
 #### Previous Research
 
 **2025-11-15_deep-research-agent-architecture.md** (lines 850-860):
+
 > **Interactive Mode** section describes step-by-step execution:
+>
 > ```
 > CLI: deep-research research "query" --interactive
 > User prompt: Continue? [Y/n/stop] after each agent step
@@ -1403,6 +1492,7 @@ def build_completer(manager: SessionManager) -> Completer:
 This was the **original vision** for interactive mode - step-by-step control. Our REPL design extends this to full session management and continuation.
 
 **2025-11-20_obsidian-iterative-research-architecture.md**:
+
 > "Previous research identified the need for 'session expansion' and 'iterative refinement' but didn't specify the storage mechanism. This research provides the missing piece: Obsidian as the persistence and exploration layer."
 
 The **storage problem is solved**. Now we're adding the **interaction layer**.
@@ -1419,6 +1509,7 @@ Detailed plan for session versioning, expand command, recompile command. Our REP
 #### Key Historical Decision
 
 From 2025-11-16_alibaba-deepresearch-gap-analysis.md:
+
 > "Human-in-the-loop decision points enhance research quality"
 
 This reinforces the value of interactive mode - not just for UX, but for **research quality** through human guidance.
@@ -1430,11 +1521,13 @@ This reinforces the value of interactive mode - not just for UX, but for **resea
 #### High Risk
 
 **1. Async REPL Complexity**
+
 - **Risk**: Nested event loops (prompt + research execution) can deadlock
 - **Mitigation**: Use `patch_stdout()`, test extensively with concurrent output
 - **Fallback**: Implement synchronous mode that blocks during research
 
 **2. State Synchronization**
+
 - **Risk**: In-memory session state gets out of sync with vault
 - **Mitigation**: Always sync on session start/complete, add sync command
 - **Fallback**: Reload from vault on every command (slower but safe)
@@ -1442,16 +1535,19 @@ This reinforces the value of interactive mode - not just for UX, but for **resea
 #### Medium Risk
 
 **3. Token Limits for Continuation**
+
 - **Risk**: Compressed context still too large for some queries
 - **Mitigation**: Aggressive summarization, configurable context size
 - **Fallback**: Allow user to select which workers to include in context
 
 **4. User Confusion**
+
 - **Risk**: Command syntax unclear, users struggle
 - **Mitigation**: Rich help text, examples, tab completion
 - **Fallback**: Add wizard mode for guided workflows
 
 **5. REPL Performance**
+
 - **Risk**: Auto-completion sluggish with many sessions
 - **Mitigation**: Cache session list, lazy load details
 - **Fallback**: Disable auto-completion, use manual entry
@@ -1459,11 +1555,13 @@ This reinforces the value of interactive mode - not just for UX, but for **resea
 #### Low Risk
 
 **6. Dependency Stability**
+
 - **Risk**: prompt_toolkit breaking changes
 - **Mitigation**: Pin version, test upgrades
 - **Fallback**: Minimal dependencies, can fork if needed
 
 **7. History File Corruption**
+
 - **Risk**: `.deep_research_history` gets corrupted
 - **Mitigation**: Graceful fallback to no history
 - **Fallback**: Clear history file on corruption
@@ -1473,23 +1571,28 @@ This reinforces the value of interactive mode - not just for UX, but for **resea
 ### 11. Success Metrics
 
 **1. Command Execution Speed**:
+
 - Metric: `status` command < 100ms
 - Metric: `list sessions` < 500ms
 - Metric: Session switch < 200ms
 
 **2. User Productivity**:
+
 - Metric: Time to continue session < 30s (vs 2 min with CLI commands)
 - Metric: 80% of users prefer interactive mode in survey
 
 **3. Context Effectiveness**:
+
 - Metric: Continuation context < 50k tokens
 - Metric: Continuation coherence score > 8/10 (human eval)
 
 **4. Reliability**:
+
 - Metric: Zero crashes in 100 REPL sessions
 - Metric: State sync accuracy 100% (vault matches memory)
 
 **5. UX Quality**:
+
 - Metric: First-time users complete tutorial in < 5 min
 - Metric: Tab completion used in 60%+ of commands
 
@@ -1502,6 +1605,7 @@ This reinforces the value of interactive mode - not just for UX, but for **resea
 **Question**: Should we allow users to customize continuation context size?
 
 **Options**:
+
 - **Fixed 50k tokens**: Simple, consistent
 - **Auto-adjust by complexity**: More context for complex queries
 - **User-configurable**: `--context-size` flag
@@ -1513,6 +1617,7 @@ This reinforces the value of interactive mode - not just for UX, but for **resea
 **Question**: Should we support collaborative research sessions?
 
 **Options**:
+
 - **Single-user only**: Simpler, current architecture
 - **Shared vault**: Multiple users, same Obsidian vault
 - **Cloud sync**: Real-time collaboration
@@ -1524,6 +1629,7 @@ This reinforces the value of interactive mode - not just for UX, but for **resea
 **Question**: Should REPL warn/block expensive operations?
 
 **Options**:
+
 - **No limits**: Trust users
 - **Soft warnings**: Show estimate, ask confirmation
 - **Hard limits**: Configurable max cost per session
@@ -1535,6 +1641,7 @@ This reinforces the value of interactive mode - not just for UX, but for **resea
 **Question**: What export formats should we support?
 
 **Options**:
+
 - **Markdown**: Already in vault
 - **Jupyter Notebook**: For analysis workflows
 - **PDF**: For sharing/archiving
@@ -1547,6 +1654,7 @@ This reinforces the value of interactive mode - not just for UX, but for **resea
 **Question**: Should we auto-delete old sessions?
 
 **Options**:
+
 - **Never delete**: Manual cleanup only
 - **Auto-archive**: Move old sessions to `.archive/`
 - **TTL-based**: Delete after N days
@@ -1558,6 +1666,7 @@ This reinforces the value of interactive mode - not just for UX, but for **resea
 ## Code References
 
 ### Current CLI Implementation
+
 - `deep-research-agent/src/deep_research/cli.py:68-71` - Click group entry point
 - `deep-research-agent/src/deep_research/cli.py:74-159` - `research` command (single-agent)
 - `deep-research-agent/src/deep_research/cli.py:178-239` - `multi` command (multi-agent)
@@ -1567,10 +1676,12 @@ This reinforces the value of interactive mode - not just for UX, but for **resea
 - `deep-research-agent/src/deep_research/cli.py:552-650` - `list-workers` command
 
 ### State Management
+
 - `deep-research-agent/src/deep_research/agent/state.py:8-58` - Core data structures (`ToolCall`, `ReActIteration`, `WorkerFullContext`, `ResearchSession`)
 - `deep-research-agent/src/deep_research/agent/state.py:60-93` - `ResearchSession` with versioning fields
 
 ### Orchestrator
+
 - `deep-research-agent/src/deep_research/agent/orchestrator.py:69-136` - Research execution entry point
 - `deep-research-agent/src/deep_research/agent/orchestrator.py:72-85` - Session initialization
 - `deep-research-agent/src/deep_research/agent/orchestrator.py:138-160` - LangGraph workflow construction
@@ -1578,6 +1689,7 @@ This reinforces the value of interactive mode - not just for UX, but for **resea
 - `deep-research-agent/src/deep_research/agent/orchestrator.py:419-445` - Full context capture from workers
 
 ### Obsidian Integration
+
 - `deep-research-agent/src/deep_research/obsidian/writer.py:22-346` - Complete ObsidianWriter implementation
 - `deep-research-agent/src/deep_research/obsidian/writer.py:27-49` - Directory structure creation
 - `deep-research-agent/src/deep_research/obsidian/writer.py:51-77` - Session write flow
@@ -1589,12 +1701,14 @@ This reinforces the value of interactive mode - not just for UX, but for **resea
 - `deep-research-agent/src/deep_research/obsidian/loader.py:143-203` - ReAct trace parsing
 
 ### Progress Display
+
 - `deep-research-agent/src/deep_research/utils/live_progress.py:24-201` - LiveProgress implementation
 - `deep-research-agent/src/deep_research/utils/live_progress.py:14-24` - Initialization with thread-safe lock
 - `deep-research-agent/src/deep_research/utils/live_progress.py:26-41` - Context manager pattern
 - `deep-research-agent/src/deep_research/utils/live_progress.py:94-185` - Rich rendering logic
 
 ### Testing
+
 - `deep-research-agent/tests/test_session_loader.py:82-105` - Round-trip persistence test
 - `deep-research-agent/tests/test_session_loader.py:266-310` - Parent session linking test
 
@@ -1603,11 +1717,13 @@ This reinforces the value of interactive mode - not just for UX, but for **resea
 ## Architecture Comparison
 
 ### Current Architecture (Fire-and-Forget)
+
 ```
 User types command → Click parses → asyncio.run() → Execute research → Save to vault → Exit
 ```
 
 ### Proposed Architecture (Interactive REPL)
+
 ```
 Launch REPL → prompt_toolkit loop
     ↓
@@ -1637,6 +1753,7 @@ The deep-research agent has a **strong foundation** for interactive CLI mode:
 5. ✅ **Rich progress display** - Production-grade terminal UI
 
 **What's needed**:
+
 1. ❌ REPL loop with `prompt_toolkit`
 2. ❌ SessionManager for in-memory state
 3. ❌ CommandParser for natural language
@@ -1645,6 +1762,7 @@ The deep-research agent has a **strong foundation** for interactive CLI mode:
 **Implementation is straightforward** because the hard parts (state management, persistence, execution) are **already implemented**. The REPL is a thin layer on top.
 
 **Critical Success Factors**:
+
 - ✅ prompt_toolkit for rich async REPL experience
 - ✅ SessionManager for fast session switching
 - ✅ Context compression for continuation (50k tokens)
@@ -1658,6 +1776,7 @@ The deep-research agent has a **strong foundation** for interactive CLI mode:
 ## References
 
 ### Internal Codebase
+
 - `deep-research-agent/src/deep_research/cli.py` - Current CLI implementation
 - `deep-research-agent/src/deep_research/agent/orchestrator.py` - Research execution engine
 - `deep-research-agent/src/deep_research/agent/state.py` - Data structures
@@ -1667,6 +1786,7 @@ The deep-research agent has a **strong foundation** for interactive CLI mode:
 ### External Documentation
 
 **prompt_toolkit**:
+
 - Official Documentation: https://python-prompt-toolkit.readthedocs.io/en/master/
 - SQLite REPL Tutorial: https://python-prompt-toolkit.readthedocs.io/en/master/pages/tutorials/repl.html
 - Asyncio Support: https://python-prompt-toolkit.readthedocs.io/en/master/pages/advanced_topics/asyncio.html
@@ -1674,17 +1794,20 @@ The deep-research agent has a **strong foundation** for interactive CLI mode:
 - Async Example: https://github.com/prompt-toolkit/python-prompt-toolkit/blob/main/examples/prompts/asyncio-prompt.py
 
 **REPL Frameworks**:
+
 - cmd2 Documentation: https://cmd2.readthedocs.io/
 - cmd2 GitHub: https://github.com/python-cmd2/cmd2
 - cmd2 Alternatives Comparison: https://cmd2.readthedocs.io/en/0.9.0/alternatives.html
 
 **Async REPL Patterns**:
+
 - aiomonitor Documentation: https://aiomonitor.aio-libs.org/en/latest/tutorial/
 - aiomonitor GitHub: https://github.com/aio-libs/aiomonitor
 - IPython Autoawait: https://ipython.readthedocs.io/en/stable/interactive/autoawait.html
 - Jupyter Architecture: https://docs.jupyter.org/en/latest/projects/architecture/content-architecture.html
 
 **Command Parsing**:
+
 - shlex Documentation: https://docs.python.org/3/library/shlex.html
 - argparse Documentation: https://docs.python.org/3/library/argparse.html
 - REPL + argparse Pattern: https://gist.github.com/benkehoe/2e6a08b385e3385f8a54805c99914c75
@@ -1692,10 +1815,12 @@ The deep-research agent has a **strong foundation** for interactive CLI mode:
 - Stack Overflow Discussion: https://stackoverflow.com/questions/69062838/python-library-for-repl-and-cli-argument-parsing
 
 **Progress Display**:
+
 - Rich Progress: https://rich.readthedocs.io/en/stable/progress.html
 - tqdm with asyncio: https://towardsdatascience.com/using-tqdm-with-asyncio-in-python-5c0f6e747d55
 
 **Production Examples**:
+
 - ptpython GitHub: https://github.com/prompt-toolkit/ptpython
 - ptpython Basic Embed: https://github.com/prompt-toolkit/ptpython/blob/main/examples/python-embed.py
 - ptpython Asyncio Embed: https://github.com/prompt-toolkit/ptpython/blob/main/examples/asyncio-python-embed.py
@@ -1703,12 +1828,14 @@ The deep-research agent has a **strong foundation** for interactive CLI mode:
 - aws-cli-repl (Performance-Optimized): https://github.com/janakaud/aws-cli-repl
 
 **Additional Resources**:
+
 - 4 Python Libraries for CLIs: https://opensource.com/article/17/5/4-practical-python-libraries
 - Python asyncio Documentation: https://docs.python.org/3/library/asyncio.html
 - Writing an async REPL (blog): https://carreau.github.io/posts/27-Writing-an-async-REPL---Part-1.ipynb/
 - Python readline module: https://docs.python.org/3/library/readline.html
 
 ### Historical Research Documents
+
 - `thoughts/shared/research/2025-11-20_obsidian-iterative-research-architecture.md` - Obsidian-based iterative research architecture
 - `thoughts/shared/research/2025-11-15_deep-research-agent-architecture.md` - Original deep research agent architecture with interactive mode vision (lines 850-860)
 - `thoughts/shared/research/2025-11-15_multi-agent-deep-research-architecture-v2.md` - Multi-agent architecture v2

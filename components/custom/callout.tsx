@@ -1,3 +1,5 @@
+'use client';
+
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
@@ -25,8 +27,7 @@ const iconMap = {
 };
 
 export interface CalloutProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof calloutVariants> {
+  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof calloutVariants> {
   variant?: 'info' | 'warning' | 'tip' | 'note';
   title?: string;
   icon?: React.ReactNode;
@@ -40,13 +41,13 @@ export function Callout({
   children,
   ...props
 }: CalloutProps) {
-  const Icon = icon || iconMap[variant];
+  const IconComponent = iconMap[variant];
 
   return (
     <div className={cn(calloutVariants({ variant }), className)} role="note" {...props}>
       <div className="flex items-start gap-3">
         <span className="text-current mt-0.5" aria-hidden="true">
-          {typeof Icon === 'function' ? <Icon className="w-5 h-5" /> : Icon}
+          {icon ?? <IconComponent className="w-5 h-5" />}
         </span>
         <div className="flex-1">
           {title && <h4 className="font-bold mb-2 text-foreground">{title}</h4>}

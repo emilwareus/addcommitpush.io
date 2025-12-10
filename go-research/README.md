@@ -18,43 +18,43 @@ go run ./cmd/research
 
 ### Research Agents
 
-| Command | Description |
-|---------|-------------|
-| `/fast <query>` | Quick single-worker research |
+| Command          | Description                                                                |
+| ---------------- | -------------------------------------------------------------------------- |
+| `/fast <query>`  | Quick single-worker research                                               |
 | `/storm <query>` | STORM: Multi-perspective conversations with cross-validation and synthesis |
 
 ### Active Session
 
-| Command | Description |
-|---------|-------------|
-| `/expand <text>` | Expand on current research |
-| `/workers` | Show worker/conversation status |
+| Command          | Description                     |
+| ---------------- | ------------------------------- |
+| `/expand <text>` | Expand on current research      |
+| `/workers`       | Show worker/conversation status |
 
 ### Sessions & History
 
-| Command | Description |
-|---------|-------------|
-| `/sessions` | List all sessions |
-| `/load <id>` | Load a previous session |
-| `/new` | Clear session and start fresh |
-| `/rerun <id>` | Rerun a previous query |
+| Command       | Description                   |
+| ------------- | ----------------------------- |
+| `/sessions`   | List all sessions             |
+| `/load <id>`  | Load a previous session       |
+| `/new`        | Clear session and start fresh |
+| `/rerun <id>` | Rerun a previous query        |
 
 ### Settings & Controls
 
-| Command | Description |
-|---------|-------------|
-| `/recompile` | Hot reload the agent |
-| `/verbose on\|off` | Toggle verbose mode |
-| `/model <name>` | Switch LLM model |
+| Command            | Description          |
+| ------------------ | -------------------- |
+| `/recompile`       | Hot reload the agent |
+| `/verbose on\|off` | Toggle verbose mode  |
+| `/model <name>`    | Switch LLM model     |
 
 ### Meta
 
-| Command | Description |
-|---------|-------------|
-| `/help` | Show all commands |
-| `/quit` | Exit the REPL |
-| `/architectures` | List available research architectures |
-| `/benchmark <query>` | Compare architecture results |
+| Command              | Description                           |
+| -------------------- | ------------------------------------- |
+| `/help`              | Show all commands                     |
+| `/quit`              | Exit the REPL                         |
+| `/architectures`     | List available research architectures |
+| `/benchmark <query>` | Compare architecture results          |
 
 **Tip:** Just type your question to start STORM research. After research, type follow-ups to expand.
 
@@ -225,16 +225,16 @@ When you run `/storm <query>`, you'll see:
 
 ### Key Components
 
-| Component | Description |
-|-----------|-------------|
-| **REPL** | Interactive shell with readline, command parsing, and colored output |
-| **STORM Orchestrator** | Coordinates the 4-phase research flow |
-| **Perspective Discovery** | Surveys topics and generates expert perspectives |
-| **Conversation Simulation** | Parallel WikiWriter↔TopicExpert dialogues |
-| **Analysis Agent** | Validates facts, detects contradictions, fills gaps |
-| **Synthesis Agent** | Two-phase outline generation and report writing |
-| **Event Bus** | Pub/sub system for real-time progress updates |
-| **Session Store** | JSON persistence with Obsidian markdown export |
+| Component                   | Description                                                          |
+| --------------------------- | -------------------------------------------------------------------- |
+| **REPL**                    | Interactive shell with readline, command parsing, and colored output |
+| **STORM Orchestrator**      | Coordinates the 4-phase research flow                                |
+| **Perspective Discovery**   | Surveys topics and generates expert perspectives                     |
+| **Conversation Simulation** | Parallel WikiWriter↔TopicExpert dialogues                            |
+| **Analysis Agent**          | Validates facts, detects contradictions, fills gaps                  |
+| **Synthesis Agent**         | Two-phase outline generation and report writing                      |
+| **Event Bus**               | Pub/sub system for real-time progress updates                        |
+| **Session Store**           | JSON persistence with Obsidian markdown export                       |
 
 ### Data Flow
 
@@ -398,11 +398,11 @@ Each perspective runs a simulated conversation:
 
 ### Perspective-Based Research
 
-| Complexity | Perspectives | Use Case |
-|------------|--------------|----------|
-| Simple | 2-3 | Factual queries with limited scope |
-| Moderate | 3-4 | Multi-aspect topics needing diverse views |
-| Complex | 5-6 | Deep research requiring comprehensive coverage |
+| Complexity | Perspectives | Use Case                                       |
+| ---------- | ------------ | ---------------------------------------------- |
+| Simple     | 2-3          | Factual queries with limited scope             |
+| Moderate   | 3-4          | Multi-aspect topics needing diverse views      |
+| Complex    | 5-6          | Deep research requiring comprehensive coverage |
 
 ### Session Persistence
 
@@ -412,6 +412,7 @@ Sessions are saved in two formats:
 2. **Obsidian** (`~/research-vault/<id>/`) - Markdown files with frontmatter
 
 Obsidian structure:
+
 ```
 <session-id>/
 ├── session.md      # Session overview with wiki-links

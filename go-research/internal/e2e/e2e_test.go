@@ -12,6 +12,7 @@ import (
 
 	"go-research/internal/agent"
 	"go-research/internal/architectures/catalog"
+	"go-research/internal/architectures/storm"
 	"go-research/internal/config"
 	"go-research/internal/events"
 	"go-research/internal/llm"
@@ -2197,9 +2198,9 @@ func TestStormOrchestratorE2EFullWorkflow(t *testing.T) {
 	mockTools := NewMockToolExecutor()
 
 	// Create STORM orchestrator with mocks
-	orch := orchestrator.NewStormOrchestrator(bus, cfg,
-		orchestrator.WithStormClient(mockLLM),
-		orchestrator.WithStormTools(mockTools),
+	orch := storm.NewStormLoop(bus, cfg,
+		storm.WithStormClient(mockLLM),
+		storm.WithStormTools(mockTools),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
@@ -2359,9 +2360,9 @@ func TestStormOrchestratorE2EWithGapFilling(t *testing.T) {
 
 	mockTools := NewMockToolExecutor()
 
-	orch := orchestrator.NewStormOrchestrator(bus, cfg,
-		orchestrator.WithStormClient(mockLLM),
-		orchestrator.WithStormTools(mockTools),
+	orch := storm.NewStormLoop(bus, cfg,
+		storm.WithStormClient(mockLLM),
+		storm.WithStormTools(mockTools),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -2398,9 +2399,9 @@ func TestStormOrchestratorE2EContextCancellation(t *testing.T) {
 
 	mockTools := NewMockToolExecutor()
 
-	orch := orchestrator.NewStormOrchestrator(bus, cfg,
-		orchestrator.WithStormClient(mockLLM),
-		orchestrator.WithStormTools(mockTools),
+	orch := storm.NewStormLoop(bus, cfg,
+		storm.WithStormClient(mockLLM),
+		storm.WithStormTools(mockTools),
 	)
 
 	// Cancel immediately
@@ -2446,9 +2447,9 @@ func TestStormOrchestratorE2EEventSequence(t *testing.T) {
 
 	mockTools := NewMockToolExecutor()
 
-	orch := orchestrator.NewStormOrchestrator(bus, cfg,
-		orchestrator.WithStormClient(mockLLM),
-		orchestrator.WithStormTools(mockTools),
+	orch := storm.NewStormLoop(bus, cfg,
+		storm.WithStormClient(mockLLM),
+		storm.WithStormTools(mockTools),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

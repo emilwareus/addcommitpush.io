@@ -11,6 +11,7 @@
 The current Go implementation deviates from STORM's core mechanism: **simulated expert conversations**. Instead of multi-turn WikiWriter↔TopicExpert dialogues, it uses ReAct-style iterative search loops.
 
 This plan aligns the implementation 1-to-1 with STORM while:
+
 - Using **web search** instead of Wikipedia (only allowed divergence)
 - **Keeping** event sourcing, cost tracking, Obsidian storage
 - **Keeping** the analysis agent (cross-validation, contradiction detection)
@@ -22,9 +23,11 @@ This plan aligns the implementation 1-to-1 with STORM while:
 **Goal**: Survey related topics before generating perspectives (like STORM's Wikipedia survey, but with web search)
 
 ### Files to Modify
+
 - `internal/planning/perspectives.go`
 
 ### New Types
+
 ```go
 // TopicOutline represents structure extracted from a related topic
 type TopicOutline struct {
@@ -37,6 +40,7 @@ type TopicOutline struct {
 ### New Functions
 
 #### 1.1 `SurveyRelatedTopics()`
+
 Surveys related topics via web search and extracts their structure.
 
 ```go
@@ -47,12 +51,14 @@ func (p *PerspectiveDiscoverer) SurveyRelatedTopics(
 ```
 
 **Implementation**:
+
 1. LLM call to generate 3-5 search queries for related subtopics
 2. Execute web searches for each query via Brave API
 3. Extract key sections/themes from top 3 results per query
 4. Return structured outlines as inspiration context
 
 **Prompt** (adapted from STORM's `FindRelatedTopic`):
+
 ```
 For the topic: "{topic}"
 
@@ -64,6 +70,7 @@ Return JSON array: ["query1", "query2", ...]
 ```
 
 #### 1.2 `DiscoverWithSurvey()`
+
 Generates perspectives informed by related topic structures.
 
 ```go
@@ -74,11 +81,13 @@ func (p *PerspectiveDiscoverer) DiscoverWithSurvey(
 ```
 
 **Implementation**:
+
 1. Call `SurveyRelatedTopics()` to get related structures
 2. Format outlines as inspiration context
 3. Generate personas using enhanced prompt
 
 **Prompt** (adapted from STORM's `GenPersona`):
+
 ```
 For the research topic: "{topic}"
 
@@ -100,6 +109,7 @@ Return JSON array: [{"name": "...", "focus": "...", "questions": [...]}]
 ```
 
 ### Acceptance Criteria
+
 - [x] Perspectives generated with awareness of related topic structures
 - [x] Cost tracked for survey LLM calls and searches
 - [x] Backward compatible: existing `Discover()` still works
@@ -113,6 +123,7 @@ Return JSON array: [{"name": "...", "focus": "...", "questions": [...]}]
 This is the **most critical phase** - it implements STORM's core innovation.
 
 ### New File
+
 - `internal/agents/conversation.go`
 
 ### New Types
@@ -161,6 +172,7 @@ func (s *ConversationSimulator) wikiWriterAsk(
 ```
 
 **Prompt** (adapted from STORM's `AskQuestionWithPersona`):
+
 ```
 You are a {perspective.Name} researching "{topic}".
 Your focus: {perspective.Focus}
@@ -195,6 +207,7 @@ func (s *ConversationSimulator) expertGenerateQueries(
 ```
 
 **Prompt** (adapted from STORM's `QuestionToQuery`):
+
 ```
 Topic: {topic}
 Question: {question}
@@ -219,6 +232,7 @@ func (s *ConversationSimulator) expertAnswer(
 ```
 
 **Prompt** (adapted from STORM's `AnswerQuestion`):
+
 ```
 Topic: {topic}
 Question: {question}
@@ -244,6 +258,7 @@ func (s *ConversationSimulator) SimulateConversation(
 ```
 
 **Implementation**:
+
 ```go
 func (s *ConversationSimulator) SimulateConversation(
     ctx context.Context,
@@ -321,6 +336,7 @@ func (s *ConversationSimulator) SimulateConversation(
 ```
 
 ### Acceptance Criteria
+
 - [x] Multi-turn conversations (3-5 turns) per perspective
 - [x] WikiWriter exits naturally when satisfied ("Thank you")
 - [x] TopicExpert grounds answers in search results
@@ -335,6 +351,7 @@ func (s *ConversationSimulator) SimulateConversation(
 **Goal**: Generate outline using STORM's draft→refine pattern
 
 ### Files to Modify
+
 - `internal/agents/synthesis.go`
 
 ### New Functions
@@ -351,6 +368,7 @@ func (s *SynthesisAgent) GenerateDraftOutline(
 ```
 
 **Prompt** (adapted from STORM's `WritePageOutline`):
+
 ```
 Create an outline for a comprehensive research report on: "{topic}"
 
@@ -374,6 +392,7 @@ func (s *SynthesisAgent) RefineOutline(
 ```
 
 **Prompt** (adapted from STORM's `WritePageOutlineFromConv`):
+
 ```
 Improve an outline for a research report on: "{topic}"
 
@@ -423,6 +442,7 @@ func (s *SynthesisAgent) GenerateOutlineWithConversations(
 ```
 
 ### Acceptance Criteria
+
 - [x] Draft outline generated from topic only
 - [x] Refined outline incorporates conversation findings
 - [x] Output structure reflects research, not just LLM's prior knowledge
@@ -434,6 +454,7 @@ func (s *SynthesisAgent) GenerateOutlineWithConversations(
 **Goal**: Wire everything together with event sourcing
 
 ### Files to Modify
+
 - `internal/orchestrator/deep_eventsourced.go`
 - `internal/events/types.go`
 - `internal/core/domain/aggregate/research_state.go`
@@ -443,6 +464,7 @@ func (s *SynthesisAgent) GenerateOutlineWithConversations(
 #### 4.1 New Event Type
 
 In `internal/events/types.go`:
+
 ```go
 EventConversationCompleted EventType = "conversation.completed"
 ```
@@ -450,6 +472,7 @@ EventConversationCompleted EventType = "conversation.completed"
 #### 4.2 Updated Aggregate State
 
 In `internal/core/domain/aggregate/research_state.go`:
+
 ```go
 type ResearchState struct {
     // ... existing fields ...
@@ -545,6 +568,7 @@ pending → planning (with survey) → conversations → analyzing → synthesiz
 ```
 
 ### Acceptance Criteria
+
 - [x] Conversations run in parallel per perspective
 - [x] Events emitted after each conversation completes
 - [x] Conversations stored in result state
@@ -579,15 +603,18 @@ Phase 3 ──┘
 ## Testing Strategy
 
 ### Unit Tests
+
 - `conversation_test.go`: Test WikiWriter/TopicExpert prompts and loop termination
 - `perspectives_test.go`: Test survey + enhanced persona generation
 - `synthesis_test.go`: Test two-phase outline generation
 
 ### Integration Tests
+
 - Full flow e2e test with mock LLM responses
 - Resume capability test (interrupt mid-conversation, resume from events)
 
 ### Quality Validation
+
 - Compare output reports between old (ReAct) and new (conversation) approaches
 - Verify conversation transcripts show natural follow-up questioning
 - Check that outlines reflect conversation content
@@ -608,15 +635,15 @@ Phase 3 ──┘
 
 Prompts to port from `knowledge_storm/storm_wiki/modules/`:
 
-| STORM Prompt | Go Location | Status |
-|--------------|-------------|--------|
-| `FindRelatedTopic` | `perspectives.go:SurveyRelatedTopics()` | Phase 1 |
-| `GenPersona` | `perspectives.go:DiscoverWithSurvey()` | Phase 1 |
-| `AskQuestionWithPersona` | `conversation.go:wikiWriterAsk()` | Phase 2 |
-| `QuestionToQuery` | `conversation.go:expertGenerateQueries()` | Phase 2 |
-| `AnswerQuestion` | `conversation.go:expertAnswer()` | Phase 2 |
-| `WritePageOutline` | `synthesis.go:GenerateDraftOutline()` | Phase 3 |
-| `WritePageOutlineFromConv` | `synthesis.go:RefineOutline()` | Phase 3 |
+| STORM Prompt               | Go Location                               | Status  |
+| -------------------------- | ----------------------------------------- | ------- |
+| `FindRelatedTopic`         | `perspectives.go:SurveyRelatedTopics()`   | Phase 1 |
+| `GenPersona`               | `perspectives.go:DiscoverWithSurvey()`    | Phase 1 |
+| `AskQuestionWithPersona`   | `conversation.go:wikiWriterAsk()`         | Phase 2 |
+| `QuestionToQuery`          | `conversation.go:expertGenerateQueries()` | Phase 2 |
+| `AnswerQuestion`           | `conversation.go:expertAnswer()`          | Phase 2 |
+| `WritePageOutline`         | `synthesis.go:GenerateDraftOutline()`     | Phase 3 |
+| `WritePageOutlineFromConv` | `synthesis.go:RefineOutline()`            | Phase 3 |
 
 ---
 

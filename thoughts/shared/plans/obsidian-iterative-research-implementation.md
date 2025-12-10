@@ -11,12 +11,14 @@ Transform the deep-research multi-agent system into an iterative, knowledge-grap
 ### What We Have
 
 **Multi-Agent Research System** (`deep-research-agent/src/deep_research/agent/orchestrator.py`):
+
 - LeadResearcher orchestrates 1-5 parallel WorkerAgents via LangGraph
 - Workers execute ReAct loops (15 iterations max, 50K token budget)
 - Dynamic fan-out using LangGraph Send API
 - HTTP connection pooling for parallel execution (100 connections LLM, 50 search, 50 fetch)
 
 **Critical Compression Point** (`orchestrator.py:351-364`):
+
 - Worker outputs compressed from full content (10-50KB) to 2000 tokens (~8KB)
 - **80-90% of research context is lost**:
   - Full ReAct thought-action-observation loops
@@ -25,6 +27,7 @@ Transform the deep-research multi-agent system into an iterative, knowledge-grap
   - Worker's decision-making process
 
 **Current Storage** (`utils/store.py:15-22`):
+
 - Single JSON file per session: `outputs/sessions/{session_id}.json`
 - Only stores compressed summaries (not full context)
 - Session ID based on `hash(query)` - same query overwrites previous
@@ -43,6 +46,7 @@ Transform the deep-research multi-agent system into an iterative, knowledge-grap
 ### Architecture
 
 **Obsidian Vault Structure**:
+
 ```
 outputs/obsidian/
 ├── sessions/                    # Research sessions (MOCs)
@@ -82,6 +86,7 @@ outputs/obsidian/
 ### Verification
 
 **After implementation**:
+
 - Run `research multi "What are AI trends?"` → Creates `outputs/obsidian/sessions/session_*.md`
 - Open Obsidian vault → Navigate session MOC → Click worker wikilink → See full ReAct trace
 - Run `research expand --session=session_abc123 --worker=task_1 "Focus on GPU costs"` → Creates v2 session
@@ -90,6 +95,7 @@ outputs/obsidian/
 ## What We're NOT Doing
 
 **Explicitly Out of Scope**:
+
 - Cross-session insight linking (v1 keeps insights within-session only)
 - Custom Obsidian plugins (rely on core + Dataview only)
 - Real-time collaborative editing (single-user research workflows)
@@ -102,6 +108,7 @@ outputs/obsidian/
 **Strategy**: Phased implementation with incremental feature delivery. Each phase is independently testable and delivers value.
 
 **Key Principles**:
+
 1. **Never break synthesis**: Compression still used for report generation (backwards compatible)
 2. **Store full + compressed**: Full context for Obsidian, compressed for synthesis
 3. **Fail gracefully**: Obsidian write failures shouldn't crash research
@@ -222,12 +229,14 @@ class ResearchSession:
 **Modify WorkerAgent Class** (line 21-62):
 
 1. **Add instance variable** (after line 32):
+
 ```python
 self.full_context: WorkerFullContext | None = None
 self.capture_context = True  # Always capture for Obsidian
 ```
 
 2. **Create context at start** (after line 44, before executing):
+
 ```python
 async def execute(self, objective: str, task_metadata: dict[str, Any]) -> WorkerResult:
     """Execute worker research with full context capture."""
@@ -287,11 +296,13 @@ async def execute(self, objective: str, task_metadata: dict[str, Any]) -> Worker
 **Capture ReAct Iterations** (modify `_step` method at line 200-310):
 
 1. **Add iteration tracking variable** (after line 121):
+
 ```python
 self.react_iterations: list[dict[str, Any]] = []  # Track for export
 ```
 
 2. **Capture iteration details** (in `_step` method, after line 216):
+
 ```python
 async def _step(self) -> str:
     """Execute one ReAct step with full trace capture."""
@@ -391,6 +402,7 @@ async def _step(self) -> str:
 ```
 
 3. **Export iterations in metadata** (modify `research` method at line 163-171):
+
 ```python
 return ResearchReport(
     query=query,
@@ -412,11 +424,13 @@ return ResearchReport(
 **Add Session Tracking** (modify LeadResearcher class):
 
 1. **Add instance variable** (after line 46):
+
 ```python
 self.session: ResearchSession | None = None
 ```
 
 2. **Initialize session** (in `research` method, after line 67):
+
 ```python
 async def research(self, query: str) -> dict[str, Any]:
     """Execute multi-agent research with full session tracking."""
@@ -460,6 +474,7 @@ async def research(self, query: str) -> dict[str, Any]:
 ```
 
 3. **Capture worker full context** (modify `_worker_execution` at line 351-364):
+
 ```python
 async def _worker_execution(self, state: dict[str, Any]) -> dict[str, Any]:
     """Execute worker - CAPTURE FULL CONTEXT."""
@@ -517,6 +532,7 @@ async def _worker_execution(self, state: dict[str, Any]) -> dict[str, Any]:
 ```
 
 4. **Update complexity in session** (in `_analyze_query` at line 105-149):
+
 ```python
 # After line 132 (after complexity_score extraction)
 if self.session:
@@ -524,6 +540,7 @@ if self.session:
 ```
 
 5. **Update sub_tasks in session** (in `_create_plan` at line 151-311):
+
 ```python
 # After line 311 (after sub_tasks extraction)
 if self.session:
@@ -533,6 +550,7 @@ if self.session:
 ### Success Criteria
 
 #### Automated Verification:
+
 - [ ] Build succeeds: `cd deep-research-agent && uv run pytest tests/ -v`
 - [ ] Type checking passes: `cd deep-research-agent && uv run mypy src/deep_research/`
 - [ ] Session object created with all fields populated
@@ -541,6 +559,7 @@ if self.session:
 - [ ] Tool calls captured (verify `len(worker.tool_calls) > 0`)
 
 #### Manual Verification:
+
 - [ ] Run research: `uv run research multi "What is Python?"`
 - [ ] Inspect `orchestrator.session` object after completion
 - [ ] Verify `session.workers[0].final_output` contains full uncompressed content
@@ -566,6 +585,7 @@ Write complete research sessions to Obsidian vault as markdown files with YAML f
 #### Location: `deep-research-agent/src/deep_research/obsidian/` (new module)
 
 Create new module:
+
 ```
 deep-research-agent/src/deep_research/obsidian/
 ├── __init__.py
@@ -914,7 +934,7 @@ class ObsidianWriter:
 
 #### File: `deep-research-agent/src/deep_research/obsidian/templates.py`
 
-```python
+````python
 """Markdown templates for Obsidian notes."""
 
 from typing import Any
@@ -1117,8 +1137,10 @@ def source_note_template(
 
 ## Content
 
-```
+````
+
 {content_display}
+
 ```
 """
 
@@ -1156,7 +1178,7 @@ def report_template(
 
 #### File: `deep-research-agent/src/deep_research/obsidian/insights.py`
 
-```python
+````python
 """Auto-extract insights from worker outputs using LLM."""
 
 from datetime import datetime
@@ -1193,15 +1215,14 @@ Example:
     "tags": ["scaling-laws", "mixture-of-experts", "model-architecture", "efficiency"]
   }
 ]
-```
+````
 
 Worker Output:
 {worker_output}
 """
 
-
 async def extract_insights(session: ResearchSession) -> list[dict[str, Any]]:
-    """Extract insights from all workers in session.
+"""Extract insights from all workers in session.
 
     Returns:
         List of insight dictionaries with metadata
@@ -1265,7 +1286,8 @@ async def extract_insights(session: ResearchSession) -> list[dict[str, Any]]:
             # Continue with other workers
 
     return all_insights
-```
+
+````
 
 ### Orchestrator Integration
 
@@ -1274,14 +1296,16 @@ async def extract_insights(session: ResearchSession) -> list[dict[str, Any]]:
 **Import ObsidianWriter** (after line 10):
 ```python
 from deep_research.obsidian.writer import ObsidianWriter
-```
+````
 
 **Add to LeadResearcher** (after line 46):
+
 ```python
 self.obsidian_writer = ObsidianWriter(vault_path="outputs/obsidian")
 ```
 
 **Write to Obsidian after research** (in `research` method, before returning result):
+
 ```python
 # Write to Obsidian (always enabled)
 try:
@@ -1308,6 +1332,7 @@ return result
 #### Location: `deep-research-agent/src/deep_research/cli.py`
 
 **Add Obsidian path to output** (after line 217):
+
 ```python
 # After displaying cost
 if "obsidian_session_path" in result["metadata"]:
@@ -1318,6 +1343,7 @@ if "obsidian_session_path" in result["metadata"]:
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Build succeeds: `cd deep-research-agent && uv run pytest tests/ -v`
 - [x] Type checking passes: `cd deep-research-agent && uv run mypy src/deep_research/`
 - [ ] Vault structure created: `outputs/obsidian/{sessions,workers,insights,sources,reports}/`
@@ -1326,6 +1352,7 @@ if "obsidian_session_path" in result["metadata"]:
 - [ ] Insight notes created: `outputs/obsidian/insights/insight_*.md`
 
 #### Manual Verification:
+
 - [ ] Run research: `uv run research multi "What are the latest AI trends?"`
 - [ ] Open `outputs/obsidian/` in Obsidian
 - [ ] Session MOC renders correctly with frontmatter and wikilinks
@@ -1352,7 +1379,7 @@ Add `expand` and `recompile-report` CLI commands to enable iterative research wo
 
 #### File: `deep-research-agent/src/deep_research/obsidian/loader.py` (new)
 
-```python
+````python
 """Load research sessions from Obsidian vault."""
 
 from pathlib import Path
@@ -1641,7 +1668,7 @@ class SessionLoader:
             })
 
         return sessions
-```
+````
 
 ### Expand Command
 
@@ -1869,6 +1896,7 @@ Create a well-structured report that addresses the original query while followin
 ### Success Criteria
 
 #### Automated Verification:
+
 - [ ] Build succeeds: `cd deep-research-agent && uv run pytest tests/ -v`
 - [x] Type checking passes: `cd deep-research-agent && uv run mypy src/deep_research/`
 - [x] SessionLoader can load existing sessions
@@ -1876,6 +1904,7 @@ Create a well-structured report that addresses the original query while followin
 - [x] Recompile command creates new report version
 
 #### Manual Verification:
+
 - [ ] Run initial research: `uv run research multi "What is Python?"`
 - [ ] List sessions: Verify session created in `outputs/obsidian/sessions/`
 - [ ] Expand worker: `uv run research expand --session=<id> --worker=task_1 "Focus on performance"`
@@ -2147,7 +2176,7 @@ async def test_expand_workflow(tmp_path):
 
 #### File: `deep-research-agent/docs/manual-testing.md` (new)
 
-```markdown
+````markdown
 # Manual Testing Procedures
 
 ## Phase 1: Basic Research
@@ -2157,6 +2186,7 @@ async def test_expand_workflow(tmp_path):
    cd deep-research-agent
    uv run research multi "What are the latest trends in AI?"
    ```
+````
 
 2. **Verify output**:
    - Report displays in console
@@ -2164,6 +2194,7 @@ async def test_expand_workflow(tmp_path):
    - Obsidian path displayed: `✓ Obsidian session: outputs/obsidian/sessions/...`
 
 3. **Check Obsidian files**:
+
    ```bash
    ls -R outputs/obsidian/
    ```
@@ -2205,6 +2236,7 @@ async def test_expand_workflow(tmp_path):
 ## Phase 3: Iteration Commands
 
 1. **Expand worker research**:
+
    ```bash
    # Get session ID from previous run
    SESSION_ID="session_YYYYMMDD_HHMMSS_XXXXXX"
@@ -2218,6 +2250,7 @@ async def test_expand_workflow(tmp_path):
    - Graph view shows lineage
 
 3. **Recompile report**:
+
    ```bash
    uv run research recompile-report --session=$SESSION_ID "Focus on beginner perspective"
    ```
@@ -2229,6 +2262,7 @@ async def test_expand_workflow(tmp_path):
 ## Phase 4: Performance Testing
 
 1. **Large query test**:
+
    ```bash
    uv run research multi "Comprehensive analysis of machine learning frameworks, comparing PyTorch, TensorFlow, and JAX across performance, ease of use, and ecosystem"
    ```
@@ -2260,7 +2294,8 @@ async def test_expand_workflow(tmp_path):
    - Verify 2-4 insights per worker
    - Check insight quality (title, finding, evidence, implications)
    - Verify confidence levels assigned
-```
+
+````
 
 ### User Documentation
 
@@ -2283,14 +2318,16 @@ The deep-research agent automatically saves all research sessions to an Obsidian
 
 ### Vault Structure
 
-```
+````
+
 outputs/obsidian/
-├── sessions/       # Research session MOCs (Maps of Content)
-├── workers/        # Individual worker research with full traces
-├── insights/       # Auto-extracted atomic insights
-├── sources/        # Deduplicated web pages
-└── reports/        # Compiled reports (versioned)
-```
+├── sessions/ # Research session MOCs (Maps of Content)
+├── workers/ # Individual worker research with full traces
+├── insights/ # Auto-extracted atomic insights
+├── sources/ # Deduplicated web pages
+└── reports/ # Compiled reports (versioned)
+
+````
 
 ### Usage
 
@@ -2302,7 +2339,7 @@ uv run research multi "What are the latest AI trends?"
 
 # Output shows Obsidian session path:
 # ✓ Obsidian session: outputs/obsidian/sessions/session_20250120_142530_abc123_v1.md
-```
+````
 
 #### Open in Obsidian
 
@@ -2351,11 +2388,13 @@ SORT created_at ASC
 ### Graph Exploration
 
 Use Obsidian's graph view to:
+
 - Visualize research session structures
 - Find connections between insights across sessions
 - Navigate from sources back to insights
 - Trace research lineage (v1 → v2 → v3)
-```
+
+````
 
 ### Performance Benchmarks
 
@@ -2432,11 +2471,12 @@ Use Obsidian's graph view to:
 - Use complexity thresholds to control cost (default settings are good)
 - Parallel execution is critical (HTTP connection pooling required)
 - Obsidian write overhead is minimal (always enable)
-```
+````
 
 ### Success Criteria
 
 #### Automated Verification:
+
 - [ ] All unit tests pass: `uv run pytest tests/test_obsidian_writer.py -v`
 - [ ] All unit tests pass: `uv run pytest tests/test_session_loader.py -v`
 - [ ] Integration tests pass: `uv run pytest tests/integration/ -v -m integration`
@@ -2444,6 +2484,7 @@ Use Obsidian's graph view to:
 - [ ] Documentation builds without errors
 
 #### Manual Verification:
+
 - [ ] Complete full manual testing procedure (see `docs/manual-testing.md`)
 - [ ] All edge cases tested and pass
 - [ ] Performance benchmarks match expected ranges

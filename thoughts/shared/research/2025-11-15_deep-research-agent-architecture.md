@@ -4,7 +4,7 @@ researcher: Claude (Sonnet 4.5)
 git_commit: 22dbf8d52dc8c995afcf147c11fad7f347571464
 branch: feat/custom-deep-research
 repository: addcommitpush.io
-topic: "Custom Deep Research Agent - Architecture & Implementation Plan"
+topic: 'Custom Deep Research Agent - Architecture & Implementation Plan'
 tags: [research, deep-research, agent, langgraph, react, eda, python, uv]
 status: complete
 last_updated: 2025-11-15
@@ -116,18 +116,21 @@ The agent will operate as a CLI tool that takes natural language research questi
 #### 1. Agent Core (`agent/`)
 
 **ReAct Loop Implementation**
+
 - Iterative thought-action-observation cycle
 - XML-tagged structured outputs (`<think>`, `<tool_call>`, `<answer>`)
 - Context window management (110K token threshold)
 - Graceful degradation on token limits
 
 **LangGraph State Machine**
+
 - `StateGraph` with typed state (Pydantic models)
 - Conditional routing based on tool calls
 - Checkpointing with PostgreSQL/SQLite
 - Human-in-the-loop interrupt points
 
 **State Definition**:
+
 ```python
 class AgentState(TypedDict):
     messages: Annotated[list[BaseMessage], add_messages]
@@ -146,12 +149,14 @@ class AgentState(TypedDict):
 #### 2. Tool Suite (`tools/`)
 
 **Search Tool** (`search.py`)
+
 - Web search via configurable provider (Serper, Brave, DuckDuckGo)
 - Batch query support
 - Markdown-formatted results with citations
 - Language detection for locale customization
 
 **Code Executor** (`code_executor.py`)
+
 - Jupyter kernel management via `jupyter-client`
 - Sandboxed Python execution
 - Rich output capture (stdout, stderr, display data)
@@ -159,12 +164,14 @@ class AgentState(TypedDict):
 - Timeout and resource limits
 
 **Web Fetch Tool** (`web_fetch.py`)
+
 - URL content retrieval and summarization
 - Jina AI Reader integration
 - Progressive content truncation (95K tokens)
 - Goal-based extraction with LLM
 
 **File Operations** (`file_ops.py`)
+
 - Read/write local files
 - CSV/Excel/Parquet loading
 - Schema extraction
@@ -173,12 +180,14 @@ class AgentState(TypedDict):
 #### 3. Notebook Generation (`notebook/`)
 
 **Builder** (`builder.py`)
+
 - Programmatic notebook creation with `nbformat`
 - Cell management (markdown, code)
 - Execution result capture
 - Output serialization
 
 **Templates** (`templates.py`)
+
 - EDA narrative structure (7-act storyline)
 - Act I: Set the Scene
 - Act II: Meet the Data
@@ -189,6 +198,7 @@ class AgentState(TypedDict):
 - Act VII: Insights & Recommendations
 
 **Validator** (`validator.py`)
+
 - AST-based code validation
 - Dangerous operation detection
 - Pandas pattern checking
@@ -197,12 +207,14 @@ class AgentState(TypedDict):
 #### 4. CLI Interface (`cli.py`)
 
 **Commands**:
+
 - `deep-research research <question>` - General research
 - `deep-research eda <file>` - Exploratory data analysis
 - `deep-research resume <thread-id>` - Continue session
 - `deep-research export <thread-id>` - Export results
 
 **Features**:
+
 - Rich terminal output with progress bars
 - Streaming token display
 - Interactive mode for refinement
@@ -248,30 +260,35 @@ dev = [
 ### Why These Choices?
 
 **uv Package Manager**:
+
 - 10-100x faster than pip/poetry
 - Automatic Python version management
 - Universal lock file (cross-platform)
 - Single binary for entire toolchain
 
 **LangGraph over LangChain LCEL**:
+
 - Explicit state management vs. implicit
 - Better debugging with state inspection
 - Checkpointing and time-travel
 - Clearer control flow with conditional edges
 
 **Click over Typer**:
+
 - More mature and stable
 - Better documentation
 - Wider community adoption
 - Simpler for this use case
 
 **jupyter-client over E2B**:
+
 - No external dependencies
 - Local execution for privacy
 - Free (no API costs)
 - Full control over environment
 
 **Pydantic v2**:
+
 - Native validation performance
 - JSON schema generation
 - Type safety for LLM outputs
@@ -346,6 +363,7 @@ deep-research-agent/
 **Goal**: Establish project structure and basic CLI
 
 **Tasks**:
+
 1. Initialize uv project with dependencies
 2. Set up development tooling (ruff, mypy, pytest)
 3. Implement basic CLI with Click
@@ -353,6 +371,7 @@ deep-research-agent/
 5. Set up logging with rich
 
 **Deliverables**:
+
 - Working CLI that accepts commands
 - Configuration file loading (.env)
 - Basic logging to console
@@ -363,6 +382,7 @@ deep-research-agent/
 **Goal**: Implement core tools for research
 
 **Tasks**:
+
 1. Implement base tool interface
 2. Build search tool with multiple providers
 3. Create web fetch tool with summarization
@@ -371,6 +391,7 @@ deep-research-agent/
 6. Create tool registry
 
 **Deliverables**:
+
 - All tools independently testable
 - Tool registry with dynamic loading
 - Comprehensive test coverage (>80%)
@@ -381,6 +402,7 @@ deep-research-agent/
 **Goal**: Build core ReAct loop with LangGraph
 
 **Tasks**:
+
 1. Define LangGraph state schema
 2. Implement ReAct loop logic
 3. Build conditional routing
@@ -389,6 +411,7 @@ deep-research-agent/
 6. Create system prompts
 
 **Deliverables**:
+
 - Working ReAct agent
 - State persistence to SQLite
 - Token counting and limits
@@ -399,6 +422,7 @@ deep-research-agent/
 **Goal**: Build EDA and notebook capabilities
 
 **Tasks**:
+
 1. Implement notebook builder
 2. Create EDA templates (7-act structure)
 3. Build code validator
@@ -406,6 +430,7 @@ deep-research-agent/
 5. Implement execution and capture
 
 **Deliverables**:
+
 - Programmatic notebook generation
 - EDA template with narrative
 - Safe code execution
@@ -416,6 +441,7 @@ deep-research-agent/
 **Goal**: End-to-end workflows and UX
 
 **Tasks**:
+
 1. Integrate all components
 2. Implement CLI workflows
 3. Add streaming output
@@ -423,6 +449,7 @@ deep-research-agent/
 5. Performance optimization
 
 **Deliverables**:
+
 - Complete research workflow
 - Complete EDA workflow
 - User documentation
@@ -436,6 +463,7 @@ deep-research-agent/
 **File**: `src/deep_research/agent/react_agent.py`
 
 **Responsibilities**:
+
 - Orchestrate thought-action-observation loop
 - Manage LLM API calls with retry logic
 - Parse structured outputs (XML tags)
@@ -443,6 +471,7 @@ deep-research-agent/
 - Accumulate context and results
 
 **Key Methods**:
+
 ```python
 class ReActAgent:
     def __init__(
@@ -465,12 +494,14 @@ class ReActAgent:
 ```
 
 **Termination Conditions**:
+
 1. Answer tag found (`<answer>...</answer>`)
 2. Max iterations reached (100)
 3. Token limit approached (110K)
 4. Explicit user termination
 
 **Error Handling**:
+
 - Exponential backoff for API errors (1-30s)
 - Max 10 retries per API call
 - Graceful degradation on tool failures
@@ -481,6 +512,7 @@ class ReActAgent:
 **File**: `src/deep_research/agent/graph.py`
 
 **Workflow**:
+
 ```python
 def build_research_graph() -> CompiledGraph:
     workflow = StateGraph(AgentState)
@@ -526,6 +558,7 @@ def build_research_graph() -> CompiledGraph:
 ```
 
 **State Updates**:
+
 - Use reducers for accumulation (`add_messages`, custom reducers)
 - Atomic updates per node
 - Immutable history via checkpointing
@@ -535,6 +568,7 @@ def build_research_graph() -> CompiledGraph:
 **File**: `src/deep_research/tools/base.py`
 
 **Base Interface**:
+
 ```python
 from abc import ABC, abstractmethod
 from typing import Any
@@ -579,6 +613,7 @@ class BaseTool(ABC):
 ```
 
 **Example: Search Tool**:
+
 ```python
 class SearchInput(ToolInput):
     query: list[str]
@@ -611,6 +646,7 @@ class SearchTool(BaseTool):
 **File**: `src/deep_research/tools/code_executor.py`
 
 **Implementation**:
+
 ```python
 from jupyter_client import KernelManager
 from queue import Empty
@@ -674,6 +710,7 @@ class CodeExecutor:
 **File**: `src/deep_research/notebook/builder.py`
 
 **Implementation**:
+
 ```python
 import nbformat as nbf
 from nbformat.v4 import new_notebook, new_code_cell, new_markdown_cell
@@ -702,6 +739,7 @@ class NotebookBuilder:
 ```
 
 **EDA Template**:
+
 ```python
 class EDATemplate:
     @staticmethod

@@ -12,8 +12,8 @@ import (
 	"text/template"
 	"time"
 
+	"go-research/internal/architectures/think_deep/runtime"
 	"go-research/internal/session"
-	"go-research/internal/think_deep"
 
 	"gopkg.in/yaml.v3"
 )
@@ -140,7 +140,7 @@ func (w *Writer) GetReportPath(sess *session.Session) string {
 
 // WriteSource writes a source file to the sources directory.
 // Returns the generated filename for linking from insights.
-func (w *Writer) WriteSource(sessionDir string, sourceRef think_deep.SourceReference, index int) (string, error) {
+func (w *Writer) WriteSource(sessionDir string, sourceRef runtime.SourceReference, index int) (string, error) {
 	// Generate safe filename from URL or file path
 	var safeName string
 	if sourceRef.URL != "" {
@@ -231,7 +231,7 @@ func (w *Writer) WriteSource(sessionDir string, sourceRef think_deep.SourceRefer
 
 // WriteSources writes all sources from insights to the sources directory.
 // Returns a map of source URL/path to filename for linking.
-func (w *Writer) WriteSources(sessionDir string, insights []think_deep.SubInsight) (map[string]string, error) {
+func (w *Writer) WriteSources(sessionDir string, insights []runtime.SubInsight) (map[string]string, error) {
 	sourceMap := make(map[string]string)
 	sourceIndex := 0
 
@@ -259,9 +259,9 @@ func (w *Writer) WriteSources(sessionDir string, insights []think_deep.SubInsigh
 		// Also create source from legacy SourceURL/SourceContent if not already covered
 		if insight.SourceURL != "" && sourceMap[insight.SourceURL] == "" {
 			sourceIndex++
-			src := think_deep.SourceReference{
+			src := runtime.SourceReference{
 				URL:             insight.SourceURL,
-				Type:            think_deep.SourceTypeWeb,
+				Type:            runtime.SourceTypeWeb,
 				RelevantExcerpt: insight.SourceContent,
 				FetchedAt:       insight.Timestamp,
 			}
@@ -277,16 +277,16 @@ func (w *Writer) WriteSources(sessionDir string, insights []think_deep.SubInsigh
 
 // WriteInsight writes a single insight to the insights directory.
 // Enhanced to include data points, analysis chain, and source links.
-func (w *Writer) WriteInsight(sessionDir string, insight think_deep.SubInsight, index int, sourceMap map[string]string) error {
+func (w *Writer) WriteInsight(sessionDir string, insight runtime.SubInsight, index int, sourceMap map[string]string) error {
 	filename := filepath.Join(sessionDir, "insights", fmt.Sprintf("insight_%03d.md", index))
 
 	frontmatter := map[string]interface{}{
-		"insight_id":    insight.ID,
-		"topic":         insight.Topic,
-		"confidence":    fmt.Sprintf("%.2f", insight.Confidence),
-		"iteration":     insight.Iteration,
-		"researcher":    insight.ResearcherNum,
-		"timestamp":     insight.Timestamp.Format(time.RFC3339),
+		"insight_id": insight.ID,
+		"topic":      insight.Topic,
+		"confidence": fmt.Sprintf("%.2f", insight.Confidence),
+		"iteration":  insight.Iteration,
+		"researcher": insight.ResearcherNum,
+		"timestamp":  insight.Timestamp.Format(time.RFC3339),
 	}
 	if insight.SourceURL != "" {
 		frontmatter["source_url"] = insight.SourceURL
@@ -416,7 +416,7 @@ func (w *Writer) WriteInsight(sessionDir string, insight think_deep.SubInsight, 
 
 // WriteInsights writes all insights for a session.
 // It first writes all sources, then writes insights with source links.
-func (w *Writer) WriteInsights(sessionDir string, insights []think_deep.SubInsight) error {
+func (w *Writer) WriteInsights(sessionDir string, insights []runtime.SubInsight) error {
 	// First, write all sources and get the mapping
 	sourceMap, err := w.WriteSources(sessionDir, insights)
 	if err != nil {
@@ -470,7 +470,7 @@ func sanitizeFilename(input string) string {
 }
 
 // WriteWithInsights writes a session with its sub-insights to the Obsidian vault.
-func (w *Writer) WriteWithInsights(sess *session.Session, subInsights []think_deep.SubInsight) error {
+func (w *Writer) WriteWithInsights(sess *session.Session, subInsights []runtime.SubInsight) error {
 	// Create session directory structure
 	sessionDir := filepath.Join(w.vaultPath, sess.ID)
 	dirs := []string{
@@ -592,7 +592,7 @@ const sessionMOCTemplate = `---
 `
 
 // writeSessionMOCWithInsights writes a session MOC that includes links to insights
-func (w *Writer) writeSessionMOCWithInsights(dir string, sess *session.Session, insights []think_deep.SubInsight) error {
+func (w *Writer) writeSessionMOCWithInsights(dir string, sess *session.Session, insights []runtime.SubInsight) error {
 	filename := filepath.Join(dir, "session.md")
 
 	frontmatter := map[string]interface{}{
@@ -619,7 +619,7 @@ func (w *Writer) writeSessionMOCWithInsights(dir string, sess *session.Session, 
 	data := struct {
 		Frontmatter string
 		*session.Session
-		SubInsights []think_deep.SubInsight
+		SubInsights []runtime.SubInsight
 	}{string(fm), sess, insights}
 
 	var content bytes.Buffer

@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"go-research/internal/agents"
+	"go-research/internal/architectures/think_deep/runtime"
 	"go-research/internal/session"
-	"go-research/internal/think_deep"
 )
 
 // Architecture defines the interface that all research architectures must implement.
@@ -44,7 +44,7 @@ type Result struct {
 	Facts       []agents.Fact
 	Sources     []string
 	Workers     []WorkerResult
-	SubInsights []think_deep.SubInsight // Structured insights from ThinkDeep
+	SubInsights []runtime.SubInsight // Structured insights from ThinkDeep
 
 	// Metrics for benchmarking
 	Metrics Metrics

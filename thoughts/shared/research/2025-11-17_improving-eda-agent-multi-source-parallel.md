@@ -4,7 +4,7 @@ researcher: Claude (Sonnet 4.5)
 git_commit: f02b5c6740b7d3c156f172c0e49106b37563d25a
 branch: feat/custom-deep-research
 repository: addcommitpush.io
-topic: "Improving EDA Agent: Multi-Data Source Support & Parallel Execution as Sub-Agent"
+topic: 'Improving EDA Agent: Multi-Data Source Support & Parallel Execution as Sub-Agent'
 tags: [research, deep-research, eda, multi-agent, data-analysis, parallel-execution, tool-system]
 status: complete
 last_updated: 2025-11-17
@@ -22,6 +22,7 @@ last_updated_by: Claude
 ## Research Question
 
 How can the IterativeEDAAgent be transformed into a sub-agent tool that:
+
 1. Can be used by the multi-agent system as a tool
 2. Supports running multiple EDA agents concurrently (parallel execution)
 3. Handles multiple data source types (pickle, csv, excel, parquet, etc.)
@@ -43,22 +44,26 @@ This research provides a comprehensive implementation plan with code references,
 ### 1. Current EDA Agent Architecture
 
 #### Implementation Location
+
 - **Primary**: `deep-research-agent/src/deep_research/agent/iterative_eda.py:19-655`
 - **Alternative**: `deep-research-agent/src/deep_research/agent/data_agent.py:16-419` (simpler, older version)
 
 #### Current Workflow (4 Phases)
 
 **Phase 1: Load & Understand** (`iterative_eda.py:49-50`, `iterative_eda.py:95-172`)
+
 - Loads CSV into pandas: `df = pd.read_csv(filepath)` (line 98)
 - Executes setup code in Jupyter kernel via CodeExecutor
 - Extracts schema: shape, columns, dtypes, missing values, head samples
 
 **Phase 2: Identify Target** (`iterative_eda.py:53-55`, `iterative_eda.py:174-212`)
+
 - LLM analyzes query + schema to identify target variable
 - Uses heuristic fallbacks: "price", "cost", "value" patterns
 - Returns target column for analysis focus
 
 **Phase 3: Iterative Exploration** (`iterative_eda.py:58-86`)
+
 - Loop up to `max_iterations` (default: 7):
   1. **Goal Check** (after 3+ iterations): LLM evaluates if sufficient insights gathered → early stop
   2. **Plan**: LLM generates Python exploration code based on insights so far
@@ -67,6 +72,7 @@ This research provides a comprehensive implementation plan with code references,
   5. **Store**: Append insight to list, continue loop
 
 **Phase 4: Generate Outputs** (`iterative_eda.py:89-90`, `iterative_eda.py:435-456`)
+
 - Generate markdown report summarizing insights
 - Build executed Jupyter notebook with:
   - Executive summary (LLM-generated from all insights)
@@ -77,16 +83,19 @@ This research provides a comprehensive implementation plan with code references,
 #### Current Limitations
 
 **Single File Format** (`iterative_eda.py:98`, `data_agent.py:34`)
+
 - Hardcoded `pd.read_csv(filepath)` calls
 - No file extension detection or format validation
 - Only CSV support (no Excel, Parquet, Pickle, etc.)
 
 **Not a Tool**
+
 - EDA agent is directly instantiated by CLI (`cli.py:275`)
 - Not registered in tool system
 - Cannot be called by other agents (ReactAgent, WorkerAgent)
 
 **No Parallel Support**
+
 - Single synchronous execution
 - No mechanism to run multiple EDA analyses concurrently
 - CodeExecutor creates single kernel instance (blocks concurrent use)
@@ -127,6 +136,7 @@ class Tool(ABC):
 ```
 
 **Key Pattern**: Tools return `ToolResult` with:
+
 - `success`: Boolean execution status
 - `content`: String output (formatted for LLM consumption)
 - `metadata`: Dict with diagnostic info (query, URL, tokens, etc.)
@@ -174,6 +184,7 @@ class SearchTool(Tool):
 ```
 
 **Key Aspects**:
+
 - Environment-based configuration (API keys)
 - Error handling with try/except → returns failure ToolResult
 - Helper methods for API calls and formatting
@@ -212,6 +223,7 @@ class ReactAgent:
 ```
 
 **Key Pattern**:
+
 1. Custom tool implements `Tool` base class (domain logic)
 2. `@tool` decorated function wraps custom tool (LangChain integration)
 3. Decorated function returns string (LangChain requirement)
@@ -257,12 +269,14 @@ async def _worker_execution(self, state: dict[str, Any]) -> dict[str, Any]:
 ```
 
 **Key Mechanism**:
+
 1. **Dynamic Fan-Out**: `Send` objects created for each task → LangGraph parallelizes execution
 2. **State Reducer**: `worker_results: Annotated[list[dict], add]` automatically merges parallel outputs
 3. **Isolated Instances**: Each worker gets own agent instance (no shared state)
 4. **Result Compression**: Summaries compressed to prevent state bloat
 
 **Graph Structure** (`orchestrator.py:80-101`):
+
 ```
 START → analyze → plan → [workers in parallel] → synthesize → END
                            ↑
@@ -369,11 +383,13 @@ class CodeExecutor:
 ```
 
 **Limitation for Parallel Execution**:
+
 - Single kernel instance per CodeExecutor
 - `execute()` is synchronous (blocks)
 - No kernel pooling or management
 
 **Needed for Parallel EDA**:
+
 - Kernel pool or factory pattern
 - Async execution support
 - Kernel lifecycle management (auto-cleanup)
@@ -385,22 +401,27 @@ class CodeExecutor:
 #### File Format Support Analysis
 
 **Current Implementation** (`iterative_eda.py:98`, `data_agent.py:34`):
+
 ```python
 # Only CSV loading implemented
 df = pd.read_csv(filepath)
 ```
 
 **CLI Validation** (`cli.py:231`):
+
 ```python
 @click.argument("filepath", type=click.Path(exists=True))
 ```
+
 - Only validates file existence, not format
 - No extension checking
 
 **Available Dependencies** (`pyproject.toml:19`):
+
 - `pandas>=2.2.0` - supports all formats via different readers
 
 **Missing Formats**:
+
 - Excel (.xlsx, .xls) - no `read_excel` calls
 - Parquet (.parquet) - no `read_parquet` calls
 - Pickle (.pkl) - no `read_pickle` calls
@@ -408,6 +429,7 @@ df = pd.read_csv(filepath)
 - Other: TSV, HDF5, Feather, etc.
 
 **Required Dependencies** (need to add to pyproject.toml):
+
 ```toml
 dependencies = [
     # ... existing ...
@@ -496,6 +518,7 @@ class DataLoader:
 ```
 
 **Usage in IterativeEDAAgent**:
+
 ```python
 # Replace line 98 in iterative_eda.py
 from ..tools.data_loader import DataLoader
@@ -659,6 +682,7 @@ self.tools = [search, fetch, eda]  # Add eda to list
 **Result**: ReactAgent can now perform EDA during research workflows!
 
 Example usage:
+
 ```bash
 uv run research research "Analyze customer_churn.csv and identify key churn drivers"
 
@@ -677,6 +701,7 @@ uv run research research "Analyze customer_churn.csv and identify key churn driv
 #### Problem: Single Kernel Limitation
 
 Current CodeExecutor creates one kernel per agent instance:
+
 - `IterativeEDAAgent.__init__()` → `self.executor = CodeExecutor()` → starts single kernel
 - Multiple agents → multiple kernels (OK for parallelization!)
 
@@ -685,6 +710,7 @@ Current CodeExecutor creates one kernel per agent instance:
 #### Step 1: Verify Kernel Isolation
 
 Each EDA agent gets own executor:
+
 ```python
 # In EDATool.execute()
 agent = IterativeEDAAgent(model=self.model)  # Line 46
@@ -692,6 +718,7 @@ agent = IterativeEDAAgent(model=self.model)  # Line 46
 ```
 
 **Test**: Spawn 2 EDA agents with same dataset:
+
 ```python
 # Both run concurrently without interference
 task1 = eda_tool.execute(filepath="data.csv", query="analyze sales trends")
@@ -743,6 +770,7 @@ Return JSON array of tasks.
 ```
 
 **Result**: Orchestrator can now spawn parallel mix of:
+
 - Web research workers (using search/fetch tools)
 - Data analysis workers (using eda tool)
 
@@ -753,6 +781,7 @@ Return JSON array of tasks.
 #### Implementation Plan
 
 **Step 1**: Add DataLoader to project
+
 - Create `src/deep_research/tools/data_loader.py` (code shown above in section 5)
 - Add dependencies to `pyproject.toml`:
   ```toml
@@ -904,6 +933,7 @@ async def _worker_execution(self, state: dict[str, Any]) -> dict[str, Any]:
 - [ ] Update README.md with examples for each format
 
 **Success Criteria**:
+
 - [ ] `uv run research eda data.csv "query"` works
 - [ ] `uv run research eda data.xlsx "query"` works
 - [ ] `uv run research eda data.parquet "query"` works
@@ -924,6 +954,7 @@ async def _worker_execution(self, state: dict[str, Any]) -> dict[str, Any]:
 - [ ] Test integration with ReactAgent
 
 **Success Criteria**:
+
 - [ ] ReactAgent can call eda tool during research
 - [ ] Tool returns formatted insights to agent
 - [ ] Agent can reason about data analysis results
@@ -942,6 +973,7 @@ async def _worker_execution(self, state: dict[str, Any]) -> dict[str, Any]:
   - Test result merging
 
 **Success Criteria**:
+
 - [ ] Multiple EDA analyses can run concurrently without conflicts
 - [ ] No kernel crashes or interference
 - [ ] Results from parallel executions are correctly merged
@@ -961,6 +993,7 @@ async def _worker_execution(self, state: dict[str, Any]) -> dict[str, Any]:
 - [ ] Performance optimization: cache data loading, kernel reuse
 
 **Success Criteria**:
+
 - [ ] Query like "Analyze sales.csv and compare with industry" completes
 - [ ] Final report includes both data insights and web research
 - [ ] Notebook + markdown report both generated
@@ -979,6 +1012,7 @@ async def _worker_execution(self, state: dict[str, Any]) -> dict[str, Any]:
 - [ ] Security review: ensure AST checks cover all formats
 
 **Success Criteria**:
+
 - [ ] Documentation has clear examples for all use cases
 - [ ] New users can run examples without errors
 - [ ] Performance meets targets (<3 min for combined queries)
@@ -1016,12 +1050,14 @@ async def _worker_execution(self, state: dict[str, Any]) -> dict[str, Any]:
 ### Relevant Planning Documents
 
 **Deep Research Agent MVP Plan** (`thoughts/shared/plans/deep-research-agent-python-mvp.md`)
+
 - Phase 3 (Week 3) details EDA implementation with notebook generation
 - 7-act narrative structure for notebooks
 - Jupyter kernel integration patterns
 - Code executor safety checks
 
 **Architecture Research** (`thoughts/shared/research/2025-11-15_deep-research-agent-architecture.md`)
+
 - ReAct framework implementation
 - LangGraph state management patterns
 - Tool suite design
@@ -1031,18 +1067,21 @@ async def _worker_execution(self, state: dict[str, Any]) -> dict[str, Any]:
 ### Design Decisions
 
 **Why Not External Sandboxing** (from architecture doc):
+
 - Local Jupyter kernel for privacy
 - No API costs (E2B/Modal avoided)
 - Full control over execution environment
 - Sufficient for MVP with AST safety checks
 
 **Why LangGraph Over Custom Orchestration**:
+
 - Built-in state management and checkpointing
 - Send API for dynamic parallelization
 - Conditional routing without complex control flow
 - State reducers handle result merging automatically
 
 **Why Tool Base Pattern**:
+
 - Consistent interface across all tools
 - Easy to test in isolation
 - Metadata tracking for observability
@@ -1059,6 +1098,7 @@ async def _worker_execution(self, state: dict[str, Any]) -> dict[str, Any]:
 **Current**: Each EDA agent creates new kernel (isolated but resource-heavy)
 
 **Options**:
+
 - **A. Keep current approach**: Simple, isolated, but uses more memory
 - **B. Kernel pool**: Reuse kernels across analyses, add cleanup between uses
 - **C. Hybrid**: Pool for sequential, isolated for parallel
@@ -1072,6 +1112,7 @@ async def _worker_execution(self, state: dict[str, Any]) -> dict[str, Any]:
 **Current**: Uses default pandas options
 
 **Options**:
+
 - **A. Hardcoded defaults**: Simple, works for 90% of cases
 - **B. Kwargs passthrough**: `DataLoader.load(path, **pandas_kwargs)`
 - **C. Config file**: `.edaconfig.json` with per-file settings
@@ -1085,6 +1126,7 @@ async def _worker_execution(self, state: dict[str, Any]) -> dict[str, Any]:
 **Current**: Executed at end of IterativeEDAAgent.analyze()
 
 **Options**:
+
 - **A. Always execute**: Validates code works, adds outputs
 - **B. Optional flag**: `--execute/--no-execute`
 - **C. Lazy execution**: Generate notebook, let user execute
@@ -1098,6 +1140,7 @@ async def _worker_execution(self, state: dict[str, Any]) -> dict[str, Any]:
 **Current**: WorkerAgent compresses to 2000 tokens
 
 **Options**:
+
 - **A. Compress EDA insights**: Summary only (loses detail)
 - **B. Full insights**: Better context, uses more tokens
 - **C. Hybrid**: Full insights + notebook path reference
@@ -1162,12 +1205,14 @@ The IterativeEDAAgent can be successfully transformed into a multi-agent tool wi
 4. **Incremental delivery** - each phase adds standalone value
 
 **Key Insights**:
+
 - **Parallelization already works** - each agent gets isolated kernel
 - **Tool pattern is proven** - SearchTool and FetchTool demonstrate the pattern
 - **Orchestrator is ready** - Send API generalizes to any worker type (web or data)
 - **Multi-format is straightforward** - DataLoader factory pattern handles all pandas formats
 
 **Biggest Wins**:
+
 - **Combined insights**: Web research + data analysis in single query
 - **Parallel execution**: 3-5x faster with multiple concurrent analyses
 - **Format flexibility**: CSV, Excel, Parquet, Pickle all supported

@@ -131,6 +131,7 @@ type Perspective struct {
 ```
 
 **How it works:**
+
 1. Survey related topics via web search
 2. LLM identifies expert angles that would provide comprehensive coverage
 3. Each perspective gets a name, focus area, and initial questions
@@ -167,6 +168,7 @@ type Perspective struct {
 ```
 
 **Each turn (see conversation.go:78-142):**
+
 1. `wikiWriterAsk()` - Generate question based on persona + history
 2. Check for exit phrase ("Thank you so much for your help!")
 3. `expertGenerateQueries()` - Convert question to 1-3 search queries
@@ -223,14 +225,14 @@ Phase 4c: WRITE REPORT
 
 ## Key Files
 
-| Component | File | Purpose |
-|-----------|------|---------|
-| **Orchestrator** | `internal/orchestrator/deep_storm.go` | Main workflow coordination |
-| **Conversation Simulator** | `internal/agents/conversation.go` | WikiWriter↔Expert dialogues |
-| **Perspective Discovery** | `internal/planning/perspectives.go` | Find expert angles |
-| **Analysis Agent** | `internal/agents/analysis.go` | Cross-validation |
-| **Synthesis Agent** | `internal/agents/synthesis.go` | Report generation |
-| **Architecture Adapter** | `internal/architectures/storm/storm.go` | Public interface |
+| Component                  | File                                    | Purpose                     |
+| -------------------------- | --------------------------------------- | --------------------------- |
+| **Orchestrator**           | `internal/orchestrator/deep_storm.go`   | Main workflow coordination  |
+| **Conversation Simulator** | `internal/agents/conversation.go`       | WikiWriter↔Expert dialogues |
+| **Perspective Discovery**  | `internal/planning/perspectives.go`     | Find expert angles          |
+| **Analysis Agent**         | `internal/agents/analysis.go`           | Cross-validation            |
+| **Synthesis Agent**        | `internal/agents/synthesis.go`          | Report generation           |
+| **Architecture Adapter**   | `internal/architectures/storm/storm.go` | Public interface            |
 
 ---
 
@@ -245,6 +247,7 @@ What are the implications of quantum computing on cryptography?
 ```
 
 **Available Commands:**
+
 - `/storm <query>` - Multi-perspective research with conversations
 - `/fast <query>` - Quick single-worker research (simpler, faster)
 - `/expand <text>` - Expand on current research

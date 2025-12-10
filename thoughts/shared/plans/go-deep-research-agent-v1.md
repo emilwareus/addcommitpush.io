@@ -17,6 +17,7 @@ Build a Go-based deep research agent with an interactive REPL interface, multi-w
 ## Desired End State
 
 A working CLI tool (`go-research`) that:
+
 1. Starts an interactive REPL with readline support
 2. Accepts `/fast <query>` for single-worker quick research
 3. Accepts `/deep <query>` for multi-worker parallel research
@@ -25,6 +26,7 @@ A working CLI tool (`go-research`) that:
 6. Supports session continuation with `/expand`, `/rerun`, `/recompile`
 
 ### Verification:
+
 ```bash
 # Build succeeds
 cd go-research && go build ./...
@@ -58,6 +60,7 @@ cp go-research/.env.example go-research/.env
 ```
 
 **File**: `go-research/.env.example`
+
 ```
 # LLM Provider
 OPENROUTER_API_KEY=sk-or-...
@@ -76,6 +79,7 @@ TEMPERATURE=0.0
 ```
 
 **Usage during development and validation:**
+
 ```bash
 # Load environment and run
 cd go-research
@@ -85,6 +89,7 @@ go run ./cmd/research
 
 **Validation with real API calls:**
 When validating phases that include manual verification with real API calls (Phases 2+), use the `.env` file with valid API keys:
+
 ```bash
 cd go-research && source .env && go run ./cmd/research
 # Then run actual research queries to verify functionality
@@ -95,6 +100,7 @@ cd go-research && source .env && go run ./cmd/research
 ## Phase 1: Core Infrastructure
 
 ### Overview
+
 Set up project structure, configuration, LLM client, and event bus.
 
 ### Changes Required:
@@ -231,6 +237,7 @@ Copy the event bus implementation from architecture document (lines 351-408).
 **File**: `go-research/internal/llm/client.go`
 
 Copy the LLM client from architecture document (lines 1241-1403), but:
+
 - Use `cfg.Model` instead of hardcoded `modelID`
 - Accept config as constructor parameter
 
@@ -302,12 +309,14 @@ func main() {
 ### Success Criteria:
 
 #### Automated Verification:
+
 - [x] `cd go-research && go mod tidy` succeeds
 - [x] `go build ./...` succeeds
 - [x] `go vet ./...` passes
 - [x] `OPENROUTER_API_KEY=test BRAVE_API_KEY=test go run ./cmd/research` prints config info
 
 #### Manual Verification:
+
 - [x] Event bus can publish and receive events (write a quick test in main)
 - [x] LLM client structure compiles (actual API calls tested in Phase 2)
 
@@ -316,6 +325,7 @@ func main() {
 ## Phase 2: Agent & Tools
 
 ### Overview
+
 Implement the search tool (Brave API), fetch tool (web scraping), tool registry, and ReAct agent loop.
 
 ### Changes Required:
@@ -614,6 +624,7 @@ Copy session types from architecture document (lines 161-261).
 **File**: `go-research/internal/agent/react.go`
 
 Copy ReAct agent from architecture document (lines 1409-1623), with modifications:
+
 - Accept config and tools registry as constructor parameters
 - Use the centralized model config
 
@@ -678,13 +689,16 @@ func (w *Worker) Research(ctx context.Context, objective string) (session.Worker
 ### Success Criteria:
 
 #### Automated Verification:
+
 - [x] `go build ./...` succeeds
 - [x] `go vet ./...` passes
 
 #### Manual Verification (use `source .env` with valid API keys):
+
 ```bash
 cd go-research && source .env && go run ./cmd/research
 ```
+
 - [ ] Search tool returns results for a test query
 - [ ] Fetch tool extracts text from a test URL
 - [ ] ReAct agent can complete a simple research query (e.g., `/fast What is ReAct?`)
@@ -694,6 +708,7 @@ cd go-research && source .env && go run ./cmd/research
 ## Phase 3: Orchestration
 
 ### Overview
+
 Implement query complexity analysis, task decomposition, worker pool with goroutines, and result synthesizer.
 
 ### Changes Required:
@@ -903,10 +918,12 @@ Copy orchestrator from architecture document (lines 1098-1235).
 ### Success Criteria:
 
 #### Automated Verification:
+
 - [x] `go build ./...` succeeds
 - [x] `go vet ./...` passes
 
 #### Manual Verification:
+
 - [ ] Planner returns reasonable complexity scores
 - [ ] Task decomposition creates appropriate sub-tasks
 - [ ] Worker pool executes tasks in parallel (visible via event output)
@@ -917,6 +934,7 @@ Copy orchestrator from architecture document (lines 1098-1235).
 ## Phase 4: Session Management
 
 ### Overview
+
 Implement session persistence, versioning, and context building for continuation.
 
 ### Changes Required:
@@ -1153,10 +1171,12 @@ func min(a, b int) int {
 ### Success Criteria:
 
 #### Automated Verification:
+
 - [x] `go build ./...` succeeds
 - [x] `go vet ./...` passes
 
 #### Manual Verification:
+
 - [ ] Sessions save to JSON files correctly
 - [ ] Sessions load from disk correctly
 - [ ] Session versioning creates linked sessions
@@ -1167,6 +1187,7 @@ func min(a, b int) int {
 ## Phase 5: Obsidian Integration
 
 ### Overview
+
 Implement vault directory structure, worker markdown files, report versioning, and session MOC.
 
 ### Changes Required:
@@ -1338,10 +1359,12 @@ generated: {{.UpdatedAt.Format "2006-01-02T15:04:05Z07:00"}}
 ### Success Criteria:
 
 #### Automated Verification:
+
 - [x] `go build ./...` succeeds
 - [x] `go vet ./...` passes
 
 #### Manual Verification:
+
 - [ ] Sessions write to vault directory structure
 - [ ] Worker files contain proper frontmatter and content
 - [ ] Report files are versioned correctly
@@ -1353,6 +1376,7 @@ generated: {{.UpdatedAt.Format "2006-01-02T15:04:05Z07:00"}}
 ## Phase 6: Interactive REPL
 
 ### Overview
+
 Implement readline integration, command parser, router, all command handlers, and tab completion.
 
 ### Changes Required:
@@ -1674,14 +1698,17 @@ func main() {
 ### Success Criteria:
 
 #### Automated Verification:
+
 - [x] `go build ./...` succeeds
 - [x] `go vet ./...` passes
 - [x] Binary can be executed: `./go-research --help` or similar
 
 #### Manual Verification (use `source .env` with valid API keys):
+
 ```bash
 cd go-research && source .env && go run ./cmd/research
 ```
+
 - [ ] REPL starts with welcome message
 - [ ] Tab completion works for commands
 - [ ] `/help` shows all commands
@@ -1696,6 +1723,7 @@ cd go-research && source .env && go run ./cmd/research
 ## Phase 7: Polish
 
 ### Overview
+
 Add streaming output, progress indicators, comprehensive error handling, and graceful shutdown.
 
 ### Changes Required:
@@ -1863,6 +1891,7 @@ func (r *REPL) shutdown() {
 #### 4. Error Handling Improvements
 
 Ensure all errors are:
+
 - Wrapped with context
 - Displayed clearly to user
 - Logged if verbose mode is on
@@ -1870,11 +1899,13 @@ Ensure all errors are:
 ### Success Criteria:
 
 #### Automated Verification:
+
 - [x] `go build ./...` succeeds
 - [x] `go vet ./...` passes
 - [x] `go test ./...` passes (if tests added)
 
 #### Manual Verification:
+
 - [ ] Streaming responses appear character-by-character
 - [ ] Progress spinners show during long operations
 - [ ] Ctrl+C triggers graceful shutdown
@@ -1887,12 +1918,14 @@ Ensure all errors are:
 ## Testing Strategy
 
 ### Unit Tests:
+
 - Event bus publish/subscribe
 - Session serialization/deserialization
 - Parser command parsing
 - Tool argument validation
 
 ### Integration Tests:
+
 - Full research flow (mock LLM responses)
 - Session save/load cycle
 - Obsidian vault generation
@@ -1900,6 +1933,7 @@ Ensure all errors are:
 ### Manual Testing Steps:
 
 **Setup (required for real API testing):**
+
 ```bash
 cd go-research
 # Ensure .env has valid API keys (copy from .env.example if needed)
@@ -1908,6 +1942,7 @@ go run ./cmd/research
 ```
 
 **Test sequence:**
+
 1. Start REPL, verify welcome message
 2. Run `/fast What is Go?` - verify single-worker execution
 3. Run `/deep How do modern web frameworks work?` - verify multi-worker parallel execution
