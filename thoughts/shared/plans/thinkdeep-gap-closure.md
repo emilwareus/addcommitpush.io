@@ -6,15 +6,16 @@ Close the critical gaps between go-research ThinkDeep implementation and the Thi
 
 ## Current State Analysis
 
-| Gap | Current | Target |
-|-----|---------|--------|
-| Sub-researcher execution | Sequential for loop | Parallel goroutines |
-| Search results | Brave snippets only (~150 chars) | Full page fetch + LLM summarization |
-| Supervisor prompt | ~40 lines, missing scaling rules | ~65 lines, full diffusion algorithm |
-| Final report prompt | ~55 lines, missing key rules | ~100 lines with insightfulness/helpfulness |
-| Search deduplication | None | URL deduplication across sub-researchers |
+| Gap                      | Current                          | Target                                     |
+| ------------------------ | -------------------------------- | ------------------------------------------ |
+| Sub-researcher execution | Sequential for loop              | Parallel goroutines                        |
+| Search results           | Brave snippets only (~150 chars) | Full page fetch + LLM summarization        |
+| Supervisor prompt        | ~40 lines, missing scaling rules | ~65 lines, full diffusion algorithm        |
+| Final report prompt      | ~55 lines, missing key rules     | ~100 lines with insightfulness/helpfulness |
+| Search deduplication     | None                             | URL deduplication across sub-researchers   |
 
 ### Key Files:
+
 - `internal/agents/supervisor.go:150-162` - Sequential execution loop
 - `internal/agents/sub_researcher.go:140-176` - Search tool execution
 - `internal/think_deep/prompts.go` - All prompts
@@ -29,6 +30,7 @@ Close the critical gaps between go-research ThinkDeep implementation and the Thi
 4. Duplicate URLs are **deduplicated** across sub-researchers before final report
 
 ### Verification:
+
 - `go test ./internal/agents/... -v` passes
 - `go test ./internal/tools/... -v` passes
 - `go build ./...` succeeds
@@ -44,6 +46,7 @@ Close the critical gaps between go-research ThinkDeep implementation and the Thi
 ## Implementation Approach
 
 Four phases, each independently testable:
+
 1. Parallel execution (core architectural fix)
 2. Webpage summarization (research quality improvement)
 3. Prompt migration (behavior alignment)
@@ -66,6 +69,7 @@ Convert sequential sub-researcher execution to parallel using goroutines and syn
 **Changes**: Replace sequential for loop with parallel goroutine execution
 
 Replace lines 150-162:
+
 ```go
 // Execute tool calls
 var toolResults []string
@@ -83,6 +87,7 @@ for _, tc := range toolCalls {
 ```
 
 With parallel execution:
+
 ```go
 // Separate conduct_research calls from other tools
 var conductResearchCalls []think_deep.ToolCallParsed
@@ -119,6 +124,7 @@ if len(conductResearchCalls) > 0 {
 ```
 
 Add new method for parallel execution:
+
 ```go
 // executeParallelResearch executes multiple conduct_research calls in parallel.
 // Limited to s.maxConcurrent parallel goroutines.
@@ -341,6 +347,7 @@ func (s *SupervisorAgent) executeParallelResearch(
 ```
 
 Add import at top of file:
+
 ```go
 import (
     "sync"
@@ -373,11 +380,13 @@ func (s *SupervisorAgent) executeConductResearch(
 ### Success Criteria:
 
 #### Automated Verification:
+
 - [x] `go build ./internal/agents/...` succeeds
 - [x] `go test ./internal/agents/... -v` passes
 - [x] `go vet ./internal/agents/...` passes
 
 #### Manual Verification:
+
 - [ ] Run research query "Compare OpenAI vs Anthropic vs DeepMind AI safety approaches"
 - [ ] Verify logs show 3 sub-researchers starting near-simultaneously (within 1 second)
 - [ ] Verify all 3 complete and findings are accumulated
@@ -389,6 +398,7 @@ func (s *SupervisorAgent) executeConductResearch(
 ### Overview
 
 Add LLM-based summarization of full webpage content to search results. The reference implementation:
+
 1. Fetches full page content via Tavily's `include_raw_content=True`
 2. Summarizes each page using LLM with structured output
 3. Returns summary + key excerpts
@@ -690,11 +700,13 @@ func (o *ThinkDeepOrchestrator) executeSubResearch(
 ### Success Criteria:
 
 #### Automated Verification:
+
 - [x] `go build ./internal/tools/...` succeeds
 - [x] `go test ./internal/tools/... -v` passes
 - [x] `go build ./internal/think_deep/...` succeeds
 
 #### Manual Verification:
+
 - [ ] Run a search query and verify output includes "SUMMARY:" sections with full content summaries
 - [ ] Verify summaries are 25-30% of original page length
 - [ ] Verify key excerpts are extracted
@@ -1241,11 +1253,13 @@ Format the report in clear markdown with proper structure and include source ref
 ### Success Criteria:
 
 #### Automated Verification:
+
 - [x] `go build ./internal/think_deep/...` succeeds
 - [x] `go test ./internal/think_deep/... -v` passes
 - [x] `go vet ./internal/think_deep/...` passes
 
 #### Manual Verification:
+
 - [ ] Run research and verify supervisor uses scaling rules (comparison → multiple agents)
 - [ ] Verify final report follows "DO NOT list facts in bullets" rule
 - [ ] Verify final report includes summary tables for comparisons
@@ -1414,11 +1428,13 @@ func ExtractURLs(content string) []string {
 ### Success Criteria:
 
 #### Automated Verification:
+
 - [x] `go build ./internal/think_deep/...` succeeds
 - [x] `go test ./internal/think_deep/... -v` passes
 - [x] `go build ./internal/orchestrator/...` succeeds
 
 #### Manual Verification:
+
 - [ ] Run research with overlapping topics
 - [ ] Verify final report doesn't have duplicate sources with same URL
 - [ ] Verify deduplication doesn't remove unique content
@@ -1430,17 +1446,20 @@ func ExtractURLs(content string) []string {
 ### Unit Tests:
 
 **File**: `internal/agents/supervisor_test.go`
+
 - Test parallel execution spawns multiple goroutines
 - Test semaphore limits concurrent workers
 - Test results are collected in order
 - Test context cancellation stops all workers
 
 **File**: `internal/tools/summarizer_test.go`
+
 - Test URL fetch + summarization flow
 - Test graceful degradation on fetch failure
 - Test content truncation for large pages
 
 **File**: `internal/think_deep/state_test.go`
+
 - Test URL extraction
 - Test deduplication logic
 - Test SeenURLs tracking
@@ -1448,6 +1467,7 @@ func ExtractURLs(content string) []string {
 ### Integration Tests:
 
 **File**: `internal/architectures/think_deep/integration_test.go`
+
 - Test full research flow with parallel sub-researchers
 - Test summarization appears in search results
 - Test final report has deduplicated sources

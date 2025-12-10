@@ -4,7 +4,7 @@ researcher: Claude (Sonnet 4.5)
 git_commit: 22dbf8d52dc8c995afcf147c11fad7f347571464
 branch: feat/custom-deep-research
 repository: addcommitpush.io
-topic: "Alibaba-NLP/DeepResearch Architecture & Gap Analysis vs MVP Plan"
+topic: 'Alibaba-NLP/DeepResearch Architecture & Gap Analysis vs MVP Plan'
 tags: [research, deep-research, multi-agent, alibaba, tongyi, gap-analysis, architecture]
 status: complete
 last_updated: 2025-11-16
@@ -42,6 +42,7 @@ The architecture supports two inference paradigms: **ReAct mode** (classic thoug
 #### Overall System Architecture
 
 **Multi-Agent vs Single-Agent**:
+
 - Supports both paradigms depending on inference mode
 - **ReAct Mode**: Single agent with classic reasoning loop
 - **Heavy Mode**: Multi-agent orchestration with parallel exploration and synthesis
@@ -50,6 +51,7 @@ The architecture supports two inference paradigms: **ReAct mode** (classic thoug
   - Enables "wider range of research paths within limited context window"
 
 **Core Model Architecture**:
+
 - **Base Model**: Qwen3-30B-A3B-Base with MoE structure
 - **Total Parameters**: 30.5 billion
 - **Activated Parameters**: 3.3 billion per token (sparse activation)
@@ -97,21 +99,25 @@ DeepResearch/
 #### Agent Types
 
 **Primary Agent**: **MultiTurnReactAgent**
+
 - Implements core execution engine at `inference/react_agent.py:180-227`
 - Follows classic Think→Action→Observation loop
 - Token limit: 110K (enforced by `_num_tokens()` at lines 166-179)
 
 **Heavy Mode Agents**:
+
 1. **Research Agents**: Multiple parallel agents using IterResearch paradigm
 2. **Synthesis Agent**: Aggregates findings from research agents
 
 **Supporting Components** (from WebAgent family):
+
 - **Lead Researcher**: High-level planning and decomposition
 - **Tool-specific Agents**: Specialized for search, visit, scholar operations
 
 #### Agent Loop/Reasoning Pattern
 
 **ReAct Mode Implementation**:
+
 ```
 Loop:
   1. Thought Generation: Model reasons about current state and next action
@@ -122,6 +128,7 @@ Loop:
 ```
 
 **IterResearch Paradigm (Heavy Mode)**:
+
 - **Workspace Reconstruction**: "Each round, agent reconstructs streamlined workspace using only essential outputs from previous round"
 - **Context Management**: Replaces full history with strategic reconstruction:
   - Question q
@@ -131,6 +138,7 @@ Loop:
 - **Enables**: "Consistent reasoning capacity across arbitrary exploration depths"
 
 **Retry Logic**:
+
 - Exponential backoff with 10 attempts
 - Formula: `base_sleep_time * (2 ** attempt) + random.uniform(0, 1)`
 - Max sleep: 30 seconds
@@ -139,11 +147,13 @@ Loop:
 #### Agent Communication
 
 **Intra-Agent Communication**:
+
 - Shared state through compressed reports (Sₜ)
 - Message passing via JSONL format
 - Thread-safe output with `threading.Lock`
 
 **Multi-Agent Coordination (Heavy Mode)**:
+
 - Parallel execution with independent context management trajectories
 - No direct communication between research agents (embarrassingly parallel)
 - Synthesis phase aggregates compressed reports
@@ -152,11 +162,13 @@ Loop:
 #### Task Decomposition & Distribution
 
 **Decomposition Strategy**:
+
 - Planning action synthesis (FAS) strengthens initial planning
 - "Strong correlation between initial planning and trajectory's accuracy"
 - Multi-step decision-making processes explored at each step
 
 **Distribution**:
+
 - Heavy Mode: Tasks distributed across multiple research agents
 - Each agent explores different research paths
 - Sticky port assignment for load balancing
@@ -171,6 +183,7 @@ Loop:
 #### Available Tools (5 Core Tools)
 
 **1. Search Tool**
+
 - **Provider**: Serper.dev API (Google Search)
 - **Capability**: Web search returning top-10 results
 - **Parameters**:
@@ -179,6 +192,7 @@ Loop:
 - **Implementation**: `inference/tool_search.py`
 
 **2. Visit Tool**
+
 - **Provider**: Jina.ai for page content extraction
 - **Capability**: Targeted webpage extraction with goal-specific summarization
 - **Parameters**:
@@ -188,6 +202,7 @@ Loop:
 - **Implementation**: `inference/tool_visit.py`
 
 **3. Python Interpreter**
+
 - **Provider**: SandboxFusion endpoints
 - **Capability**: Sandboxed code execution
 - **Format Requirements**:
@@ -197,12 +212,14 @@ Loop:
 - **Implementation**: `inference/tool_python.py`
 
 **4. Google Scholar**
+
 - **Capability**: Academic publication retrieval
 - **Parameters**: Multiple queries supported
 - **Output**: Scholarly search results
 - **Implementation**: `inference/tool_scholar.py`
 
 **5. File Parser**
+
 - **Provider**: Dashscope (Alibaba)
 - **Supported Formats**: PDF, DOCX, PPTX, TXT, CSV, XLSX, MP4, MP3
 - **Capability**: Multi-format document analysis
@@ -212,6 +229,7 @@ Loop:
 #### Tool Implementation & Integration
 
 **Unified Sandbox Architecture**:
+
 - **Concurrency**: Graceful handling with ThreadPoolExecutor
 - **Failure Handling**:
   - Result caching to avoid re-execution
@@ -221,12 +239,14 @@ Loop:
 - **Purpose**: "Preventing tool errors from corrupting learning trajectory"
 
 **Tool Call Format**:
+
 - JSON format within structured tags
 - Custom mapping via `TOOL_MAP`
 - Special handling in `custom_call_tool` method
 - Current date provided at runtime for temporal grounding
 
 **API Configuration** (via `.env` file):
+
 - `SERPER_KEY_ID`: Web search
 - `JINA_API_KEYS`: Page reading
 - `API_KEY/API_BASE`: LLM summarization (OpenAI-compatible)
@@ -244,18 +264,21 @@ Loop:
 #### State Persistence
 
 **File-Based Storage**:
+
 - **Input Format**: JSONL (line-delimited JSON, recommended) or JSON (array format)
 - **Location**: `eval_data/` directory
 - **Schema**: Question-answer pairs with optional file references
 - **File Corpus**: `eval_data/file_corpus/` for document inputs
 
 **Trajectory Storage**:
+
 - **Format**: JSONL for agent trajectories
 - **Content**: Sequences of thoughts, actions, observations
 - **Usage**: Training data generation, evaluation results
 - **Output**: Results saved to designated output directory in JSONL
 
 **Caching Strategy**:
+
 - **File Parser**: `diskcache.Cache` with SHA256 keys to avoid re-parsing identical files
 - **Tool Results**: Cached to prevent redundant API calls
 - **Determinism**: Ensures consistent experiences during training
@@ -263,6 +286,7 @@ Loop:
 #### Data Structures
 
 **Trajectory Structure** (ℋₜ):
+
 ```python
 Trajectory = {
   question: str,
@@ -281,6 +305,7 @@ Message = {
 ```
 
 **Compressed State (Sₜ)**:
+
 ```python
 CompressedState = {
   question: str,
@@ -291,6 +316,7 @@ CompressedState = {
 ```
 
 **Environment Abstraction** (Three Forms):
+
 1. **Prior World Environment**: Task elements + tools without responses (infinite scalability, zero cost)
 2. **Simulated Environment**: Offline Wikipedia-based RAG with local tools (rapid iteration, sim-to-real gap)
 3. **Real-world Environment**: Authentic distributions with deterministic sandbox wrapper
@@ -304,16 +330,19 @@ CompressedState = {
 #### Context Window Management
 
 **Progressive Expansion**:
+
 - Training: 32K → 128K token context
 - Two-stage Agentic CPT with increasing context length
 - SFT: Two-stage approach (40K context → 128K context)
 
 **Context Management Paradigm**:
+
 - **Challenge**: 128K context insufficient for extreme long-horizon tasks
 - **Solution**: Markovian state reconstruction via IterResearch
 - **Mechanism**: Strategic compression replacing full history
 
 **IterResearch Context Strategy**:
+
 - **Workspace Reconstruction**: Each round creates streamlined workspace
 - **Retention Policy**: Only essential outputs from previous round
 - **Benefits**:
@@ -325,6 +354,7 @@ CompressedState = {
 #### Memory Compression Strategies
 
 **ReSum Paradigm** (from WebAgent family):
+
 - **Purpose**: "Overcome context window limitations on complex, long-horizon search tasks"
 - **Approach**: Periodically compress growing interaction history into compact, structured summary
 - **Components**:
@@ -333,6 +363,7 @@ CompressedState = {
   - **WebResummer-30B**: Agent trained with ReSum-GRPO achieving SOTA on BrowseComp benchmarks
 
 **Compression Techniques**:
+
 1. **Evidence Distillation**: Extract key findings from noisy, extensive histories
 2. **Gap Identification**: Recognize information deficiencies
 3. **Action Suggestion**: Recommend next research steps
@@ -341,12 +372,14 @@ CompressedState = {
 #### Aggregation Across Agents
 
 **Heavy Mode Synthesis**:
+
 - Multiple research agents operate independently
 - Each produces compressed report (Sₜᵘ)
 - Synthesis Agent aggregates {Sₜ¹, Sₜ², ..., Sₜⁿ}
 - Final answer integrates diverse research paths
 
 **Aggregation Strategy**:
+
 - No shared memory during research phase (embarrassingly parallel)
 - Post-processing synthesis combines findings
 - Enables exploration of wider solution space
@@ -361,12 +394,14 @@ CompressedState = {
 #### Supported LLM Providers/Models
 
 **Primary Model**:
+
 - **Tongyi-DeepResearch-30B-A3B**: Custom-trained MoE model
 - **Architecture**: Qwen3-30B-A3B-Base lineage
 - **Format**: Hugging Face Transformers compatible
 - **License**: Apache 2.0
 
 **Deployment Options**:
+
 1. **Local Deployment**: Full model inference with GPU
    - Download weights from HuggingFace or ModelScope
    - Requires Python 3.10.0 (strict requirement)
@@ -386,6 +421,7 @@ CompressedState = {
    - Hugging Face Spaces demo
 
 **Integration for Summarization**:
+
 - OpenAI-compatible APIs for Visit tool content synthesis
 - Configurable via `API_KEY/API_BASE` environment variables
 - Goal-specific summarization aligned with information needs
@@ -393,6 +429,7 @@ CompressedState = {
 #### Prompt Structure
 
 **System Prompt**:
+
 ```
 Your core function is to conduct thorough, multi-source
 investigations into any topic. You must handle both broad,
@@ -401,17 +438,20 @@ academic fields.
 ```
 
 **Tool Descriptions**: Comprehensive JSON schemas for each tool with:
+
 - Tool name and purpose
 - Parameter specifications (types, arrays, requirements)
 - Output format descriptions
 - Usage constraints and formatting rules
 
 **Context Injection**:
+
 - Current date provided at runtime for temporal grounding
 - Question inserted at conversation start
 - File references prepended for document-based queries
 
 **Message Format**:
+
 ```
 [
   {role: 'user', content: '<question>'},
@@ -424,18 +464,21 @@ academic fields.
 #### Special Prompting Techniques
 
 **ReAct Mode**:
+
 - "Vanilla setup, no prompt hacks"
 - "Strictly adheres to Thought-Action-Observation cycle"
 - Model natively generates structured outputs
 - No heavy prompt engineering required
 
 **Heavy Mode (IterResearch)**:
+
 - Workspace reconstruction prompts
 - Report synthesis instructions
 - Context compression directives
 - Multi-agent coordination prompts for synthesis phase
 
 **Custom Tokenizer**:
+
 - Optimized for agentic tokens
 - Action prefixes and observation delimiters
 - Embedded tool vocabulary
@@ -449,15 +492,18 @@ academic fields.
 #### Programming Language & Frameworks
 
 **Core Language**: Python 3.10.0 (strict requirement)
+
 - Other versions may cause dependency issues
 - Isolated environment strongly recommended (conda/virtualenv)
 
 **ML Frameworks**:
+
 - **Transformers**: Hugging Face ecosystem for model loading
 - **vLLM**: Likely used for efficient inference (not explicitly confirmed in sources)
 - **rLLM Framework**: Custom step-level asynchronous RL training loop
 
 **Concurrency & Parallelism**:
+
 - **ThreadPoolExecutor**: For parallel tool execution (default 20 workers)
 - **threading.Lock**: Thread-safe file writes
 - **Async Patterns**: Step-level asynchronous RL rollouts
@@ -465,6 +511,7 @@ academic fields.
 #### Key Dependencies
 
 **Based on repository structure and documentation**:
+
 - `requirements.txt`: All dependencies listed (specific packages not detailed in search results)
 - **diskcache**: For file parser caching
 - **requests** (implied): For API calls to external services
@@ -472,6 +519,7 @@ academic fields.
 - **JSON/JSONL processing**: Standard library
 
 **External Services** (Required for full functionality):
+
 - **Serper.dev**: Web search API
 - **Jina.ai**: Page content extraction
 - **Dashscope**: Alibaba's file parsing service
@@ -481,6 +529,7 @@ academic fields.
 #### Specialized Libraries
 
 **Training Infrastructure**:
+
 - **rLLM Framework**: Custom async RL training
 - **Group Relative Policy Optimization (GRPO)**: Custom implementation
   - Token-level policy gradients
@@ -488,11 +537,13 @@ academic fields.
   - Conservative negative sampling strategy
 
 **Data Synthesis**:
+
 - **AgentFounder Pipeline**: Entity-anchored knowledge graph processing
 - **AgentScaler Pipeline**: Environment scaling for RL
 - **Knowledge Graph Libraries**: For entity extraction and relationship mapping
 
 **Evaluation**:
+
 - Custom benchmark frameworks in `evaluation/` directory
 - Support for 7+ benchmark datasets
 - Model judges: Qwen2.5-72B, Gemini-2.0-Flash, GPT-4o variants, o3-mini
@@ -504,6 +555,7 @@ academic fields.
 ### 1. Architecture & Scale
 
 **Alibaba-NLP/DeepResearch:**
+
 - Production-ready 30.5B parameter MoE model (3.3B activated)
 - Custom-trained foundation model optimized for agentic tasks
 - 128K context window with progressive expansion training
@@ -511,6 +563,7 @@ academic fields.
 - End-to-end training pipeline (CPT + SFT + RL)
 
 **MVP Plan** (`thoughts/shared/plans/deep-research-agent-python-mvp.md`):
+
 - Uses off-the-shelf models (GPT-4o-mini, GPT-4, OpenAI/Anthropic/OpenRouter)
 - No custom model training
 - Relies on provider context limits (~50K-200K depending on model)
@@ -518,6 +571,7 @@ academic fields.
 - No RL training infrastructure
 
 **Gap Summary:**
+
 - ❌ **Model Training**: MVP has no model training; relies entirely on API providers
 - ❌ **Scale**: No MoE architecture or parameter optimization
 - ✅ **Multi-Model Support**: MVP more flexible with provider selection
@@ -528,6 +582,7 @@ academic fields.
 ### 2. Agent Loop Strategy
 
 **Alibaba-NLP/DeepResearch:**
+
 - **ReAct Mode**: Classic Think→Action→Observation with native model generation
 - **Heavy Mode (IterResearch)**:
   - Markovian state reconstruction
@@ -539,6 +594,7 @@ academic fields.
 - **Retry Logic**: Exponential backoff (10 attempts, max 30s sleep)
 
 **MVP Plan:**
+
 - **Phase 1**: Basic ReAct loop with manual tool call parsing
   - Custom XML tag parsing (`<tool_call>`, `<answer>`)
   - Max 20 iterations, 50K token budget
@@ -550,6 +606,7 @@ academic fields.
 - **Phase 3**: Code execution in Jupyter kernel for EDA
 
 **Gap Summary:**
+
 - ❌ **Context Management**: No IterResearch-style workspace reconstruction
 - ❌ **Native ReAct**: MVP uses XML tag parsing; Alibaba has native model generation
 - ✅ **LangGraph**: MVP uses production framework; Alibaba uses custom orchestration
@@ -561,6 +618,7 @@ academic fields.
 ### 3. Tools & Capabilities
 
 **Alibaba-NLP/DeepResearch (5 Tools):**
+
 1. **Search**: Serper.dev (Google Search), top-10 results, concurrent queries
 2. **Visit**: Jina.ai with goal-specific summarization
 3. **Python**: SandboxFusion with strict format (empty args JSON, `<code>` tags)
@@ -570,13 +628,14 @@ academic fields.
 **Unified Sandbox**: Thread-safe, cached results, exponential backoff, redundant providers
 
 **MVP Plan (Phase 1: 2 Tools, Phase 3: +1 Tool):**
+
 - **Phase 1**:
   1. **Search**: Brave or Serper API, max 10 results
   2. **Fetch**: Jina Reader or simple httpx (basic HTML stripping)
-- **Phase 3**:
-  3. **Python Executor**: Jupyter kernel with AST-based safety checks
+- **Phase 3**: 3. **Python Executor**: Jupyter kernel with AST-based safety checks
 
 **Gap Summary:**
+
 - ❌ **Scholar Tool**: MVP has no academic search capability
 - ❌ **File Parser**: MVP lacks multi-format document parsing
 - ❌ **Goal-Specific Summarization**: MVP's fetch is basic; no goal-alignment
@@ -590,6 +649,7 @@ academic fields.
 ### 4. Storage & State Management
 
 **Alibaba-NLP/DeepResearch:**
+
 - **Input**: JSONL (recommended) or JSON array format
 - **Trajectory Storage**: JSONL for training data and evaluation
 - **Caching**: `diskcache.Cache` with SHA256 keys for file parser
@@ -597,6 +657,7 @@ academic fields.
 - **Environment Abstraction**: Three-tier (Prior World, Simulated, Real-world)
 
 **MVP Plan:**
+
 - **Phase 1**:
   - Simple JSON file store (`FileStore` class)
   - Session logs saved to `outputs/sessions/<session_id>.json`
@@ -605,6 +666,7 @@ academic fields.
 - **Phase 3**: Notebook outputs saved as `.ipynb` files
 
 **Gap Summary:**
+
 - ❌ **Trajectory Format**: MVP uses simple JSON; no JSONL training format
 - ❌ **Result Caching**: MVP has no caching layer (could add easily)
 - ❌ **Environment Abstraction**: MVP only interacts with real-world; no simulated environments
@@ -616,6 +678,7 @@ academic fields.
 ### 5. Memory & Context Management
 
 **Alibaba-NLP/DeepResearch:**
+
 - **128K Context Window**: Trained with progressive expansion (32K → 128K)
 - **IterResearch Paradigm**:
   - Workspace reconstruction each round
@@ -629,6 +692,7 @@ academic fields.
   - ReSumTool-30B specialized compression model
 
 **MVP Plan:**
+
 - **Token Counting**: Basic `tiktoken` usage
 - **Budget Management**:
   - Phase 1: 50K token limit with 90% warning
@@ -639,6 +703,7 @@ academic fields.
 - **No Structured Memory**: Linear message history until budget exhausted
 
 **Gap Summary:**
+
 - ❌ **Sophisticated Compression**: No IterResearch or ReSum paradigm
 - ❌ **Workspace Reconstruction**: MVP maintains full message history
 - ❌ **Specialized Compression Model**: MVP uses same LLM for compression
@@ -652,6 +717,7 @@ academic fields.
 ### 6. LLM Integration & Prompting
 
 **Alibaba-NLP/DeepResearch:**
+
 - **Custom Model**: Tongyi-DeepResearch-30B-A3B (Apache 2.0 license)
 - **Training**: Agentic CPT + SFT + GRPO reinforcement learning
 - **Prompting**: "Vanilla setup, no prompt hacks" - native ReAct generation
@@ -660,6 +726,7 @@ academic fields.
 - **Summarization**: OpenAI-compatible APIs for Visit tool
 
 **MVP Plan:**
+
 - **Phase 1**: OpenRouter/OpenAI/Anthropic API clients
 - **Models**: GPT-4o-mini (default), GPT-4, Claude variants
 - **Prompting**:
@@ -670,6 +737,7 @@ academic fields.
 - **No Custom Training**: Zero model optimization
 
 **Gap Summary:**
+
 - ❌ **Custom Model**: MVP has no proprietary model; fully API-dependent
 - ❌ **Agentic Training**: No CPT, SFT, or RL training pipeline
 - ❌ **Native ReAct**: MVP requires prompt engineering and parsing
@@ -683,6 +751,7 @@ academic fields.
 ### 7. Tech Stack & Infrastructure
 
 **Alibaba-NLP/DeepResearch:**
+
 - **Language**: Python 3.10.0 (strict)
 - **ML Framework**: Transformers, likely vLLM, rLLM (custom RL framework)
 - **Concurrency**: ThreadPoolExecutor (20 workers), threading.Lock, async RL rollouts
@@ -695,6 +764,7 @@ academic fields.
 - **Data**: JSONL processing, knowledge graph libraries
 
 **MVP Plan:**
+
 - **Language**: Python 3.11+
 - **Package Manager**: `uv` (modern, fast)
 - **Framework**: LangGraph (multi-agent orchestration)
@@ -710,6 +780,7 @@ academic fields.
 - **No Training Infrastructure**
 
 **Gap Summary:**
+
 - ❌ **Training Pipeline**: MVP has zero training capabilities
 - ❌ **Custom RL Framework**: No rLLM, GRPO, or AgentFounder/AgentScaler
 - ✅ **Modern Package Manager**: `uv` faster than pip/conda
@@ -724,6 +795,7 @@ academic fields.
 ### 8. Evaluation & Quality
 
 **Alibaba-NLP/DeepResearch:**
+
 - **Benchmarks**: 7+ datasets (BrowseComp, Wiki1B, etc.)
 - **Model Judges**: Qwen2.5-72B, Gemini-2.0-Flash, GPT-4o, o3-mini
 - **Performance**: Comparable or exceeding o3
@@ -731,6 +803,7 @@ academic fields.
 - **Metrics**: Task success rate, reasoning quality, tool usage efficiency
 
 **MVP Plan:**
+
 - **Automated Verification**:
   - `uv sync`, `ruff check`, `mypy src/`, `pytest tests/`
   - CLI execution tests
@@ -742,6 +815,7 @@ academic fields.
 - **No Formal Benchmarks**: Testing on ad-hoc queries
 
 **Gap Summary:**
+
 - ❌ **Benchmark Suite**: MVP has no formal evaluation datasets
 - ❌ **Model Judges**: No automated quality assessment
 - ❌ **Performance Metrics**: No systematic measurement
@@ -910,10 +984,12 @@ academic fields.
 ### Main Repository & Papers
 
 **GitHub**:
+
 - [Alibaba-NLP/DeepResearch](https://github.com/Alibaba-NLP/DeepResearch) - Main repository
 - [Alibaba-NLP/WebAgent](https://github.com/Alibaba-NLP/WebAgent) - WebAgent family
 
 **Technical Papers**:
+
 1. [Tongyi DeepResearch Technical Report (arXiv:2510.24701)](https://arxiv.org/abs/2510.24701) - Main paper
 2. [AgentFounder: Scaling Agents via Continual Pre-training (arXiv:2509.13310)](https://arxiv.org/abs/2509.13310)
 3. [AgentScaler: Environment Scaling for Agentic Intelligence (arXiv:2509.13311)](https://arxiv.org/abs/2509.13311)

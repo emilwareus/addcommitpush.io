@@ -4,7 +4,7 @@ researcher: Emil Wareus
 git_commit: c032b77aec5b215d766dad45f6511c629f728e73
 branch: feat/custom-deep-research
 repository: addcommitpush.io
-topic: "Obsidian-Based Iterative Research System Architecture"
+topic: 'Obsidian-Based Iterative Research System Architecture'
 tags: [research, deep-research-agent, obsidian, knowledge-graph, multi-agent, langgraph]
 status: complete
 last_updated: 2025-11-20
@@ -22,6 +22,7 @@ last_updated_by: Emil Wareus
 ## Research Question
 
 How can we transform the deep-research multi-agent system into an iterative, knowledge-graph-driven research platform using Obsidian as the persistence layer, enabling:
+
 1. Full traceable session storage with complete worker context
 2. Worker-specific research expansion via CLI
 3. Report recompilation with custom synthesis instructions
@@ -33,6 +34,7 @@ How can we transform the deep-research multi-agent system into an iterative, kno
 Through comprehensive codebase analysis and external research into Obsidian's knowledge management capabilities, we discovered a viable architectural pattern for transforming the existing multi-agent research system into an iterative research platform. The current system loses critical context during worker result compression (orchestrator.py:352), limiting the ability to expand or reanalyze research. By implementing full context capture and Obsidian-based storage, we can enable iterative research workflows while maintaining backwards compatibility.
 
 **Key Findings**:
+
 - Current architecture compresses worker outputs from full context (10-50KB) to 2000 tokens (~8KB), losing 80-90% of research detail
 - Obsidian's markdown + YAML frontmatter + wikilinks provide natural structure for research sessions as knowledge graphs
 - LangGraph's state machine supports session tracking with minimal modifications
@@ -87,6 +89,7 @@ return {
 ```
 
 **What's Lost**:
+
 - Full worker reasoning steps (ReAct thought-action-observation loops)
 - All individual tool calls and their complete results
 - Complete search queries and fetched page contents
@@ -94,6 +97,7 @@ return {
 - Intermediate insights before compression
 
 **Impact**: 80-90% of worker research context is discarded, making it impossible to:
+
 - Accurately expand on specific worker findings
 - Debug why certain conclusions were reached
 - Recompile reports with different analytical angles
@@ -115,6 +119,7 @@ def save_session(self, session_id: str, data: dict[str, Any]) -> None:
 ```
 
 **Limitations Discovered**:
+
 1. Only saves compressed summaries (not full worker context)
 2. Single JSON file per session (no versioning)
 3. No graph structure (can't link insights across sessions)
@@ -132,7 +137,7 @@ Research into Obsidian documentation revealed that YAML frontmatter (also called
 type: research_session
 session_id: session_abc123
 version: 1
-query: "What are the latest trends in AI research?"
+query: 'What are the latest trends in AI research?'
 status: completed
 created_at: 2025-01-20T14:25:00Z
 updated_at: 2025-01-20T14:45:00Z
@@ -148,6 +153,7 @@ tags:
 ```
 
 **Benefits**:
+
 - Queryable via Dataview plugin
 - Native Obsidian UI display
 - Git-friendly version control
@@ -160,14 +166,17 @@ Obsidian's `[[note name]]` syntax creates bidirectional links automatically:
 ```markdown
 **Session**: [[session_abc123_v1]]
 **Workers**:
+
 - [[task_1_worker|Worker 1]]: Foundation models research
 - [[task_2_worker|Worker 2]]: Multimodal AI systems
 
 **Key Insights**:
+
 - [[insight_20250120_143052|Foundation models reaching 10T parameters]]
 ```
 
 **Graph View Benefits**:
+
 - Visual exploration of research connections
 - Discover non-obvious relationships
 - Navigate between session → worker → insight → source
@@ -185,6 +194,7 @@ SORT created_at ASC
 ```
 
 **Use Cases**:
+
 - Aggregate worker costs across sessions
 - Find all insights related to a topic
 - Generate session summaries dynamically
@@ -221,6 +231,7 @@ outputs/obsidian/
 ```
 
 **Rationale**:
+
 - **sessions/**: Central MOCs that link to all related entities
 - **workers/**: Grouped by session for organizational clarity
 - **insights/**: Flat structure enables cross-session linking
@@ -306,6 +317,7 @@ class ResearchSession:
 ```
 
 **Versioning Pattern**: `session_{hash}_v{N}`
+
 - Same base query → same session ID
 - Expansions/recompilations increment version
 - Never delete previous versions (audit trail)
@@ -316,12 +328,12 @@ class ResearchSession:
 
 **File**: `outputs/obsidian/sessions/session_abc123_v1.md`
 
-```markdown
+````markdown
 ---
 type: research_session
 session_id: session_abc123
 version: 1
-query: "What are the latest trends in AI research?"
+query: 'What are the latest trends in AI research?'
 status: completed
 created_at: 2025-01-20T14:25:00Z
 updated_at: 2025-01-20T14:45:00Z
@@ -339,6 +351,7 @@ tags:
 # Research Session: Latest AI Research Trends
 
 ## Query
+
 > What are the latest trends in AI research?
 
 ## Research Plan
@@ -346,6 +359,7 @@ tags:
 Complexity: 0.75 (5 workers)
 
 ### Workers
+
 1. [[task_1_worker|Worker 1]]: Foundation models and scaling laws
 2. [[task_2_worker|Worker 2]]: Multimodal AI systems
 3. [[task_3_worker|Worker 3]]: AI safety and alignment research
@@ -367,6 +381,7 @@ Complexity: 0.75 (5 workers)
 Total: 45 sources across all workers
 
 ### By Worker
+
 - Worker 1: 12 sources
 - Worker 2: 9 sources
 - Worker 3: 8 sources
@@ -380,7 +395,9 @@ LIST
 FROM [[session_abc123_v1]]
 WHERE type = "worker" OR type = "insight"
 ```
-```
+````
+
+````
 
 **Purpose**: Central navigation hub linking to all session components
 
@@ -441,7 +458,7 @@ tags:
 *This is what gets passed to the synthesis step:*
 
 Foundation models in 2024-2025 show continued scaling trends with models reaching 10T parameters through mixture-of-experts architectures...
-```
+````
 
 **Critical Feature**: Full ReAct trace preserved for expansion and debugging
 
@@ -454,8 +471,8 @@ Foundation models in 2024-2025 show continued scaling trends with models reachin
 type: insight
 insight_id: insight_20250120_143052
 created_at: 2025-01-20T14:30:52Z
-source_session: "[[session_abc123_v1]]"
-source_worker: "[[task_1_worker]]"
+source_session: '[[session_abc123_v1]]'
+source_worker: '[[task_1_worker]]'
 tags:
   - scaling-laws
   - foundation-models
@@ -508,6 +525,7 @@ def expand(session: str, worker: str, prompt: str, model: str | None, verbose: b
 ```
 
 **Workflow**:
+
 1. Load session from Obsidian vault
 2. Extract target worker's full context
 3. Build expansion query incorporating previous findings
@@ -515,6 +533,7 @@ def expand(session: str, worker: str, prompt: str, model: str | None, verbose: b
 5. Save as new version (v2, v3, etc.)
 
 **Example Usage**:
+
 ```bash
 research expand --session=session_abc123 --worker=task_1 "Research GPU costs in detail"
 ```
@@ -531,6 +550,7 @@ def recompile_report(session: str, instructions: str | None, model: str | None) 
 ```
 
 **Workflow**:
+
 1. Load session from Obsidian
 2. Extract ALL worker full contexts (not compressed summaries)
 3. Generate new synthesis with custom instructions
@@ -538,6 +558,7 @@ def recompile_report(session: str, instructions: str | None, model: str | None) 
 5. Update session MOC to reference new report
 
 **Example Usage**:
+
 ```bash
 research recompile-report --session=session_abc123 "Focus on cost-benefit analysis"
 ```
@@ -549,6 +570,7 @@ research recompile-report --session=session_abc123 "Focus on cost-benefit analys
 **Location**: `src/deep_research/obsidian/writer.py` (new module)
 
 **Core Responsibilities**:
+
 1. Create vault directory structure
 2. Write session MOCs with frontmatter and wikilinks
 3. Write worker notes with full ReAct traces
@@ -558,6 +580,7 @@ research recompile-report --session=session_abc123 "Focus on cost-benefit analys
 7. Maintain bidirectional link integrity
 
 **Key Methods**:
+
 ```python
 class ObsidianWriter:
     def write_session(self, session: ResearchSession) -> Path:
@@ -584,6 +607,7 @@ class ObsidianWriter:
 **Location**: `src/deep_research/agent/orchestrator.py` (modifications)
 
 **Required Changes**:
+
 1. Add `save_to_obsidian` flag to `__init__()`
 2. Initialize `ObsidianWriter` instance
 3. Create `ResearchSession` tracking at start of `research()`
@@ -592,6 +616,7 @@ class ObsidianWriter:
 6. Add session ID and version to result metadata
 
 **Critical Modification** (orchestrator.py:320-393):
+
 ```python
 async def _worker_execution(self, state: dict[str, Any]) -> dict[str, Any]:
     """Execute worker - CAPTURE FULL CONTEXT."""
@@ -627,6 +652,7 @@ async def _worker_execution(self, state: dict[str, Any]) -> dict[str, Any]:
 #### Why Obsidian Over Database?
 
 **Advantages Discovered**:
+
 - **Human-readable**: Direct markdown editing and reading
 - **Built-in graph view**: Visual knowledge exploration (no custom visualization needed)
 - **Dataview plugin**: SQL-like queries without database setup
@@ -636,6 +662,7 @@ async def _worker_execution(self, state: dict[str, Any]) -> dict[str, Any]:
 - **Offline-first**: Works without network connection
 
 **Trade-offs**:
+
 - File I/O slower than database for large-scale queries (10,000+ notes)
 - No ACID guarantees (but single-user research doesn't need them)
 - Manual index management (Dataview provides virtual indexes)
@@ -645,6 +672,7 @@ async def _worker_execution(self, state: dict[str, Any]) -> dict[str, Any]:
 #### Why Store Full Context (Not Compressed)?
 
 **Rationale**:
+
 1. **Expansion accuracy**: LLM needs full context to continue research coherently
 2. **Recompilation quality**: Different synthesis angles require access to all evidence
 3. **Debugging capability**: Understand exactly what the worker saw and did
@@ -652,6 +680,7 @@ async def _worker_execution(self, state: dict[str, Any]) -> dict[str, Any]:
 5. **Research evolution**: Build knowledge over time, not just final outputs
 
 **Cost Analysis**:
+
 - Compressed: ~50KB per worker
 - Full context: ~500KB - 2MB per worker (10-40x larger)
 - Storage cost: ~$0.023/GB/month (S3 Standard)
@@ -664,12 +693,14 @@ async def _worker_execution(self, state: dict[str, Any]) -> dict[str, Any]:
 **Pattern**: `session_{hash}_v{N}`
 
 **How It Works**:
+
 - Initial query "What are AI trends?" → `session_abc123_v1`
 - Expansion of worker 1 → `session_abc123_v2` (same base ID)
 - Recompilation → `session_abc123_v3`
 - Different query "What is Python?" → `session_def456_v1` (new base ID)
 
 **Alternative Considered**: UUID per execution
+
 - **Rejected**: Loses connection between related research sessions
 - No way to know v2 expanded v1
 - Graph becomes disconnected forest instead of connected graph
@@ -727,9 +758,11 @@ class ReActIteration:
 The key architectural insight: **Compress for synthesis, never for storage.**
 
 Current flow:
+
 1. Worker generates full output → compress → store compressed → synthesize
 
 Proposed flow:
+
 1. Worker generates full output → store full → compress copy → synthesize
 
 This adds minimal overhead (one extra data structure) but preserves all context.
@@ -744,11 +777,13 @@ The proposed architecture maintains full backwards compatibility:
 - `research recompile-report` - New command, requires Obsidian
 
 Users opt-in via:
+
 ```bash
 research multi "query" --save-obsidian
 ```
 
 Or environment variable:
+
 ```bash
 export DEEP_RESEARCH_OBSIDIAN=true
 ```
@@ -793,6 +828,7 @@ This research builds on previous work documented in:
 ### Similar Systems
 
 **Comparison with Obsidian Research Plugins**:
+
 - **Research Assistant** plugin - Manual note-taking focused
 - **Zotero Integration** plugin - Academic paper management
 - **Smart Connections** plugin - Embedding-based search
@@ -825,6 +861,7 @@ Based on the research, we identified measurable success criteria:
 **Question**: Should insights be auto-extracted from worker outputs using LLM, or manually curated?
 
 **Options**:
+
 - **Auto-extraction**: Use LLM to identify key insights from worker output
   - Pro: Automated, consistent, scales
   - Con: May miss nuance, requires prompt engineering, adds cost
@@ -840,6 +877,7 @@ Based on the research, we identified measurable success criteria:
 **Question**: Should we link insights between sessions (cross-session graph)?
 
 **Options**:
+
 - **Within-session only**: Each session is isolated graph
   - Pro: Simpler, clearer boundaries
   - Con: Misses connections across research topics
@@ -855,6 +893,7 @@ Based on the research, we identified measurable success criteria:
 **Question**: How to handle same URL fetched by multiple workers?
 
 **Options**:
+
 - **No deduplication**: Store separately per worker
   - Pro: Simple, preserves exact context
   - Con: Wastes storage, fragments references
@@ -870,6 +909,7 @@ Based on the research, we identified measurable success criteria:
 **Question**: Should we require Dataview plugin for full functionality?
 
 **Options**:
+
 - **Required**: Vault assumes Dataview installed
   - Pro: Rich queries, better UX
   - Con: Adds setup friction
@@ -885,10 +925,12 @@ Based on the research, we identified measurable success criteria:
 Based on the research findings, a phased implementation approach is recommended:
 
 ### Phase 1: Data Capture (Foundation)
+
 **Duration**: 1 week
 **Focus**: Preserve full context without changing synthesis
 
 **Tasks**:
+
 1. Create enhanced data structures (`WorkerFullContext`, `ResearchSession`, `ToolCall`, `ReActIteration`)
 2. Modify `WorkerAgent` to track ReAct iterations
 3. Modify `LeadResearcher._worker_execution()` to build full context
@@ -897,10 +939,12 @@ Based on the research findings, a phased implementation approach is recommended:
 **Validation**: Workers complete successfully, full context captured in memory
 
 ### Phase 2: Obsidian Writer (Storage)
+
 **Duration**: 1 week
 **Focus**: Write sessions to Obsidian vault
 
 **Tasks**:
+
 1. Create `obsidian/` module
 2. Implement `ObsidianWriter` class
 3. Implement note generation (session MOC, workers, sources, reports)
@@ -910,10 +954,12 @@ Based on the research findings, a phased implementation approach is recommended:
 **Validation**: Session writes to Obsidian, graph view shows connections
 
 ### Phase 3: CLI Commands (Iteration)
+
 **Duration**: 1 week
 **Focus**: Enable expansion and recompilation
 
 **Tasks**:
+
 1. Implement `research expand` command
 2. Implement `research recompile-report` command
 3. Add session loading from Obsidian
@@ -923,10 +969,12 @@ Based on the research findings, a phased implementation approach is recommended:
 **Validation**: Can expand worker research, recompile with new instructions
 
 ### Phase 4: Testing & Documentation (Polish)
+
 **Duration**: 1 week
 **Focus**: Ensure reliability and usability
 
 **Tasks**:
+
 1. Test full workflow with multiple sessions
 2. Performance testing with 10+ workers
 3. Write user documentation
@@ -950,6 +998,7 @@ The research demonstrates that transforming the deep-research multi-agent system
 5. **Implementation Feasibility**: 4-week phased approach leverages existing patterns (CLI, state management, HTTP pooling)
 
 **Critical Success Factors**:
+
 - Full context capture must not break existing synthesis pipeline
 - Obsidian vault structure must be intuitive for human exploration
 - Version management must clearly show research lineage
@@ -960,6 +1009,7 @@ The research demonstrates that transforming the deep-research multi-agent system
 ## References
 
 ### Internal Codebase
+
 - `deep-research-agent/src/deep_research/agent/orchestrator.py` - Multi-agent orchestration
 - `deep-research-agent/src/deep_research/agent/worker.py` - Worker agent implementation
 - `deep-research-agent/src/deep_research/agent/state.py` - LangGraph state definitions
@@ -967,12 +1017,14 @@ The research demonstrates that transforming the deep-research multi-agent system
 - `deep-research-agent/src/deep_research/cli.py` - CLI command patterns
 
 ### External Documentation
+
 - **LangGraph**: https://langchain-ai.github.io/langgraph/ - State machine and parallel execution patterns
 - **Obsidian Format**: https://help.obsidian.md/ - Markdown, frontmatter, wikilinks specification
 - **Dataview Plugin**: https://blacksmithgu.github.io/obsidian-dataview/ - Query language documentation
 - **Zettelkasten Method**: https://zettelkasten.de/posts/overview/ - Knowledge management principles
 
 ### Research Papers
+
 - Alibaba DeepResearch (2024) - Multi-agent research system architecture
 - LangGraph Documentation - Dynamic parallel execution with Send API
 - Obsidian Community Best Practices - MOC patterns and vault organization

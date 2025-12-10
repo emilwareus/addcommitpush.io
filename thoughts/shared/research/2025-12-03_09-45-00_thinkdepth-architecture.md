@@ -4,12 +4,12 @@ researcher: Claude
 git_commit: 7a0d7034c05fc3e2dd0010ea7c396615afe9d632
 branch: main
 repository: go-research
-topic: "ThinkDepth.ai Deep Research Architecture Analysis and Implementation Plan"
+topic: 'ThinkDepth.ai Deep Research Architecture Analysis and Implementation Plan'
 tags: [research, thinkdepth, deep-research, agentic-ai, architecture, cli-visualization]
 status: complete
 last_updated: 2025-12-03
 last_updated_by: Claude
-last_updated_note: "Added comprehensive CLI visualization design section with event types, display components, and example output"
+last_updated_note: 'Added comprehensive CLI visualization design section with event types, display components, and example output'
 ---
 
 # Research: ThinkDepth.ai Deep Research Architecture Analysis and Implementation Plan
@@ -72,6 +72,7 @@ ThinkDepth uses a multi-agent supervisor pattern with LangGraph:
 ### 2. Key Components
 
 #### 2.1 Supervisor Agent (Lead Researcher)
+
 - **File**: `multi_agent_supervisor.py`
 - **Model Used**: `openai:gpt-5` (in original)
 - **Our Model**: `alibaba/tongyi-deepresearch-30b-a3b`
@@ -82,6 +83,7 @@ ThinkDepth uses a multi-agent supervisor pattern with LangGraph:
   - `think_tool` - Strategic reflection
 
 #### 2.2 Research Sub-Agent
+
 - **File**: `research_agent.py`
 - **Model Used**: `openai:gpt-5` (in original)
 - **Tools Available**:
@@ -89,6 +91,7 @@ ThinkDepth uses a multi-agent supervisor pattern with LangGraph:
   - `think_tool` - Reflection after each search
 
 #### 2.3 State Management
+
 - `SupervisorState`: supervisor_messages, research_brief, notes, research_iterations, raw_notes, draft_report
 - `ResearcherState`: researcher_messages, tool_call_iterations, research_topic, compressed_research, raw_notes
 - `AgentState`: messages, research_brief, supervisor_messages, raw_notes, notes, draft_report, final_report
@@ -110,11 +113,13 @@ Key insight: **Never complete based on draft report looking good** - always veri
 ### 4. Self-Balancing Rules
 
 #### 4.1 Insightfulness Rules (Applied in Final Report)
+
 - Granular breakdown of topics with specific causes/impacts
 - Detailed mapping tables connecting relationships
 - Nuanced exploration with explicit discussion
 
 #### 4.2 Helpfulness Rules (Applied in Final Report)
+
 - Direct user intent satisfaction
 - Fluent, coherent logical structure
 - Factual accuracy
@@ -125,6 +130,7 @@ Key insight: **Never complete based on draft report looking good** - always veri
 ### 5. Context Compression Strategy
 
 #### 5.1 Research Compression (`compress_research_system_prompt`)
+
 - Preserve ALL information from tool calls verbatim
 - Clean up but don't summarize
 - Include inline citations for each source
@@ -135,6 +141,7 @@ Key insight: **Never complete based on draft report looking good** - always veri
   - List of All Relevant Sources
 
 #### 5.2 Draft Report as Context
+
 - Acts as "dynamic context" that guides subsequent research
 - Similar to "gradually adding features to an initial prototype"
 - Mitigates context pollution, distraction, confusion, and clash
@@ -142,6 +149,7 @@ Key insight: **Never complete based on draft report looking good** - always veri
 ### 6. Tool Implementations
 
 #### 6.1 tavily_search Tool
+
 ```python
 # Executes search → deduplicates by URL → summarizes raw content → formats output
 @tool
@@ -153,6 +161,7 @@ def tavily_search(query: str, max_results: int = 3, topic: str = "general") -> s
 ```
 
 #### 6.2 think_tool
+
 ```python
 @tool
 def think_tool(reflection: str) -> str:
@@ -161,6 +170,7 @@ def think_tool(reflection: str) -> str:
 ```
 
 #### 6.3 refine_draft_report Tool
+
 ```python
 @tool
 def refine_draft_report(research_brief: str, findings: str, draft_report: str) -> str:
@@ -172,6 +182,7 @@ def refine_draft_report(research_brief: str, findings: str, draft_report: str) -
 ### 7. Configuration Constants
 
 From the original implementation:
+
 - `max_researcher_iterations = 15` (tool calls per sub-agent)
 - `max_concurrent_researchers = 3` (parallel sub-agents)
 - `MAX_CONTEXT_LENGTH = 250000` (for webpage summarization)
@@ -179,12 +190,14 @@ From the original implementation:
 ### 8. Key Prompts (Detailed Analysis)
 
 #### 8.1 Lead Researcher Prompt (`lead_researcher_with_multiple_steps_diffusion_double_check_prompt`)
+
 - Emphasizes diffusion algorithm
 - Critical: "CompleteResearch only based on findings' completeness, not draft report"
 - Always run diverse research questions to verify comprehensiveness
 - Use parallel ConductResearch for multi-faceted questions
 
 #### 8.2 Research Agent Prompt (`research_agent_prompt`)
+
 - Hard limits: 2-3 searches for simple, up to 5 for complex
 - Stop immediately when:
   - Can answer comprehensively
@@ -192,6 +205,7 @@ From the original implementation:
   - Last 2 searches returned similar information
 
 #### 8.3 Final Report Prompt (`final_report_generation_with_helpfulness_insightfulness_hit_citation_prompt`)
+
 - Applies both Insightfulness and Helpfulness rules
 - Flexible section structure (comparison, list, overview, etc.)
 - Strict citation rules with sequential numbering
@@ -199,6 +213,7 @@ From the original implementation:
 ## Implementation Plan for Go
 
 ### File Structure
+
 ```
 internal/architectures/think_deep/
 ├── README.md              # Architecture documentation
@@ -1107,17 +1122,19 @@ func init() {
 5. **Parallel Sub-Agents**: Up to 3 concurrent sub-researchers for independent topics
 
 ### Model Mapping
-| Original Model | Our Model |
-|----------------|-----------|
+
+| Original Model | Our Model                             |
+| -------------- | ------------------------------------- |
 | `openai:gpt-5` | `alibaba/tongyi-deepresearch-30b-a3b` |
-| Tavily Search | Brave Search (existing) |
+| Tavily Search  | Brave Search (existing)               |
 
 ### Configuration Mapping
-| Original | Our Go Implementation |
-|----------|----------------------|
+
+| Original                         | Our Go Implementation          |
+| -------------------------------- | ------------------------------ |
 | `max_researcher_iterations = 15` | `MaxSupervisorIterations = 15` |
-| `max_concurrent_researchers = 3` | `MaxConcurrentResearch = 3` |
-| `MAX_CONTEXT_LENGTH = 250000` | (handled by model) |
+| `max_concurrent_researchers = 3` | `MaxConcurrentResearch = 3`    |
+| `MAX_CONTEXT_LENGTH = 250000`    | (handled by model)             |
 
 ## Open Questions
 
@@ -1533,15 +1550,15 @@ When running ThinkDeep research, the user sees:
 
 ### Color Scheme
 
-| Phase | Color | Icon |
-|-------|-------|------|
-| Brief | Blue (HiBlue) | 📋 |
-| Draft | Yellow (HiYellow) | 📝 |
-| Diffuse | Magenta (HiMagenta) | 🔄 |
-| Sub-research | Yellow/Cyan | 🔍💭📦 |
-| Refinement | Cyan | ✏️ |
-| Final | Green (HiGreen) | ✓ |
-| Thinking | Dim | 💭 |
+| Phase        | Color               | Icon   |
+| ------------ | ------------------- | ------ |
+| Brief        | Blue (HiBlue)       | 📋     |
+| Draft        | Yellow (HiYellow)   | 📝     |
+| Diffuse      | Magenta (HiMagenta) | 🔄     |
+| Sub-research | Yellow/Cyan         | 🔍💭📦 |
+| Refinement   | Cyan                | ✏️     |
+| Final        | Green (HiGreen)     | ✓      |
+| Thinking     | Dim                 | 💭     |
 
 ## References
 

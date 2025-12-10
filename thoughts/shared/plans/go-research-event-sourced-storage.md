@@ -8,12 +8,12 @@ Implement an event-sourced adapter-based storage architecture for the go-researc
 
 ### What Exists
 
-| Component | Location | Issue |
-|-----------|----------|-------|
-| Event Bus | `internal/events/bus.go:8-66` | Fire-and-forget, events dropped if buffer full |
-| Session Store | `internal/session/store.go:18-147` | Snapshot-only, no intermediate state |
-| Orchestrator | `internal/orchestrator/deep.go:25-35` | Stateless, state in local variables |
-| DAG | `internal/planning/dag.go:60-69` | Direct mutation, no history |
+| Component     | Location                              | Issue                                          |
+| ------------- | ------------------------------------- | ---------------------------------------------- |
+| Event Bus     | `internal/events/bus.go:8-66`         | Fire-and-forget, events dropped if buffer full |
+| Session Store | `internal/session/store.go:18-147`    | Snapshot-only, no intermediate state           |
+| Orchestrator  | `internal/orchestrator/deep.go:25-35` | Stateless, state in local variables            |
+| DAG           | `internal/planning/dag.go:60-69`      | Direct mutation, no history                    |
 
 ### Key Discoveries
 
@@ -50,6 +50,7 @@ After implementation:
 ### Verification
 
 After implementation:
+
 - `go build ./...` compiles
 - `go test ./...` passes
 - `/deep <query>` works with event persistence
@@ -196,10 +197,12 @@ func (e BaseEvent) GetTimestamp() time.Time { return e.Timestamp }
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Build succeeds: `cd go-research && go build ./internal/core/...`
 - [x] No linting errors: `cd go-research && go vet ./internal/core/...`
 
 #### Manual Verification:
+
 - [x] Port interfaces are well-documented
 - [x] No circular dependencies in core package
 
@@ -474,10 +477,12 @@ type ReportSnapshot struct {
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Build succeeds: `cd go-research && go build ./internal/core/domain/events/...`
 - [x] No linting errors: `cd go-research && go vet ./internal/core/domain/events/...`
 
 #### Manual Verification:
+
 - [x] All event types have JSON tags for serialization
 - [x] Events follow naming convention: `<Entity><Action>Event`
 - [x] All events embed BaseEvent
@@ -1166,10 +1171,12 @@ func (c *events.CostBreakdown) Add(other events.CostBreakdown) {
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Build succeeds: `cd go-research && go build ./internal/core/domain/aggregate/...`
 - [x] Unit tests pass: `cd go-research && go test ./internal/core/domain/aggregate/...`
 
 #### Manual Verification:
+
 - [x] Commands validate preconditions correctly
 - [x] Events apply to state correctly
 - [x] State can be reconstructed from event replay
@@ -1640,10 +1647,12 @@ func TestEventStore_GetAllAggregateIDs(t *testing.T) {
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Build succeeds: `cd go-research && go build ./internal/adapters/storage/...`
 - [x] Tests pass: `cd go-research && go test ./internal/adapters/storage/...`
 
 #### Manual Verification:
+
 - [x] Events persist to disk as JSON files
 - [x] Events load correctly with type discrimination
 - [x] Version conflict detection works
@@ -2152,10 +2161,12 @@ func (o *DeepOrchestratorES) buildAnalysisResultFromState(state *aggregate.Resea
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Build succeeds: `cd go-research && go build ./internal/orchestrator/...`
 - [x] Tests pass: `cd go-research && go test ./internal/orchestrator/...`
 
 #### Manual Verification:
+
 - [x] Events persist during research execution
 - [x] Research can be interrupted and state is preserved
 - [x] State can be reconstructed from events
@@ -2620,11 +2631,13 @@ func main() {
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Build succeeds: `cd go-research && go build ./...`
 - [x] Tests pass: `cd go-research && go test ./...`
 - [x] Type check passes: `cd go-research && go vet ./...`
 
 #### Manual Verification:
+
 - [x] `/resume <session-id>` continues interrupted research
 - [x] `/sessions-es` shows all event-sourced sessions
 - [x] Legacy sessions can be migrated
@@ -2687,6 +2700,7 @@ None - this is additive. Legacy sessions can be migrated.
 ### Configuration
 
 Add to config:
+
 ```go
 type Config struct {
     // ... existing ...
@@ -2699,6 +2713,7 @@ type Config struct {
 ### Rollback
 
 If issues occur:
+
 1. Legacy sessions still exist in original location
 2. Event store can be deleted to revert
 3. Old orchestrator remains available

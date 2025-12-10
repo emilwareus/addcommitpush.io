@@ -29,8 +29,8 @@ const stages = [
     label: 'Refined text',
     render: (
       <p>
-        OpenAI: RLHF + eval gates. Anthropic: Constitutional AI + red-team. DeepMind: interpretability
-        + strict evals. Cited incidents and mitigations mapped to primary URLs.
+        OpenAI: RLHF + eval gates. Anthropic: Constitutional AI + red-team. DeepMind:
+        interpretability + strict evals. Cited incidents and mitigations mapped to primary URLs.
       </p>
     ),
   },
@@ -50,10 +50,7 @@ export function DraftDenoising({ className }: DraftDenoisingProps) {
     const isAtEnd = iteration >= 15;
     const delay = isAtEnd ? 5000 : 700; // 5s hold on 15/15 before restarting
 
-    const id = setTimeout(
-      () => setIteration((prev) => (prev >= 15 ? 1 : prev + 1)),
-      delay,
-    );
+    const id = setTimeout(() => setIteration((prev) => (prev >= 15 ? 1 : prev + 1)), delay);
     return () => clearTimeout(id);
   }, [isInView, iteration]);
 
@@ -66,7 +63,7 @@ export function DraftDenoising({ className }: DraftDenoisingProps) {
       ref={ref}
       className={cn(
         'rounded-2xl border border-border/60 bg-muted/30 p-6 md:p-8 shadow-lg space-y-4',
-        className,
+        className
       )}
     >
       <div className="flex items-center justify-between">
@@ -115,8 +112,8 @@ export function DraftDenoising({ className }: DraftDenoisingProps) {
           </p>
           <div className="flex-1 overflow-hidden">
             <p>
-              The report converges toward a comprehensive, insight-rich, and readable deliverable with
-              clean citations that pass the FACT evaluation.
+              The report converges toward a comprehensive, insight-rich, and readable deliverable
+              with clean citations that pass the FACT evaluation.
             </p>
           </div>
         </motion.div>
@@ -139,7 +136,3 @@ export function DraftDenoising({ className }: DraftDenoisingProps) {
     </div>
   );
 }
-
-
-
-

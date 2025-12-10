@@ -16,6 +16,7 @@ The `IterativeEDAAgent` (deep-research-agent/src/deep_research/agent/iterative_e
 4. **Generate Outputs** (lines 435-456): Creates markdown report + executed Jupyter notebook
 
 **Key Architecture Patterns Already in Place:**
+
 - Tool base class: `deep-research-agent/src/deep_research/tools/base.py:7-35`
 - LangChain tool wrapping: `deep-research-agent/src/deep_research/agent/react.py:60-85`
 - Parallel execution via LangGraph Send API: `deep-research-agent/src/deep_research/agent/orchestrator.py:155-184`
@@ -24,32 +25,38 @@ The `IterativeEDAAgent` (deep-research-agent/src/deep_research/agent/iterative_e
 ### Current Limitations
 
 **Single Format Support** (iterative_eda.py:98)
+
 - Hardcoded `pd.read_csv(filepath)` - only CSV supported
 - No file extension detection or validation
 - No support for Excel, Parquet, Pickle, JSON, TSV, etc.
 
 **Not a Tool**
+
 - Instantiated directly by CLI (cli.py:275), not through tool system
 - Cannot be called by ReactAgent or WorkerAgent
 - Not registered in multi-agent tool suite
 
 **Missing Dependencies** (pyproject.toml:19)
+
 - No `openpyxl` for Excel support
 - No `pyarrow` for Parquet support
 
 ### Key Discoveries
 
 **✅ Parallelization Already Supported!**
+
 - Each `IterativeEDAAgent` creates own `CodeExecutor` with isolated kernel (iterative_eda.py:25)
 - Multiple agents can run concurrently without interference
 - LangGraph Send API (orchestrator.py:155-184) generalizes to any worker type
 
 **✅ Tool Pattern is Proven**
+
 - `SearchTool` and `FetchTool` demonstrate the exact pattern we need to follow
 - ReactAgent (react.py:60-85) shows how to wrap tools with `@tool` decorator
 - All infrastructure already exists
 
 **✅ Architecture is Additive, Not Refactoring**
+
 - No breaking changes to existing EDA functionality
 - Pure additions to tool system and data loading
 - Existing CLI remains unchanged
@@ -59,6 +66,7 @@ The `IterativeEDAAgent` (deep-research-agent/src/deep_research/agent/iterative_e
 ### Success Criteria
 
 Users can:
+
 1. **Run EDA on multiple formats**: `uv run research eda data.xlsx "predict sales"`
 2. **Use EDA as tool in research**: `uv run research research "Analyze sales.csv and compare with industry benchmarks"`
 3. **Execute parallel EDA**: Multiple datasets analyzed concurrently via orchestrator
@@ -67,11 +75,13 @@ Users can:
 ### Verification Steps
 
 **Automated Verification:**
+
 - [ ] Build succeeds: `cd deep-research-agent && uv run pytest`
 - [ ] Type checking passes: `cd deep-research-agent && uv run mypy src`
 - [ ] Linting passes: `cd deep-research-agent && uv run ruff check src`
 
 **Manual Verification:**
+
 - [ ] CLI works with CSV: `uv run research eda data/car_price_prediction_.csv "predict price"`
 - [ ] CLI works with Excel: `uv run research eda customers.xlsx "segment customers"`
 - [ ] CLI works with Parquet: `uv run research eda events.parquet "analyze behavior"`
@@ -545,12 +555,14 @@ def test_supported_formats() -> None:
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Tests pass: `cd deep-research-agent && uv run pytest tests/test_data_loader.py -v`
 - [x] Type checking: `cd deep-research-agent && uv run mypy src/deep_research/tools/data_loader.py`
 - [x] Linting: `cd deep-research-agent && uv run ruff check src/deep_research/tools/data_loader.py`
 - [ ] Integration test: `cd deep-research-agent && uv run pytest tests/test_agent.py -v`
 
 #### Manual Verification:
+
 - [ ] CSV works: `uv run research eda deep-research-agent/data/car_price_prediction_.csv "predict price"`
 - [ ] Create test Excel file and verify: `uv run research eda test.xlsx "analyze data"`
 - [ ] Create test Parquet file and verify: `uv run research eda test.parquet "analyze data"`
@@ -880,12 +892,14 @@ def test_eda_tool_properties() -> None:
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Tests pass: `cd deep-research-agent && uv run pytest tests/test_eda_tool.py -v` (Note: 1 test requires API key)
 - [x] Integration tests: `cd deep-research-agent && uv run pytest tests/ -v` (Most pass, some require API key)
 - [x] Type checking: `cd deep-research-agent && uv run mypy src`
 - [x] Linting: `cd deep-research-agent && uv run ruff check src`
 
 #### Manual Verification:
+
 - [ ] ReactAgent can call eda tool: Test with query that mentions analyzing a CSV file
 - [ ] Tool returns formatted insights: Verify output contains insights and notebook path
 - [ ] Agent can reason about results: Check that agent uses insights in final answer
@@ -1068,11 +1082,13 @@ Return JSON array with this structure:
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Parallel tests pass: `cd deep-research-agent && uv run pytest tests/test_parallel_eda.py -v` (Note: Tests require API key)
 - [x] No kernel conflicts: Tests complete without errors (architecture supports isolation)
 - [ ] Performance improvement: Parallel execution is faster than sequential (< 1.5x sequential time) (Requires API key to verify)
 
 #### Manual Verification:
+
 - [ ] Two concurrent EDAs work: Run test manually, verify both complete
 - [ ] No kernel crashes: Check logs for kernel shutdown errors
 - [ ] Results are independent: Verify each analysis produces correct insights for its dataset
@@ -1269,7 +1285,7 @@ async def test_pure_data_analysis_workflow() -> None:
 **File**: `deep-research-agent/README.md`
 **Changes**: Add combined workflow examples
 
-```markdown
+````markdown
 # Deep Research Agent
 
 ... (existing content) ...
@@ -1300,6 +1316,7 @@ uv run research eda data/customers.xlsx "segment customers"
 # Analyze Parquet
 uv run research eda data/events.parquet "analyze user behavior"
 ```
+````
 
 ### Combined Workflows
 
@@ -1314,12 +1331,14 @@ uv run research research "Compare sales patterns in Q1.csv and Q2.csv, then rese
 ```
 
 The system automatically:
+
 - Detects data analysis needs in your query
 - Spawns parallel workers for data analysis and web research
 - Synthesizes insights from both sources
 - Generates Jupyter notebooks with executable analysis
 
 ... (rest of README) ...
+
 ```
 
 ### Success Criteria
@@ -1460,3 +1479,4 @@ After deployment, monitor:
 **Risk Level**: Low (all patterns proven, changes are additive)
 **Team Size**: 1-2 developers
 **Dependencies**: None (all patterns exist in codebase)
+```

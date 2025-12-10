@@ -17,10 +17,10 @@ Implement the ThinkDepth.ai "Self-Balancing Test-Time Diffusion Deep Research" a
 
 ### Model Mapping
 
-| Original | Implementation |
-|----------|----------------|
+| Original       | Implementation                                         |
+| -------------- | ------------------------------------------------------ |
 | `openai:gpt-5` | `alibaba/tongyi-deepresearch-30b-a3b` (via OpenRouter) |
-| Tavily Search | Brave Search (existing) |
+| Tavily Search  | Brave Search (existing)                                |
 
 ---
 
@@ -87,6 +87,7 @@ type DraftRefinedData struct {
 ```
 
 ### Success Criteria
+
 - [x] `go build ./...` passes
 - [x] Event types are exported and accessible
 
@@ -101,6 +102,7 @@ type DraftRefinedData struct {
 Create the prompts package with all necessary prompt templates. Reference implementation in research document section "3. Prompts (`prompts.go`)".
 
 Key prompts:
+
 1. `LeadResearcherPrompt` - Supervisor with diffusion algorithm instructions
 2. `ResearchAgentPrompt` - Sub-researcher with hard limits (2-5 searches)
 3. `CompressResearchPrompt` - Context compression preserving all info
@@ -110,6 +112,7 @@ Key prompts:
 7. `TransformToResearchBriefPrompt` - Convert user query to detailed brief
 
 ### Success Criteria
+
 - [x] All prompts defined as functions with proper formatting
 - [x] `go build ./...` passes
 
@@ -147,6 +150,7 @@ type ResearcherState struct {
 ```
 
 ### Success Criteria
+
 - [x] State types are properly exported
 - [x] `go build ./...` passes
 
@@ -189,6 +193,7 @@ func parseToolCalls(content string) []ToolCallParsed {
 ```
 
 ### Success Criteria
+
 - [x] All tools implement the `tools.Tool` interface
 - [x] Tool call parsing works with XML-style tags
 - [x] `go build ./...` passes
@@ -202,6 +207,7 @@ func parseToolCalls(content string) []ToolCallParsed {
 ### Implementation
 
 The sub-researcher:
+
 1. Receives a research topic from supervisor
 2. Executes search loop (2-5 iterations)
 3. Uses think_tool for reflection after each search
@@ -218,6 +224,7 @@ The sub-researcher:
 - **Compression**: Filter out think_tool calls, preserve all search results verbatim
 
 ### Success Criteria
+
 - [x] SubResearcherAgent struct with Research() method
 - [x] Integration with existing tools.Registry for search
 - [x] Compression function that filters think_tool calls
@@ -233,6 +240,7 @@ The sub-researcher:
 ### Implementation
 
 The supervisor:
+
 1. Receives research brief and initial draft
 2. Executes diffusion loop:
    - Generate research questions for gaps
@@ -249,6 +257,7 @@ The supervisor:
 - **think_tool**: Used before/after conduct_research for planning
 
 ### Success Criteria
+
 - [x] SupervisorAgent struct with Coordinate() method
 - [x] Takes sub-researcher callback for delegation
 - [x] Parallel execution support for conduct_research
@@ -294,6 +303,7 @@ func WithThinkDeepTools(tools tools.ToolExecutor) ThinkDeepOption {
 ### Event Emission
 
 Emit events at each phase transition:
+
 - `EventDiffusionStarted` at start
 - `EventDiffusionIterationStart` for each iteration
 - `EventResearchDelegated` when delegating to sub-researcher
@@ -303,6 +313,7 @@ Emit events at each phase transition:
 - `EventFinalReportStarted/Complete` for final phase
 
 ### Success Criteria
+
 - [x] ThinkDeepOrchestrator with Research() method
 - [x] Functional options for dependency injection
 - [x] Full event emission for visualization
@@ -359,6 +370,7 @@ import (
 ```
 
 ### Success Criteria
+
 - [x] Architecture implements `architectures.Architecture` interface
 - [x] Self-registers via init()
 - [x] Accessible via `catalog.Get("think_deep")`
@@ -381,6 +393,7 @@ Due to import cycle constraints, the shared prompts/state/tools are in `internal
 ### DiffusionDisplay Component
 
 Create a display component that:
+
 1. Renders initial diffusion plan (4-phase flow diagram)
 2. Shows iteration progress with progress bars
 3. Displays sub-researcher activity with icons
@@ -389,11 +402,13 @@ Create a display component that:
 ### Visualizer Integration
 
 Add to `Visualizer`:
+
 1. New `diffusionDisplay *DiffusionDisplay` field
 2. Subscribe to ThinkDeep event types
 3. Route events to diffusionDisplay.HandleEvent()
 
 ### Success Criteria
+
 - [x] DiffusionDisplay renders plan visualization
 - [x] Iteration progress displays correctly
 - [x] Sub-researcher status updates in real-time
@@ -428,6 +443,7 @@ Add to `Visualizer`:
    - Verify graceful completion
 
 ### Success Criteria
+
 - [x] All integration tests pass
 - [x] Event emission verified
 - [x] Cost tracking accurate

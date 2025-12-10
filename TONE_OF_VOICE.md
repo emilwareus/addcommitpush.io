@@ -11,11 +11,13 @@ This document captures the writing voice and style for blog posts on addcommitpu
 Write from direct experience. Use "I" liberally. Share what you've actually built, failed at, and learned.
 
 **Do:**
+
 > "As someone who's worked as a data lead or head of engineering for the past years, I've learned a lot about finding and hiring great engineers."
 
 > "In September 2018 I joined Debricked as the very interesting combination of a Machine Learning Engineer and Sales with the perception that the SaaS product was 'done' and ready to take on the world. We just needed to add some more ML-enabled capabilities and off we go! We were wrong.. so so wrong."
 
 **Don't:**
+
 > "Organizations should consider the following best practices when hiring engineers..."
 
 ### 2. Honest About Mistakes
@@ -23,6 +25,7 @@ Write from direct experience. Use "I" liberally. Share what you've actually buil
 Openly admit when you were wrong. This builds credibility and makes lessons more impactful.
 
 **Do:**
+
 > "We were wrong.. so so wrong."
 
 > "If I got to re-live the beginning of our endeavor, I would have pruned these dimensions A LOT from the start."
@@ -30,6 +33,7 @@ Openly admit when you were wrong. This builds credibility and makes lessons more
 > "In the beginning, we did not do this right."
 
 **Don't:**
+
 > "After careful analysis, we pivoted our strategy to better align with market conditions."
 
 ### 3. Humble but Opinionated
@@ -37,6 +41,7 @@ Openly admit when you were wrong. This builds credibility and makes lessons more
 Take strong stances, but acknowledge you're still learning. Never position yourself as having all the answers.
 
 **Do:**
+
 > "I feel like Emil 2.0... It also feels like I'm level 2 out of 100, I wonder what the next thing could be ;)"
 
 > "In my opinion, the best indicator of a good hire is a successful result from the case..."
@@ -44,6 +49,7 @@ Take strong stances, but acknowledge you're still learning. Never position yours
 > "This is at least the state late 2025, in a year or so... who knows."
 
 **Don't:**
+
 > "As industry experts, we recommend the following definitive approach..."
 
 ### 4. Give Credit Openly
@@ -51,9 +57,11 @@ Take strong stances, but acknowledge you're still learning. Never position yours
 When ideas aren't yours, say so explicitly. Link to sources. This shows intellectual honesty.
 
 **Do:**
+
 > "But first, these are not my ideas! I stole with pride! This approach was pioneered by Dex and Vaibhav from AI That Works..."
 
 **Don't:**
+
 > Take credit for frameworks or ideas developed by others.
 
 ---
@@ -105,6 +113,7 @@ You have already spent more on AI coding tools the last 6 months than any other 
 Make abstract concepts tangible through imagery.
 
 **Examples:**
+
 - "throwing spaghetti [and my head] against the wall to see what sticks"
 - "pushing the Great Wall of China 0.01 centimeters a day"
 - "polishing a stone"
@@ -133,6 +142,7 @@ D₂ = U(D₁, R(D₁))
 ### Avoid Corporate Speak
 
 Never use:
+
 - "leverage synergies"
 - "best-in-class"
 - "thought leadership"
@@ -179,6 +189,7 @@ Add context or wit in parentheses:
 ### Lists for Actionable Items
 
 Use bullet lists for:
+
 - Things to look for
 - Steps in a process
 - Comparisons
@@ -188,8 +199,8 @@ Use bullet lists for:
 When comparing concepts, tools, or approaches, use tables:
 
 | Classical Diffusion | Research Diffusion |
-|---------------------|-------------------|
-| Random noise        | Initial draft     |
+| ------------------- | ------------------ |
+| Random noise        | Initial draft      |
 
 ### Blockquotes for External Voices
 
@@ -215,9 +226,11 @@ Use terminal/code blocks liberally for anything executable:
 Show genuine excitement, but don't overdo punctuation or superlatives.
 
 **Good:**
+
 > "It was the most thrilling experience in my professional life so far"
 
 **Too much:**
+
 > "This is AMAZING!!! The BEST thing EVER!!!"
 
 ### Vulnerability

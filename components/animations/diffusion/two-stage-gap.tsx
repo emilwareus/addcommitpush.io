@@ -12,7 +12,7 @@ export function TwoStageGap({ className }: TwoStageGapProps) {
     <div
       className={cn(
         'rounded-2xl border border-border/60 bg-muted/30 p-6 md:p-8 shadow-lg space-y-6',
-        className,
+        className
       )}
     >
       <div className="flex items-center justify-between">
@@ -31,7 +31,10 @@ export function TwoStageGap({ className }: TwoStageGapProps) {
           <div className="space-y-2 text-muted-foreground">
             <p className="text-xs uppercase tracking-wide">Outputs</p>
             <ul className="list-disc pl-5 space-y-2">
-              <li>Top sources (3–5): OpenAI system card, Anthropic Constitutional AI, DeepMind eval blogs.</li>
+              <li>
+                Top sources (3–5): OpenAI system card, Anthropic Constitutional AI, DeepMind eval
+                blogs.
+              </li>
               <li>Extracted facts: eval gates, red-team cadence, 2023–2025 incident summaries.</li>
               <li>Inline quotes + URLs; duplicates removed.</li>
             </ul>
@@ -49,9 +52,13 @@ export function TwoStageGap({ className }: TwoStageGapProps) {
           <div className="space-y-2 text-foreground">
             <p className="text-xs uppercase tracking-wide">Outputs</p>
             <ul className="list-disc pl-5 space-y-2">
-              <li>Narrative: safety pillars per lab with inline citations; incidents + mitigations.</li>
+              <li>
+                Narrative: safety pillars per lab with inline citations; incidents + mitigations.
+              </li>
               <li>Table: Lab vs eval gates vs red-team cadence vs interpretability depth.</li>
-              <li>Clarity pass: removes repetition, smooth flow, instruction-following guaranteed.</li>
+              <li>
+                Clarity pass: removes repetition, smooth flow, instruction-following guaranteed.
+              </li>
             </ul>
             <p className="text-xs text-muted-foreground">
               Goal: readable, insightful synthesis once facts are locked.

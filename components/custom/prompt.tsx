@@ -25,7 +25,12 @@ export function Prompt({ value, label = 'Prompt', className }: PromptProps) {
   };
 
   return (
-    <div className={cn('not-prose my-8 rounded-lg border border-border bg-muted/70 shadow-sm', className)}>
+    <div
+      className={cn(
+        'not-prose my-8 rounded-lg border border-border bg-muted/70 shadow-sm',
+        className
+      )}
+    >
       <div className="flex items-center justify-between px-3 py-2 border-b border-border/60">
         <span className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
           {label}
@@ -58,5 +63,3 @@ export function Prompt({ value, label = 'Prompt', className }: PromptProps) {
     </div>
   );
 }
-
-

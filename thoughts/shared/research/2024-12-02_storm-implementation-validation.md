@@ -4,7 +4,7 @@ researcher: Claude
 git_commit: 160381af670355a4c2899b504fdd2748b64704c5
 branch: feat/custom-deep-research
 repository: addcommitpush.io
-topic: "STORM Implementation Validation: Go vs Original Python"
+topic: 'STORM Implementation Validation: Go vs Original Python'
 tags: [research, storm, deep-research, architecture, validation]
 status: complete
 last_updated: 2024-12-02
@@ -29,13 +29,13 @@ Validate that the Go implementation of STORM matches the original Stanford STORM
 
 The Go implementation **deviates significantly** from the original STORM algorithm. While it captures the spirit of multi-perspective research, it uses a fundamentally different approach:
 
-| Aspect | Original STORM | Go Implementation |
-|--------|---------------|-------------------|
-| Information Gathering | **Simulated Conversations** (multi-turn Q&A) | **ReAct Loops** (Think→Act→Observe→Evaluate) |
-| Perspective Discovery | **Survey-based** (scrape related Wikipedia articles) | **Single-shot LLM** (no external survey) |
-| Outline Creation | **Two-phase** (draft + refinement with conversations) | **Single-shot** (no refinement) |
-| Section Writing | **Parallel** with semantic retrieval | **Sequential** with validated facts |
-| Analysis Phase | **None** | **Cross-validation, contradiction detection** (novel addition) |
+| Aspect                | Original STORM                                        | Go Implementation                                              |
+| --------------------- | ----------------------------------------------------- | -------------------------------------------------------------- |
+| Information Gathering | **Simulated Conversations** (multi-turn Q&A)          | **ReAct Loops** (Think→Act→Observe→Evaluate)                   |
+| Perspective Discovery | **Survey-based** (scrape related Wikipedia articles)  | **Single-shot LLM** (no external survey)                       |
+| Outline Creation      | **Two-phase** (draft + refinement with conversations) | **Single-shot** (no refinement)                                |
+| Section Writing       | **Parallel** with semantic retrieval                  | **Sequential** with validated facts                            |
+| Analysis Phase        | **None**                                              | **Cross-validation, contradiction detection** (novel addition) |
 
 **Key Finding**: The Go implementation is a valid research agent, but it's NOT a faithful STORM implementation. It's closer to a "ReAct + Multi-Perspective + Analysis" hybrid.
 
@@ -48,6 +48,7 @@ The Go implementation **deviates significantly** from the original STORM algorit
 #### Original STORM (`knowledge_storm/storm_wiki/modules/persona_generator.py`)
 
 **Two-step process:**
+
 1. **Survey Related Topics** (lines 80-92):
    - LLM generates related Wikipedia topic URLs
    - HTTP fetch of each related article
@@ -60,6 +61,7 @@ The Go implementation **deviates significantly** from the original STORM algorit
    - Always includes "Basic fact writer" as default
 
 **Prompt** (line 56-59):
+
 ```
 "You need to select a group of Wikipedia editors who will work together to create
 a comprehensive article on the topic. Each of them represents a different
@@ -70,6 +72,7 @@ Wikipedia pages of related topics for inspiration."
 #### Go Implementation (`internal/planning/perspectives.go`)
 
 **Single-shot process:**
+
 - **Lines 35-51**: Single LLM call requests 3-5 perspectives
 - **NO** related topic survey
 - **NO** Wikipedia scraping for structure inspiration
@@ -84,6 +87,7 @@ Wikipedia pages of related topics for inspiration."
 #### Original STORM (`knowledge_storm/storm_wiki/modules/knowledge_curation.py`)
 
 **Simulated Expert Conversations:**
+
 - For each perspective, simulate a multi-turn dialogue (default: 3-5 turns)
 - **WikiWriter** (with persona) asks questions
 - **TopicExpert** (grounded on search) answers
@@ -91,6 +95,7 @@ Wikipedia pages of related topics for inspiration."
 - Conversations run **in parallel** per perspective
 
 **Loop Structure** (lines 60-80):
+
 ```python
 for _ in range(self.max_turn):  # default max_turn = 3
     # WikiWriter asks question (grounded on persona + history)
@@ -112,11 +117,13 @@ for _ in range(self.max_turn):  # default max_turn = 3
 #### Go Implementation (`internal/agents/search.go:85-175`)
 
 **ReAct Loop:**
+
 - For each perspective, run a ReAct loop (max 3 iterations)
 - Think → Act (search) → Observe (extract facts) → Evaluate (find gaps)
 - No simulated conversation - just iterative search
 
 **Loop Structure** (lines 103-167):
+
 ```go
 for iter := 0; iter < maxIterations && !sufficientCoverage; iter++ {
     // Generate queries from perspective questions
@@ -159,6 +166,7 @@ for iter := 0; iter < maxIterations && !sufficientCoverage; iter++ {
    - Refines based on collected information
 
 **Prompt for refinement** (line 154-159):
+
 ```
 "Improve an outline for a Wikipedia page. You already have a draft outline that
 covers the general information. Now you want to improve it based on the
@@ -169,6 +177,7 @@ informative."
 #### Go Implementation (`internal/agents/synthesis.go:85-127`)
 
 **Single-shot generation:**
+
 - Input: Perspectives + fact counts only
 - No draft phase
 - No incorporation of collected facts into outline
@@ -180,11 +189,13 @@ informative."
 ### 4. Analysis Phase (Go-Only)
 
 #### Original STORM
+
 **No analysis phase** - facts are used directly for section writing.
 
 #### Go Implementation (`internal/agents/analysis.go`)
 
 **Three-step analysis:**
+
 1. **Cross-validation**: Score facts 0-1, identify corroborating sources
 2. **Contradiction detection**: Find conflicts between facts
 3. **Knowledge gap identification**: Find missing coverage areas
@@ -198,6 +209,7 @@ informative."
 #### Original STORM (`knowledge_storm/storm_wiki/modules/article_generation.py`)
 
 **Parallel section writing:**
+
 - Sections generated independently via ThreadPoolExecutor
 - Each section uses **semantic retrieval** from conversation corpus
 - SentenceTransformer embeddings for similarity search
@@ -206,6 +218,7 @@ informative."
 #### Go Implementation (`internal/agents/synthesis.go:130-211`)
 
 **Sequential section writing:**
+
 - Sections generated one-by-one
 - Uses validated facts with confidence scores
 - No semantic retrieval - all facts provided to each section
@@ -222,6 +235,7 @@ To align the Go implementation with the original STORM algorithm, the following 
 **File**: `internal/planning/perspectives.go`
 
 **Changes:**
+
 1. Add `SurveyRelatedTopics()` function:
    - Generate related topic queries via LLM
    - Fetch Wikipedia articles (or use web search)
@@ -234,6 +248,7 @@ To align the Go implementation with the original STORM algorithm, the following 
    - Update prompt to match STORM's `GenPersona` signature
 
 **New Functions:**
+
 ```go
 // perspectives.go
 
@@ -261,6 +276,7 @@ func (d *PerspectiveDiscoverer) Discover(ctx context.Context, topic string) ([]P
 **New File**: `internal/agents/conversation.go`
 
 **New Types:**
+
 ```go
 type DialogueTurn struct {
     Question      string
@@ -277,6 +293,7 @@ type ConversationSimulator struct {
 ```
 
 **Key Functions:**
+
 ```go
 func (s *ConversationSimulator) SimulateConversation(
     ctx context.Context,
@@ -317,6 +334,7 @@ func (s *ConversationSimulator) SimulateConversation(
 **File**: `internal/agents/synthesis.go`
 
 **Changes:**
+
 1. Add `generateDraftOutline()` - topic only
 2. Add `refineOutline()` - topic + draft + conversations
 3. Modify `generateOutline()` to use two-phase process
@@ -343,11 +361,13 @@ func (a *SynthesisAgent) GenerateOutline(
 **File**: `internal/orchestrator/deep_eventsourced.go`
 
 **Changes:**
+
 1. Replace search workers with conversation simulation
 2. Store conversations in state (for outline refinement)
 3. Update synthesis to use two-phase outline
 
 **New Flow:**
+
 ```
 1. Perspective Discovery (with related topic survey)
    └─> Emit PlanCreatedEvent with perspectives
@@ -374,6 +394,7 @@ func (a *SynthesisAgent) GenerateOutline(
 **New File**: `internal/retrieval/semantic.go`
 
 **Functions:**
+
 ```go
 type ConversationCorpus struct {
     conversations map[string][]DialogueTurn
@@ -394,13 +415,13 @@ func (c *ConversationCorpus) RetrieveRelevant(
 
 ## Implementation Priority
 
-| Priority | Change | Effort | Impact |
-|----------|--------|--------|--------|
-| **P0** | Conversation Simulation | High | Critical - core STORM mechanism |
-| **P1** | Related Topic Survey | Medium | Important - perspective quality |
-| **P1** | Two-Phase Outline | Medium | Important - outline quality |
-| **P2** | Semantic Retrieval | Medium | Nice-to-have - section quality |
-| **P3** | Keep Analysis Phase | None | Already done - adds value |
+| Priority | Change                  | Effort | Impact                          |
+| -------- | ----------------------- | ------ | ------------------------------- |
+| **P0**   | Conversation Simulation | High   | Critical - core STORM mechanism |
+| **P1**   | Related Topic Survey    | Medium | Important - perspective quality |
+| **P1**   | Two-Phase Outline       | Medium | Important - outline quality     |
+| **P2**   | Semantic Retrieval      | Medium | Nice-to-have - section quality  |
+| **P3**   | Keep Analysis Phase     | None   | Already done - adds value       |
 
 ---
 
@@ -428,12 +449,14 @@ The following prompts from the Python implementation should be ported to Go:
 ## Code References
 
 ### Original STORM (Python)
+
 - Entry point: `knowledge_storm/storm_wiki/engine.py:341-442`
 - Persona generation: `knowledge_storm/storm_wiki/modules/persona_generator.py:114-154`
 - Conversation simulation: `knowledge_storm/storm_wiki/modules/knowledge_curation.py:47-81`
 - Outline generation: `knowledge_storm/storm_wiki/modules/outline_generation.py:22-72`
 
 ### Go Implementation
+
 - Entry point: `internal/orchestrator/deep_eventsourced.go:88-260`
 - Perspective discovery: `internal/planning/perspectives.go:34-77`
 - Search agent: `internal/agents/search.go:85-175`
@@ -458,6 +481,7 @@ The following prompts from the Python implementation should be ported to Go:
 The Go implementation is a functional research agent but **not a faithful STORM implementation**. The key missing piece is the **simulated conversation** mechanism, which is STORM's core innovation. The ReAct loop approach, while valid, produces different results.
 
 To create a true STORM implementation in Go:
+
 1. Replace ReAct loops with conversation simulation
 2. Add related topic survey for perspective discovery
 3. Implement two-phase outline generation

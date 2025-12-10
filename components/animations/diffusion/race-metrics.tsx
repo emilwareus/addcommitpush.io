@@ -21,7 +21,7 @@ export function RACEMetrics({ className }: RACEMetricsProps) {
     <div
       className={cn(
         'rounded-2xl border border-border/60 bg-muted/30 p-6 md:p-8 shadow-lg space-y-6',
-        className,
+        className
       )}
     >
       <div className="flex items-center justify-between">
@@ -76,4 +76,3 @@ export function RACEMetrics({ className }: RACEMetricsProps) {
     </div>
   );
 }
-

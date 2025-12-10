@@ -3,6 +3,7 @@
 ## Overview
 
 Refactor the go-research deep research agent to implement Ports/Adapters (Hexagonal) Architecture, separating:
+
 1. The agent core from the CLI (REPL)
 2. The agent core from storage (sessions, reports)
 3. Enable swappable frontends (CLI first, web/API later)
@@ -12,24 +13,26 @@ Refactor the go-research deep research agent to implement Ports/Adapters (Hexago
 
 ### What Exists
 
-| Component | Location | Coupling Level | Issues |
-|-----------|----------|---------------|--------|
-| Event Bus | `internal/events/` | **Low** | Clean pub/sub, already abstracted |
-| LLM Client | `internal/llm/client.go` | **Low** | Has `ChatClient` interface |
-| Tool Executor | `internal/tools/registry.go` | **Low** | Has `ToolExecutor` interface |
-| CLI/REPL | `internal/repl/` | **Medium** | Direct orchestrator instantiation in handlers |
-| Storage | `internal/session/store.go` | **High** | Session struct is both domain AND storage schema |
-| Obsidian | `internal/obsidian/` | **Medium** | VaultWriter interface exists but limited |
+| Component     | Location                     | Coupling Level | Issues                                           |
+| ------------- | ---------------------------- | -------------- | ------------------------------------------------ |
+| Event Bus     | `internal/events/`           | **Low**        | Clean pub/sub, already abstracted                |
+| LLM Client    | `internal/llm/client.go`     | **Low**        | Has `ChatClient` interface                       |
+| Tool Executor | `internal/tools/registry.go` | **Low**        | Has `ToolExecutor` interface                     |
+| CLI/REPL      | `internal/repl/`             | **Medium**     | Direct orchestrator instantiation in handlers    |
+| Storage       | `internal/session/store.go`  | **High**       | Session struct is both domain AND storage schema |
+| Obsidian      | `internal/obsidian/`         | **Medium**     | VaultWriter interface exists but limited         |
 
 ### Key Discoveries
 
 **Strong Points:**
+
 - `llm.ChatClient` interface already exists (`internal/llm/client.go:19-25`)
 - `tools.ToolExecutor` interface already exists (`internal/tools/registry.go:16-19`)
 - Event bus enables loose coupling for progress updates
 - Options pattern used for dependency injection in orchestrators
 
 **Weak Points:**
+
 - `Session` struct conflates domain model and storage schema
 - Handlers directly instantiate orchestrators (`handlers/start.go:145`)
 - Result→Session transformation logic lives in handlers
@@ -120,6 +123,7 @@ After refactoring:
 ### Verification
 
 After implementation:
+
 - `go build ./...` compiles without errors
 - `go test ./...` all tests pass
 - Existing functionality preserved:
@@ -299,10 +303,12 @@ type EventSubscriber interface {
 ### Success Criteria
 
 #### Automated Verification:
+
 - [ ] Build succeeds: `go build ./internal/core/ports/...`
 - [ ] No linting errors: `go vet ./internal/core/ports/...`
 
 #### Manual Verification:
+
 - [ ] All port interfaces are well-documented
 - [ ] Interface methods match current implementations' signatures
 
@@ -628,11 +634,13 @@ func generateID() string {
 ### Success Criteria
 
 #### Automated Verification:
+
 - [ ] Build succeeds: `go build ./internal/core/domain/...`
 - [ ] Tests pass: `go test ./internal/core/domain/...`
 - [ ] No linting errors: `go vet ./internal/core/domain/...`
 
 #### Manual Verification:
+
 - [ ] Domain models have no `json` tags
 - [ ] Domain models have no infrastructure dependencies
 - [ ] All types are well-documented
@@ -1161,11 +1169,13 @@ func (b *InMemoryBus) Close() {
 ### Success Criteria
 
 #### Automated Verification:
+
 - [ ] Build succeeds: `go build ./internal/adapters/...`
 - [ ] Tests pass: `go test ./internal/adapters/...`
 - [ ] No linting errors: `go vet ./internal/adapters/...`
 
 #### Manual Verification:
+
 - [ ] All adapters implement their port interfaces (compile-time verification)
 - [ ] Existing functionality preserved when adapters wrap current implementations
 
@@ -1395,11 +1405,13 @@ func (s *SessionServiceImpl) Delete(ctx context.Context, id string) error {
 ### Success Criteria
 
 #### Automated Verification:
+
 - [ ] Build succeeds: `go build ./internal/core/service/...`
 - [ ] Tests pass: `go test ./internal/core/service/...`
 - [ ] No linting errors: `go vet ./internal/core/service/...`
 
 #### Manual Verification:
+
 - [ ] Services implement port interfaces
 - [ ] Services only depend on ports, not concrete implementations
 - [ ] Business logic is properly encapsulated
@@ -1626,11 +1638,13 @@ func main() {
 ### Success Criteria
 
 #### Automated Verification:
+
 - [ ] Build succeeds: `go build ./...`
 - [ ] Tests pass: `go test ./...`
 - [ ] No linting errors: `go vet ./...`
 
 #### Manual Verification:
+
 - [ ] `/fast` command executes research correctly
 - [ ] `/deep` command executes multi-perspective research
 - [ ] `/sessions` lists all sessions

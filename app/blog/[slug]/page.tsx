@@ -66,9 +66,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         return <SaasZeroToOneHindsightContent />;
       }
       case 'diffusion-deep-research': {
-        const { DiffusionDeepResearchContent } = await import(
-          '@/components/blog-posts/diffusion-deep-research'
-        );
+        const { DiffusionDeepResearchContent } =
+          await import('@/components/blog-posts/diffusion-deep-research');
         return <DiffusionDeepResearchContent />;
       }
       case 'context-engineering-claude-code': {

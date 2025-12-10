@@ -3,6 +3,7 @@
 ## Overview
 
 Transform the existing Go research agent from a basic ReAct implementation into a state-of-the-art deep research system incorporating:
+
 - **Context Folding** (AgentFold-style proactive context management)
 - **Multi-Perspective Research** (STORM-style expert conversations)
 - **DAG-Based Planning** (parallel task execution with dependencies)
@@ -17,17 +18,17 @@ This plan uses the **existing LLM client** (OpenRouter via `internal/llm/client.
 
 ### What Exists
 
-| Component | Location | Current State |
-|-----------|----------|---------------|
-| Orchestrator | `internal/orchestrator/orchestrator.go` | Basic coordination, complexity-based worker allocation |
-| Planner | `internal/orchestrator/planner.go` | Flat task decomposition (no DAG, no dependencies) |
-| Worker Pool | `internal/orchestrator/pool.go` | Parallel execution with goroutines |
-| ReAct Agent | `internal/agent/react.go` | Single-agent ReAct loop with `<thought>/<tool>/<answer>` |
-| Synthesizer | `internal/orchestrator/synthesizer.go` | Simple concatenation synthesis |
-| Tools | `internal/tools/` | `search` (Brave API), `fetch` (HTML scraping) |
-| LLM Client | `internal/llm/client.go` | OpenRouter client with streaming support |
-| Session | `internal/session/session.go` | Session state, worker context tracking |
-| Events | `internal/events/` | Event bus for UI updates |
+| Component    | Location                                | Current State                                            |
+| ------------ | --------------------------------------- | -------------------------------------------------------- |
+| Orchestrator | `internal/orchestrator/orchestrator.go` | Basic coordination, complexity-based worker allocation   |
+| Planner      | `internal/orchestrator/planner.go`      | Flat task decomposition (no DAG, no dependencies)        |
+| Worker Pool  | `internal/orchestrator/pool.go`         | Parallel execution with goroutines                       |
+| ReAct Agent  | `internal/agent/react.go`               | Single-agent ReAct loop with `<thought>/<tool>/<answer>` |
+| Synthesizer  | `internal/orchestrator/synthesizer.go`  | Simple concatenation synthesis                           |
+| Tools        | `internal/tools/`                       | `search` (Brave API), `fetch` (HTML scraping)            |
+| LLM Client   | `internal/llm/client.go`                | OpenRouter client with streaming support                 |
+| Session      | `internal/session/session.go`           | Session state, worker context tracking                   |
+| Events       | `internal/events/`                      | Event bus for UI updates                                 |
 
 ### Key Discoveries
 
@@ -117,6 +118,7 @@ We'll implement in **6 phases**, each building on the previous. Each phase produ
 ## Phase 1: Context Manager Foundation
 
 ### Overview
+
 Implement the Context Manager with multi-scale state summaries and token budget management. This is the most critical component for long-horizon research tasks.
 
 ### Changes Required
@@ -486,11 +488,13 @@ func TestBuildMessages(t *testing.T) {
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Build succeeds: `go build ./internal/context/...`
 - [x] Tests pass: `go test ./internal/context/...`
 - [x] No linting errors: `go vet ./internal/context/...`
 
 #### Manual Verification:
+
 - [x] Context manager initializes without panic
 - [x] Token counting produces reasonable estimates
 - [x] ShouldFold triggers at correct threshold
@@ -500,6 +504,7 @@ func TestBuildMessages(t *testing.T) {
 ## Phase 2: DAG-Based Planning System
 
 ### Overview
+
 Replace flat task lists with a directed acyclic graph structure supporting parallel execution with dependencies.
 
 ### Changes Required
@@ -900,11 +905,13 @@ func TestDAGTopologicalOrder(t *testing.T) {
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Build succeeds: `go build ./internal/planning/...`
 - [x] Tests pass: `go test ./internal/planning/...`
 - [x] No linting errors: `go vet ./internal/planning/...`
 
 #### Manual Verification:
+
 - [x] DAG correctly tracks dependencies
 - [x] Ready tasks are computed correctly as dependencies complete
 - [x] Perspective discovery returns reasonable expert viewpoints
@@ -914,6 +921,7 @@ func TestDAGTopologicalOrder(t *testing.T) {
 ## Phase 3: Specialized Search Agent
 
 ### Overview
+
 Create an iterative search agent that generates follow-up queries based on knowledge gaps.
 
 ### Changes Required
@@ -1190,10 +1198,12 @@ func dedupe(items []string) []string {
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Build succeeds: `go build ./internal/agents/...`
 - [x] Tests pass: `go test ./internal/agents/...`
 
 #### Manual Verification:
+
 - [x] Search agent generates queries from perspectives
 - [x] Facts are extracted with sources
 - [x] Gaps are identified correctly
@@ -1204,6 +1214,7 @@ func dedupe(items []string) []string {
 ## Phase 4: Analysis Agent
 
 ### Overview
+
 Create an agent that cross-validates facts and identifies contradictions.
 
 ### Changes Required
@@ -1454,11 +1465,13 @@ func parseKnowledgeGaps(content string) []KnowledgeGap {
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Build succeeds: `go build ./internal/agents/...`
 - [x] Tests pass: `go test ./internal/agents/...` (15 analysis tests)
 - [x] No linting errors: `go vet ./internal/agents/...`
 
 #### Manual Verification:
+
 - [x] Facts are cross-validated with scores
 - [x] Contradictions are detected
 - [x] Knowledge gaps are identified with suggested queries
@@ -1468,6 +1481,7 @@ func parseKnowledgeGaps(content string) []KnowledgeGap {
 ## Phase 5: Synthesis Agent
 
 ### Overview
+
 Create an agent that generates structured reports with proper citations.
 
 ### Changes Required
@@ -1699,10 +1713,12 @@ func defaultOutline() []string {
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Build succeeds: `go build ./internal/agents/...`
 - [x] Tests pass: `go test ./internal/agents/...`
 
 #### Manual Verification:
+
 - [x] Outline is generated based on perspectives
 - [x] Sections reference sources
 - [x] Final report is well-structured with citations
@@ -1712,6 +1728,7 @@ func defaultOutline() []string {
 ## Phase 6: Deep Research Orchestrator Integration
 
 ### Overview
+
 Replace the existing orchestrator with the new deep research orchestrator that coordinates all components.
 
 ### Changes Required
@@ -2003,11 +2020,13 @@ func (o *Orchestrator) DeepResearch(ctx context.Context, query string) (*DeepRes
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Build succeeds: `go build ./...`
 - [x] Tests pass: `go test ./...` (Phase 6 related packages pass; unrelated panel test has pre-existing failure)
 - [x] No linting errors: `go vet ./...`
 
 #### Manual Verification:
+
 - [ ] Running deep research discovers perspectives
 - [ ] DAG tasks execute in correct order
 - [ ] Context folding occurs during long research

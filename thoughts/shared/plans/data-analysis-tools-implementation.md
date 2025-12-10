@@ -11,6 +11,7 @@ This plan implements data analysis tools (CSV EDA) and document reading tools (P
 The codebase has a clean tool architecture:
 
 - **Tool Interface** (`internal/tools/registry.go:9-13`):
+
   ```go
   type Tool interface {
       Name() string
@@ -41,6 +42,7 @@ The codebase has a clean tool architecture:
 ### Current Dependencies
 
 From `go.mod`:
+
 - Go 1.24.0
 - No existing PDF/document parsing libraries
 - No CSV/data analysis libraries
@@ -77,6 +79,7 @@ After this plan is complete:
 ## Implementation Approach
 
 Follow the `SearchTool` + `ContentSummarizer` pattern:
+
 1. Create standalone tools that work without LLM
 2. Add optional LLM enhancement for deeper analysis
 3. Register tools in `SubResearcherToolRegistry()`
@@ -95,6 +98,7 @@ Implement a PDF text extraction tool using the `pdfcpu` library (pure Go, no CGO
 #### 1. Add pdfcpu dependency
 
 **Command**:
+
 ```bash
 go get github.com/pdfcpu/pdfcpu
 ```
@@ -314,11 +318,13 @@ func TestPDFReadTool_Execute_RealFile(t *testing.T) {
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Build succeeds: `cd go-research && go build ./...`
 - [x] Tests pass: `cd go-research && go test ./internal/tools/...`
 - [x] No linting errors: `cd go-research && golangci-lint run ./...` (if available)
 
 #### Manual Verification:
+
 - [ ] Create a test PDF and verify text extraction works
 - [ ] Large PDFs are truncated appropriately
 
@@ -335,6 +341,7 @@ Implement a DOCX text extraction tool. Since unioffice is commercial, use `balia
 #### 1. Add docx dependency
 
 **Command**:
+
 ```bash
 go get github.com/nguyenthenguyen/docx
 ```
@@ -491,10 +498,12 @@ func TestDOCXReadTool_Execute_RealFile(t *testing.T) {
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Build succeeds: `cd go-research && go build ./...`
 - [x] Tests pass: `cd go-research && go test ./internal/tools/...`
 
 #### Manual Verification:
+
 - [ ] Create a test DOCX and verify text extraction works
 - [ ] Complex DOCX with tables/formatting extracts readable text
 
@@ -634,10 +643,12 @@ func TestDocumentReadTool_Execute_DetectsDOCX(t *testing.T) {
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Build succeeds: `cd go-research && go build ./...`
 - [x] Tests pass: `cd go-research && go test ./internal/tools/...`
 
 #### Manual Verification:
+
 - [x] Tool correctly routes PDF files to PDF reader
 - [x] Tool correctly routes DOCX files to DOCX reader
 - [x] Unsupported formats return clear error message
@@ -655,6 +666,7 @@ Implement a CSV analysis tool that performs exploratory data analysis (EDA) incl
 #### 1. Add statistics dependency
 
 **Command**:
+
 ```bash
 go get gonum.org/v1/gonum/stat
 go get github.com/montanaflynn/stats
@@ -1094,10 +1106,12 @@ func TestIsNumericColumn(t *testing.T) {
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Build succeeds: `cd go-research && go build ./...`
 - [x] Tests pass: `cd go-research && go test ./internal/tools/...`
 
 #### Manual Verification:
+
 - [x] Tool correctly identifies numeric vs string columns
 - [x] Summary statistics are accurate
 - [ ] Large CSV files are handled without memory issues
@@ -1241,11 +1255,13 @@ Add to the `<Scaling Rules>` section:
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Build succeeds: `cd go-research && go build ./...`
 - [x] Tests pass: `cd go-research && go test ./...`
 - [x] Type check passes: `cd go-research && go vet ./...`
 
 #### Manual Verification:
+
 - [x] New tools appear in sub-researcher tool registry
 - [x] Updated prompts include documentation for new tools
 - [ ] Sub-researcher can call document and CSV tools during research
@@ -1265,6 +1281,7 @@ Create integration tests that verify the new tools work correctly within the Thi
 **Directory**: `internal/tools/testdata/`
 
 Create test files:
+
 - `testdata/sample.pdf` - Simple PDF with text content
 - `testdata/sample.docx` - Simple DOCX with text content
 - `testdata/sample.csv` - CSV with numeric and string columns
@@ -1354,11 +1371,13 @@ func TestSubResearcherToolRegistry_ExecuteCSVTool(t *testing.T) {
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Build succeeds: `cd go-research && go build ./...`
 - [x] All tests pass: `cd go-research && go test ./...`
 - [x] Tool registry contains all expected tools
 
 #### Manual Verification:
+
 - [ ] End-to-end test with real PDF/DOCX/CSV files
 - [ ] Sub-researcher can use document tools during research session
 - [ ] Performance is acceptable with moderately sized files (< 10MB)
@@ -1370,6 +1389,7 @@ func TestSubResearcherToolRegistry_ExecuteCSVTool(t *testing.T) {
 ### Unit Tests
 
 Each tool has dedicated unit tests covering:
+
 - Name and description methods
 - Missing/invalid arguments
 - File not found scenarios

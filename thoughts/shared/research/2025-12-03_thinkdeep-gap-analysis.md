@@ -10,18 +10,19 @@
 
 The go-research ThinkDeep implementation successfully captures the **core architecture** of the reference (diffusion-based multi-agent research with supervisor coordination), but has **significant gaps** in several areas:
 
-| Category | Alignment | Criticality |
-|----------|-----------|-------------|
-| Core Architecture | ✅ 90% | - |
-| Workflow Phases | ⚠️ 75% | Medium |
-| Prompts | ⚠️ 70% | High |
-| State Management | ✅ 85% | Low |
-| Tool Handling | ⚠️ 60% | High |
-| Search Strategy | ⚠️ 65% | Medium |
-| Synthesis Process | ⚠️ 70% | High |
-| Configuration | ✅ 90% | Low |
+| Category          | Alignment | Criticality |
+| ----------------- | --------- | ----------- |
+| Core Architecture | ✅ 90%    | -           |
+| Workflow Phases   | ⚠️ 75%    | Medium      |
+| Prompts           | ⚠️ 70%    | High        |
+| State Management  | ✅ 85%    | Low         |
+| Tool Handling     | ⚠️ 60%    | High        |
+| Search Strategy   | ⚠️ 65%    | Medium      |
+| Synthesis Process | ⚠️ 70%    | High        |
+| Configuration     | ✅ 90%    | Low         |
 
 **Critical Gaps Requiring Immediate Attention:**
+
 1. Missing async parallel execution of sub-researchers
 2. Missing webpage content summarization in search results
 3. Prompt differences affecting research behavior
@@ -33,18 +34,19 @@ The go-research ThinkDeep implementation successfully captures the **core archit
 
 ### What Matches ✅
 
-| Feature | Reference | Go Implementation | Status |
-|---------|-----------|-------------------|--------|
-| 4-phase workflow | Brief → Draft → Diffusion → Final | Brief → Draft → Diffusion → Final | ✅ Match |
-| Supervisor-Worker pattern | Supervisor delegates to sub-agents | Supervisor delegates to sub-researchers | ✅ Match |
-| Diffusion concept | Draft as noisy signal, refine via research | Same conceptual approach | ✅ Match |
-| Max iterations | 15 supervisor iterations | 15 supervisor iterations | ✅ Match |
-| Max concurrent | 3 parallel sub-agents | 3 parallel sub-researchers | ✅ Match |
-| Max search/agent | 5 searches per agent | 5 searches per sub-researcher | ✅ Match |
+| Feature                   | Reference                                  | Go Implementation                       | Status   |
+| ------------------------- | ------------------------------------------ | --------------------------------------- | -------- |
+| 4-phase workflow          | Brief → Draft → Diffusion → Final          | Brief → Draft → Diffusion → Final       | ✅ Match |
+| Supervisor-Worker pattern | Supervisor delegates to sub-agents         | Supervisor delegates to sub-researchers | ✅ Match |
+| Diffusion concept         | Draft as noisy signal, refine via research | Same conceptual approach                | ✅ Match |
+| Max iterations            | 15 supervisor iterations                   | 15 supervisor iterations                | ✅ Match |
+| Max concurrent            | 3 parallel sub-agents                      | 3 parallel sub-researchers              | ✅ Match |
+| Max search/agent          | 5 searches per agent                       | 5 searches per sub-researcher           | ✅ Match |
 
 ### Critical Gap: User Clarification Phase 🔴
 
 **Reference Implementation** (`research_agent_scope.py:37-68`):
+
 - Has a `clarify_with_user` stage (currently disabled but implemented)
 - Uses structured output `ClarifyWithUser` schema with fields:
   - `need_clarification: bool`
@@ -53,6 +55,7 @@ The go-research ThinkDeep implementation successfully captures the **core archit
 - Prompt asks LLM to determine if user input needs clarification
 
 **Go Implementation**:
+
 - ❌ No clarification phase implemented
 - Jumps directly from user query to research brief generation
 
@@ -61,11 +64,13 @@ The go-research ThinkDeep implementation successfully captures the **core archit
 ### Gap: Entry Point Separation 🟡
 
 **Reference Implementation**:
+
 - `research_agent_full.py` defines the complete workflow
 - `research_agent_scope.py` handles scoping (clarification + brief + draft)
 - Clear separation between scoping and execution
 
 **Go Implementation**:
+
 - All phases combined in `orchestrator/think_deep.go`
 - Less modular - harder to customize individual phases
 
@@ -80,7 +85,9 @@ The go-research ThinkDeep implementation successfully captures the **core archit
 **Reference Prompt** (`prompts.py:196-261`) - Key sections missing from Go:
 
 #### Missing: Explicit Diffusion Algorithm Statement
+
 Reference has detailed algorithm explanation:
+
 ```
 1. generate the next research questions to address gaps in the draft report
 2. **ConductResearch**: retrieve external information to provide concrete delta for denoising
@@ -92,7 +99,9 @@ Reference has detailed algorithm explanation:
 Go version has a simplified version but **lacks the critical instruction**: "even if the draft report looks complete, you should continue doing the research until all the research findings are collected."
 
 #### Missing: Scaling Rules
+
 Reference (`prompts.py:248-261`):
+
 ```
 Simple fact-finding, lists, rankings → 1 sub-agent
   Example: "List top 10 coffee shops in San Francisco" → 1 agent
@@ -104,7 +113,9 @@ Comparisons → 1 sub-agent per element
 **Go Implementation**: No explicit scaling rules in supervisor prompt.
 
 #### Missing: "Show Your Thinking" Integration
+
 Reference instructs supervisor to use think_tool after each ConductResearch with specific questions:
+
 - What key information did I find?
 - What's missing?
 - Do I have enough?
@@ -129,6 +140,7 @@ Reference instructs supervisor to use think_tool after each ConductResearch with
 ### Gap: Compress Research Prompt 🟡
 
 **Reference** (`prompts.py:263-308`) includes:
+
 - Explicit tool call filtering instructions (include search, exclude think)
 - "Report can be as long as necessary"
 - "Don't lose any sources - downstream LLM will merge reports"
@@ -139,6 +151,7 @@ Reference instructs supervisor to use think_tool after each ConductResearch with
 ### Gap: Final Report Prompt 🟡
 
 **Reference** (`prompts.py:326-426`) includes detailed section guidelines:
+
 ```
 - Explicit discussion in simple, clear language
 - DO NOT oversimplify - clarify ambiguity
@@ -149,20 +162,21 @@ Reference instructs supervisor to use think_tool after each ConductResearch with
 ```
 
 **Go Implementation**: Has insightfulness/helpfulness rules but missing:
+
 - "DO NOT list facts in bullets" rule
 - "Long, verbose sections expected" instruction
 - Detailed structure examples (comparison, lists, overview patterns)
 
 ### Prompt Alignment Summary
 
-| Prompt | Reference Lines | Go Approx Lines | Content Match |
-|--------|-----------------|-----------------|---------------|
-| Supervisor | ~65 lines | ~40 lines | 70% |
-| Research Agent | ~45 lines | ~30 lines | 75% |
-| Compress | ~45 lines | ~35 lines | 80% |
-| Final Report | ~100 lines | ~55 lines | 65% |
-| Refine Draft | ~80 lines | ~35 lines | 60% |
-| Research Brief | ~50 lines | ~45 lines | 85% |
+| Prompt         | Reference Lines | Go Approx Lines | Content Match |
+| -------------- | --------------- | --------------- | ------------- |
+| Supervisor     | ~65 lines       | ~40 lines       | 70%           |
+| Research Agent | ~45 lines       | ~30 lines       | 75%           |
+| Compress       | ~45 lines       | ~35 lines       | 80%           |
+| Final Report   | ~100 lines      | ~55 lines       | 65%           |
+| Refine Draft   | ~80 lines       | ~35 lines       | 60%           |
+| Research Brief | ~50 lines       | ~45 lines       | 85%           |
 
 ---
 
@@ -170,14 +184,14 @@ Reference instructs supervisor to use think_tool after each ConductResearch with
 
 ### What Matches ✅
 
-| State Field | Reference | Go | Status |
-|-------------|-----------|-----|--------|
-| supervisor_messages | ✅ | Messages | ✅ Match |
-| research_brief | ✅ | ResearchBrief | ✅ Match |
-| notes | ✅ (with operator.add) | Notes []string | ✅ Match |
-| raw_notes | ✅ (with operator.add) | RawNotes []string | ✅ Match |
-| draft_report | ✅ | DraftReport | ✅ Match |
-| research_iterations | ✅ | Iterations | ✅ Match |
+| State Field         | Reference              | Go                | Status   |
+| ------------------- | ---------------------- | ----------------- | -------- |
+| supervisor_messages | ✅                     | Messages          | ✅ Match |
+| research_brief      | ✅                     | ResearchBrief     | ✅ Match |
+| notes               | ✅ (with operator.add) | Notes []string    | ✅ Match |
+| raw_notes           | ✅ (with operator.add) | RawNotes []string | ✅ Match |
+| draft_report        | ✅                     | DraftReport       | ✅ Match |
+| research_iterations | ✅                     | Iterations        | ✅ Match |
 
 ### Minor Gap: Message Accumulation Pattern 🟢
 
@@ -194,6 +208,7 @@ Reference instructs supervisor to use think_tool after each ConductResearch with
 ### Critical Gap: Parallel Execution of Sub-Researchers 🔴
 
 **Reference Implementation** (`multi_agent_supervisor.py:189-223`):
+
 ```python
 coros = [
     researcher_agent.ainvoke({
@@ -206,6 +221,7 @@ tool_results = await asyncio.gather(*coros)  # TRUE PARALLELISM
 ```
 
 **Go Implementation** (`supervisor.go:150-162`):
+
 ```go
 for _, tc := range toolCalls {
     result, err := s.executeToolCall(...)  // SEQUENTIAL EXECUTION
@@ -214,6 +230,7 @@ for _, tc := range toolCalls {
 ```
 
 **Impact**: HIGH
+
 - Reference executes multiple sub-researchers truly in parallel
 - Go version executes them sequentially
 - Significantly impacts research speed for comparison queries
@@ -222,6 +239,7 @@ for _, tc := range toolCalls {
 ### Critical Gap: refine_draft_report Tool Implementation 🔴
 
 **Reference Implementation** (`multi_agent_supervisor.py:225-241`):
+
 ```python
 def refine_draft_report(research_brief, findings, draft_report):
     """Refine draft report - Synthesizes research findings into comprehensive draft"""
@@ -231,6 +249,7 @@ def refine_draft_report(research_brief, findings, draft_report):
 ```
 
 **Go Implementation** (`think_deep/tools.go:124-183`):
+
 - Takes args from tool call (none expected)
 - Joins state.Notes correctly
 - BUT: Missing the `InjectedToolArg` pattern - reference auto-injects state values
@@ -240,11 +259,13 @@ def refine_draft_report(research_brief, findings, draft_report):
 ### Gap: Tool Call Format 🟡
 
 **Reference**: Uses LangChain's native tool calling with `bind_tools()`:
+
 ```python
 supervisor_model_with_tools = supervisor_model.bind_tools(supervisor_tools)
 ```
 
 **Go Implementation**: Uses XML-style tool call parsing:
+
 ```xml
 <tool name="conduct_research">{"research_topic": "..."}</tool>
 ```
@@ -254,11 +275,13 @@ supervisor_model_with_tools = supervisor_model.bind_tools(supervisor_tools)
 ### Gap: Think Tool Semantic Handling 🟡
 
 **Reference** (`research_agent.py:178-187`):
+
 - Think tool calls are processed synchronously
 - Recorded as part of conversation
 - Explicitly filtered out during compression
 
 **Go Implementation**:
+
 - Think tool acknowledged but treated as no-op
 - `FilterThinkToolCalls()` removes them from compression
 
@@ -271,6 +294,7 @@ supervisor_model_with_tools = supervisor_model.bind_tools(supervisor_tools)
 ### Critical Gap: Webpage Content Summarization 🔴
 
 **Reference Implementation** (`utils.py:80-111`, `132-156`):
+
 ```python
 def summarize_webpage_content(raw_content: str) -> str:
     """Summarizes web page content using structured output"""
@@ -280,17 +304,20 @@ def summarize_webpage_content(raw_content: str) -> str:
 ```
 
 The reference:
+
 1. Fetches raw page content via Tavily (`include_raw_content=True`)
 2. Summarizes each page using LLM with structured output
 3. Returns formatted summary with key excerpts
 
 **Go Implementation**:
+
 - Uses Brave Search API
 - Returns search snippets directly
 - ❌ NO webpage content fetching
 - ❌ NO content summarization
 
 **Impact**: HIGH
+
 - Reference gets much richer content from web pages
 - Go version only gets search snippets (typically 150-200 chars)
 - Significantly impacts research quality and depth
@@ -298,6 +325,7 @@ The reference:
 ### Gap: Search Deduplication 🟡
 
 **Reference** (`utils.py:113-130`):
+
 ```python
 def deduplicate_search_results(search_results: List[dict]) -> dict:
     unique_results = {}
@@ -329,16 +357,17 @@ def deduplicate_search_results(search_results: List[dict]) -> dict:
 
 **Reference Implementation** uses structured output (Pydantic models) at key decision points:
 
-| Stage | Reference Schema | Go Equivalent |
-|-------|------------------|---------------|
-| Clarification | `ClarifyWithUser` | ❌ Missing |
+| Stage          | Reference Schema   | Go Equivalent |
+| -------------- | ------------------ | ------------- |
+| Clarification  | `ClarifyWithUser`  | ❌ Missing    |
 | Research Brief | `ResearchQuestion` | ❌ Plain text |
-| Draft Report | `DraftReport` | ❌ Plain text |
-| Compression | `Summary` | ❌ Plain text |
+| Draft Report   | `DraftReport`      | ❌ Plain text |
+| Compression    | `Summary`          | ❌ Plain text |
 
 **Go Implementation**: All stages use plain text LLM responses.
 
 **Impact**: HIGH
+
 - Structured output prevents hallucination in decisions
 - Ensures consistent parsing
 - Reference can deterministically route based on schema fields
@@ -347,11 +376,13 @@ def deduplicate_search_results(search_results: List[dict]) -> dict:
 ### Gap: Draft Refinement Accumulation Strategy 🟡
 
 **Reference** (`multi_agent_supervisor.py:225-241`):
+
 - Calls `get_notes_from_tool_calls()` which extracts ALL tool message content
 - Joins with newlines
 - Every refinement uses ALL accumulated notes
 
 **Go Implementation** (`tools.go:124-183`):
+
 - Uses `state.Notes` which already contains compressed findings
 - Joins with `\n---\n`
 - Similar behavior but slightly different separator
@@ -361,6 +392,7 @@ def deduplicate_search_results(search_results: List[dict]) -> dict:
 ### Gap: Final Report Input Structure 🟡
 
 **Reference** (`research_agent_full.py:42`):
+
 ```python
 final_report_prompt = prompt.format(
     research_brief=state.get("research_brief", ""),
@@ -381,13 +413,13 @@ final_report_prompt = prompt.format(
 
 ### What Matches ✅
 
-| Parameter | Reference | Go | Status |
-|-----------|-----------|-----|--------|
-| max_researcher_iterations | 15 | MaxSupervisorIterations: 15 | ✅ |
-| max_concurrent_researchers | 3 | MaxConcurrentResearch: 3 | ✅ |
-| max searches per agent | 5 (via prompt) | MaxIterations: 5 | ✅ |
-| compress model max_tokens | 32000 | Uses default | ⚠️ Check |
-| final report max_tokens | 40000 | Uses default | ⚠️ Check |
+| Parameter                  | Reference      | Go                          | Status   |
+| -------------------------- | -------------- | --------------------------- | -------- |
+| max_researcher_iterations  | 15             | MaxSupervisorIterations: 15 | ✅       |
+| max_concurrent_researchers | 3              | MaxConcurrentResearch: 3    | ✅       |
+| max searches per agent     | 5 (via prompt) | MaxIterations: 5            | ✅       |
+| compress model max_tokens  | 32000          | Uses default                | ⚠️ Check |
+| final report max_tokens    | 40000          | Uses default                | ⚠️ Check |
 
 ### Gap: Model Selection 🟡
 
@@ -400,6 +432,7 @@ final_report_prompt = prompt.format(
 ### Gap: Model-Specific Token Limits 🟡
 
 **Reference** explicitly sets:
+
 - `compress_model = init_chat_model(model="openai:gpt-5", max_tokens=32000)`
 - `writer_model = init_chat_model(model="openai:gpt-5", max_tokens=40000)`
 
@@ -414,6 +447,7 @@ final_report_prompt = prompt.format(
 ### Feature: Jupyter Notebook Compatibility 🟢
 
 **Reference** (`multi_agent_supervisor.py:54-65`):
+
 ```python
 try:
     import nest_asyncio
@@ -450,6 +484,7 @@ try:
    - Use goroutines + WaitGroup for true parallelism
    - Location: `supervisor.go:150-162`
    - Pattern:
+
    ```go
    var wg sync.WaitGroup
    results := make(chan SubResearcherResult, len(conductResearchCalls))
@@ -511,18 +546,18 @@ try:
 
 ## 10. Alignment Score by Component
 
-| Component | Score | Notes |
-|-----------|-------|-------|
-| Core Architecture | 90% | Fundamentally correct |
-| Workflow Phases | 75% | Missing clarification phase |
-| Supervisor Agent | 70% | Missing parallel execution, prompt gaps |
-| Sub-Researcher Agent | 75% | Prompt differences, no page summarization |
-| State Management | 85% | Minor differences in patterns |
-| Tool Handling | 60% | Sequential vs parallel, no structured output |
-| Search Strategy | 65% | No page fetch, no deduplication |
-| Synthesis | 70% | Prompt gaps, no structured output |
-| Configuration | 90% | Model differences |
-| **Overall** | **73%** | Functional but needs optimization |
+| Component            | Score   | Notes                                        |
+| -------------------- | ------- | -------------------------------------------- |
+| Core Architecture    | 90%     | Fundamentally correct                        |
+| Workflow Phases      | 75%     | Missing clarification phase                  |
+| Supervisor Agent     | 70%     | Missing parallel execution, prompt gaps      |
+| Sub-Researcher Agent | 75%     | Prompt differences, no page summarization    |
+| State Management     | 85%     | Minor differences in patterns                |
+| Tool Handling        | 60%     | Sequential vs parallel, no structured output |
+| Search Strategy      | 65%     | No page fetch, no deduplication              |
+| Synthesis            | 70%     | Prompt gaps, no structured output            |
+| Configuration        | 90%     | Model differences                            |
+| **Overall**          | **73%** | Functional but needs optimization            |
 
 ---
 
@@ -530,16 +565,16 @@ try:
 
 ### Reference Files → Go Equivalents
 
-| Reference File | Go Equivalent | Alignment |
-|----------------|---------------|-----------|
-| `research_agent_full.py` | `architectures/think_deep/think_deep.go` | 80% |
-| `multi_agent_supervisor.py` | `agents/supervisor.go` | 65% |
-| `research_agent.py` | `agents/sub_researcher.go` | 75% |
-| `research_agent_scope.py` | `orchestrator/think_deep.go` (partial) | 70% |
-| `state_multi_agent_supervisor.py` | `think_deep/state.go` | 85% |
-| `state_research.py` | `think_deep/state.go` (partial) | 80% |
-| `prompts.py` | `think_deep/prompts.go` | 70% |
-| `utils.py` | `think_deep/tools.go` + `tools/registry.go` | 55% |
+| Reference File                    | Go Equivalent                               | Alignment |
+| --------------------------------- | ------------------------------------------- | --------- |
+| `research_agent_full.py`          | `architectures/think_deep/think_deep.go`    | 80%       |
+| `multi_agent_supervisor.py`       | `agents/supervisor.go`                      | 65%       |
+| `research_agent.py`               | `agents/sub_researcher.go`                  | 75%       |
+| `research_agent_scope.py`         | `orchestrator/think_deep.go` (partial)      | 70%       |
+| `state_multi_agent_supervisor.py` | `think_deep/state.go`                       | 85%       |
+| `state_research.py`               | `think_deep/state.go` (partial)             | 80%       |
+| `prompts.py`                      | `think_deep/prompts.go`                     | 70%       |
+| `utils.py`                        | `think_deep/tools.go` + `tools/registry.go` | 55%       |
 
 ---
 

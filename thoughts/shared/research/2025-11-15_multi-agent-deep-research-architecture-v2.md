@@ -4,8 +4,9 @@ researcher: GPT-5.1 Codex (Tongyi DeepResearch 30B A3B)
 git_commit: 22dbf8d52dc8c995afcf147c11fad7f347571464
 branch: feat/custom-deep-research
 repository: addcommitpush.io
-topic: "Multi-Agent Deep Research Architecture - Production-Ready Design (v2)"
-tags: [research, deep-research, multi-agent, langgraph, context-engineering, production, architecture]
+topic: 'Multi-Agent Deep Research Architecture - Production-Ready Design (v2)'
+tags:
+  [research, deep-research, multi-agent, langgraph, context-engineering, production, architecture]
 status: complete
 last_updated: 2025-11-15
 last_updated_by: GPT-5.1 Codex
@@ -199,6 +200,7 @@ Final Output
 > **Model Policy**: The MVP exclusively uses Tongyi DeepResearch 30B A3B for every agent type to avoid fragmented reasoning behaviors; Anthropic models are intentionally excluded in this phase. [\[link\]](https://openrouter.ai/alibaba/tongyi-deepresearch-30b-a3b)
 
 **Responsibilities**:
+
 1. **Query Analysis**: Assess complexity, identify sub-tasks, estimate required agents
 2. **Scaling Decision**: Simple (1-2 agents, 3-10 calls) vs. Complex (3-10 agents, 20+ calls)
 3. **Sub-Agent Spawning**: Generate focused prompts with clear objectives and output schemas
@@ -207,12 +209,14 @@ Final Output
 6. **Memory Management**: Persist strategies, retrieve past learnings, manage evolving report
 
 **Context Engineering**:
+
 - **Input**: User query (200-1K tokens) + Summary from previous round (if iterative)
 - **Receives from sub-agents**: Compressed 1-2K summaries (not full 50K exploration)
 - **Maintains**: Evolving research report using Markovian workspace pattern
 - **Output**: Final report or decision to spawn next research round
 
 **Scaling Rules** (industry benchmarks from Alibaba IterResearch + Anthropic studies):
+
 ```python
 def determine_scaling(query_complexity: float, query_specificity: float) -> ScalingStrategy:
     if complexity < 0.3 and specificity > 0.7:
@@ -224,6 +228,7 @@ def determine_scaling(query_complexity: float, query_specificity: float) -> Scal
 ```
 
 **Prompt Template**:
+
 ```
 You are a LeadResearcher coordinating specialized research agents.
 
@@ -290,6 +295,7 @@ Return JSON:
    - Output: Validation report with flagged issues
 
 **Worker Lifecycle**:
+
 1. **Spawn**: LeadResearcher creates with focused prompt
 2. **Execute**: Independent exploration with full tool access
 3. **Compress**: Condense findings using LLM (50K → 2K)
@@ -298,6 +304,7 @@ Return JSON:
 6. **Terminate**: Worker agent lifecycle ends
 
 **Context Isolation Pattern**:
+
 ```python
 class WorkerAgent:
     def execute(self, objective: str, tools: list[str]) -> WorkerResult:
@@ -369,6 +376,7 @@ class SearchTool(BaseTool):
 ```
 
 **Features**:
+
 - Batch processing (3-5 queries in single call)
 - Provider fallback (Serper → Brave → DuckDuckGo)
 - Result caching with semantic similarity check
@@ -411,6 +419,7 @@ class WebFetchTool(BaseTool):
 ```
 
 **Context Optimization**:
+
 - Pre-truncation before LLM processing (95K token limit)
 - Goal-directed extraction (only relevant sections)
 - Progressive truncation on failure (70% reduction per retry)
@@ -505,6 +514,7 @@ class CodeExecutorTool(BaseTool):
 ```
 
 **Safety Features**:
+
 - AST-based code validation
 - Resource limits (CPU, memory, time)
 - Network isolation (optional)
@@ -543,6 +553,7 @@ class ShortTermMemory:
 ```
 
 **Stores**:
+
 - Current conversation state
 - Active research round progress
 - In-flight tool calls
@@ -602,6 +613,7 @@ class LongTermMemory:
 ```
 
 **Stores**:
+
 - Past research results
 - Sub-agent exploration outputs (full context)
 - Learned patterns and strategies
@@ -679,6 +691,7 @@ class MarkovianWorkspace:
 ```
 
 **Key Properties**:
+
 - **Markovian**: Only depends on current state, not full history
 - **Bounded**: Evolving report has maximum size (e.g., 8K tokens)
 - **Compressed**: Lossy compression filters noise while preserving signal
@@ -859,6 +872,7 @@ Based on [LangChain Context Engineering Guide](https://blog.langchain.com/contex
 #### 1. Write Context (Persist Outside Window)
 
 **Scratchpad Pattern**:
+
 ```python
 class AgentState(TypedDict):
     messages: Annotated[list, add_messages]
@@ -879,6 +893,7 @@ def research_node(state: AgentState) -> dict:
 ```
 
 **Memory Blocks Pattern**:
+
 ```python
 # Letta/MemGPT-inspired memory blocks
 memory_blocks = {
@@ -901,6 +916,7 @@ memory_blocks = {
 ```
 
 **External Memory Store**:
+
 ```python
 # Store full sub-agent outputs
 long_term_memory.store({
@@ -919,6 +935,7 @@ if need_details:
 #### 2. Select Context (Pull Relevant Information)
 
 **Semantic Memory Retrieval**:
+
 ```python
 def select_relevant_memories(query: str, k: int = 5) -> list[Memory]:
     # Embedding-based retrieval
@@ -935,6 +952,7 @@ def select_relevant_memories(query: str, k: int = 5) -> list[Memory]:
 ```
 
 **Tool Selection**:
+
 ```python
 def select_tools_for_task(objective: str, available_tools: list[Tool]) -> list[Tool]:
     # RAG on tool descriptions
@@ -949,6 +967,7 @@ def select_tools_for_task(objective: str, available_tools: list[Tool]) -> list[T
 #### 3. Compress Context (Retain Essential Tokens)
 
 **Summarization Pattern**:
+
 ```python
 def compress_findings(full_exploration: str, max_tokens: int = 2000) -> str:
     compression_prompt = f"""
@@ -966,6 +985,7 @@ def compress_findings(full_exploration: str, max_tokens: int = 2000) -> str:
 ```
 
 **LazyLLM-Inspired Token Pruning** (if implementing):
+
 ```python
 def prune_low_relevance_tokens(context: str, attention_scores: np.ndarray, k: float = 0.3):
     # Calculate k-th percentile threshold
@@ -980,6 +1000,7 @@ def prune_low_relevance_tokens(context: str, attention_scores: np.ndarray, k: fl
 ```
 
 **Auto-Compact at Context Limits**:
+
 ```python
 def check_context_limit(state: AgentState, threshold: float = 0.95):
     total_tokens = sum(count_tokens(m.content) for m in state["messages"])
@@ -999,6 +1020,7 @@ def check_context_limit(state: AgentState, threshold: float = 0.95):
 #### 4. Isolate Context (Split Across Agents)
 
 **Multi-Agent Isolation**:
+
 ```python
 # Each worker operates in isolated context
 # Does NOT see:
@@ -1020,6 +1042,7 @@ def create_isolated_worker(objective: str, tools: list[str]) -> WorkerAgent:
 ```
 
 **Environment Isolation**:
+
 ```python
 # Token-heavy objects stored as environment variables
 class JupyterExecutionEnvironment:
@@ -1048,6 +1071,7 @@ class JupyterExecutionEnvironment:
 **Goal**: Establish orchestrator-worker pattern with basic tools
 
 **Tasks**:
+
 1. **Project Setup**
    - Initialize uv project with dependencies
    - Configure LangGraph with PostgreSQL checkpointing
@@ -1077,12 +1101,14 @@ class JupyterExecutionEnvironment:
    - Basic error handling
 
 **Deliverables**:
+
 - Working multi-agent system with 1 orchestrator + N workers
 - Basic research workflow end-to-end
 - Unit tests for core components
 - CLI accepting queries and returning results
 
 **Success Criteria**:
+
 - Spawn 3 parallel workers successfully
 - Workers operate in isolated contexts
 - Results aggregate correctly
@@ -1093,6 +1119,7 @@ class JupyterExecutionEnvironment:
 **Goal**: Implement Markovian workspace and memory architecture
 
 **Tasks**:
+
 1. **Markovian Workspace**
    - Implement IterResearch-inspired state management
    - Bounded-size evolving report
@@ -1117,12 +1144,14 @@ class JupyterExecutionEnvironment:
    - Auto-compact triggers
 
 **Deliverables**:
+
 - Markovian workspace with O(1) context complexity
 - Multi-tier memory system
 - Compression achieving 60%+ token reduction
 - Monitoring dashboard for context usage
 
 **Success Criteria**:
+
 - Orchestrator maintains <50% context usage across 10+ rounds
 - Successfully complete 50+ interaction workflow without overflow
 - Workers compress 50K exploration to 2K summary
@@ -1133,6 +1162,7 @@ class JupyterExecutionEnvironment:
 **Goal**: Build comprehensive tool suite and error recovery
 
 **Tasks**:
+
 1. **Enhanced Tools**
    - Parallel search with batch queries
    - Goal-directed web fetch with retry
@@ -1159,12 +1189,14 @@ class JupyterExecutionEnvironment:
    - Source attribution
 
 **Deliverables**:
+
 - Complete tool suite (8+ tools)
 - Robust error handling
 - Validation agents
 - Tool usage analytics
 
 **Success Criteria**:
+
 - <5% tool failure rate with retries
 - Successful recovery from sub-agent failures
 - Citation accuracy >90%
@@ -1175,6 +1207,7 @@ class JupyterExecutionEnvironment:
 **Goal**: Specialized data analysis capabilities
 
 **Tasks**:
+
 1. **Data Agent Type**
    - Specialized worker for data analysis
    - Pandas/Polars integration
@@ -1200,12 +1233,14 @@ class JupyterExecutionEnvironment:
    - Report synthesis
 
 **Deliverables**:
+
 - Data analysis agent type
 - Notebook generation pipeline
 - EDA template library
 - Multi-agent EDA orchestration
 
 **Success Criteria**:
+
 - Generate executable notebooks from data files
 - 7-act narrative structure
 - Visualizations embedded correctly
@@ -1216,6 +1251,7 @@ class JupyterExecutionEnvironment:
 **Goal**: Observability, optimization, and deployment
 
 **Tasks**:
+
 1. **Observability**
    - Structured logging
    - LangSmith integration
@@ -1241,12 +1277,14 @@ class JupyterExecutionEnvironment:
    - Deployment guide
 
 **Deliverables**:
+
 - Production-ready system
 - Comprehensive observability
 - Optimized for cost and performance
 - Complete documentation
 
 **Success Criteria**:
+
 - Average cost <$0.10 per research task
 - 90% reduction in research time vs. single-agent
 - Observability covering all critical paths
@@ -1581,6 +1619,7 @@ class WorkerAgent:
 ### Cost Optimization
 
 **Single-Model Baseline (Tongyi DeepResearch 30B A3B)**:
+
 ```python
 DEFAULT_MODEL = "alibaba/tongyi-deepresearch-30b-a3b"
 
@@ -1604,6 +1643,7 @@ def build_llm(profile: ResearchProfile, temperature: float = 0):
 Using a single reasoning-optimized model keeps behavior consistent, simplifies evaluation, and honors the "no Anthropic models" requirement while still allowing future swaps by editing `profile.model_name` rather than touching code. [\[link\]](https://openrouter.ai/alibaba/tongyi-deepresearch-30b-a3b)
 
 **Token Budget Enforcement**:
+
 ```python
 class TokenBudgetManager:
     def __init__(self, monthly_budget: float):
@@ -1630,6 +1670,7 @@ class TokenBudgetManager:
 ```
 
 **Reasoning Traces & Prompt Reuse (OpenRouter)**:
+
 ```python
 def build_openrouter_payload(system_prompt: str, user_query: str, profile: ResearchProfile):
     messages = [
@@ -1653,6 +1694,7 @@ OpenRouter exposes a native `reasoning` parameter and returns `reasoning_details
 ### Observability
 
 **Structured Logging**:
+
 ```python
 import structlog
 
@@ -1686,6 +1728,7 @@ class ObservableAgent:
 ```
 
 **LangSmith Integration**:
+
 ```python
 from langsmith import trace
 
@@ -1698,6 +1741,7 @@ def execute_research(query: str):
 ```
 
 **Metrics Dashboard**:
+
 ```python
 from prometheus_client import Counter, Histogram
 
@@ -1738,6 +1782,7 @@ def execute_with_metrics(query: str):
 ### Error Recovery
 
 **Retry with Exponential Backoff**:
+
 ```python
 from tenacity import retry, stop_after_attempt, wait_exponential
 
@@ -1752,6 +1797,7 @@ class ResilientAgent:
 ```
 
 **Graceful Degradation**:
+
 ```python
 def execute_research_with_degradation(query: str):
     try:
@@ -1768,6 +1814,7 @@ def execute_research_with_degradation(query: str):
 ```
 
 **Sub-Agent Failure Isolation**:
+
 ```python
 def synthesize_with_partial_results(sub_agent_results: list[dict]) -> str:
     # Filter successful results
@@ -2083,21 +2130,22 @@ By implementing this architecture in **6 phased weeks**, you'll have a robust mu
 
 The key differentiators from the initial design:
 
-| Aspect | Initial Design | Improved Design |
-|--------|---------------|-----------------|
-| **Context Management** | Accumulate all outputs | Compress to 2K summaries |
-| **Orchestration** | Single ReAct loop | Hierarchical orchestrator + workers |
-| **Execution** | Sequential | Parallel map-reduce |
-| **Memory** | Simple checkpointing | Three-tier with Markovian workspace |
-| **Scaling** | Fixed architecture | Dynamic 1-10 agents |
-| **Cost** | Unoptimized | Tongyi baseline efficiency, budgets, caching |
-| **Observability** | Basic logging | LangSmith, metrics, dashboards |
+| Aspect                 | Initial Design         | Improved Design                              |
+| ---------------------- | ---------------------- | -------------------------------------------- |
+| **Context Management** | Accumulate all outputs | Compress to 2K summaries                     |
+| **Orchestration**      | Single ReAct loop      | Hierarchical orchestrator + workers          |
+| **Execution**          | Sequential             | Parallel map-reduce                          |
+| **Memory**             | Simple checkpointing   | Three-tier with Markovian workspace          |
+| **Scaling**            | Fixed architecture     | Dynamic 1-10 agents                          |
+| **Cost**               | Unoptimized            | Tongyi baseline efficiency, budgets, caching |
+| **Observability**      | Basic logging          | LangSmith, metrics, dashboards               |
 
 **Next Steps**: Begin Phase 1 implementation, focusing on the orchestrator-worker pattern and basic parallel execution. Iterate based on real usage, and progressively add advanced features.
 
 ---
 
 **Related Research**:
+
 - [2025-11-15_deep-research-agent-architecture.md](./2025-11-15_deep-research-agent-architecture.md) - Initial single-agent design (superseded)
 - Future: Deep Research Agent v3 - Test-time scaling with Heavy Mode
 - Future: Deep Research Agent - Production Deployment Guide

@@ -98,7 +98,7 @@ export function DiffusionOverview({ className }: DiffusionOverviewProps) {
       ref={ref}
       className={cn(
         'w-full rounded-2xl border border-border/60 bg-muted/30 p-6 md:p-8 shadow-lg',
-        className,
+        className
       )}
     >
       <div className="flex items-center justify-between mb-4">
@@ -124,17 +124,19 @@ export function DiffusionOverview({ className }: DiffusionOverviewProps) {
               transition={{ duration: 0.4 }}
               className={cn(
                 'rounded-xl border border-border/70 bg-background/70 p-4 text-sm h-full flex flex-col gap-2 min-h-[220px] max-h-[220px]',
-                active && 'border-primary/80 shadow-primary/30 shadow-lg',
+                active && 'border-primary/80 shadow-primary/30 shadow-lg'
               )}
             >
               <div className="flex items-center gap-2 font-semibold">
-                <Icon className={cn('h-5 w-5', active ? 'text-primary' : 'text-muted-foreground')} />
+                <Icon
+                  className={cn('h-5 w-5', active ? 'text-primary' : 'text-muted-foreground')}
+                />
                 <span>{label}</span>
               </div>
               <div
                 className={cn(
                   'text-left text-muted-foreground leading-snug transition-colors min-h-[64px]',
-                  active && 'text-foreground',
+                  active && 'text-foreground'
                 )}
               >
                 {streamed}

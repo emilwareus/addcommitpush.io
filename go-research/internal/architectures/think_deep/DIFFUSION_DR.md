@@ -53,7 +53,7 @@ Diffusion models, originally developed for image generation, provide an elegant 
 3. Use **guidance signals** to steer the refinement (class labels for images, research findings for reports)
 
 > "The iterative nature of diffusion models naturally mirrors how humans actually conduct research—cycles of searching, reasoning, and revision."
-> — *Google Research, Deep Researcher with Test-Time Diffusion, 2025* [1]
+> — _Google Research, Deep Researcher with Test-Time Diffusion, 2025_ [1]
 
 This insight led to the development of **Test-Time Diffusion Deep Research (TTD-DR)**, which applies diffusion principles to research report generation.
 
@@ -66,11 +66,13 @@ This insight led to the development of **Test-Time Diffusion Deep Research (TTD-
 In classical diffusion models (e.g., DDPM, Stable Diffusion), the process consists of:
 
 **Forward Diffusion**: Gradually add noise to data
+
 ```
 x₀ → x₁ → x₂ → ... → xₜ (pure noise)
 ```
 
 **Reverse Diffusion**: Learn to denoise step by step
+
 ```
 xₜ → xₜ₋₁ → ... → x₁ → x₀ (clean data)
 ```
@@ -79,12 +81,12 @@ xₜ → xₜ₋₁ → ... → x₁ → x₀ (clean data)
 
 For research report generation, we reinterpret this process:
 
-| Classical Diffusion | Research Diffusion |
-|--------------------|--------------------|
-| Random noise (xₜ) | Initial draft from model knowledge |
-| Denoising step | Research iteration + draft refinement |
-| Guidance signal | Retrieved information from web search |
-| Clean output (x₀) | Comprehensive, accurate research report |
+| Classical Diffusion | Research Diffusion                      |
+| ------------------- | --------------------------------------- |
+| Random noise (xₜ)   | Initial draft from model knowledge      |
+| Denoising step      | Research iteration + draft refinement   |
+| Guidance signal     | Retrieved information from web search   |
+| Clean output (x₀)   | Comprehensive, accurate research report |
 
 The key insight is that the **initial draft** generated purely from the LLM's training data represents the "noisy" starting state. Each iteration of:
 
@@ -97,6 +99,7 @@ The key insight is that the **initial draft** generated purely from the LLM's tr
 ### Mathematical Formulation
 
 Let:
+
 - `D₀` = Initial draft (from LLM training data only)
 - `Dₜ` = Draft at iteration t
 - `R(Dₜ)` = Research function that identifies gaps and retrieves information
@@ -112,6 +115,7 @@ Dₙ = U(Dₙ₋₁, R(Dₙ₋₁))
 ```
 
 The process terminates when:
+
 - `R(Dₜ)` returns no new information (information gap closed)
 - Maximum iterations reached
 - Supervisor determines research is comprehensive
@@ -251,26 +255,26 @@ This is the **self-balancing** aspect: the model determines when research is com
 
 ### Supervisor Tools
 
-| Tool | Purpose | Invocation |
-|------|---------|------------|
-| `ConductResearch` | Delegate research to sub-agent | `{"research_topic": "Detailed paragraph..."}` |
-| `refine_draft_report` | Update draft with new findings | `{"research_brief": "...", "findings": "...", "draft_report": "..."}` |
-| `ResearchComplete` | Signal research is comprehensive | `{}` |
-| `think_tool` | Strategic reflection | `{"reflection": "..."}` |
+| Tool                  | Purpose                          | Invocation                                                            |
+| --------------------- | -------------------------------- | --------------------------------------------------------------------- |
+| `ConductResearch`     | Delegate research to sub-agent   | `{"research_topic": "Detailed paragraph..."}`                         |
+| `refine_draft_report` | Update draft with new findings   | `{"research_brief": "...", "findings": "...", "draft_report": "..."}` |
+| `ResearchComplete`    | Signal research is comprehensive | `{}`                                                                  |
+| `think_tool`          | Strategic reflection             | `{"reflection": "..."}`                                               |
 
 ### Sub-Researcher Tools
 
-| Tool | Purpose | Limits |
-|------|---------|--------|
-| `tavily_search` | Web search with summarization | Simple: 2-3 calls, Complex: up to 5 calls |
-| `think_tool` | Analyze results, plan next step | Use after each search |
+| Tool            | Purpose                         | Limits                                    |
+| --------------- | ------------------------------- | ----------------------------------------- |
+| `tavily_search` | Web search with summarization   | Simple: 2-3 calls, Complex: up to 5 calls |
+| `think_tool`    | Analyze results, plan next step | Use after each search                     |
 
 ---
 
 ## The Self-Balancing Principle
 
 > "Self-balancing Agentic AI sets up self-balancing rules to guide the self-evolution of the agentic system. We can set up a group of rules and let the model decide how to apply them dynamically."
-> — *Paichun Lin, ThinkDepth.ai* [2]
+> — _Paichun Lin, ThinkDepth.ai_ [2]
 
 ### Two-Stage Gap Closing
 
@@ -312,15 +316,17 @@ The algorithm explicitly separates **information gap closing** from **generation
 From the research:
 
 > "There is a trade-off between the two gaps. We cannot optimize the generation gap too early when the system is still optimizing the information gap because the generation gap tends to bring more verbose and stylistic content that can distract from finding missing information."
-> — *Paichun Lin, ThinkDepth.ai* [2]
+> — _Paichun Lin, ThinkDepth.ai_ [2]
 
 **Stage 1 characteristics:**
+
 - Focus on **what** information exists, not **how** to present it
 - Draft updates are functional, not polished
 - Prioritizes breadth of coverage
 - Uses global-context OR section-specific queries based on gap analysis
 
 **Stage 2 characteristics:**
+
 - All information is available
 - Focus on presentation, coherence, and user satisfaction
 - Applies full quality optimization
@@ -337,22 +343,22 @@ From `state_multi_agent_supervisor.py`:
 ```python
 class SupervisorState(TypedDict):
     """State for the multi-agent research supervisor."""
-    
+
     # Messages exchanged with supervisor for coordination
     supervisor_messages: Annotated[Sequence[BaseMessage], add_messages]
-    
+
     # Detailed research brief that guides the overall direction
     research_brief: str
-    
+
     # Processed notes ready for final report generation
     notes: Annotated[list[str], operator.add]
-    
+
     # Counter tracking research iterations performed
     research_iterations: int  # Max: 15
-    
+
     # Raw unprocessed research notes from sub-agents
     raw_notes: Annotated[list[str], operator.add]
-    
+
     # The evolving draft report
     draft_report: str
 ```
@@ -376,9 +382,9 @@ class ResearchComplete(BaseModel):
 @tool
 def think_tool(reflection: str) -> str:
     """Tool for strategic reflection on research progress and decision-making.
-    
+
     Use this tool after each search to analyze results and plan next steps.
-    
+
     Reflection should address:
     1. Analysis of current findings
     2. Gap assessment - what's still missing?
@@ -390,11 +396,11 @@ def think_tool(reflection: str) -> str:
 @tool
 def refine_draft_report(
     research_brief: str,
-    findings: str, 
+    findings: str,
     draft_report: str
 ) -> str:
     """Refine draft report with new research findings.
-    
+
     Synthesizes findings into draft, maintaining structure
     and adding citations.
     """
@@ -413,24 +419,24 @@ max_concurrent_researchers = 3   # Parallel sub-agents
 
 async def supervisor(state: SupervisorState) -> Command:
     """Coordinate research activities.
-    
+
     Analyzes the research brief and current progress to decide:
     - What research topics need investigation
     - Whether to conduct parallel research
     - When research is complete
     """
     supervisor_messages = state.get("supervisor_messages", [])
-    
+
     # Format system prompt with diffusion algorithm
     system_message = lead_researcher_with_multiple_steps_diffusion_double_check_prompt.format(
         date=get_today_str(),
         max_concurrent_research_units=max_concurrent_researchers,
         max_researcher_iterations=max_researcher_iterations
     )
-    
+
     messages = [SystemMessage(content=system_message)] + supervisor_messages
     response = await supervisor_model_with_tools.ainvoke(messages)
-    
+
     return Command(
         goto="supervisor_tools",
         update={
@@ -441,27 +447,27 @@ async def supervisor(state: SupervisorState) -> Command:
 
 async def supervisor_tools(state: SupervisorState) -> Command:
     """Execute supervisor decisions."""
-    
+
     # Check exit criteria
     exceeded_iterations = research_iterations >= max_researcher_iterations
     research_complete = any(
-        tc["name"] == "ResearchComplete" 
+        tc["name"] == "ResearchComplete"
         for tc in most_recent_message.tool_calls
     )
-    
+
     if exceeded_iterations or research_complete:
         return Command(goto=END, update={"notes": get_notes_from_tool_calls(...)})
-    
+
     # Separate tool call types
     think_calls = [tc for tc in tool_calls if tc["name"] == "think_tool"]
     research_calls = [tc for tc in tool_calls if tc["name"] == "ConductResearch"]
     refine_calls = [tc for tc in tool_calls if tc["name"] == "refine_draft_report"]
-    
+
     # Execute think_tool calls (synchronous)
     for tool_call in think_calls:
         observation = think_tool.invoke(tool_call["args"])
         tool_messages.append(ToolMessage(content=observation, ...))
-    
+
     # Execute ConductResearch calls (PARALLEL)
     if research_calls:
         coros = [
@@ -472,7 +478,7 @@ async def supervisor_tools(state: SupervisorState) -> Command:
             for tc in research_calls
         ]
         results = await asyncio.gather(*coros)  # Parallel execution!
-        
+
         # Each sub-agent returns compressed_research
         for result, tc in zip(results, research_calls):
             tool_messages.append(ToolMessage(
@@ -480,7 +486,7 @@ async def supervisor_tools(state: SupervisorState) -> Command:
                 name=tc["name"],
                 tool_call_id=tc["id"]
             ))
-    
+
     # Execute refine_draft_report
     for tc in refine_calls:
         notes = get_notes_from_tool_calls(supervisor_messages)
@@ -490,7 +496,7 @@ async def supervisor_tools(state: SupervisorState) -> Command:
             "draft_report": state.get("draft_report")
         })
         tool_messages.append(ToolMessage(content=draft_report, ...))
-    
+
     return Command(
         goto="supervisor",
         update={"supervisor_messages": tool_messages, "draft_report": draft_report}
@@ -516,11 +522,11 @@ def tool_node(state: ResearcherState):
     """Execute all tool calls from previous response."""
     tool_calls = state["researcher_messages"][-1].tool_calls
     observations = []
-    
+
     for tool_call in tool_calls:
         tool = tools_by_name[tool_call["name"]]
         observations.append(tool.invoke(tool_call["args"]))
-    
+
     return {"researcher_messages": [
         ToolMessage(content=obs, name=tc["name"], tool_call_id=tc["id"])
         for obs, tc in zip(observations, tool_calls)
@@ -528,14 +534,14 @@ def tool_node(state: ResearcherState):
 
 def compress_research(state: ResearcherState) -> dict:
     """Compress research findings into concise summary for supervisor."""
-    
+
     # Use compression prompt to synthesize findings
     response = compress_model.invoke([
         SystemMessage(content=compress_research_system_prompt.format(date=get_today_str())),
         *state.get("researcher_messages", []),
         HumanMessage(content=compress_research_human_message)
     ])
-    
+
     return {
         "compressed_research": str(response.content),
         "raw_notes": ["\n".join(raw_notes)]
@@ -558,31 +564,31 @@ From `utils.py`:
 @tool
 def tavily_search(query: str, max_results: int = 3, topic: str = "general") -> str:
     """Fetch results from Tavily search API with content summarization."""
-    
+
     # Execute search
     search_results = tavily_search_multiple([query], max_results, topic, include_raw_content=True)
-    
+
     # Deduplicate by URL
     unique_results = deduplicate_search_results(search_results)
-    
+
     # Summarize each result (using LLM)
     summarized_results = process_search_results(unique_results)
-    
+
     # Format output
     return format_search_output(summarized_results)
 
 def summarize_webpage_content(webpage_content: str) -> str:
     """Summarize webpage to ~25-30% of original length."""
-    
+
     structured_model = summarization_model.with_structured_output(Summary)
-    
+
     summary = structured_model.invoke([
         HumanMessage(content=summarize_webpage_prompt.format(
             webpage_content=webpage_content,
             date=get_today_str()
         ))
     ])
-    
+
     return f"<summary>\n{summary.summary}\n</summary>\n\n" \
            f"<key_excerpts>\n{summary.key_excerpts}\n</key_excerpts>"
 ```
@@ -718,8 +724,9 @@ RACE evaluates report generation quality through four key dimensions:
 ```
 
 **Scoring Formula:**
+
 ```
-Total Score = (Comprehensiveness × W₁) + (Insight × W₂) + 
+Total Score = (Comprehensiveness × W₁) + (Insight × W₂) +
               (Instruction Following × W₃) + (Readability × W₄)
 
 Where: W₁ + W₂ + W₃ + W₄ = 1.0 (dynamic weights per task)
@@ -754,14 +761,15 @@ FACT evaluates information retrieval and grounding capabilities:
 
 The Test-Time Diffusion approach directly targets the RACE metrics:
 
-| RACE Metric | Diffusion Mechanism | Implementation |
-|-------------|---------------------|----------------|
-| **Comprehensiveness** | Iterative gap-filling loop | `ConductResearch` until no new findings |
-| **Insight** | Insightfulness Rules in final generation | Granular breakdown, detailed tables |
-| **Instruction Following** | Research brief generation phase | `write_research_brief` from user query |
-| **Readability** | Helpfulness Rules + structured draft | `refine_draft_report` + final polish |
+| RACE Metric               | Diffusion Mechanism                      | Implementation                          |
+| ------------------------- | ---------------------------------------- | --------------------------------------- |
+| **Comprehensiveness**     | Iterative gap-filling loop               | `ConductResearch` until no new findings |
+| **Insight**               | Insightfulness Rules in final generation | Granular breakdown, detailed tables     |
+| **Instruction Following** | Research brief generation phase          | `write_research_brief` from user query  |
+| **Readability**           | Helpfulness Rules + structured draft     | `refine_draft_report` + final polish    |
 
 For FACT metrics:
+
 - **Citation Accuracy**: Each sub-researcher includes inline citations
 - **Effective Citations**: Compression preserves ALL sources with citations
 
@@ -769,52 +777,52 @@ For FACT metrics:
 
 ThinkDepth.ai, implementing the Self-Balancing Test-Time Diffusion algorithm, achieved **#1 ranking on DeepResearch Bench** (November 2025) [4]:
 
-| Rank | System | Overall Score | vs ThinkDepth |
-|------|--------|---------------|---------------|
-| 🥇 | **ThinkDepth.ai** | **52.58** | — |
-| 🥈 | Google Gemini 2.5 Pro | 51.16 | -2.78% |
-| 🥉 | OpenAI Deep Research | 49.58 | -6.04% |
-| 4 | Anthropic Claude | 48.83 | -7.45% |
+| Rank | System                | Overall Score | vs ThinkDepth |
+| ---- | --------------------- | ------------- | ------------- |
+| 🥇   | **ThinkDepth.ai**     | **52.58**     | —             |
+| 🥈   | Google Gemini 2.5 Pro | 51.16         | -2.78%        |
+| 🥉   | OpenAI Deep Research  | 49.58         | -6.04%        |
+| 4    | Anthropic Claude      | 48.83         | -7.45%        |
 
-*Source: [DeepResearch Bench Leaderboard](https://huggingface.co/spaces/muset-ai/DeepResearch-Bench-Leaderboard), November 2025*
+_Source: [DeepResearch Bench Leaderboard](https://huggingface.co/spaces/muset-ai/DeepResearch-Bench-Leaderboard), November 2025_
 
 ### Component-Level Analysis
 
 **Comprehensiveness Score** (Information Gap Closing):
 
-| System | Score | vs ThinkDepth | Why Diffusion Wins |
-|--------|-------|---------------|-------------------|
-| ThinkDepth.ai | 52.03 | — | Iterative research until findings complete |
-| Google Gemini 2.5 Pro | 50.50 | -3.02% | |
-| OpenAI Deep Research | 49.29 | -5.57% | |
-| Anthropic Claude | 48.36 | -7.58% | |
+| System                | Score | vs ThinkDepth | Why Diffusion Wins                         |
+| --------------------- | ----- | ------------- | ------------------------------------------ |
+| ThinkDepth.ai         | 52.03 | —             | Iterative research until findings complete |
+| Google Gemini 2.5 Pro | 50.50 | -3.02%        |                                            |
+| OpenAI Deep Research  | 49.29 | -5.57%        |                                            |
+| Anthropic Claude      | 48.36 | -7.58%        |                                            |
 
 **Insight Score** (Quality of Analysis):
 
-| System | Score | vs ThinkDepth | Why Diffusion Wins |
-|--------|-------|---------------|-------------------|
-| ThinkDepth.ai | 53.94 | — | Insightfulness Rules + draft refinement |
-| Google Gemini 2.5 Pro | 51.62 | -4.49% | |
-| OpenAI Deep Research | 48.94 | -10.21% | |
-| Anthropic Claude | 48.79 | -10.54% | |
+| System                | Score | vs ThinkDepth | Why Diffusion Wins                      |
+| --------------------- | ----- | ------------- | --------------------------------------- |
+| ThinkDepth.ai         | 53.94 | —             | Insightfulness Rules + draft refinement |
+| Google Gemini 2.5 Pro | 51.62 | -4.49%        |                                         |
+| OpenAI Deep Research  | 48.94 | -10.21%       |                                         |
+| Anthropic Claude      | 48.79 | -10.54%       |                                         |
 
 **Instruction Following Score**:
 
-| System | Score | vs ThinkDepth | Why Diffusion Wins |
-|--------|-------|---------------|-------------------|
-| ThinkDepth.ai | 52.07 | — | Detailed research brief phase |
-| Google Gemini 2.5 Pro | 51.07 | -1.95% | |
-| OpenAI Deep Research | 50.67 | -2.68% | |
-| Anthropic Claude | 49.67 | -4.61% | |
+| System                | Score | vs ThinkDepth | Why Diffusion Wins            |
+| --------------------- | ----- | ------------- | ----------------------------- |
+| ThinkDepth.ai         | 52.07 | —             | Detailed research brief phase |
+| Google Gemini 2.5 Pro | 51.07 | -1.95%        |                               |
+| OpenAI Deep Research  | 50.67 | -2.68%        |                               |
+| Anthropic Claude      | 49.67 | -4.61%        |                               |
 
 **Readability Score**:
 
-| System | Score | vs ThinkDepth | Why Diffusion Wins |
-|--------|-------|---------------|-------------------|
-| ThinkDepth.ai | 50.44 | — | Helpfulness Rules + structured draft |
-| Google Gemini 2.5 Pro | 50.22 | -0.44% | |
-| OpenAI Deep Research | 48.82 | -3.22% | |
-| Anthropic Claude | 48.31 | -4.22% | |
+| System                | Score | vs ThinkDepth | Why Diffusion Wins                   |
+| --------------------- | ----- | ------------- | ------------------------------------ |
+| ThinkDepth.ai         | 50.44 | —             | Helpfulness Rules + structured draft |
+| Google Gemini 2.5 Pro | 50.22 | -0.44%        |                                      |
+| OpenAI Deep Research  | 48.82 | -3.22%        |                                      |
+| Anthropic Claude      | 48.31 | -4.22%        |                                      |
 
 ### Why Diffusion Outperforms
 
@@ -856,12 +864,12 @@ ThinkDepth.ai, implementing the Self-Balancing Test-Time Diffusion algorithm, ac
 
 Long-horizon research tasks face several context challenges [6]:
 
-| Problem | Description | Diffusion Solution |
-|---------|-------------|-------------------|
-| **Context Poisoning** | Hallucinations enter context | Draft serves as verified state |
-| **Context Distraction** | Too much context overwhelms focus | Parallel sub-agents with isolated contexts |
-| **Context Confusion** | Superfluous context influences output | Structured finding format with compression |
-| **Context Clash** | Parts of context disagree | Supervisor resolves conflicts during refinement |
+| Problem                 | Description                           | Diffusion Solution                              |
+| ----------------------- | ------------------------------------- | ----------------------------------------------- |
+| **Context Poisoning**   | Hallucinations enter context          | Draft serves as verified state                  |
+| **Context Distraction** | Too much context overwhelms focus     | Parallel sub-agents with isolated contexts      |
+| **Context Confusion**   | Superfluous context influences output | Structured finding format with compression      |
+| **Context Clash**       | Parts of context disagree             | Supervisor resolves conflicts during refinement |
 
 ### Draft as Context Anchor
 
@@ -874,9 +882,9 @@ The draft serves as a **persistent, verified context** that:
 
 ```
 Traditional RAG:              Diffusion Approach:
-                              
+
 Query → Search → Response     Query → Brief → Draft → [Research → Refine] × N → Report
-                              
+
 Context grows unboundedly     Draft stays ~constant size
 No structure                  Structured by sections
 Can contradict itself         Conflicts resolved each iteration
@@ -910,6 +918,7 @@ Sub-researchers operate with **isolated contexts**—they cannot see each other'
 ```
 
 This prevents:
+
 - Topic A's findings from biasing Topic B's research
 - Context growing unboundedly during parallel work
 - Confusion from interleaved search results
@@ -921,14 +930,14 @@ Each sub-agent compresses its findings before returning to supervisor:
 ```python
 def compress_research(state: ResearcherState) -> dict:
     """Compress research findings into concise summary."""
-    
+
     # Compression guidelines:
     # - Include ALL relevant information verbatim
     # - Remove obviously irrelevant or duplicate info
     # - Include inline citations for each source
     # - List all sources at the end with citations
     # - Exclude think_tool reflections (internal only)
-    
+
     return {
         "compressed_research": compressed_content,
         "raw_notes": raw_notes
@@ -968,28 +977,30 @@ writer_model = "openai:gpt-5"    # max_tokens=40000
 
 ### Primary Sources
 
-[1] **Google Research** (2025). *Deep Researcher with Test-Time Diffusion*. Google Research Blog.  
+[1] **Google Research** (2025). _Deep Researcher with Test-Time Diffusion_. Google Research Blog.  
 https://research.google/blog/deep-researcher-with-test-time-diffusion/
 
-[2] **Paichun Lin** (2025). *Self-Balancing Agentic AI: Test-Time Diffusion and Context Engineering Re-imagined for Deep Research*. Paichun Publication, Substack.  
+[2] **Paichun Lin** (2025). _Self-Balancing Agentic AI: Test-Time Diffusion and Context Engineering Re-imagined for Deep Research_. Paichun Publication, Substack.  
 https://paichunlin.substack.com/p/self-balancing-agentic-ai-test-time
 
-[3] **Richard Sutton** (2019). *The Bitter Lesson*. Incomplete Ideas Blog.  
+[3] **Richard Sutton** (2019). _The Bitter Lesson_. Incomplete Ideas Blog.  
 http://www.incompleteideas.net/IncIdeas/BitterLesson.html
 
-[4] **DeepResearch Bench** (2025). *A Comprehensive Benchmark for Deep Research Agents*.  
+[4] **DeepResearch Bench** (2025). _A Comprehensive Benchmark for Deep Research Agents_.
+
 - **Leaderboard**: https://huggingface.co/spaces/muset-ai/DeepResearch-Bench-Leaderboard
 - **GitHub**: https://github.com/Ayanami0730/deep_research_bench
 - **Paper**: https://deepresearch-bench.github.io/static/papers/deepresearch-bench.pdf
 - **Website**: https://deepresearch-bench.github.io/
 
 Evaluation Frameworks:
+
 - **RACE**: Reference-based Adaptive Criteria-driven Evaluation (Comprehensiveness, Insight, Instruction Following, Readability)
 - **FACT**: Framework for Factual Abundance and Citation Trustworthiness (Citation Accuracy, Effective Citations)
 
-[5] **Liu et al.** (2023). *Lost in the Middle: How Language Models Use Long Contexts*. arXiv:2307.03172
+[5] **Liu et al.** (2023). _Lost in the Middle: How Language Models Use Long Contexts_. arXiv:2307.03172
 
-[6] **Anthropic** (2025). *Context Engineering for AI Agents*. Anthropic Research.
+[6] **Anthropic** (2025). _Context Engineering for AI Agents_. Anthropic Research.
 
 ### Reference Implementation
 
@@ -1001,17 +1012,17 @@ Evaluation Frameworks:
 
 ### Key Implementation Files
 
-| File | Purpose |
-|------|---------|
-| `multi_agent_supervisor.py` | Supervisor node, parallel research execution |
-| `research_agent.py` | Sub-researcher implementation |
-| `prompts.py` | All prompt templates including diffusion algorithm |
-| `state_multi_agent_supervisor.py` | SupervisorState, tool definitions |
-| `state_research.py` | ResearcherState definitions |
-| `utils.py` | Search, summarization, tools |
-| `research_agent_full.py` | Full workflow orchestration |
-| `research_agent_scope.py` | Brief generation, draft creation |
+| File                              | Purpose                                            |
+| --------------------------------- | -------------------------------------------------- |
+| `multi_agent_supervisor.py`       | Supervisor node, parallel research execution       |
+| `research_agent.py`               | Sub-researcher implementation                      |
+| `prompts.py`                      | All prompt templates including diffusion algorithm |
+| `state_multi_agent_supervisor.py` | SupervisorState, tool definitions                  |
+| `state_research.py`               | ResearcherState definitions                        |
+| `utils.py`                        | Search, summarization, tools                       |
+| `research_agent_full.py`          | Full workflow orchestration                        |
+| `research_agent_scope.py`         | Brief generation, draft creation                   |
 
 ---
 
-*This document is based on the ThinkDepth.ai open-source implementation. For Go implementation details, see the adjacent README.md and source files.*
+_This document is based on the ThinkDepth.ai open-source implementation. For Go implementation details, see the adjacent README.md and source files._

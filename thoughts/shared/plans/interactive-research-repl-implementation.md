@@ -60,6 +60,7 @@ The deep-research agent has a **solid foundation** for interactive mode:
 ### Key Discoveries
 
 **File References:**
+
 - Session state: `deep-research-agent/src/deep_research/agent/state.py:60-94`
 - CLI commands: `deep-research-agent/src/deep_research/cli.py:68-651`
 - Obsidian writer: `deep-research-agent/src/deep_research/obsidian/writer.py:51-77`
@@ -94,12 +95,14 @@ A production-ready interactive CLI that enables:
 ### Verification Criteria
 
 **Automated Verification:**
+
 - [x] Build succeeds: `cd deep-research-agent && uv sync` ✅
 - [x] Type checking passes: `uv run mypy src/deep_research/repl/` ✅ (9 source files)
 - [x] Tests pass: `uv run pytest tests/test_repl*.py -v` ✅ (31 tests passing)
 - [x] Linting passes: `uv run ruff check src/deep_research/repl/` ✅
 
 **Manual Verification:**
+
 - [ ] REPL starts successfully: `uv run research interactive`
 - [ ] Can start new research session and see live progress
 - [ ] Can continue from previous session (context loaded correctly)
@@ -128,17 +131,20 @@ To prevent scope creep, the following are **explicitly out of scope**:
 ### Architecture Decision
 
 **Technology Stack:**
+
 - **REPL Framework**: `prompt_toolkit` (not cmd2)
   - Native async support (critical for long-running research)
   - Rich customization (completion, history, styling)
   - Used by production tools (IPython, ptpython)
 
 **State Management:**
+
 - **In-Memory Cache**: `SessionManager` maintains active session
 - **Single Source of Truth**: Obsidian vault (file-based persistence)
 - **Sync Strategy**: Update vault on session start/complete/switch
 
 **Command Parsing:**
+
 - **Parser**: argparse with `exit_on_error=False`
 - **Tokenizer**: shlex for shell-like input handling
 - **Aliases**: Built into argparse subparsers
@@ -161,6 +167,7 @@ To prevent scope creep, the following are **explicitly out of scope**:
 ## Phase 1: REPL Foundation
 
 ### Overview
+
 Build the basic REPL loop with command parsing infrastructure. No research execution yet - focus on getting the interactive shell working with command parsing and validation.
 
 ### Changes Required
@@ -182,6 +189,7 @@ dependencies = [
 **New Directory**: `deep-research-agent/src/deep_research/repl/`
 
 Create the following files:
+
 - `__init__.py` - Module exports
 - `parser.py` - Command parser implementation
 - `shell.py` - Main REPL loop
@@ -481,12 +489,14 @@ def test_parse_empty_input() -> None:
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Dependencies install: `cd deep-research-agent && uv sync` ✅
 - [x] Type checking passes: `uv run mypy src/deep_research/repl/` ✅
 - [x] Parser tests pass: `uv run pytest tests/test_repl_parser.py -v` ✅ (16 tests)
 - [x] Linting passes: `uv run ruff check src/deep_research/repl/` ✅
 
 #### Manual Verification:
+
 - [ ] REPL starts: `uv run research interactive`
 - [ ] Welcome message displays correctly
 - [ ] Can parse `start` command and show parsed args
@@ -528,6 +538,7 @@ research> exit
 ## Phase 2: Session Management
 
 ### Overview
+
 Implement in-memory session tracking and lifecycle management. Enable starting new research sessions and tracking active session state.
 
 ### Changes Required
@@ -885,12 +896,14 @@ def test_set_and_clear_active_session(manager):
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Dependencies synced: `uv sync` ✅
 - [x] Type checking passes: `uv run mypy src/deep_research/repl/` ✅
 - [x] Session manager tests pass: `uv run pytest tests/test_repl_session_manager.py -v` ✅ (3 tests)
 - [x] Linting passes: `uv run ruff check src/deep_research/repl/` ✅
 
 #### Manual Verification:
+
 - [ ] Can start research session via REPL
 - [ ] Live progress displays during research
 - [ ] Session saved to Obsidian vault after completion
@@ -929,6 +942,7 @@ research> exit
 ## Phase 3: Session Continuation
 
 ### Overview
+
 Enable continuation of previous sessions with new queries, creating versioned sessions (v1 → v2 → v3). Implement context compression from previous session for coherent continuation.
 
 ### Changes Required
@@ -1299,11 +1313,13 @@ def test_build_worker_expansion_context_not_found():
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Type checking passes: `uv run mypy src/deep_research/repl/` ✅
 - [x] Context tests pass: `uv run pytest tests/test_repl_context.py -v` ✅ (3 tests)
 - [x] All REPL tests pass: `uv run pytest tests/test_repl*.py -v` ✅ (22 tests at this phase)
 
 #### Manual Verification:
+
 - [ ] Can continue from previous session (creates v2)
 - [ ] Continuation context includes insights and report summary
 - [ ] Parent session ID correctly set (e.g., `session_abc123_v1`)
@@ -1338,6 +1354,7 @@ research> expand --worker task_1 Research quantum algorithms in detail
 ## Phase 4: Multi-Session Management
 
 ### Overview
+
 Enable tracking and switching between multiple concurrent sessions. Implement session listing, switching, and persistence of active session across REPL restarts.
 
 ### Changes Required
@@ -1676,10 +1693,12 @@ async def interactive_repl() -> None:
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Type checking passes: `uv run mypy src/deep_research/repl/` ✅
 - [x] All tests pass: `uv run pytest tests/test_repl*.py -v` ✅ (31 tests total)
 
 #### Manual Verification:
+
 - [ ] `list sessions` shows all sessions with active session highlighted
 - [ ] `list workers` shows workers for active session
 - [ ] `list workers --session ID` shows workers for specific session
@@ -1728,6 +1747,7 @@ research> status
 ## Phase 5: Polish & UX Enhancements
 
 ### Overview
+
 Production-ready UX with tab completion, cost estimation, keyboard shortcuts, and export functionality.
 
 ### Changes Required
@@ -2128,11 +2148,13 @@ def show_help(console: Console) -> None:
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Type checking passes: `uv run mypy src/deep_research/repl/` ✅ (9 source files)
 - [x] All tests pass: `uv run pytest tests/test_repl*.py -v` ✅ (31 tests total)
 - [x] Linting passes: `uv run ruff check src/deep_research/repl/` ✅
 
 #### Manual Verification:
+
 - [ ] Tab completion works for commands (type `sw<Tab>` → `switch`)
 - [ ] Tab completion shows session IDs (type `switch session_<Tab>`)
 - [ ] Auto-suggest shows grey text from history
@@ -2186,6 +2208,7 @@ research> sta
 ### Unit Tests
 
 **Coverage Areas:**
+
 1. Command parser (test_repl_parser.py)
    - All command variations
    - Aliases
@@ -2242,6 +2265,7 @@ Create a comprehensive manual test plan:
 # REPL Manual Test Plan
 
 ## Basic Functionality
+
 - [ ] REPL starts without errors
 - [ ] Welcome message displays
 - [ ] Can enter commands and see responses
@@ -2249,12 +2273,14 @@ Create a comprehensive manual test plan:
 - [ ] Ctrl+D exits
 
 ## Command Parsing
+
 - [ ] All commands parse correctly
 - [ ] Aliases work (new → start, quit → exit)
 - [ ] Invalid commands show error
 - [ ] Empty input ignored
 
 ## Session Management
+
 - [ ] Can start new research session
 - [ ] Live progress displays during research
 - [ ] Session saved to vault
@@ -2262,12 +2288,14 @@ Create a comprehensive manual test plan:
 - [ ] Can reset session
 
 ## Continuation
+
 - [ ] Can continue from previous session
 - [ ] Version increments (v1 → v2)
 - [ ] Parent session ID set correctly
 - [ ] Can expand worker findings
 
 ## Multi-Session
+
 - [ ] Can create multiple sessions
 - [ ] List sessions shows all
 - [ ] Active session highlighted
@@ -2275,6 +2303,7 @@ Create a comprehensive manual test plan:
 - [ ] Last session loads on restart
 
 ## UX Features
+
 - [ ] Tab completion for commands
 - [ ] Tab completion for session IDs
 - [ ] Auto-suggest from history
@@ -2285,6 +2314,7 @@ Create a comprehensive manual test plan:
 - [ ] Help text accurate
 
 ## Error Handling
+
 - [ ] Invalid session ID shows clear error
 - [ ] Worker not found shows available workers
 - [ ] Network errors handled gracefully
@@ -2294,6 +2324,7 @@ Create a comprehensive manual test plan:
 ### Performance Testing
 
 **Metrics to Track:**
+
 1. Command execution speed
    - `status` < 100ms
    - `list sessions` < 500ms
@@ -2400,6 +2431,7 @@ uv run research interactive
 ```
 
 No migration needed for:
+
 - Existing sessions in Obsidian vault
 - Session data structures
 - ObsidianWriter/Loader
@@ -2408,6 +2440,7 @@ No migration needed for:
 ### Data Format
 
 All data structures remain unchanged:
+
 - `ResearchSession` (state.py:60-94)
 - `WorkerFullContext` (state.py:30-58)
 - Obsidian vault structure
@@ -2418,6 +2451,7 @@ All data structures remain unchanged:
 ## References
 
 ### Internal Documentation
+
 - Research Document: `thoughts/shared/research/2025-11-21_interactive-research-cli-architecture.md`
 - Codebase Files:
   - `deep-research-agent/src/deep_research/cli.py` - Current CLI
@@ -2429,15 +2463,18 @@ All data structures remain unchanged:
 ### External Resources
 
 **prompt_toolkit:**
+
 - Official Docs: https://python-prompt-toolkit.readthedocs.io/
 - Async Example: https://github.com/prompt-toolkit/python-prompt-toolkit/blob/main/examples/prompts/asyncio-prompt.py
 - REPL Tutorial: https://python-prompt-toolkit.readthedocs.io/en/master/pages/tutorials/repl.html
 
 **Production Examples:**
+
 - ptpython: https://github.com/prompt-toolkit/ptpython
 - IPython: https://ipython.readthedocs.io/
 
 **Command Parsing:**
+
 - shlex: https://docs.python.org/3/library/shlex.html
 - argparse: https://docs.python.org/3/library/argparse.html
 
@@ -2523,6 +2560,7 @@ All data structures remain unchanged:
 - **Phase 5** (Polish & UX): 1 week
 
 **Parallel Work Possible**:
+
 - Tests can be written alongside implementation
 - Documentation can be updated incrementally
 
@@ -2533,6 +2571,7 @@ All data structures remain unchanged:
 This implementation plan is based on comprehensive research and verified against the actual codebase. The deep-research agent has a **strong foundation** for interactive mode - the data model, persistence layer, and async execution are all ready. We're adding a thin REPL layer on top.
 
 **Critical Success Factors**:
+
 1. ✅ Use prompt_toolkit for rich async REPL
 2. ✅ SessionManager for fast session switching
 3. ✅ Context compression to ~50k tokens
@@ -2552,19 +2591,20 @@ All 5 implementation phases have been successfully completed with comprehensive 
 
 ### Implementation Metrics
 
-| Metric | Target | Actual | Status |
-|--------|--------|--------|--------|
-| **Phases Complete** | 5 | 5 | ✅ |
-| **Test Coverage** | >90% | 100% | ✅ |
-| **Tests Passing** | All | 31/31 | ✅ |
-| **Type Errors** | 0 | 0 | ✅ |
-| **Linting Issues** | 0 | 0 | ✅ |
-| **Files Created** | ~9 | 9 | ✅ |
-| **Test Files** | ~4 | 4 | ✅ |
+| Metric              | Target | Actual | Status |
+| ------------------- | ------ | ------ | ------ |
+| **Phases Complete** | 5      | 5      | ✅     |
+| **Test Coverage**   | >90%   | 100%   | ✅     |
+| **Tests Passing**   | All    | 31/31  | ✅     |
+| **Type Errors**     | 0      | 0      | ✅     |
+| **Linting Issues**  | 0      | 0      | ✅     |
+| **Files Created**   | ~9     | 9      | ✅     |
+| **Test Files**      | ~4     | 4      | ✅     |
 
 ### Files Created
 
 **REPL Module** (`src/deep_research/repl/`):
+
 - ✅ `__init__.py` - Module exports
 - ✅ `parser.py` - Command parser with argparse (3.7 KB)
 - ✅ `shell.py` - Main REPL loop with prompt_toolkit (7.1 KB)
@@ -2576,18 +2616,21 @@ All 5 implementation phases have been successfully completed with comprehensive 
 - ✅ `cost_estimation.py` - Cost estimation (1.4 KB)
 
 **Test Suite** (`tests/`):
+
 - ✅ `test_repl_parser.py` - 16 tests for command parsing
 - ✅ `test_repl_session_manager.py` - 3 tests for session management
 - ✅ `test_repl_context.py` - 3 tests for context compression
 - ✅ `test_repl_state.py` - 9 tests for state persistence
 
 **Modified Files**:
+
 - ✅ `pyproject.toml` - Added `prompt-toolkit>=3.0.0` dependency
 - ✅ `src/deep_research/cli.py` - Added `interactive` command
 
 ### Phase Completion Status
 
 #### ✅ Phase 1: REPL Foundation
+
 - **Status**: COMPLETE
 - **Tests**: 16/16 passing
 - **Features**:
@@ -2598,6 +2641,7 @@ All 5 implementation phases have been successfully completed with comprehensive 
   - ✅ Help command with examples
 
 #### ✅ Phase 2: Session Management
+
 - **Status**: COMPLETE
 - **Tests**: 3/3 passing
 - **Features**:
@@ -2608,6 +2652,7 @@ All 5 implementation phases have been successfully completed with comprehensive 
   - ✅ LiveProgress integration for real-time updates
 
 #### ✅ Phase 3: Session Continuation
+
 - **Status**: COMPLETE
 - **Tests**: 3/3 passing
 - **Features**:
@@ -2617,6 +2662,7 @@ All 5 implementation phases have been successfully completed with comprehensive 
   - ✅ Parent session linking with `parent_session_id`
 
 #### ✅ Phase 4: Multi-Session Management
+
 - **Status**: COMPLETE
 - **Tests**: 9/9 passing
 - **Features**:
@@ -2628,6 +2674,7 @@ All 5 implementation phases have been successfully completed with comprehensive 
   - ✅ Graceful handling of missing/corrupted state files
 
 #### ✅ Phase 5: Polish & UX Enhancements
+
 - **Status**: COMPLETE
 - **Tests**: All existing tests pass
 - **Features**:
@@ -2660,14 +2707,14 @@ All 5 implementation phases have been successfully completed with comprehensive 
 
 ### Architecture Compliance
 
-| Design Decision | Implementation | Status |
-|----------------|----------------|--------|
-| Use `prompt_toolkit` for REPL | ✅ Implemented | ✅ |
-| SessionManager pattern | ✅ Implemented | ✅ |
-| Obsidian vault as source of truth | ✅ Integrated | ✅ |
-| argparse for command parsing | ✅ Implemented | ✅ |
-| Context compression to <50k tokens | ✅ Implemented | ✅ |
-| LiveProgress integration | ✅ Integrated | ✅ |
+| Design Decision                    | Implementation | Status |
+| ---------------------------------- | -------------- | ------ |
+| Use `prompt_toolkit` for REPL      | ✅ Implemented | ✅     |
+| SessionManager pattern             | ✅ Implemented | ✅     |
+| Obsidian vault as source of truth  | ✅ Integrated  | ✅     |
+| argparse for command parsing       | ✅ Implemented | ✅     |
+| Context compression to <50k tokens | ✅ Implemented | ✅     |
+| LiveProgress integration           | ✅ Integrated  | ✅     |
 
 ### Code Quality Metrics
 
@@ -2682,18 +2729,21 @@ All 5 implementation phases have been successfully completed with comprehensive 
 The following manual tests should be performed before production release:
 
 #### Session Management
+
 - [ ] REPL starts successfully: `uv run research interactive`
 - [ ] Can start new research session and see live progress
 - [ ] Can continue from previous session (context loaded correctly)
 - [ ] Session state persists between commands
 
 #### Multi-Session Features
+
 - [ ] Can switch between multiple sessions
 - [ ] Last active session loads automatically on restart
 - [ ] `list sessions` displays all sessions correctly
 - [ ] `list workers` shows worker details
 
 #### UX Features
+
 - [ ] Tab completion works for commands (type `sw<Tab>` → `switch`)
 - [ ] Tab completion shows session IDs
 - [ ] Auto-suggest shows grey text from history
@@ -2701,11 +2751,13 @@ The following manual tests should be performed before production release:
 - [ ] User can cancel expensive operations
 
 #### Export Functionality
+
 - [ ] Export markdown creates readable file
 - [ ] Export JSON creates valid JSON
 - [ ] Custom output paths work
 
 #### Error Handling
+
 - [ ] Invalid commands show clear error messages
 - [ ] Corrupted state file handled gracefully
 - [ ] Missing session files show helpful error
@@ -2728,12 +2780,14 @@ The following items were intentionally excluded from scope:
 ### Recommendations
 
 #### Before Production Deployment
+
 1. ✅ Complete manual testing checklist above
 2. ✅ Test with real research queries to validate end-to-end flow
 3. ✅ Document keyboard shortcuts in README
 4. ⚠️ Consider adding integration tests for full research workflows
 
 #### Future Enhancements
+
 1. Add session archiving/cleanup command
 2. Implement session search/filtering
 3. Add session tagging for organization
@@ -2748,6 +2802,7 @@ The following items were intentionally excluded from scope:
 All 5 phases have been successfully implemented with comprehensive test coverage, type safety, and adherence to the architectural design. The Interactive Research REPL is ready for production use pending completion of manual testing.
 
 **Key Achievements**:
+
 - 📦 9 new modules implemented
 - ✅ 31 tests passing (100% success rate)
 - 🔍 Zero type errors (mypy strict mode)

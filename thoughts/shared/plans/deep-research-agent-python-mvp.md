@@ -10,11 +10,13 @@ Build a production-ready deep research agent in **pure Python** over **3 increme
 
 **Repository**: `addcommitpush.io` - A Next.js 16 TypeScript blog
 **Existing Assets**:
+
 - `/deep-research-agent/` directory (empty skeleton, will be rebuilt in Python)
 - Research documents at `/thoughts/shared/research/` (comprehensive architecture references)
 - No Python dependencies in main blog project
 
 **Technology Constraints**:
+
 - **Language**: Pure Python 3.14+ (no TypeScript mixing)
 - **Package Manager**: uv (modern, fast Python package manager)
 - **State**: File-based initially, PostgreSQL optional for production
@@ -34,6 +36,7 @@ After completing all 3 phases, you'll have:
 ### Verification
 
 **Automated**:
+
 - `uv sync` installs all dependencies successfully
 - `ruff check .` passes (no linting errors)
 - `mypy src/` passes (strict type checking)
@@ -41,6 +44,7 @@ After completing all 3 phases, you'll have:
 - CLI runs: `uv run research "test query"`
 
 **Manual**:
+
 - Research reports are coherent and well-sourced
 - Multi-agent execution is 3-5× faster than single-agent
 - EDA notebooks execute without errors in Jupyter
@@ -64,6 +68,7 @@ To keep scope manageable for MVP:
 **Strategy**: Build vertically - each phase delivers end-to-end value.
 
 **Tech Stack**:
+
 - **Language**: Python 3.11+
 - **Package Manager**: uv
 - **Framework**: LangGraph (multi-agent orchestration)
@@ -94,6 +99,7 @@ Build a working single-agent system using the ReAct pattern (Reasoning + Acting)
 **Directory**: `deep-research-agent/` (complete rebuild)
 
 **Structure**:
+
 ```
 deep-research-agent/
 ├── pyproject.toml           # uv project config
@@ -132,6 +138,7 @@ deep-research-agent/
 ```
 
 **File**: `deep-research-agent/pyproject.toml`
+
 ```toml
 [project]
 name = "deep-research"
@@ -186,6 +193,7 @@ disallow_untyped_defs = true
 ```
 
 **File**: `deep-research-agent/.env.example`
+
 ```bash
 # LLM Provider (choose one)
 OPENAI_API_KEY=sk-...
@@ -210,7 +218,8 @@ TEMPERATURE=0.0
 ```
 
 **File**: `deep-research-agent/README.md`
-```markdown
+
+````markdown
 # Deep Research Agent
 
 Multi-agent deep research system built with LangGraph.
@@ -228,6 +237,7 @@ uv sync
 cp .env.example .env
 # Edit .env with your API keys
 ```
+````
 
 ## Usage
 
@@ -254,7 +264,8 @@ uv run ruff check .
 # Type check
 uv run mypy src/
 ```
-```
+
+````
 
 #### 2. Core Agent Implementation
 
@@ -450,7 +461,7 @@ class ReactAgent:
                 sources.update(urls)
 
         return sorted(sources)
-```
+````
 
 **File**: `src/deep_research/agent/prompts.py`
 
@@ -944,6 +955,7 @@ if __name__ == "__main__":
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Dependencies install: `uv sync`
 - [x] Linting passes: `uv run ruff check .`
 - [x] Type checking passes: `uv run mypy src/`
@@ -952,6 +964,7 @@ if __name__ == "__main__":
 - [ ] Output file created: `uv run research "test" -o test.md && test -f test.md` (requires API keys)
 
 #### Manual Verification:
+
 - [ ] Research report is coherent and structured
 - [ ] Sources are cited with working URLs
 - [ ] Facts are accurate (spot-check 3-5 key points)
@@ -1007,6 +1020,7 @@ Upgrade to multi-agent architecture using LangGraph. A LeadResearcher orchestrat
 #### 1. Add LangGraph Dependencies
 
 **File**: `pyproject.toml` (update dependencies)
+
 ```toml
 dependencies = [
     # ... existing ...
@@ -1330,12 +1344,14 @@ def multi(
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Dependencies install: `uv sync`
 - [x] Type check passes: `uv run mypy src/`
 - [ ] Multi-agent runs: `uv run research multi "Complex topic"` (requires API keys)
 - [ ] Parallel execution happens (check logs for concurrent workers)
 
 #### Manual Verification:
+
 - [ ] Multi-agent completes 2-3× faster than single-agent
 - [ ] Reports are more comprehensive
 - [ ] Worker summaries are distinct (not redundant)
@@ -1367,6 +1383,7 @@ Add data analysis capabilities. Agent takes CSV/Parquet files, performs EDA, and
 #### 1. Add Data Dependencies
 
 **File**: `pyproject.toml` (update)
+
 ```toml
 dependencies = [
     # ... existing ...
@@ -1754,6 +1771,7 @@ def eda(filepath: str, goal: str | None, model: str | None) -> None:
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Dependencies install: `uv sync`
 - [x] CLI command exists: `uv run research eda --help`
 - [x] Tests pass: `uv run pytest tests/test_notebook.py tests/test_executor.py`
@@ -1762,6 +1780,7 @@ def eda(filepath: str, goal: str | None, model: str | None) -> None:
 - [ ] Notebook generated: `uv run research eda data/car_price_prediction_.csv` (requires API keys)
 
 #### Manual Verification:
+
 - [ ] Notebook opens in Jupyter
 - [ ] "Run All Cells" executes without errors
 - [ ] Narrative follows 7-act structure (all 7 acts present)
@@ -1784,6 +1803,7 @@ def eda(filepath: str, goal: str | None, model: str | None) -> None:
 ### Unit Tests
 
 **File**: `tests/test_tools.py`
+
 ```python
 import pytest
 from deep_research.tools.search import SearchTool
@@ -1813,6 +1833,7 @@ async def test_fetch_tool():
 ### Integration Tests
 
 **File**: `tests/test_agent.py`
+
 ```python
 @pytest.mark.asyncio
 async def test_react_agent():

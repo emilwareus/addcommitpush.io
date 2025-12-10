@@ -69,11 +69,11 @@ export function DiffusionDeepResearchContent() {
           kinda liked them)...
         </p>
         <p>
-          At least a few times you probably tried the &ldquo;parallel&rdquo; way of working, optimizing for a bit
-          less collaboration and each participant owning one segment of the report. Off you go! Each
-          person for themselves writing extensive backgrounds, history, theory, or whatever segments
-          you decided on. Then you meet up 3 hours before the deadline to &ldquo;glue the report&rdquo;
-          together—how did that turn out?
+          At least a few times you probably tried the &ldquo;parallel&rdquo; way of working,
+          optimizing for a bit less collaboration and each participant owning one segment of the
+          report. Off you go! Each person for themselves writing extensive backgrounds, history,
+          theory, or whatever segments you decided on. Then you meet up 3 hours before the deadline
+          to &ldquo;glue the report&rdquo; together—how did that turn out?
         </p>
         <div>
           <p className="mb-3">The result was probably:</p>
@@ -88,7 +88,8 @@ export function DiffusionDeepResearchContent() {
         <p>
           It turns out, when we construct our AI research agents like this (plan -&gt; parallel
           research -&gt; glue research into report), we get the same problem! When no context of the
-          &ldquo;evolving report&rdquo; is shared across sub-agents, we get a fragmented ball of mud.
+          &ldquo;evolving report&rdquo; is shared across sub-agents, we get a fragmented ball of
+          mud.
         </p>
         <p>
           These sequential and isolated group projects/research agents have their perks, like high
@@ -98,9 +99,9 @@ export function DiffusionDeepResearchContent() {
         <BlogHeading level={2}>Diffusion Deep Research</BlogHeading>
         <p>
           Think of diffusion agent models like brainstorming, but instead of everyone writing their
-          own part in isolation and building a Frankenstein report, the research spreads and overlaps
-          as it evolves within the team. Ideas for each segment are not isolated, as not one person
-          owns each segment.
+          own part in isolation and building a Frankenstein report, the research spreads and
+          overlaps as it evolves within the team. Ideas for each segment are not isolated, as not
+          one person owns each segment.
         </p>
         <p>
           The team starts off by writing a draft, only based on their internal knowledge. Typically
@@ -125,37 +126,45 @@ export function DiffusionDeepResearchContent() {
 
       <BlogHeading level={3}>The problem with single-pass research</BlogHeading>
       <p>
-        Traditional AI research agents follow a linear paradigm: <code>Query → Search → Synthesize → Report</code>.
-        This suffers from fundamental limitations:
+        Traditional AI research agents follow a linear paradigm:{' '}
+        <code>Query → Search → Synthesize → Report</code>. This suffers from fundamental
+        limitations:
       </p>
       <BlogList variant="ordered">
         <BlogListItem>
-          <strong>Information Loss:</strong> Important context discovered late cannot influence earlier decisions.
+          <strong>Information Loss:</strong> Important context discovered late cannot influence
+          earlier decisions.
         </BlogListItem>
         <BlogListItem>
-          <strong>No Self-Correction:</strong> Errors or gaps in early research propagate to the final output.
+          <strong>No Self-Correction:</strong> Errors or gaps in early research propagate to the
+          final output.
         </BlogListItem>
         <BlogListItem>
-          <strong>Static Search Strategy:</strong> The search strategy is fixed at the start and cannot adapt.
+          <strong>Static Search Strategy:</strong> The search strategy is fixed at the start and
+          cannot adapt.
         </BlogListItem>
         <BlogListItem>
-          <strong>Coherence Degradation:</strong> Long reports lose coherence when sections are generated independently.
+          <strong>Coherence Degradation:</strong> Long reports lose coherence when sections are
+          generated independently.
         </BlogListItem>
       </BlogList>
 
       <BlogHeading level={3}>The diffusion paradigm</BlogHeading>
       <p>
-        Diffusion models, originally developed for image generation, provide an elegant solution. Instead
-        of generating content in one pass, they start with a <strong>noisy initial state</strong> (random
-        noise for images, rough draft for research) and <strong>iteratively refine</strong> through multiple
-        denoising steps, using <strong>guidance signals</strong> to steer the refinement.
+        Diffusion models, originally developed for image generation, provide an elegant solution.
+        Instead of generating content in one pass, they start with a{' '}
+        <strong>noisy initial state</strong> (random noise for images, rough draft for research) and{' '}
+        <strong>iteratively refine</strong> through multiple denoising steps, using{' '}
+        <strong>guidance signals</strong> to steer the refinement.
       </p>
 
       <blockquote className="border-l-4 border-secondary pl-4 italic my-6">
-        &ldquo;The iterative nature of diffusion models naturally mirrors how humans actually conduct
-        research—cycles of searching, reasoning, and revision.&rdquo;
+        &ldquo;The iterative nature of diffusion models naturally mirrors how humans actually
+        conduct research—cycles of searching, reasoning, and revision.&rdquo;
         <br />
-        <span className="text-sm not-italic">— Google Research, Deep Researcher with Test-Time Diffusion, 2025</span>
+        <span className="text-sm not-italic">
+          — Google Research, Deep Researcher with Test-Time Diffusion, 2025
+        </span>
       </blockquote>
 
       <DiffusionOverview className="my-10" />
@@ -167,33 +176,40 @@ export function DiffusionDeepResearchContent() {
 
       <BlogHeading level={3}>Phase 1: Research brief generation</BlogHeading>
       <p>
-        Transform the user query into a detailed research brief with sources, constraints, and scope.
-        This ensures all downstream research is grounded in explicit requirements.
+        Transform the user query into a detailed research brief with sources, constraints, and
+        scope. This ensures all downstream research is grounded in explicit requirements.
       </p>
 
       <BlogHeading level={3}>Phase 2: Initial draft generation</BlogHeading>
       <p>
         Generate a draft from the LLM&apos;s <strong>internal knowledge only</strong>—no external
-        information retrieval yet. This is the &ldquo;noisy&rdquo; initial state that provides structure
-        to guide subsequent research. It may contain outdated or incomplete information, and that&apos;s
-        intentional.
+        information retrieval yet. This is the &ldquo;noisy&rdquo; initial state that provides
+        structure to guide subsequent research. It may contain outdated or incomplete information,
+        and that&apos;s intentional.
       </p>
 
       <BlogHeading level={3}>Phase 3: Diffusion loop (supervisor subgraph)</BlogHeading>
-      <p>
-        The core innovation. Each iteration follows four steps:
-      </p>
+      <p>The core innovation. Each iteration follows four steps:</p>
       <BlogList variant="ordered">
-        <BlogListItem>Generate research questions to address <strong>gaps</strong> in the draft</BlogListItem>
-        <BlogListItem>Conduct Research: Retrieve external info for &ldquo;denoising&rdquo;</BlogListItem>
-        <BlogListItem>Refine Draft: Remove &ldquo;noise&rdquo; (imprecision, incompleteness) from draft</BlogListItem>
-        <BlogListItem>Assess: Are findings comprehensive? (NOT draft appearance, readability vs correctness)</BlogListItem>
+        <BlogListItem>
+          Generate research questions to address <strong>gaps</strong> in the draft
+        </BlogListItem>
+        <BlogListItem>
+          Conduct Research: Retrieve external info for &ldquo;denoising&rdquo;
+        </BlogListItem>
+        <BlogListItem>
+          Refine Draft: Remove &ldquo;noise&rdquo; (imprecision, incompleteness) from draft
+        </BlogListItem>
+        <BlogListItem>
+          Assess: Are findings comprehensive? (NOT draft appearance, readability vs correctness)
+        </BlogListItem>
       </BlogList>
 
       <BlogHeading level={3}>Phase 4: Final report generation</BlogHeading>
       <p>
-        Apply quality optimization with Insightfulness + Helpfulness rules. Deduplicate findings by URL,
-        add granular breakdowns, detailed mapping tables, nuanced discussion, and proper citations.
+        Apply quality optimization with Insightfulness + Helpfulness rules. Deduplicate findings by
+        URL, add granular breakdowns, detailed mapping tables, nuanced discussion, and proper
+        citations.
       </p>
 
       <BlogHeading level={2}>Core algorithm overview</BlogHeading>
@@ -204,8 +220,8 @@ export function DiffusionDeepResearchContent() {
       </p>
 
       <p className="text-sm text-muted-foreground">
-        The full diffusion algorithm prompt is available as a collapsible block in the code walkthrough
-        below.
+        The full diffusion algorithm prompt is available as a collapsible block in the code
+        walkthrough below.
       </p>
 
       <DiffusionLoopStep className="my-10" />
@@ -217,24 +233,25 @@ export function DiffusionDeepResearchContent() {
         In classical diffusion models (DDPM, Stable Diffusion), the process consists of two phases:
       </p>
       <p>
-        <strong>Forward Diffusion:</strong> Gradually add noise to data: <code>x₀ → x₁ → x₂ → ... → xₜ (pure noise)</code>
+        <strong>Forward Diffusion:</strong> Gradually add noise to data:{' '}
+        <code>x₀ → x₁ → x₂ → ... → xₜ (pure noise)</code>
       </p>
       <p>
-        <strong>Reverse Diffusion:</strong> Learn to denoise step by step: <code>xₜ → xₜ₋₁ → ... → x₁ → x₀ (clean data)</code>
+        <strong>Reverse Diffusion:</strong> Learn to denoise step by step:{' '}
+        <code>xₜ → xₜ₋₁ → ... → x₁ → x₀ (clean data)</code>
       </p>
 
       <br />
 
-      <p>For the readers that have walked the fields of Machine Learning, 
-        this feels like an autoencoder but that goes to complete noise 
-        instead of a low-dimensional latent space representation (that still actually means something). 
-        With key differences of course.. (for another blog post)
+      <p>
+        For the readers that have walked the fields of Machine Learning, this feels like an
+        autoencoder but that goes to complete noise instead of a low-dimensional latent space
+        representation (that still actually means something). With key differences of course.. (for
+        another blog post)
       </p>
 
       <BlogHeading level={3}>Adaptation to research</BlogHeading>
-      <p>
-        For research report generation, we reinterpret this process:
-      </p>
+      <p>For research report generation, we reinterpret this process:</p>
 
       <div className="overflow-x-auto my-6">
         <table className="min-w-full text-sm">
@@ -266,10 +283,10 @@ export function DiffusionDeepResearchContent() {
       </div>
 
       <p>
-        The key insight is that the <strong>initial draft</strong> generated purely from the LLM&apos;s
-        training data represents the &ldquo;noisy&rdquo; starting state. Each iteration of identifying gaps,
-        searching for information, and incorporating findings acts as a <strong>denoising step</strong> that
-        brings the report closer to ground truth.
+        The key insight is that the <strong>initial draft</strong> generated purely from the
+        LLM&apos;s training data represents the &ldquo;noisy&rdquo; starting state. Each iteration
+        of identifying gaps, searching for information, and incorporating findings acts as a{' '}
+        <strong>denoising step</strong> that brings the report closer to ground truth.
       </p>
 
       <p>The process terminates when (in priority order):</p>
@@ -282,9 +299,9 @@ export function DiffusionDeepResearchContent() {
       </BlogList>
 
       <Callout variant="warning">
-        <strong>Guardrails:</strong> Require citations for new facts (drop uncited claims), retry failed
-        tool calls once then mark as a gap, and deduplicate by URL before synthesis. Completion is about
-        evidence coverage, not draft polish.
+        <strong>Guardrails:</strong> Require citations for new facts (drop uncited claims), retry
+        failed tool calls once then mark as a gap, and deduplicate by URL before synthesis.
+        Completion is about evidence coverage, not draft polish.
       </Callout>
 
       <DraftDenoising className="my-10" />
@@ -297,8 +314,8 @@ export function DiffusionDeepResearchContent() {
 
       <BlogHeading level={3}>Phase 1 &amp; 2: Brief and initial draft generation</BlogHeading>
       <p>
-        The entry point is <code>AgentLoop.Research</code>. This function orchestrates all four phases
-        of the diffusion algorithm. The first two phases are straightforward LLM calls:
+        The entry point is <code>AgentLoop.Research</code>. This function orchestrates all four
+        phases of the diffusion algorithm. The first two phases are straightforward LLM calls:
       </p>
       <GoCode
         code={`
@@ -474,9 +491,7 @@ Format the report in clear markdown with proper structure and include source ref
       </details>
 
       <BlogHeading level={3}>Phase 3: Supervisor diffusion loop</BlogHeading>
-      <p>
-        This is the heart of the algorithm. The supervisor runs an iterative loop that:
-      </p>
+      <p>This is the heart of the algorithm. The supervisor runs an iterative loop that:</p>
       <BlogList variant="ordered">
         <BlogListItem>Analyzes gaps in the current draft</BlogListItem>
         <BlogListItem>Delegates research tasks to sub-agents (in parallel)</BlogListItem>
@@ -1167,10 +1182,11 @@ func (o *AgentLoop) generateFinalReport(
       </details>
 
       <Callout variant="info">
-        <strong>The key insight:</strong> Unlike traditional pipelines that generate content in one pass,
-        diffusion builds the report iteratively. Each supervisor iteration sees the <em>current</em> draft
-        and <em>accumulated</em> research, allowing the system to self-correct and fill gaps it discovers
-        along the way. This is why the loop checks findings completeness, not draft polish.
+        <strong>The key insight:</strong> Unlike traditional pipelines that generate content in one
+        pass, diffusion builds the report iteratively. Each supervisor iteration sees the{' '}
+        <em>current</em> draft and <em>accumulated</em> research, allowing the system to
+        self-correct and fill gaps it discovers along the way. This is why the loop checks findings
+        completeness, not draft polish.
       </Callout>
 
       <BlogHeading level={2}>Gap closing &amp; context</BlogHeading>
@@ -1184,23 +1200,31 @@ func (o *AgentLoop) generateFinalReport(
       <BlogHeading level={3}>Why separate the stages?</BlogHeading>
 
       <blockquote className="border-l-4 border-secondary pl-4 italic my-6">
-        &ldquo;There is a trade-off between the two gaps. We cannot optimize the generation gap
-        too early when the system is still optimizing the information gap because the generation
-        gap tends to bring more verbose and stylistic content that can distract from finding
-        missing information.&rdquo;
+        &ldquo;There is a trade-off between the two gaps. We cannot optimize the generation gap too
+        early when the system is still optimizing the information gap because the generation gap
+        tends to bring more verbose and stylistic content that can distract from finding missing
+        information.&rdquo;
         <br />
         <span className="text-sm not-italic">— Paichun Lin, ThinkDepth.ai</span>
       </blockquote>
 
-      <p><strong>Stage 1 characteristics:</strong></p>
+      <p>
+        <strong>Stage 1 characteristics:</strong>
+      </p>
       <BlogList variant="unordered">
-        <BlogListItem>Focus on <strong>what</strong> information exists, not <strong>how</strong> to present it</BlogListItem>
+        <BlogListItem>
+          Focus on <strong>what</strong> information exists, not <strong>how</strong> to present it
+        </BlogListItem>
         <BlogListItem>Draft updates are functional, not polished</BlogListItem>
         <BlogListItem>Prioritizes breadth of coverage</BlogListItem>
-        <BlogListItem>Uses global-context OR section-specific queries based on gap analysis</BlogListItem>
+        <BlogListItem>
+          Uses global-context OR section-specific queries based on gap analysis
+        </BlogListItem>
       </BlogList>
 
-      <p><strong>Stage 2 characteristics:</strong></p>
+      <p>
+        <strong>Stage 2 characteristics:</strong>
+      </p>
       <BlogList variant="unordered">
         <BlogListItem>All information is available</BlogListItem>
         <BlogListItem>Focus on presentation, coherence, and user satisfaction</BlogListItem>
@@ -1253,14 +1277,22 @@ func (o *AgentLoop) generateFinalReport(
         The draft serves as a <strong>persistent, verified context</strong> that:
       </p>
       <BlogList variant="unordered">
-        <BlogListItem><strong>Evolves incrementally:</strong> Each <code>refine_draft</code> call is validated</BlogListItem>
-        <BlogListItem><strong>Structures information:</strong> Prevents disorganized accumulation</BlogListItem>
-        <BlogListItem><strong>Guides research:</strong> Makes gaps explicit</BlogListItem>
-        <BlogListItem><strong>Maintains coherence:</strong> Narrative thread across iterations</BlogListItem>
+        <BlogListItem>
+          <strong>Evolves incrementally:</strong> Each <code>refine_draft</code> call is validated
+        </BlogListItem>
+        <BlogListItem>
+          <strong>Structures information:</strong> Prevents disorganized accumulation
+        </BlogListItem>
+        <BlogListItem>
+          <strong>Guides research:</strong> Makes gaps explicit
+        </BlogListItem>
+        <BlogListItem>
+          <strong>Maintains coherence:</strong> Narrative thread across iterations
+        </BlogListItem>
       </BlogList>
 
       <Terminal className="my-4">
-{`Traditional RAG:              Diffusion Approach:
+        {`Traditional RAG:              Diffusion Approach:
 
 Query → Search → Response     Query → Brief → Draft → [Research → Refine] × N → Report
 
@@ -1271,9 +1303,10 @@ Can contradict itself         Conflicts resolved each iteration`}
 
       <BlogHeading level={3}>Multi-agent context isolation</BlogHeading>
       <p>
-        Sub-researchers operate with <strong>isolated contexts</strong>—they cannot see each other&apos;s
-        work. This prevents topic A&apos;s findings from biasing topic B&apos;s research, keeps context
-        from growing unboundedly during parallel work, and avoids confusion from interleaved search results.
+        Sub-researchers operate with <strong>isolated contexts</strong>—they cannot see each
+        other&apos;s work. This prevents topic A&apos;s findings from biasing topic B&apos;s
+        research, keeps context from growing unboundedly during parallel work, and avoids confusion
+        from interleaved search results.
       </p>
 
       <BlogHeading level={2}>Benchmark performance (RACE + FACT)</BlogHeading>
@@ -1287,30 +1320,39 @@ Can contradict itself         Conflicts resolved each iteration`}
           DeepResearch Bench
         </BlogLink>{' '}
         is the comprehensive benchmark for evaluating Deep Research Agents. It consists of{' '}
-        <strong>100 PhD-level research tasks</strong> designed by domain experts across Science &amp;
-        Technology, Finance &amp; Business, Software, and other fields.
+        <strong>100 PhD-level research tasks</strong> designed by domain experts across Science
+        &amp; Technology, Finance &amp; Business, Software, and other fields.
       </p>
 
       <BlogHeading level={3}>RACE framework (report quality)</BlogHeading>
-      <p>
-        RACE evaluates report generation quality through four dimensions:
-      </p>
+      <p>RACE evaluates report generation quality through four dimensions:</p>
       <BlogList variant="unordered">
-        <BlogListItem><strong>Comprehensiveness:</strong> Coverage breadth and depth (measures information gap closing)</BlogListItem>
-        <BlogListItem><strong>Insight / Depth:</strong> Quality, originality, logic, and value of analysis</BlogListItem>
-        <BlogListItem><strong>Instruction Following:</strong> Adherence to task requirements and constraints</BlogListItem>
-        <BlogListItem><strong>Readability:</strong> Clarity of structure, fluency, ease of understanding (measures generation gap closing)</BlogListItem>
+        <BlogListItem>
+          <strong>Comprehensiveness:</strong> Coverage breadth and depth (measures information gap
+          closing)
+        </BlogListItem>
+        <BlogListItem>
+          <strong>Insight / Depth:</strong> Quality, originality, logic, and value of analysis
+        </BlogListItem>
+        <BlogListItem>
+          <strong>Instruction Following:</strong> Adherence to task requirements and constraints
+        </BlogListItem>
+        <BlogListItem>
+          <strong>Readability:</strong> Clarity of structure, fluency, ease of understanding
+          (measures generation gap closing)
+        </BlogListItem>
       </BlogList>
 
       <BlogHeading level={3}>FACT framework (citation quality)</BlogHeading>
-      <p>
-        FACT evaluates information retrieval and grounding capabilities:
-      </p>
+      <p>FACT evaluates information retrieval and grounding capabilities:</p>
       <BlogList variant="ordered">
         <BlogListItem>Automatically extract statement-URL pairs from the report</BlogListItem>
         <BlogListItem>Deduplicate redundant pairs</BlogListItem>
         <BlogListItem>Web scrape + LLM judgment to verify support</BlogListItem>
-        <BlogListItem>Calculate Citation Accuracy (% correctly supported) and Effective Citations (avg verified per task)</BlogListItem>
+        <BlogListItem>
+          Calculate Citation Accuracy (% correctly supported) and Effective Citations (avg verified
+          per task)
+        </BlogListItem>
       </BlogList>
 
       <RACEMetrics className="my-10" />
@@ -1318,12 +1360,13 @@ Can contradict itself         Conflicts resolved each iteration`}
       <BlogHeading level={3}>Why diffusion outperforms</BlogHeading>
       <BlogList variant="ordered">
         <BlogListItem>
-          <strong>Iterative refinement catches gaps → Higher Comprehensiveness.</strong> Each iteration
-          identifies and fills missing information. Traditional single-pass cannot self-correct.
+          <strong>Iterative refinement catches gaps → Higher Comprehensiveness.</strong> Each
+          iteration identifies and fills missing information. Traditional single-pass cannot
+          self-correct.
         </BlogListItem>
         <BlogListItem>
-          <strong>Parallel execution is efficient → Better Coverage.</strong> Up to 3 sub-researchers
-          gather diverse perspectives simultaneously with isolated contexts.
+          <strong>Parallel execution is efficient → Better Coverage.</strong> Up to 3
+          sub-researchers gather diverse perspectives simultaneously with isolated contexts.
         </BlogListItem>
         <BlogListItem>
           <strong>Explicit completion criteria → Validated Comprehensiveness.</strong> Research ends
@@ -1346,24 +1389,27 @@ Can contradict itself         Conflicts resolved each iteration`}
       <BlogHeading level={2}>Test it out?</BlogHeading>
 
       <p className="text-sm text-muted-foreground">
-        I implemented a version of this in go in the blog repository, in: <code>/go-research</code>. It expects API keys and runs a REPL with
-        multiple architectures, including <code>/think_deep</code> (diffusion), <code>/storm</code>,
-        and <code>/fast</code> (just a simple ReAct agent). It is not finished software and can execute ai generated code in your environment... :)
-        At your own risk!
+        I implemented a version of this in go in the blog repository, in: <code>/go-research</code>.
+        It expects API keys and runs a REPL with multiple architectures, including{' '}
+        <code>/think_deep</code> (diffusion), <code>/storm</code>, and <code>/fast</code> (just a
+        simple ReAct agent). It is not finished software and can execute ai generated code in your
+        environment... :) At your own risk!
       </p>
       <br />
       <p className="text-sm">
-        Browse the code: <BlogLink href="https://github.com/emilwareus/addcommitpush.io/tree/main/go-research/internal/architectures/think_deep">
+        Browse the code:{' '}
+        <BlogLink href="https://github.com/emilwareus/addcommitpush.io/tree/main/go-research/internal/architectures/think_deep">
           Go implementation (think_deep)
         </BlogLink>
         <br />
-        CLI with multiple architectures: <BlogLink href="https://github.com/emilwareus/addcommitpush.io/tree/main/go-research">
+        CLI with multiple architectures:{' '}
+        <BlogLink href="https://github.com/emilwareus/addcommitpush.io/tree/main/go-research">
           Go Research
         </BlogLink>
       </p>
 
       <Terminal className="my-4">
-{`# Env (required)
+        {`# Env (required)
 OPENROUTER_API_KEY=sk-or-...
 BRAVE_API_KEY=sk-brave-...
 
@@ -1391,16 +1437,16 @@ OPENROUTER_API_KEY=... BRAVE_API_KEY=... go run ./cmd/research
           structure for subsequent research.
         </BlogListItem>
         <BlogListItem>
-          <strong>Deduplicate by URL before synthesis.</strong> Keeps signal high and prevents the same
-          source from being cited multiple times with different wordings.
+          <strong>Deduplicate by URL before synthesis.</strong> Keeps signal high and prevents the
+          same source from being cited multiple times with different wordings.
         </BlogListItem>
         <BlogListItem>
-          <strong>Completion is about evidence coverage, not aesthetics.</strong> Run diverse queries
-          and only stop when they yield no new facts.
+          <strong>Completion is about evidence coverage, not aesthetics.</strong> Run diverse
+          queries and only stop when they yield no new facts.
         </BlogListItem>
         <BlogListItem>
-          <strong>Cap iterations and concurrency.</strong> 15 loops max, 3 agents max. Prevents thrash
-          and keeps costs predictable.
+          <strong>Cap iterations and concurrency.</strong> 15 loops max, 3 agents max. Prevents
+          thrash and keeps costs predictable.
         </BlogListItem>
         <BlogListItem>
           <strong>Separate information gap from generation gap.</strong> Don&apos;t polish until the
@@ -1429,7 +1475,8 @@ OPENROUTER_API_KEY=... BRAVE_API_KEY=... go run ./cmd/research
         </BlogListItem>
         <BlogListItem>
           <BlogLink href="https://paichunlin.substack.com/p/self-balancing-agentic-ai-test-time">
-            Paichun Lin: Self-Balancing Agentic AI: Test-Time Diffusion and Context Engineering Re-imagined
+            Paichun Lin: Self-Balancing Agentic AI: Test-Time Diffusion and Context Engineering
+            Re-imagined
           </BlogLink>
         </BlogListItem>
         <BlogListItem>
@@ -1444,7 +1491,8 @@ OPENROUTER_API_KEY=... BRAVE_API_KEY=... go run ./cmd/research
         </BlogListItem>
         <BlogListItem>
           <BlogLink href="https://github.com/thinkdepthai/Deep_Research">
-            ThinkDepth.ai Open Source Reference Implementation - Python. (Thanks for the open source and innovations! I learned a lot from it.)
+            ThinkDepth.ai Open Source Reference Implementation - Python. (Thanks for the open source
+            and innovations! I learned a lot from it.)
           </BlogLink>
         </BlogListItem>
         <BlogListItem>
@@ -1452,7 +1500,7 @@ OPENROUTER_API_KEY=... BRAVE_API_KEY=... go run ./cmd/research
             Richard Sutton: The Bitter Lesson (2019)
           </BlogLink>
         </BlogListItem>
-        <BlogListItem> 
+        <BlogListItem>
           <BlogLink href="https://github.com/emilwareus/addcommitpush.io/tree/main/go-research/internal/architectures/think_deep">
             My implementation of the ThinkDepth.ai architecture in Go
           </BlogLink>

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
@@ -27,8 +27,7 @@ const iconMap = {
 };
 
 export interface CalloutProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof calloutVariants> {
+  extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof calloutVariants> {
   variant?: 'info' | 'warning' | 'tip' | 'note';
   title?: string;
   icon?: React.ReactNode;

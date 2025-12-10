@@ -3,6 +3,7 @@
 ## Overview
 
 Transform the go-research CLI into a Claude Code-style interactive experience where users can:
+
 1. Ask questions about existing research (answered from chat history + reports)
 2. Expand on specific topics with context injection
 3. Have queries intelligently routed to the appropriate handler via LLM classification
@@ -12,6 +13,7 @@ This plan implements the architecture from `thoughts/shared/research/2025-12-03_
 ## Current State Analysis
 
 ### Existing Infrastructure
+
 - **Router** (`internal/repl/router.go:46-74`): Routes natural language → expand (if session) or storm (if no session)
 - **ExpandHandler** (`internal/repl/handlers/expand.go:21-88`): Creates versioned sessions with continuation context
 - **Session Context** (`internal/session/context.go:9-45`): Builds text summary from prior session (report, insights, sources)
@@ -19,6 +21,7 @@ This plan implements the architecture from `thoughts/shared/research/2025-12-03_
 - **Obsidian Writer** (`internal/obsidian/writer.go:27-62`): Creates directories for insights/ but never populates them
 
 ### Key Gaps
+
 1. No sub-insight capture during ThinkDeep research
 2. Insights directory created but empty - no insight files written
 3. No question-answering from existing content
@@ -28,12 +31,14 @@ This plan implements the architecture from `thoughts/shared/research/2025-12-03_
 ## Desired End State
 
 After implementation:
+
 1. ThinkDeep captures insights per search result and saves them to Obsidian
 2. Users can ask questions and get answers from chat history + all reports in session chain
 3. Natural language queries are classified by LLM into research/question/expand intents
 4. Expansion injects prior context (findings, visited URLs, existing report) into supervisor state
 
 ### Verification
+
 - Run ThinkDeep research → insights/ directory populated with files
 - Ask question about report → get answer without new research
 - Type ambiguous query → LLM classifies intent correctly
@@ -88,6 +93,7 @@ type SubInsight struct {
 ```
 
 Add methods:
+
 ```go
 func (s *SupervisorState) AddSubInsight(insight SubInsight)
 func (s *SupervisorState) GetSubInsights() []SubInsight
@@ -99,6 +105,7 @@ func (s *SupervisorState) GetSubInsights() []SubInsight
 **Changes**: After search tool execution, extract insights from results
 
 Add function to extract insights from search result content:
+
 ```go
 // extractInsightsFromSearch parses search results and extracts structured insights.
 // Called after each search tool execution with the raw search results.
@@ -106,6 +113,7 @@ func extractInsightsFromSearch(topic string, searchResult string, researcherNum 
 ```
 
 This function should:
+
 1. Parse the search result content
 2. Extract key findings (facts, data points, claims)
 3. Create SubInsight for each distinct finding
@@ -117,6 +125,7 @@ This function should:
 **Changes**: Collect insights from sub-researcher results
 
 In `executeParallelResearch()` around line 395-417, after processing each sub-researcher result:
+
 ```go
 // After accumulating notes and raw notes, also accumulate insights
 for _, insight := range result.Insights {
@@ -155,11 +164,13 @@ Pass through from supervisor result to orchestrator result.
 ### Success Criteria
 
 #### Automated Verification
+
 - [x] Build succeeds: `go build ./...`
 - [x] Tests pass: `go test ./internal/think_deep/... ./internal/agents/...`
 - [x] No linting errors: `golangci-lint run ./internal/think_deep/... ./internal/agents/...`
 
 #### Manual Verification
+
 - [ ] Run ThinkDeep research and verify `ThinkDeepResult.SubInsights` is populated
 - [ ] Each insight has valid Topic, Finding, SourceURL fields
 - [ ] Insight count correlates with number of search results processed
@@ -205,6 +216,7 @@ func (w *Writer) WriteInsights(sessionDir string, insights []think_deep.SubInsig
 **Changes**: Call WriteInsights in main Write method
 
 In `Write()` method after writing workers (around line 49):
+
 ```go
 // Write insight files
 if len(sess.Insights) > 0 {
@@ -221,6 +233,7 @@ if len(sess.Insights) > 0 {
 **Changes**: Add Insights section to sessionMOCTemplate
 
 Add after the Sources section:
+
 ```go
 ## Insights
 
@@ -239,6 +252,7 @@ Add after the Sources section:
 **Changes**: Pass insights to Obsidian writer
 
 After research completion, call the extended write method:
+
 ```go
 if err := ctx.Obsidian.WriteWithInsights(newSess, result.SubInsights); err != nil {
     ctx.Renderer.Error(fmt.Errorf("save to obsidian: %w", err))
@@ -248,11 +262,13 @@ if err := ctx.Obsidian.WriteWithInsights(newSess, result.SubInsights); err != ni
 ### Success Criteria
 
 #### Automated Verification
+
 - [x] Build succeeds: `go build ./...`
 - [x] Tests pass: `go test ./internal/obsidian/...`
 - [x] Existing Obsidian tests still pass (no regression)
 
 #### Manual Verification
+
 - [ ] Run ThinkDeep research → insights/ directory contains insight_001.md, insight_002.md, etc.
 - [ ] Each insight file has valid YAML frontmatter
 - [ ] Session MOC links to all insight files
@@ -392,11 +408,13 @@ add("question", &QuestionHandler{}, "/question <query>", "Ask a question about e
 ### Success Criteria
 
 #### Automated Verification
+
 - [ ] Build succeeds: `go build ./...`
 - [ ] Tests pass: `go test ./internal/repl/handlers/...`
 - [ ] No linting errors: `golangci-lint run ./internal/repl/handlers/...`
 
 #### Manual Verification
+
 - [ ] Start research on a topic
 - [ ] Run `/question What did the report say about X?`
 - [ ] Get answer synthesized from report content
@@ -508,6 +526,7 @@ type Context struct {
 **Changes**: Replace simple session check with classifier
 
 In `Route()` method, replace lines 59-73:
+
 ```go
 // Natural language with session - classify intent
 if r.ctx.Session != nil && r.ctx.Classifier != nil {
@@ -584,11 +603,13 @@ Default to a fast, cheap model like Haiku for classification.
 ### Success Criteria
 
 #### Automated Verification
+
 - [ ] Build succeeds: `go build ./...`
 - [ ] Tests pass: `go test ./internal/repl/...`
 - [ ] No linting errors: `golangci-lint run ./internal/repl/...`
 
 #### Manual Verification
+
 - [ ] Start research on "Swedish political parties"
 - [ ] Type "What did you find about Moderaterna?" → routes to question handler
 - [ ] Type "Tell me more about tax policies" → routes to expand handler
@@ -678,6 +699,7 @@ func WithExpansionFocus(topic string) ThinkDeepOption {
 **Changes**: Use injection context when initializing supervisor
 
 In `Research()` method, after creating supervisor state (around line 189-207):
+
 ```go
 // Apply injection context if provided
 if td.injectionContext != nil {
@@ -790,11 +812,13 @@ func (td *ThinkDeep) enhanceBriefForExpansion(brief string, injection *think_dee
 ### Success Criteria
 
 #### Automated Verification
+
 - [ ] Build succeeds: `go build ./...`
 - [ ] Tests pass: `go test ./internal/orchestrator/... ./internal/think_deep/...`
 - [ ] No linting errors: `golangci-lint run ./internal/orchestrator/... ./internal/think_deep/...`
 
 #### Manual Verification
+
 - [ ] Start research on "Swedish political parties economic policies"
 - [ ] Note the number of sources and iterations
 - [ ] Expand on "corporate tax proposals"
@@ -810,22 +834,22 @@ func (td *ThinkDeep) enhanceBriefForExpansion(brief string, injection *think_dee
 
 ### Unit Tests
 
-| Phase | Test File | Key Tests |
-|-------|-----------|-----------|
-| 1 | `internal/think_deep/state_test.go` | SubInsight struct, Add/Get methods |
-| 1 | `internal/agents/sub_researcher_test.go` | Insight extraction from search results |
-| 2 | `internal/obsidian/writer_test.go` | WriteInsight, WriteInsights methods |
-| 3 | `internal/repl/handlers/question_test.go` | QA context building, answer generation |
-| 4 | `internal/repl/classifier_test.go` | Classification accuracy for each intent |
-| 5 | `internal/think_deep/injection_test.go` | InjectionContext struct, builder functions |
+| Phase | Test File                                 | Key Tests                                  |
+| ----- | ----------------------------------------- | ------------------------------------------ |
+| 1     | `internal/think_deep/state_test.go`       | SubInsight struct, Add/Get methods         |
+| 1     | `internal/agents/sub_researcher_test.go`  | Insight extraction from search results     |
+| 2     | `internal/obsidian/writer_test.go`        | WriteInsight, WriteInsights methods        |
+| 3     | `internal/repl/handlers/question_test.go` | QA context building, answer generation     |
+| 4     | `internal/repl/classifier_test.go`        | Classification accuracy for each intent    |
+| 5     | `internal/think_deep/injection_test.go`   | InjectionContext struct, builder functions |
 
 ### Integration Tests
 
-| Phase | Test File | Key Tests |
-|-------|-----------|-----------|
-| 1-2 | `internal/e2e/think_deep_insights_test.go` | Full ThinkDeep run captures and persists insights |
-| 3-4 | `internal/e2e/interactive_flow_test.go` | Research → Question → Expand flow |
-| 5 | `internal/e2e/expansion_context_test.go` | Expansion uses prior context correctly |
+| Phase | Test File                                  | Key Tests                                         |
+| ----- | ------------------------------------------ | ------------------------------------------------- |
+| 1-2   | `internal/e2e/think_deep_insights_test.go` | Full ThinkDeep run captures and persists insights |
+| 3-4   | `internal/e2e/interactive_flow_test.go`    | Research → Question → Expand flow                 |
+| 5     | `internal/e2e/expansion_context_test.go`   | Expansion uses prior context correctly            |
 
 ### Manual Testing Steps
 
@@ -861,6 +885,7 @@ func (td *ThinkDeep) enhanceBriefForExpansion(brief string, injection *think_dee
 ## Migration Notes
 
 No migration needed - this is additive functionality:
+
 - Existing sessions work unchanged
 - New fields (SubInsights) default to empty
 - Classification is opt-in via Classifier presence in context

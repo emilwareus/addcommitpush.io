@@ -376,8 +376,8 @@ export function ContextEngineeringClaudeCodeContent() {
         <Terminal>{`/research_codebase`}</Terminal>
 
         <p>
-          The command will prompt you with &quot;what would you like to research?&quot; Provide a detailed
-          prompt like:
+          The command will prompt you with &quot;what would you like to research?&quot; Provide a
+          detailed prompt like:
         </p>
 
         <Terminal>
@@ -392,15 +392,15 @@ Follow @frontend/ARCHITECTURE.md guidelines and patterns.`}
 
         <p>
           This generates a research document with file references, target architecture, and
-          critically—a &quot;What not to do&quot; section that helps guide Claude in the right direction
-          without detours.
+          critically—a &quot;What not to do&quot; section that helps guide Claude in the right
+          direction without detours.
         </p>
 
         <p>
           <strong>Important:</strong> Review the research document closely. Check if it found all
           relevant files, if the target architecture looks reasonable, and if you agree with the
-          &quot;what not to do&quot; section. In about 50% of cases, I edit these sections manually using
-          Cursor with a powerful model or by editing the file directly.
+          &quot;what not to do&quot; section. In about 50% of cases, I edit these sections manually
+          using Cursor with a powerful model or by editing the file directly.
         </p>
 
         <p>
@@ -420,9 +420,10 @@ Follow @frontend/ARCHITECTURE.md guidelines and patterns.`}
         </Terminal>
 
         <p>
-          Additional instructions might include: &quot;make it 4 phases&quot;, &quot;make sure to add e2e tests in
-          the frontend to the plan&quot;, etc. You can also add &quot;think deeply&quot; for higher accuracy (but
-          avoid &quot;ultrathink&quot;—it&apos;s a token burner that uses the main context to explore).
+          Additional instructions might include: &quot;make it 4 phases&quot;, &quot;make sure to
+          add e2e tests in the frontend to the plan&quot;, etc. You can also add &quot;think
+          deeply&quot; for higher accuracy (but avoid &quot;ultrathink&quot;—it&apos;s a token
+          burner that uses the main context to explore).
         </p>
 
         <p>
@@ -462,9 +463,9 @@ Follow @frontend/ARCHITECTURE.md guidelines and patterns.`}
         <p>
           Repeat this loop for each phase until all phases are complete, then run a final validation
           on the full plan. I typically review the code between iterations to ensure it makes sense
-          and guide the AI if needed. Aim for &quot;working software&quot; in each phase—tests should pass and
-          there should be no lint errors. The validation step will catch missing interface
-          implementations and run your linters.
+          and guide the AI if needed. Aim for &quot;working software&quot; in each phase—tests
+          should pass and there should be no lint errors. The validation step will catch missing
+          interface implementations and run your linters.
         </p>
 
         <BlogHeading level={3}>Git Management</BlogHeading>
@@ -482,36 +483,36 @@ Follow @frontend/ARCHITECTURE.md guidelines and patterns.`}
 
         <p>
           In my experience, this flow completely 1-shots (after research/plan refinements) 2-5 such
-          features per day. I run up to 3 in parallel—one &quot;big hairy&quot; problem and two simpler, more
-          straightforward ones.
+          features per day. I run up to 3 in parallel—one &quot;big hairy&quot; problem and two
+          simpler, more straightforward ones.
         </p>
 
         <p>
-          In the future, I want to make this a &quot;linear workflow&quot; where humans gather information
-          into Linear issues (the initial research prompts), and moving issues into different phases
-          would auto-trigger different steps, creating PRs with research docs, etc.
+          In the future, I want to make this a &quot;linear workflow&quot; where humans gather
+          information into Linear issues (the initial research prompts), and moving issues into
+          different phases would auto-trigger different steps, creating PRs with research docs, etc.
         </p>
 
         <BlogHeading level={2}>Codebase Requirements</BlogHeading>
 
         <p>
           I don&apos;t think this will work well in all settings and codebases. The right type of
-          &quot;mid/mid+&quot; size problems is the right fit. The better your codebase is, the better code AI
-          will write. Just like in boomer-coding, quality compounds into velocity over time, and
-          tech debt snowballs to a turd, but with AI the effects of this have increased. Prioritize
-          solving your tech debt!
+          &quot;mid/mid+&quot; size problems is the right fit. The better your codebase is, the
+          better code AI will write. Just like in boomer-coding, quality compounds into velocity
+          over time, and tech debt snowballs to a turd, but with AI the effects of this have
+          increased. Prioritize solving your tech debt!
         </p>
 
         <br />
 
         <p>
           Also, in my experience, language matters... in TS/JS you can loop in 20+ different ways or
-          chain useEffects in magical ways to create foot-cannons... if Cloudflare can&apos;t properly
-          use useEffect... are you sure our PhD-level next token predictors can? I actually like a
-          lot of things about TS, but too many variations confuse the AI. In my &quot;big&quot; codebase I&apos;m
-          working on our backend is built in Go, and Claude/Cursor are simply fantastic there!
-          Simplicity = clarity = less hallucination = higher velocity. This is at least the state
-          late 2025, in a year or so... who knows.
+          chain useEffects in magical ways to create foot-cannons... if Cloudflare can&apos;t
+          properly use useEffect... are you sure our PhD-level next token predictors can? I actually
+          like a lot of things about TS, but too many variations confuse the AI. In my
+          &quot;big&quot; codebase I&apos;m working on our backend is built in Go, and Claude/Cursor
+          are simply fantastic there! Simplicity = clarity = less hallucination = higher velocity.
+          This is at least the state late 2025, in a year or so... who knows.
         </p>
 
         <BlogHeading level={2}>TL;DR</BlogHeading>
@@ -521,9 +522,9 @@ Follow @frontend/ARCHITECTURE.md guidelines and patterns.`}
           proper commands and guidance. Starting with a research and planning phase to create .md
           files that clearly set HIGH-value context is a great way to get more accurate results from
           Claude Code. Running multiple SpecDD flows at the same time... like spinning plates, is
-          the new name of the game in some codebases. This maybe takes out a bit of the old &quot;fun&quot;
-          about developing, but I&apos;m mostly excited about user value and winning in the market, which
-          is more fun than polishing a stone.
+          the new name of the game in some codebases. This maybe takes out a bit of the old
+          &quot;fun&quot; about developing, but I&apos;m mostly excited about user value and winning
+          in the market, which is more fun than polishing a stone.
         </p>
       </div>
     </>

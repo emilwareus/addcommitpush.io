@@ -48,8 +48,7 @@ const posts: Post[] = [
   {
     title: 'Diffusion Deep Research',
     slug: 'diffusion-deep-research',
-    description:
-      'How diffusion can be used to create a deep research report.',
+    description: 'How diffusion can be used to create a deep research report.',
     publishedAt: '2025-12-05',
     tags: ['ai', 'agents', 'research', 'deep-research'],
     cover: '/posts/diffusion-deep-research/cover-optimized.webp',

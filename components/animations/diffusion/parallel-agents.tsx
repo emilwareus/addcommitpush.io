@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import { motion, useInView } from 'framer-motion';
-import { cn } from "@/lib/utils";
-import { Users, Search, ArrowDown, FilePenLine, CheckCircle2, Repeat2 } from "lucide-react";
+import { cn } from '@/lib/utils';
+import { Users, Search, ArrowDown, FilePenLine, CheckCircle2, Repeat2 } from 'lucide-react';
 
 interface ParallelAgentsProps {
   className?: string;
@@ -11,26 +11,28 @@ interface ParallelAgentsProps {
 
 const agents = [
   {
-    name: "Sub-Agent 1",
-    focus: "Global or section-level query",
-    topic: "Topic A",
+    name: 'Sub-Agent 1',
+    focus: 'Global or section-level query',
+    topic: 'Topic A',
   },
   {
-    name: "Sub-Agent 2",
-    focus: "Section-specific deep dive",
-    topic: "Topic B",
+    name: 'Sub-Agent 2',
+    focus: 'Section-specific deep dive',
+    topic: 'Topic B',
   },
   {
-    name: "Sub-Agent 3",
-    focus: "Comparative or incident-focused",
-    topic: "Topic C",
+    name: 'Sub-Agent 3',
+    focus: 'Comparative or incident-focused',
+    topic: 'Topic C',
   },
 ];
 
 export function ParallelAgents({ className }: ParallelAgentsProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { margin: '-10% 0px -10% 0px', amount: 0.2 });
-  const [stage, setStage] = useState<'assign' | 'research' | 'collect' | 'refine' | 'decide'>('assign');
+  const [stage, setStage] = useState<'assign' | 'research' | 'collect' | 'refine' | 'decide'>(
+    'assign'
+  );
   const lastStageRef = useRef<typeof stage>('assign');
   const startRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -116,15 +118,16 @@ export function ParallelAgents({ className }: ParallelAgentsProps) {
   };
 
   const getSubAgentBorder = () => {
-    if (stage === 'research') return "border-primary/80 bg-primary/5 shadow-lg shadow-primary/20";
-    if (stage === 'collect' || stage === 'refine' || stage === 'decide') return "border-green-500/40 bg-green-500/5";
-    return "border-border/70 bg-background/70";
+    if (stage === 'research') return 'border-primary/80 bg-primary/5 shadow-lg shadow-primary/20';
+    if (stage === 'collect' || stage === 'refine' || stage === 'decide')
+      return 'border-green-500/40 bg-green-500/5';
+    return 'border-border/70 bg-background/70';
   };
 
   const getSubAgentIconColor = () => {
-    if (stage === 'research') return "text-primary";
-    if (stage === 'collect' || stage === 'refine' || stage === 'decide') return "text-green-500";
-    return "text-muted-foreground";
+    if (stage === 'research') return 'text-primary';
+    if (stage === 'collect' || stage === 'refine' || stage === 'decide') return 'text-green-500';
+    return 'text-muted-foreground';
   };
 
   const getResearchingOpacity = () => {
@@ -132,7 +135,7 @@ export function ParallelAgents({ className }: ParallelAgentsProps) {
   };
 
   const getFindingsReturnedOpacity = () => {
-    return (stage === 'collect' || stage === 'refine' || stage === 'decide') ? 1 : 0;
+    return stage === 'collect' || stage === 'refine' || stage === 'decide' ? 1 : 0;
   };
 
   const getConvergingArrowsOpacity = () => {
@@ -153,8 +156,8 @@ export function ParallelAgents({ className }: ParallelAgentsProps) {
   };
 
   const getRefineBoxBorder = () => {
-    if (stage === 'refine') return "border-primary/60 bg-primary/5 shadow-lg shadow-primary/20";
-    return "border-border/70 bg-background/70";
+    if (stage === 'refine') return 'border-primary/60 bg-primary/5 shadow-lg shadow-primary/20';
+    return 'border-border/70 bg-background/70';
   };
 
   const getDecisionOpacity = () => {
@@ -166,7 +169,7 @@ export function ParallelAgents({ className }: ParallelAgentsProps) {
     <div
       ref={ref}
       className={cn(
-        "rounded-2xl border border-border/60 bg-muted/30 p-6 md:p-8 shadow-lg space-y-6",
+        'rounded-2xl border border-border/60 bg-muted/30 p-6 md:p-8 shadow-lg space-y-6',
         className
       )}
     >
@@ -216,15 +219,12 @@ export function ParallelAgents({ className }: ParallelAgentsProps) {
                   }}
                   transition={{ duration: 0.3 }}
                   className={cn(
-                    "rounded-xl border p-4 text-sm text-left min-h-[160px] w-full flex flex-col gap-2 relative transition-colors",
+                    'rounded-xl border p-4 text-sm text-left min-h-[160px] w-full flex flex-col gap-2 relative transition-colors',
                     getSubAgentBorder()
                   )}
                 >
                   <p className="font-semibold flex items-center gap-2">
-                    <Search className={cn(
-                      "h-4 w-4 transition-colors",
-                      getSubAgentIconColor()
-                    )} />
+                    <Search className={cn('h-4 w-4 transition-colors', getSubAgentIconColor())} />
                     {agent.name}
                   </p>
                   <p className="text-xs text-muted-foreground">
@@ -233,7 +233,7 @@ export function ParallelAgents({ className }: ParallelAgentsProps) {
                   <p className="text-xs text-muted-foreground">
                     <span className="font-medium">Focus:</span> {agent.focus}
                   </p>
-                  
+
                   {/* Status messages container - always render, control opacity */}
                   <div className="mt-auto pt-2 border-t border-border/50 relative min-h-[24px]">
                     {/* Researching status */}
@@ -246,7 +246,11 @@ export function ParallelAgents({ className }: ParallelAgentsProps) {
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <motion.div
                           animate={{ rotate: stage === 'research' ? 360 : 0 }}
-                          transition={{ duration: 2, repeat: stage === 'research' ? Infinity : 0, ease: "linear" }}
+                          transition={{
+                            duration: 2,
+                            repeat: stage === 'research' ? Infinity : 0,
+                            ease: 'linear',
+                          }}
                         >
                           <Repeat2 className="h-3 w-3 text-primary" />
                         </motion.div>
@@ -286,9 +290,9 @@ export function ParallelAgents({ className }: ParallelAgentsProps) {
 
         {/* Refine Draft Report - always render */}
         <motion.div
-          animate={{ 
+          animate={{
             opacity: getRefineBoxOpacity(),
-            y: getRefineBoxOpacity() > 0.5 ? 0 : 10
+            y: getRefineBoxOpacity() > 0.5 ? 0 : 10,
           }}
           transition={{ duration: 0.4 }}
           className="flex justify-center"
@@ -299,26 +303,30 @@ export function ParallelAgents({ className }: ParallelAgentsProps) {
             }}
             transition={{ duration: 0.3 }}
             className={cn(
-              "rounded-xl border p-4 text-sm text-center min-w-[200px] transition-colors",
+              'rounded-xl border p-4 text-sm text-center min-w-[200px] transition-colors',
               getRefineBoxBorder()
             )}
           >
-            <FilePenLine className={cn(
-              "h-5 w-5 mb-2 mx-auto transition-colors",
-              stage === 'refine' ? "text-primary" : "text-muted-foreground"
-            )} />
+            <FilePenLine
+              className={cn(
+                'h-5 w-5 mb-2 mx-auto transition-colors',
+                stage === 'refine' ? 'text-primary' : 'text-muted-foreground'
+              )}
+            />
             <div className="font-semibold mb-1">refine_draft_report</div>
             <p className="text-xs text-muted-foreground font-normal">
-              {stage === 'refine' ? 'Incorporating findings with citations...' : 'Draft updated with citations'}
+              {stage === 'refine'
+                ? 'Incorporating findings with citations...'
+                : 'Draft updated with citations'}
             </p>
           </motion.div>
         </motion.div>
 
         {/* Decision point - always render */}
         <motion.div
-          animate={{ 
+          animate={{
             opacity: getDecisionOpacity(),
-            y: getDecisionOpacity() > 0.5 ? 0 : 10
+            y: getDecisionOpacity() > 0.5 ? 0 : 10,
           }}
           transition={{ duration: 0.4 }}
           className="flex justify-center items-center"
@@ -341,19 +349,22 @@ export function ParallelAgents({ className }: ParallelAgentsProps) {
           <div className="flex items-start gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" />
             <div>
-              <span className="font-medium">1. Assign:</span> Supervisor generates research questions and delegates to sub-agents (max 3 parallel)
+              <span className="font-medium">1. Assign:</span> Supervisor generates research
+              questions and delegates to sub-agents (max 3 parallel)
             </div>
           </div>
           <div className="flex items-start gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" />
             <div>
-              <span className="font-medium">2. Research:</span> Sub-agents work independently with isolated contexts, return compressed findings
+              <span className="font-medium">2. Research:</span> Sub-agents work independently with
+              isolated contexts, return compressed findings
             </div>
           </div>
           <div className="flex items-start gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" />
             <div>
-              <span className="font-medium">3. Refine:</span> Findings converge, draft updated with citations, completeness assessed
+              <span className="font-medium">3. Refine:</span> Findings converge, draft updated with
+              citations, completeness assessed
             </div>
           </div>
         </div>

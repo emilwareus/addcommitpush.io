@@ -429,8 +429,7 @@ const headingVariants = cva('font-bold text-balance scroll-mt-20', {
 });
 
 export interface BlogHeadingProps
-  extends React.HTMLAttributes<HTMLHeadingElement>,
-    VariantProps<typeof headingVariants> {
+  extends React.HTMLAttributes<HTMLHeadingElement>, VariantProps<typeof headingVariants> {
   level: 1 | 2 | 3 | 4 | 5 | 6;
 }
 
@@ -481,7 +480,8 @@ const listVariants = cva('my-6 space-y-2', {
 });
 
 export interface BlogListProps
-  extends React.HTMLAttributes<HTMLUListElement | HTMLOListElement>,
+  extends
+    React.HTMLAttributes<HTMLUListElement | HTMLOListElement>,
     VariantProps<typeof listVariants> {
   variant?: 'unordered' | 'ordered' | 'checklist';
 }
