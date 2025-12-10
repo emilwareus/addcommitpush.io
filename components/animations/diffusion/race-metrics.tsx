@@ -8,10 +8,10 @@ interface RACEMetricsProps {
 }
 
 const metrics = [
-  { key: 'Comprehensiveness', think: 52.03, gemini: 50.5, openai: 49.29, claude: 48.36 },
-  { key: 'Insight', think: 53.94, gemini: 51.62, openai: 48.94, claude: 48.79 },
-  { key: 'Instruction Following', think: 52.07, gemini: 51.07, openai: 50.67, claude: 49.67 },
-  { key: 'Readability', think: 50.44, gemini: 50.22, openai: 48.82, claude: 48.31 },
+  { key: 'Comprehensiveness', tavily: 52.84, think: 52.02, gemini: 49.51, openai: 46.46, claude: 45.34 },
+  { key: 'Insight', tavily: 53.59, think: 53.88, gemini: 49.45, openai: 43.73, claude: 42.79 },
+  { key: 'Instruction Following', tavily: 51.92, think: 52.04, gemini: 50.12, openai: 49.39, claude: 47.58 },
+  { key: 'Readability', tavily: 49.21, think: 50.12, gemini: 50, openai: 47.22, claude: 44.66 },
 ];
 
 const maxScore = 55;
@@ -31,11 +31,14 @@ export function RACEMetrics({ className }: RACEMetricsProps) {
             RACE Metrics
           </p>
           <h3 className="text-xl font-bold text-foreground">ThinkDepth.ai vs peers</h3>
+          <p className="text-xs text-muted-foreground">
+            Tavily Research currently leads (closed-source; details undisclosed).
+          </p>
         </div>
       </div>
 
       <div className="space-y-6">
-        {metrics.map(({ key, think, gemini, openai, claude }) => (
+        {metrics.map(({ key, tavily, think, gemini, openai, claude }) => (
           <div key={key} className="space-y-3">
             <div className="flex justify-between items-baseline">
               <span className="text-sm font-semibold text-foreground">{key}</span>
@@ -43,10 +46,11 @@ export function RACEMetrics({ className }: RACEMetricsProps) {
             </div>
             <div className="space-y-2.5">
               {[
-                { label: 'ThinkDepth.ai', value: think, color: 'bg-primary' },
-                { label: 'Gemini 2.5 Pro Deep Research', value: gemini, color: 'bg-secondary' },
-                { label: 'OpenAI Deep Research', value: openai, color: 'bg-foreground/70' },
-                { label: 'Claude Research', value: claude, color: 'bg-border' },
+                { label: 'Tavily Research', value: tavily, color: 'bg-primary' },
+                { label: 'ThinkDepth.ai', value: think, color: 'bg-secondary' },
+                { label: 'Gemini 2.5 Pro Deep Research', value: gemini, color: 'bg-foreground/70' },
+                { label: 'OpenAI Deep Research', value: openai, color: 'bg-amber-500/80' },
+                { label: 'Claude Research', value: claude, color: 'bg-blue-500/70' },
               ].map((row) => (
                 <div key={row.label} className="flex items-center gap-4">
                   <span className="w-40 md:w-48 shrink-0 text-sm text-foreground font-medium">
@@ -70,7 +74,8 @@ export function RACEMetrics({ className }: RACEMetricsProps) {
 
       <div className="pt-4 border-t border-border/50">
         <p className="text-sm text-muted-foreground italic leading-relaxed">
-          Note: At this time, Trivy tops this benchmark with a secret model.
+          Source: DeepResearch Bench (Hugging Face). Tavily Research sits above this
+          comparison but remains closed-source.
         </p>
       </div>
     </div>
