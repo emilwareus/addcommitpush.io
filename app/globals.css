@@ -42,6 +42,13 @@
 
   --radius: 0.5rem;
 
+  /* Navbar colors */
+  --navbar: oklch(0.15 0.015 265);
+  --navbar-foreground: oklch(0.92 0.005 280);
+  --navbar-border: oklch(0.32 0.03 270);
+  --navbar-active: oklch(0.7 0.14 195);
+  --navbar-hover: oklch(0.7 0.14 195);
+
   --sidebar: oklch(0.18 0.02 270);
   --sidebar-foreground: oklch(0.92 0.005 280);
   --sidebar-primary: oklch(0.7 0.14 195);
@@ -77,6 +84,14 @@
   --chart-3: oklch(0.62 0.16 300);
   --chart-4: oklch(0.72 0.2 85);
   --chart-5: oklch(0.68 0.23 50);
+
+  /* Navbar colors */
+  --navbar: oklch(0.15 0.015 265);
+  --navbar-foreground: oklch(0.92 0.005 280);
+  --navbar-border: oklch(0.32 0.03 270);
+  --navbar-active: oklch(0.7 0.14 195);
+  --navbar-hover: oklch(0.7 0.14 195);
+
   --sidebar: oklch(0.18 0.02 270);
   --sidebar-foreground: oklch(0.92 0.005 280);
   --sidebar-primary: oklch(0.7 0.14 195);
