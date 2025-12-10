@@ -309,7 +309,8 @@ export function DiffusionDeepResearchContent() {
       <BlogHeading level={2}>Diffusion loop (core)</BlogHeading>
       <p>
         A walkthrough of how the supervisor and sub-agents iterate, including prompts, parallel
-        fan-out, and final synthesis.
+        fan-out, and final synthesis. The code is complementary to the free-text explanations, to
+        skip or deep-dive into the details as you see fit.
       </p>
 
       <BlogHeading level={3}>Phase 1 &amp; 2: Brief and initial draft generation</BlogHeading>
