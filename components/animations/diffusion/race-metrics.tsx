@@ -31,9 +31,6 @@ export function RACEMetrics({ className }: RACEMetricsProps) {
             RACE Metrics
           </p>
           <h3 className="text-xl font-bold text-foreground">ThinkDepth.ai vs peers</h3>
-          <p className="text-xs text-muted-foreground">
-            Tavily Research currently leads (closed-source; details undisclosed).
-          </p>
         </div>
       </div>
 
@@ -74,8 +71,16 @@ export function RACEMetrics({ className }: RACEMetricsProps) {
 
       <div className="pt-4 border-t border-border/50">
         <p className="text-sm text-muted-foreground italic leading-relaxed">
-          Source: DeepResearch Bench (Hugging Face). Tavily Research sits above this
-          comparison but remains closed-source.
+          Source:{' '}
+          <a
+            href="https://huggingface.co/spaces/muset-ai/DeepResearch-Bench-Leaderboard"
+            className="text-primary underline-offset-2 hover:underline"
+            target="_blank"
+            rel="noreferrer"
+          >
+            DeepResearch Bench (Hugging Face)
+          </a>
+          . Tavily Research sits above this comparison but remains closed-source.
         </p>
       </div>
     </div>
