@@ -5,7 +5,11 @@ import { z } from 'zod';
 
 // Helper to normalize color strings
 function normalizeColorString(color: string): string {
-  return color.trim().replace(/^["']|["']$/g, '').replace(/[;,]+$/, '').trim();
+  return color
+    .trim()
+    .replace(/^["']|["']$/g, '')
+    .replace(/[;,]+$/, '')
+    .trim();
 }
 
 // Helper to normalize font strings (preserve commas in font stacks)
@@ -51,7 +55,11 @@ const themeSchema = z.object({
   'sidebar-accent-foreground': z.string().optional().describe('Sidebar accent text color'),
   'sidebar-border': z.string().optional().describe('Sidebar border color'),
   'sidebar-ring': z.string().optional().describe('Sidebar focus ring color'),
-  radius: z.number().min(0).max(24).describe('Border radius in rem (0 = sharp corners, 24 = very rounded)'),
+  radius: z
+    .number()
+    .min(0)
+    .max(24)
+    .describe('Border radius in rem (0 = sharp corners, 24 = very rounded)'),
   'font-sans': z.string().optional().describe('Sans-serif font stack'),
   'font-mono': z.string().optional().describe('Monospace font stack'),
 });
@@ -69,10 +77,7 @@ export async function POST(req: Request) {
 
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
-      return NextResponse.json(
-        { error: 'OpenRouter API key not configured' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'OpenRouter API key not configured' }, { status: 500 });
     }
 
     const openrouter = createOpenRouter({
@@ -200,7 +205,10 @@ EXAMPLES:
   } catch (error) {
     console.error('Error generating theme:', error);
     return NextResponse.json(
-      { error: 'Failed to generate theme', details: error instanceof Error ? error.message : 'Unknown error' },
+      {
+        error: 'Failed to generate theme',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
     );
   }

@@ -34,26 +34,26 @@ export const ALLOWED_VARS = [
   'font-mono',
 ] as const;
 
-export type Theme = Partial<Record<typeof ALLOWED_VARS[number], string | number>>;
+export type Theme = Partial<Record<(typeof ALLOWED_VARS)[number], string | number>>;
 
 const STORAGE_KEY = 'byo-css-theme';
 
 export function normalizeColor(color: string): string {
   if (!color || typeof color !== 'string') return '';
-  
+
   // Trim whitespace and remove quotes
   let normalized = color.trim().replace(/^["']|["']$/g, '');
-  
+
   // Remove any trailing semicolons or commas
   normalized = normalized.replace(/[;,]+$/, '');
-  
+
   return normalized.trim();
 }
 
 export function validateColor(color: string): boolean {
   const normalized = normalizeColor(color);
   if (!normalized) return false;
-  
+
   // Check for common valid CSS color formats
   const colorPatterns = [
     /^oklch\([^)]+\)$/i, // oklch() format (case insensitive) - valid even if browser doesn't support it
@@ -64,17 +64,17 @@ export function validateColor(color: string): boolean {
     /^hsla\([^)]+\)$/i, // hsla()
     /^[a-z]+$/i, // named colors like "red", "blue", etc.
   ];
-  
+
   // Check if it matches a pattern
-  const matchesPattern = colorPatterns.some(pattern => pattern.test(normalized));
+  const matchesPattern = colorPatterns.some((pattern) => pattern.test(normalized));
   if (!matchesPattern) return false;
-  
+
   // For oklch(), it's a valid CSS format even if browser doesn't support it yet
   // So we accept it if it matches the pattern
   if (/^oklch\([^)]+\)$/i.test(normalized)) {
     return true;
   }
-  
+
   // For other formats, validate with CSS.supports
   try {
     return CSS.supports('color', normalized);
@@ -92,7 +92,7 @@ export function validateFont(font: string): boolean {
   if (!font || typeof font !== 'string') return false;
   const normalized = font.trim();
   if (!normalized) return false;
-  
+
   // Font stacks should be comma-separated font names, optionally with quotes
   // Examples: "Inter, sans-serif", 'Space Grotesk', 'Geist Mono', 'Geist Mono Fallback'
   // Allow font names with spaces, numbers, hyphens
@@ -113,12 +113,12 @@ export function normalizeFont(font: string): string {
 
 export function applyTheme(theme: Theme) {
   const root = document.documentElement;
-  
+
   for (const [key, value] of Object.entries(theme)) {
-    if (!ALLOWED_VARS.includes(key as typeof ALLOWED_VARS[number])) {
+    if (!ALLOWED_VARS.includes(key as (typeof ALLOWED_VARS)[number])) {
       continue;
     }
-    
+
     if (key === 'radius') {
       const radius = validateRadius(value as number);
       root.style.setProperty(`--${key}`, `${radius}rem`);
@@ -166,3 +166,4 @@ export function saveThemeToStorage(theme: Theme) {
     // Ignore storage errors
   }
 }
+

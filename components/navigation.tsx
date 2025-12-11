@@ -19,7 +19,14 @@ export function Navigation() {
   ];
 
   return (
-    <nav className="border-b backdrop-blur-sm sticky top-0 z-50" style={{ backgroundColor: 'var(--navbar)', borderColor: 'var(--navbar-border)', color: 'var(--navbar-foreground)' }}>
+    <nav
+      className="border-b backdrop-blur-sm sticky top-0 z-50"
+      style={{
+        backgroundColor: 'var(--navbar)',
+        borderColor: 'var(--navbar-border)',
+        color: 'var(--navbar-foreground)',
+      }}
+    >
       <div className="container mx-auto px-4 sm:px-6 py-4">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group">
@@ -30,7 +37,10 @@ export function Navigation() {
               height={24}
               className="w-5 h-5 md:w-6 md:h-6"
             />
-            <span className="text-base md:text-xl font-bold neon-glow" style={{ color: 'var(--navbar-active)' }}>
+            <span
+              className="text-base md:text-xl font-bold neon-glow"
+              style={{ color: 'var(--navbar-active)' }}
+            >
               <span className="hidden sm:inline">addcommitpush.io</span>
               <span className="sm:hidden">acp.io</span>
             </span>
@@ -48,7 +58,8 @@ export function Navigation() {
                     pathname === link.href ? '' : ''
                   )}
                   style={{
-                    color: pathname === link.href ? 'var(--navbar-active)' : 'var(--navbar-foreground)',
+                    color:
+                      pathname === link.href ? 'var(--navbar-active)' : 'var(--navbar-foreground)',
                   }}
                   onMouseEnter={(e) => {
                     if (pathname !== link.href) {
@@ -86,7 +97,10 @@ export function Navigation() {
         </div>
 
         {mobileMenuOpen && (
-          <div className="md:hidden mt-4 pb-4 space-y-3 border-t pt-4" style={{ borderColor: 'var(--navbar-border)' }}>
+          <div
+            className="md:hidden mt-4 pb-4 space-y-3 border-t pt-4"
+            style={{ borderColor: 'var(--navbar-border)' }}
+          >
             {links.map((link) => {
               const Icon = link.icon;
               return (
@@ -98,7 +112,8 @@ export function Navigation() {
                     'flex items-center gap-3 text-base font-medium transition-colors py-2'
                   )}
                   style={{
-                    color: pathname === link.href ? 'var(--navbar-active)' : 'var(--navbar-foreground)',
+                    color:
+                      pathname === link.href ? 'var(--navbar-active)' : 'var(--navbar-foreground)',
                   }}
                   onMouseEnter={(e) => {
                     if (pathname !== link.href) {

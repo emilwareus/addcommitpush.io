@@ -8,9 +8,23 @@ interface RACEMetricsProps {
 }
 
 const metrics = [
-  { key: 'Comprehensiveness', tavily: 52.84, think: 52.02, gemini: 49.51, openai: 46.46, claude: 45.34 },
+  {
+    key: 'Comprehensiveness',
+    tavily: 52.84,
+    think: 52.02,
+    gemini: 49.51,
+    openai: 46.46,
+    claude: 45.34,
+  },
   { key: 'Insight', tavily: 53.59, think: 53.88, gemini: 49.45, openai: 43.73, claude: 42.79 },
-  { key: 'Instruction Following', tavily: 51.92, think: 52.04, gemini: 50.12, openai: 49.39, claude: 47.58 },
+  {
+    key: 'Instruction Following',
+    tavily: 51.92,
+    think: 52.04,
+    gemini: 50.12,
+    openai: 49.39,
+    claude: 47.58,
+  },
   { key: 'Readability', tavily: 49.21, think: 50.12, gemini: 50, openai: 47.22, claude: 44.66 },
 ];
 
