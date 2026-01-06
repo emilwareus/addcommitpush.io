@@ -40,6 +40,7 @@ jobs:
         if: github.event_name == 'pull_request'
         id: deploy_preview
         run: |
+          mkdir -p .vercel
           bash scripts/deploy-vercel.sh preview --output .vercel/last-deployment-url.txt | tee .vercel/preview-url.txt
           echo "url=$(tail -n1 .vercel/preview-url.txt | tr -d '\n')" >> $GITHUB_OUTPUT
 
