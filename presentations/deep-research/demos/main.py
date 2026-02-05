@@ -111,7 +111,10 @@ def main() -> None:
         sources.update(re.findall(r'https?://[^\s"\'\]>]+', report))
 
     total_cost, total_calls = log.get_total_cost()
-    print(f"\n{log.DIM}Completed in {elapsed:.1f}s | Total LLM cost: ${total_cost:.4f} | LLM calls: {total_calls} | Sources: {len(sources)}{log.RESET}\n")
+    print(
+        f"\n{log.DIM}Completed in {elapsed:.1f}s | Total LLM cost: ${total_cost:.4f}"
+        f" | LLM calls: {total_calls} | Sources: {len(sources)}{log.RESET}\n"
+    )
 
 
 if __name__ == "__main__":

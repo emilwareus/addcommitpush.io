@@ -36,7 +36,6 @@ import os
 from datetime import datetime
 from typing import Annotated, Literal, Sequence
 
-from langchain_openai import ChatOpenAI
 from langchain_core.messages import (
     AIMessage,
     BaseMessage,
@@ -46,13 +45,13 @@ from langchain_core.messages import (
     filter_messages,
 )
 from langchain_core.tools import tool
-from langgraph.graph import StateGraph, START, END
+from langchain_openai import ChatOpenAI
+from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.types import Command
 from pydantic import BaseModel, Field
 from tavily import TavilyClient
 from typing_extensions import TypedDict
-
 
 # ╔══════════════════════════════════════════════════════════════════════╗
 # ║  LLM CONFIGURATION                                                  ║
@@ -316,7 +315,6 @@ def research_llm_call(state: ResearcherState) -> dict:
     import log
 
     messages = state["researcher_messages"]
-    topic = state.get("research_topic", "")
 
     prompt = RESEARCH_AGENT_PROMPT.format(date=get_today_str())
     response = llm_with_research_tools.invoke(

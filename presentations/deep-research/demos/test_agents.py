@@ -9,18 +9,13 @@ real LLM/search API calls. Each agent's compiled graph is tested for:
 """
 
 import operator
-from typing import Annotated
-from unittest.mock import MagicMock, patch
-
-import pytest
-from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
-from typing_extensions import TypedDict
-
 
 # ── Helpers ──────────────────────────────────────────────────────────────
-
 # Set dummy env vars before importing agents (they create LLM at import time)
 import os
+
+import pytest
+from langchain_core.messages import AIMessage, HumanMessage
 
 os.environ.setdefault("OPENROUTER_API_KEY", "test-key")
 os.environ.setdefault("TAVILY_API_KEY", "test-key")
@@ -95,7 +90,8 @@ class TestSTORMAgent:
         assert "discover_perspectives" in node_names
         assert "conduct_interview" in node_names
         assert "generate_outline" in node_names
-        assert "write_report" in node_names
+        assert "write_sections" in node_names
+        assert "write_lead_and_assemble" in node_names
 
     def test_initial_state_structure(self):
         from storm_agent import initial_state
@@ -104,7 +100,10 @@ class TestSTORMAgent:
         assert state["topic"] == "test topic"
         assert state["analysts"] == []
         assert state["interview_results"] == []
+        assert state["collected_info"] == []
+        assert state["collected_urls"] == []
         assert state["outline"] == ""
+        assert state["section_texts"] == []
         assert state["final_report"] == ""
 
     def test_interview_subgraph_has_expected_nodes(self):
@@ -118,16 +117,8 @@ class TestSTORMAgent:
     def test_should_continue_interview_respects_max_turns(self):
         from storm_agent import should_continue_interview
 
-        # 3 turns = 6 messages (Q&A pairs)
-        messages = [
-            HumanMessage(content="q1", name="WikiWriter"),
-            AIMessage(content="a1", name="TopicExpert"),
-            HumanMessage(content="q2", name="WikiWriter"),
-            AIMessage(content="a2", name="TopicExpert"),
-            HumanMessage(content="q3", name="WikiWriter"),
-            AIMessage(content="a3", name="TopicExpert"),
-        ]
-        state = {"messages": messages, "max_turns": 3}
+        # turn_count tracks turns, not message count
+        state = {"messages": [], "turn_count": 3}
 
         result = should_continue_interview(state)
         assert result == "compile_interview"
@@ -135,38 +126,39 @@ class TestSTORMAgent:
     def test_should_continue_interview_continues_when_turns_remain(self):
         from storm_agent import should_continue_interview
 
-        messages = [
-            HumanMessage(content="q1", name="WikiWriter"),
-            AIMessage(content="a1", name="TopicExpert"),
-        ]
-        state = {"messages": messages, "max_turns": 3}
+        state = {"messages": [], "turn_count": 1}
 
         result = should_continue_interview(state)
         assert result == "answer_question"
 
-    def test_should_continue_interview_stops_on_complete_signal(self):
+    def test_should_continue_interview_stops_on_thank_you(self):
         from storm_agent import should_continue_interview
 
+        # Reference uses "Thank you so much for your help!" as stop signal
         messages = [
-            HumanMessage(content="INTERVIEW_COMPLETE", name="WikiWriter"),
+            HumanMessage(content="Thank you so much for your help!", name="WikiWriter"),
         ]
-        state = {"messages": messages, "max_turns": 5}
+        state = {"messages": messages, "turn_count": 1}
 
         result = should_continue_interview(state)
         assert result == "compile_interview"
 
     def test_initiate_interviews_creates_sends(self):
-        from storm_agent import initiate_interviews
         from langgraph.types import Send
+
+        from storm_agent import initiate_interviews
 
         state = {
             "topic": "AI safety",
             "analysts": [
-                {"name": "Alice", "role": "Engineer", "focus": "technical", "description": "..."},
-                {"name": "Bob", "role": "Ethicist", "focus": "ethics", "description": "..."},
+                {"name": "Security Expert", "description": "Focuses on technical risks"},
+                {"name": "Policy Analyst", "description": "Focuses on regulation"},
             ],
             "interview_results": [],
+            "collected_info": [],
+            "collected_urls": [],
             "outline": "",
+            "section_texts": [],
             "final_report": "",
         }
 
@@ -178,15 +170,13 @@ class TestSTORMAgent:
         from storm_agent import Analyst
 
         analyst = Analyst(
-            name="Test",
-            role="Engineer",
-            focus="technical details",
-            description="A test analyst",
+            name="Test Expert",
+            description="A test analyst persona",
         )
-        assert analyst.name == "Test"
+        assert analyst.name == "Test Expert"
         dumped = analyst.model_dump()
         assert "name" in dumped
-        assert "role" in dumped
+        assert "description" in dumped
 
     def test_graph_compiles(self):
         from storm_agent import graph
@@ -208,12 +198,11 @@ class TestDiffusionAgent:
         from diffusion_agent import graph
 
         node_names = set(graph.nodes.keys())
-        assert "generate_brief" in node_names
-        assert "generate_noisy_draft" in node_names
-        assert "identify_gaps" in node_names
-        assert "research_sub_agent" in node_names
-        assert "refine_draft" in node_names
-        assert "generate_report" in node_names
+        assert "write_research_brief" in node_names
+        assert "write_draft_report" in node_names
+        assert "supervisor" in node_names
+        assert "supervisor_tools" in node_names
+        assert "final_report_generation" in node_names
 
     def test_initial_state_structure(self):
         from diffusion_agent import initial_state
@@ -221,69 +210,55 @@ class TestDiffusionAgent:
         state = initial_state("test query")
         assert state["query"] == "test query"
         assert state["research_brief"] == ""
-        assert state["current_draft"] == ""
-        assert state["iteration"] == 0
-        assert state["max_iterations"] == 3
-        assert state["research_findings"] == []
-        assert state["sources"] == []
-        assert state["research_questions"] == []
+        assert state["draft_report"] == ""
+        assert state["supervisor_messages"] == []
+        assert state["notes"] == []
+        assert state["raw_notes"] == []
+        assert state["research_iterations"] == 0
         assert state["final_report"] == ""
 
-    def test_should_continue_stops_at_max_iterations(self):
-        from diffusion_agent import should_continue
+    def test_research_sub_agent_compiles(self):
+        """The research sub-agent (ReAct loop) should compile."""
+        from diffusion_agent import research_agent
 
-        state = {
-            "query": "test",
-            "current_draft": "Some draft content.",
-            "iteration": 3,
-            "max_iterations": 3,
-        }
+        assert research_agent is not None
+        assert hasattr(research_agent, "invoke")
 
-        result = should_continue(state)
-        assert result == "generate_report"
+    def test_research_sub_agent_has_expected_nodes(self):
+        from diffusion_agent import research_agent
 
-    def test_dispatch_research_creates_sends(self):
-        from diffusion_agent import dispatch_research
-        from langgraph.types import Send
+        node_names = set(research_agent.nodes.keys())
+        assert "research_llm_call" in node_names
+        assert "research_tool_node" in node_names
+        assert "compress_research" in node_names
 
-        state = {
-            "query": "AI safety",
-            "research_questions": ["What is alignment?", "What are risks?"],
-            "research_brief": "",
-            "current_draft": "",
-            "iteration": 0,
-            "max_iterations": 3,
-            "research_findings": [],
-            "sources": [],
-            "final_report": "",
-        }
+    def test_state_notes_uses_operator_add(self):
+        """Verify that notes field uses operator.add for safe merging."""
+        import typing
 
-        sends = dispatch_research(state)
-        assert len(sends) == 2
-        assert all(isinstance(s, Send) for s in sends)
-
-    def test_state_iteration_uses_operator_add(self):
-        """Verify that iteration field uses operator.add annotation."""
         from diffusion_agent import DiffusionState
 
-        annotations = DiffusionState.__annotations__
-        # Check that iteration is Annotated with operator.add
-        import typing
         hint = typing.get_type_hints(DiffusionState, include_extras=True)
-        iter_hint = hint["iteration"]
-        # Annotated types have __metadata__
-        assert hasattr(iter_hint, "__metadata__")
-        assert operator.add in iter_hint.__metadata__
+        notes_hint = hint["notes"]
+        assert hasattr(notes_hint, "__metadata__")
+        assert operator.add in notes_hint.__metadata__
 
-    def test_state_research_findings_uses_operator_add(self):
-        """Verify that research_findings uses operator.add for safe parallel merging."""
+    def test_state_raw_notes_uses_operator_add(self):
+        """Verify that raw_notes uses operator.add for parallel sub-agent merging."""
+        import typing
+
         from diffusion_agent import DiffusionState
 
-        import typing
         hint = typing.get_type_hints(DiffusionState, include_extras=True)
-        findings_hint = hint["research_findings"]
-        assert hasattr(findings_hint, "__metadata__")
-        assert operator.add in findings_hint.__metadata__
+        raw_hint = hint["raw_notes"]
+        assert hasattr(raw_hint, "__metadata__")
+        assert operator.add in raw_hint.__metadata__
+
+    def test_max_supervisor_iterations_constant(self):
+        from diffusion_agent import MAX_SUPERVISOR_ITERATIONS
+
+        assert isinstance(MAX_SUPERVISOR_ITERATIONS, int)
+        assert MAX_SUPERVISOR_ITERATIONS > 0
 
     def test_graph_compiles(self):
         from diffusion_agent import graph
@@ -353,8 +328,8 @@ class TestCostTrackingIntegration:
         """Dump response_metadata to discover where OpenRouter puts cost info."""
         import json
 
-        from langchain_openai import ChatOpenAI
         from langchain_core.messages import HumanMessage
+        from langchain_openai import ChatOpenAI
 
         llm = ChatOpenAI(
             model="openai/gpt-oss-120b",
@@ -393,9 +368,8 @@ class TestCostTrackingIntegration:
         state = initial_state("What is 2+2? Answer in one word.")
         config = {"recursion_limit": 10}
 
-        final_state = state
         for update in graph.stream(state, config=config, stream_mode="values"):
-            final_state = update
+            _ = update
 
         total_cost, total_calls = log.get_total_cost()
         print(f"\nTotal cost: ${total_cost:.6f}, calls: {total_calls}")

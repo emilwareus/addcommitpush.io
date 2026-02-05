@@ -35,18 +35,17 @@ import operator
 import os
 from typing import Annotated, Literal
 
-from langchain_openai import ChatOpenAI
 from langchain_core.messages import (
     AIMessage,
     HumanMessage,
     SystemMessage,
 )
+from langchain_openai import ChatOpenAI
+from langgraph.graph import END, START, StateGraph
 from langgraph.types import Send
-from langgraph.graph import StateGraph, START, END
 from pydantic import BaseModel, Field
 from tavily import TavilyClient
 from typing_extensions import TypedDict
-
 
 # ╔══════════════════════════════════════════════════════════════════════╗
 # ║  LLM + SEARCH CONFIGURATION                                         ║

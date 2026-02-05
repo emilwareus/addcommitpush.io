@@ -20,14 +20,13 @@ Key concepts demonstrated:
 import os
 from typing import Annotated
 
+from langchain_core.messages import SystemMessage
 from langchain_openai import ChatOpenAI
 from langchain_tavily import TavilySearch
-from langchain_core.messages import SystemMessage
-from langgraph.graph import StateGraph, START, END
+from langgraph.graph import END, START, StateGraph
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
 from typing_extensions import TypedDict
-
 
 # ╔══════════════════════════════════════════════════════════════════════╗
 # ║  LLM CONFIGURATION                                                  ║
