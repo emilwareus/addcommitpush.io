@@ -10,10 +10,10 @@ import { SpotifyCard } from './components/spotify-card';
 export const revalidate = 14400; // 4 hours in seconds
 
 export const metadata = {
-  title: 'Status - Emil Wareus',
+  title: 'Status - Emil Wåreus',
   description: "What I'm working on, listening to, and doing right now.",
   openGraph: {
-    title: 'Status - Emil Wareus',
+    title: 'Status - Emil Wåreus',
     description: 'Real-time view into my current activities.',
     url: 'https://addcommitpush.io/status',
     images: [
@@ -27,7 +27,7 @@ export const metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Status - Emil Wareus',
+    title: 'Status - Emil Wåreus',
     description: 'Real-time view into my current activities.',
     images: ['https://addcommitpush.io/og-status.png'],
   },

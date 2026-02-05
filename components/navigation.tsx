@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Activity, Cpu, Earth, Menu, X } from 'lucide-react';
+import { Activity, Cpu, Earth, Menu, Presentation, X } from 'lucide-react';
 import { useState } from 'react';
 import Image from 'next/image';
 import { ThemeSelector } from '@/components/theme-selector';
@@ -14,9 +14,13 @@ export function Navigation() {
 
   const links = [
     { href: '/', label: 'Blog', icon: Earth },
+    { href: '/presentations', label: 'Presentations', icon: Presentation },
     { href: '/about', label: 'About', icon: Cpu },
     { href: '/status', label: 'Status', icon: Activity },
   ];
+
+  const isActive = (href: string) =>
+    href === '/' ? pathname === '/' : pathname.startsWith(href);
 
   return (
     <nav
@@ -55,19 +59,19 @@ export function Navigation() {
                   href={link.href}
                   className={cn(
                     'flex items-center gap-2 text-sm font-medium transition-colors',
-                    pathname === link.href ? '' : ''
+                    isActive(link.href) ? '' : ''
                   )}
                   style={{
                     color:
-                      pathname === link.href ? 'var(--navbar-active)' : 'var(--navbar-foreground)',
+                      isActive(link.href) ? 'var(--navbar-active)' : 'var(--navbar-foreground)',
                   }}
                   onMouseEnter={(e) => {
-                    if (pathname !== link.href) {
+                    if (!isActive(link.href)) {
                       e.currentTarget.style.color = 'var(--navbar-hover)';
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (pathname !== link.href) {
+                    if (!isActive(link.href)) {
                       e.currentTarget.style.color = 'var(--navbar-foreground)';
                     }
                   }}
@@ -113,15 +117,15 @@ export function Navigation() {
                   )}
                   style={{
                     color:
-                      pathname === link.href ? 'var(--navbar-active)' : 'var(--navbar-foreground)',
+                      isActive(link.href) ? 'var(--navbar-active)' : 'var(--navbar-foreground)',
                   }}
                   onMouseEnter={(e) => {
-                    if (pathname !== link.href) {
+                    if (!isActive(link.href)) {
                       e.currentTarget.style.color = 'var(--navbar-hover)';
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (pathname !== link.href) {
+                    if (!isActive(link.href)) {
                       e.currentTarget.style.color = 'var(--navbar-foreground)';
                     }
                   }}

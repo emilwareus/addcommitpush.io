@@ -10,9 +10,9 @@ interface DiffusionOverviewProps {
 }
 
 const diffusionLoopStages = [
-  'Identify Gaps → ask research questions',
-  'Conduct Research in parallel + citations',
-  'Refine Draft Report → assess completeness',
+  'Supervisor identifies gaps → calls ConductResearch tool',
+  'ReAct sub-agents search in parallel → compress findings',
+  'Refine draft with evidence → supervisor assesses completeness',
 ];
 
 // Per-phase dwell times (ms): brief, initial draft, diffusion loop (slower), final report (faster)
@@ -28,7 +28,7 @@ const phases: { label: string; icon: LucideIcon; text: string; isLoop?: boolean 
   {
     label: 'Initial Draft',
     icon: FilePenLine,
-    text: 'Creates a noisy draft from model knowledge only—no external facts yet, just structure and placeholders.',
+    text: 'Creates a noisy draft from LLM knowledge only (high temperature)—no search yet, intentionally speculative.',
   },
   {
     label: 'Diffusion Loop',
