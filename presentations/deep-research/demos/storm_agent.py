@@ -48,7 +48,7 @@ from tavily import TavilyClient
 from typing_extensions import TypedDict
 
 # ╔══════════════════════════════════════════════════════════════════════╗
-# ║  LLM + SEARCH CONFIGURATION                                         ║
+# ║  LLM + SEARCH CONFIGURATION                                          ║
 # ║                                                                      ║
 # ║  Reference uses 5 separate models (conv, question, outline,          ║
 # ║  article, polish). We use one fast model for demo speed.             ║
@@ -75,7 +75,7 @@ SEARCH_TOP_K = 3           # Reference default: 3 results per query
 # ╔══════════════════════════════════════════════════════════════════════╗
 # ║  PYDANTIC MODELS — STRUCTURED OUTPUT                                 ║
 # ║                                                                      ║
-# ║  Reference uses DSPy signatures. We use Pydantic with               ║
+# ║  Reference uses DSPy signatures. We use Pydantic with                ║
 # ║  with_structured_output() for the same typed extraction.             ║
 # ╚══════════════════════════════════════════════════════════════════════╝
 
@@ -231,7 +231,7 @@ def discover_perspectives(state: STORMState) -> dict:
 
 
 # ╔══════════════════════════════════════════════════════════════════════╗
-# ║  PHASE 2: MULTI-TURN CONVERSATIONS (WikiWriter ↔ TopicExpert)       ║
+# ║  PHASE 2: MULTI-TURN CONVERSATIONS (WikiWriter ↔ TopicExpert)        ║
 # ║                                                                      ║
 # ║  Reference: knowledge_curation.py                                    ║
 # ║  For each persona, a ConvSimulator runs max_turn iterations:         ║
@@ -442,6 +442,20 @@ def answer_question(state: InterviewState) -> dict:
     }
 
 
+COMPILE_INTERVIEW_PROMPT = """Summarize the key findings from this research interview.
+Perspective: {persona_name} — {persona_description}
+
+Interview transcript:
+{conversation}
+
+Provide a structured summary with:
+1. Key findings (preserve all factual claims)
+2. Important data points and quotes
+3. Inline citations [1], [2] etc. as they appeared in the expert answers
+
+Keep all citations intact. Be thorough — every fact matters for article writing."""
+
+
 def compile_interview(state: InterviewState) -> dict:
     """Compile the interview into a summary preserving citations.
 
@@ -462,18 +476,11 @@ def compile_interview(state: InterviewState) -> dict:
         if hasattr(msg, "content") and msg.content
     )
 
-    prompt = f"""Summarize the key findings from this research interview.
-Perspective: {analyst['name']} — {analyst['description']}
-
-Interview transcript:
-{conversation}
-
-Provide a structured summary with:
-1. Key findings (preserve all factual claims)
-2. Important data points and quotes
-3. Inline citations [1], [2] etc. as they appeared in the expert answers
-
-Keep all citations intact. Be thorough — every fact matters for article writing."""
+    prompt = COMPILE_INTERVIEW_PROMPT.format(
+        persona_name=analyst["name"],
+        persona_description=analyst["description"],
+        conversation=conversation,
+    )
 
     response = llm.invoke([HumanMessage(content=prompt)])
     log.track_cost(response.response_metadata)
@@ -528,10 +535,10 @@ interview_graph = _interview_builder.compile()
 # ║  FAN-OUT: Launch parallel interviews via Send()                      ║
 # ║                                                                      ║
 # ║  Reference: knowledge_curation.py uses ThreadPoolExecutor            ║
-# ║  We use LangGraph's Send() API for the same parallel fan-out.       ║
-# ║  Each Send targets conduct_interview with its own InterviewState.   ║
+# ║  We use LangGraph's Send() API for the same parallel fan-out.        ║
+# ║  Each Send targets conduct_interview with its own InterviewState.    ║
 # ║  When all complete, interview_results are concatenated via           ║
-# ║  operator.add annotation.                                           ║
+# ║  operator.add annotation.                                            ║
 # ╚══════════════════════════════════════════════════════════════════════╝
 
 
@@ -573,15 +580,15 @@ def conduct_interview(state: InterviewState) -> dict:
 
 
 # ╔══════════════════════════════════════════════════════════════════════╗
-# ║  PHASE 3: OUTLINE GENERATION (Two-Stage)                            ║
+# ║  PHASE 3: OUTLINE GENERATION (Two-Stage)                             ║
 # ║                                                                      ║
 # ║  Reference: outline_generation.py                                    ║
-# ║  Stage 1: WritePageOutline — draft from LLM knowledge ONLY          ║
+# ║  Stage 1: WritePageOutline — draft from LLM knowledge ONLY           ║
 # ║  Stage 2: WritePageOutlineFromConv — refine with conversation data   ║
 # ║                                                                      ║
 # ║  The two-stage approach prevents the outline from being biased by    ║
-# ║  whichever perspective found the most data. The LLM first proposes  ║
-# ║  a structurally sound outline, then adapts it to the actual data.   ║
+# ║  whichever perspective found the most data. The LLM first proposes   ║
+# ║  a structurally sound outline, then adapts it to the actual data.    ║
 # ╚══════════════════════════════════════════════════════════════════════╝
 
 # ── Reference prompts ──
@@ -656,7 +663,7 @@ def generate_outline(state: STORMState) -> dict:
 
 
 # ╔══════════════════════════════════════════════════════════════════════╗
-# ║  PHASE 4: PER-SECTION ARTICLE WRITING                               ║
+# ║  PHASE 4: PER-SECTION ARTICLE WRITING                                ║
 # ║                                                                      ║
 # ║  Reference: article_generation.py                                    ║
 # ║  Each top-level section is written independently with relevant       ║
@@ -664,8 +671,8 @@ def generate_outline(state: STORMState) -> dict:
 # ║  Reference uses SentenceTransformer cosine similarity for retrieval. ║
 # ║  We pass all collected info (small enough for a demo query).         ║
 # ║                                                                      ║
-# ║  Key: sections are written IN PARALLEL (ref: ThreadPoolExecutor).   ║
-# ║  We write them sequentially for clearer demo logging.               ║
+# ║  Key: sections are written IN PARALLEL (ref: ThreadPoolExecutor).    ║
+# ║  We write them sequentially for clearer demo logging.                ║
 # ╚══════════════════════════════════════════════════════════════════════╝
 
 # ── Reference prompt (WriteSection signature) ──
@@ -757,7 +764,7 @@ def write_sections(state: STORMState) -> dict:
 
 
 # ╔══════════════════════════════════════════════════════════════════════╗
-# ║  PHASE 5: LEAD SECTION + ASSEMBLY                                   ║
+# ║  PHASE 5: LEAD SECTION + ASSEMBLY                                    ║
 # ║                                                                      ║
 # ║  Reference: article_polish.py                                        ║
 # ║  Lead section is written AFTER the body so it reflects actual        ║
@@ -823,7 +830,7 @@ def write_lead_and_assemble(state: STORMState) -> dict:
 # ║  GRAPH ASSEMBLY                                                      ║
 # ║                                                                      ║
 # ║  The STORM pipeline is LINEAR — each phase feeds the next.           ║
-# ║  Parallelism happens WITHIN Phase 2 via Send() fan-out.             ║
+# ║  Parallelism happens WITHIN Phase 2 via Send() fan-out.              ║
 # ║                                                                      ║
 # ║  Reference pipeline:                                                 ║
 # ║    knowledge_curation → outline_generation → article_generation      ║

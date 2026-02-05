@@ -54,10 +54,10 @@ from tavily import TavilyClient
 from typing_extensions import TypedDict
 
 # ╔══════════════════════════════════════════════════════════════════════╗
-# ║  LLM CONFIGURATION                                                  ║
+# ║  LLM CONFIGURATION                                                   ║
 # ║                                                                      ║
 # ║  Using OpenRouter to route to Groq for fastest inference.            ║
-# ║  The reference uses gpt-5; we use gpt-oss-120b for demo speed.      ║
+# ║  The reference uses gpt-5; we use gpt-oss-120b for demo speed.       ║
 # ╚══════════════════════════════════════════════════════════════════════╝
 
 llm = ChatOpenAI(
@@ -195,7 +195,7 @@ class DiffusionState(TypedDict):
 
 
 # ╔══════════════════════════════════════════════════════════════════════╗
-# ║  PHASE 1: RESEARCH BRIEF                                            ║
+# ║  PHASE 1: RESEARCH BRIEF                                             ║
 # ║                                                                      ║
 # ║  Reference: research_agent_scope.py → write_research_brief()         ║
 # ║  Converts user query into a detailed, structured research brief.     ║
@@ -238,10 +238,10 @@ def write_research_brief(state: DiffusionState) -> dict:
 
 
 # ╔══════════════════════════════════════════════════════════════════════╗
-# ║  PHASE 2: NOISY DRAFT                                               ║
+# ║  PHASE 2: NOISY DRAFT                                                ║
 # ║                                                                      ║
 # ║  Reference: research_agent_scope.py → write_draft_report()           ║
-# ║  The "noise" — a draft from LLM knowledge ONLY, no search.          ║
+# ║  The "noise" — a draft from LLM knowledge ONLY, no search.           ║
 # ║  Higher temperature encourages speculative content that will be      ║
 # ║  verified/corrected by real research in subsequent phases.           ║
 # ╚══════════════════════════════════════════════════════════════════════╝
@@ -284,10 +284,10 @@ def write_draft_report(state: DiffusionState) -> dict:
 
 
 # ╔══════════════════════════════════════════════════════════════════════╗
-# ║  SUB-AGENT: RESEARCH AGENT (ReAct pattern)                          ║
+# ║  SUB-AGENT: RESEARCH AGENT (ReAct pattern)                           ║
 # ║                                                                      ║
 # ║  Reference: research_agent.py                                        ║
-# ║  Each sub-agent runs a ReAct loop: LLM → tool calls → LLM → ...     ║
+# ║  Each sub-agent runs a ReAct loop: LLM → tool calls → LLM → ...      ║
 # ║  Uses tavily_search for web search and think_tool for reflection.    ║
 # ║  Results are compressed before returning to the supervisor.          ║
 # ╚══════════════════════════════════════════════════════════════════════╝
@@ -349,6 +349,22 @@ def research_tool_node(state: ResearcherState) -> dict:
     return {"researcher_messages": tool_outputs}
 
 
+COMPRESS_RESEARCH_PROMPT = """Clean up these research findings. Preserve ALL information and source URLs.
+
+Research topic: {topic}
+
+Raw findings:
+{findings_text}
+
+Rules:
+- Preserve ALL relevant information verbatim
+- Include ALL source URLs as [Source: URL] citations
+- Remove duplicates
+- Structure: Cleaned findings with inline citations, then a Sources section listing all URLs
+
+Return the cleaned findings."""
+
+
 def compress_research(state: ResearcherState) -> dict:
     """Compress research findings into a concise summary with citations.
 
@@ -378,20 +394,10 @@ def compress_research(state: ResearcherState) -> dict:
 
     findings_text = "\n\n---\n\n".join(raw_notes)
 
-    prompt = f"""Clean up these research findings. Preserve ALL information and source URLs.
-
-Research topic: {topic}
-
-Raw findings:
-{findings_text}
-
-Rules:
-- Preserve ALL relevant information verbatim
-- Include ALL source URLs as [Source: URL] citations
-- Remove duplicates
-- Structure: Cleaned findings with inline citations, then a Sources section listing all URLs
-
-Return the cleaned findings."""
+    prompt = COMPRESS_RESEARCH_PROMPT.format(
+        topic=topic,
+        findings_text=findings_text,
+    )
 
     response = llm.invoke([HumanMessage(content=prompt)])
     log.track_cost(response.response_metadata)
@@ -432,13 +438,13 @@ research_agent = _research_builder.compile()
 # ║                                                                      ║
 # ║  Reference: multi_agent_supervisor.py                                ║
 # ║  The supervisor LLM decides what to research next using tools:       ║
-# ║  - ConductResearch: spawn a sub-agent for a specific topic          ║
-# ║  - refine_draft_report: update the draft with findings              ║
+# ║  - ConductResearch: spawn a sub-agent for a specific topic           ║
+# ║  - refine_draft_report: update the draft with findings               ║
 # ║  - think_tool: reflect on progress                                   ║
 # ║  - ResearchComplete: signal we're done                               ║
 # ║                                                                      ║
 # ║  This loop IS the diffusion denoising — each iteration reduces       ║
-# ║  uncertainty in the draft by replacing speculation with evidence.     ║
+# ║  uncertainty in the draft by replacing speculation with evidence.    ║
 # ╚══════════════════════════════════════════════════════════════════════╝
 
 MAX_SUPERVISOR_ITERATIONS = 8
@@ -515,18 +521,7 @@ def supervisor(state: DiffusionState) -> Command[Literal["supervisor_tools"]]:
     )
 
 
-def _refine_draft(state: DiffusionState) -> str:
-    """Refine the draft report using collected findings."""
-    import log
-
-    notes = _get_notes_from_tool_calls(state.get("supervisor_messages", []))
-    findings = "\n".join(notes)
-    draft = state.get("draft_report", "")
-    brief = state.get("research_brief", "")
-
-    log.step("*", "Refining draft report with new findings...")
-
-    prompt = f"""Refine this draft report using the new research findings.
+REFINE_DRAFT_PROMPT = """Refine this draft report using the new research findings.
 
 Research Brief:
 {brief}
@@ -545,6 +540,24 @@ Rules:
 - Write in markdown with ## section headers
 
 Return the complete updated draft."""
+
+
+def _refine_draft(state: DiffusionState) -> str:
+    """Refine the draft report using collected findings."""
+    import log
+
+    notes = _get_notes_from_tool_calls(state.get("supervisor_messages", []))
+    findings = "\n".join(notes)
+    draft = state.get("draft_report", "")
+    brief = state.get("research_brief", "")
+
+    log.step("*", "Refining draft report with new findings...")
+
+    prompt = REFINE_DRAFT_PROMPT.format(
+        brief=brief,
+        draft=draft,
+        findings=findings,
+    )
 
     response = llm.invoke([HumanMessage(content=prompt)])
     log.track_cost(response.response_metadata)
@@ -656,7 +669,7 @@ def supervisor_tools_node(state: DiffusionState) -> Command[Literal["supervisor"
 
 
 # ╔══════════════════════════════════════════════════════════════════════╗
-# ║  PHASE 5: FINAL REPORT                                              ║
+# ║  PHASE 5: FINAL REPORT                                               ║
 # ║                                                                      ║
 # ║  Reference: research_agent_full.py → final_report_generation()       ║
 # ║  Polish the refined draft into a professional final report.          ║
