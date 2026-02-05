@@ -1,6 +1,6 @@
 ---
 date: 2025-11-21T12:30:00+0000
-researcher: Emil Wareus
+researcher: Emil Wåreus
 git_commit: 6a27b87a0b5c98277f9e2c7f1fb3348e5edadc17
 branch: feat/custom-deep-research
 repository: addcommitpush.io
@@ -18,13 +18,13 @@ tags:
   ]
 status: complete
 last_updated: 2025-11-21
-last_updated_by: Emil Wareus
+last_updated_by: Emil Wåreus
 ---
 
 # Research: Interactive Research CLI Mode Architecture
 
 **Date**: 2025-11-21T12:30:00+0000
-**Researcher**: Emil Wareus
+**Researcher**: Emil Wåreus
 **Git Commit**: 6a27b87a0b5c98277f9e2c7f1fb3348e5edadc17
 **Branch**: feat/custom-deep-research
 **Repository**: addcommitpush.io

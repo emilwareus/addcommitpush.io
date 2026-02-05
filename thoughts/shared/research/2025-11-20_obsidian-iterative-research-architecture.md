@@ -1,6 +1,6 @@
 ---
 date: 2025-11-20T10:31:21+0000
-researcher: Emil Wareus
+researcher: Emil Wåreus
 git_commit: c032b77aec5b215d766dad45f6511c629f728e73
 branch: feat/custom-deep-research
 repository: addcommitpush.io
@@ -8,13 +8,13 @@ topic: 'Obsidian-Based Iterative Research System Architecture'
 tags: [research, deep-research-agent, obsidian, knowledge-graph, multi-agent, langgraph]
 status: complete
 last_updated: 2025-11-20
-last_updated_by: Emil Wareus
+last_updated_by: Emil Wåreus
 ---
 
 # Research: Obsidian-Based Iterative Research System Architecture
 
 **Date**: 2025-11-20T10:31:21+0000
-**Researcher**: Emil Wareus
+**Researcher**: Emil Wåreus
 **Git Commit**: c032b77aec5b215d766dad45f6511c629f728e73
 **Branch**: feat/custom-deep-research
 **Repository**: addcommitpush.io

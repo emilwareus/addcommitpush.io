@@ -7,30 +7,31 @@ import { FilePenLine, FileCheck2 } from 'lucide-react';
 
 const stages = [
   {
-    label: 'Bullets',
-    render: (
-      <ul className="list-disc pl-5 space-y-1">
-        <li>Compare OpenAI, Anthropic, DeepMind safety pillars</li>
-        <li>Pull 3–5 primary sources (2023–2025)</li>
-      </ul>
-    ),
-  },
-  {
-    label: 'Masked draft',
+    label: 'Noisy draft (LLM knowledge only)',
     render: (
       <p>
-        The report covers <span className="bg-muted px-1 rounded">[pillars]</span> across labs,
-        highlighting <span className="bg-muted px-1 rounded">[methods]</span> with citations to
-        <span className="bg-muted px-1 rounded">[sources]</span>.
+        Foo Café is a <span className="bg-muted px-1 rounded">[community space?]</span> in Malmö
+        that hosts <span className="bg-muted px-1 rounded">[tech events?]</span>. They may have
+        connections to <span className="bg-muted px-1 rounded">[startups?]</span>...
       </p>
     ),
   },
   {
-    label: 'Refined text',
+    label: 'After research + refinement',
     render: (
       <p>
-        OpenAI: RLHF + eval gates. Anthropic: Constitutional AI + red-team. DeepMind:
-        interpretability + strict evals. Cited incidents and mitigations mapped to primary URLs.
+        Foo Café is a community-driven tech space in Malmö founded in 2012. They host hack nights,
+        tech talks, and pitch evenings. <span className="bg-muted px-1 rounded">[attendance?]</span>{' '}
+        [Source: foocafe.org]
+      </p>
+    ),
+  },
+  {
+    label: 'Evidence-complete draft',
+    render: (
+      <p>
+        Foo Café hosts ~300 events/year with 1,691 Meetup members. Weekly hack nights see ~84%
+        RSVP conversion. Topics: AI/ML, FinTech, Web Dev. [Source: meetup.com/foocafe]
       </p>
     ),
   },
@@ -47,15 +48,15 @@ export function DraftDenoising({ className }: DraftDenoisingProps) {
 
   useEffect(() => {
     if (!isInView) return;
-    const isAtEnd = iteration >= 15;
-    const delay = isAtEnd ? 5000 : 700; // 5s hold on 15/15 before restarting
+    const isAtEnd = iteration >= 8;
+    const delay = isAtEnd ? 5000 : 900; // 5s hold on 8/8 before restarting
 
-    const id = setTimeout(() => setIteration((prev) => (prev >= 15 ? 1 : prev + 1)), delay);
+    const id = setTimeout(() => setIteration((prev) => (prev >= 8 ? 1 : prev + 1)), delay);
     return () => clearTimeout(id);
   }, [isInView, iteration]);
 
-  const progress = Math.min(iteration / 15, 1);
-  const stageIndex = Math.min(2, Math.floor((iteration - 1) / 5)); // 1-5, 6-10, 11-15
+  const progress = Math.min(iteration / 8, 1);
+  const stageIndex = Math.min(2, Math.floor((iteration - 1) / 3)); // 1-3, 4-5, 6-8
   const stage = stages[stageIndex];
 
   return (
@@ -112,8 +113,8 @@ export function DraftDenoising({ className }: DraftDenoisingProps) {
           </p>
           <div className="flex-1 overflow-hidden">
             <p>
-              The report converges toward a comprehensive, insight-rich, and readable deliverable
-              with clean citations that pass the FACT evaluation.
+              Each iteration replaces speculation with verified evidence. The supervisor keeps
+              researching until findings are comprehensive — not until the draft looks good.
             </p>
           </div>
         </motion.div>
@@ -121,7 +122,7 @@ export function DraftDenoising({ className }: DraftDenoisingProps) {
 
       <div className="space-y-2">
         <div className="flex justify-between text-xs text-muted-foreground">
-          <span>Iteration {iteration || 1} / 15</span>
+          <span>Iteration {iteration || 1} / 8</span>
           <span>{Math.round(progress * 100)}% denoised</span>
         </div>
         <div className="h-2 rounded-full bg-border/60 overflow-hidden">

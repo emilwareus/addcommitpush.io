@@ -1,0 +1,767 @@
+================================================================================
+DEEP RESEARCH AGENTS - ARCHITECTURE WALKTHROUGH
+Foo Cafe Malmö | February 5th, 2026 | Emil Wåreus
+================================================================================
+
+--------------------------------------------------------------------------------
+SECTION 1: HOOK (2-3 MINUTES)
+--------------------------------------------------------------------------------
+
+SLIDE: "The Group Project Problem"
+
+SCRIPT:
+"Remember back in school when you had one of those infamous group projects?
+
+At least a few times you probably tried the 'parallel' way of working -
+optimizing for less collaboration and each person owning one segment of the
+report. Each person writing their section in isolation. Background, history,
+theory, whatever you decided on.
+
+Then you meet up 3 hours before the deadline to 'glue the report' together.
+
+How did that turn out?"
+
+[PAUSE for audience reaction]
+
+"The result was probably:
+- Repetitive
+- Inconsistent
+- Different tone of voice per segment
+- Vastly different quality per segment
+- Not the grade you hoped for"
+
+REVEAL:
+"It turns out, when we construct our AI research agents like this -
+plan → parallel research → glue research into report -
+we get the exact same problem!
+
+When no context of the 'evolving report' is shared across sub-agents,
+we get a fragmented ball of mud.
+
+Today I'll show you how we fixed this with something called 'diffusion'."
+
+--------------------------------------------------------------------------------
+SECTION 2: INTRO - EMIL WÅREUS (1-2 MINUTES)
+--------------------------------------------------------------------------------
+
+SLIDE: Speaker introduction
+
+CONTENT:
+- Emil Wåreus
+- General hacker
+- Founder of oaiz [Let humans do human work, AI should do the rest]
+- Passionate about AI research agents and automation
+- ex-co-founder of Debricked [Security + AI startup], exit 2022.
+- Blog: addcommitpush.io
+
+SCRIPT:
+My blog addcommitpush.io is where I write about things like what we're
+discussing today. There's a deep dive on the diffusion architecture there
+if you want to go deeper after this talk."
+
+--------------------------------------------------------------------------------
+SECTION 3: AUDIENCE INTERACTION (3-5 MINUTES)
+--------------------------------------------------------------------------------
+
+SLIDE: "Quick Poll"
+
+QUESTIONS (show of hands):
+
+1. "Who has used ChatGPT or Claude for research tasks?"
+   [Expect most hands]
+
+2. "Who has built or experimented with AI agents?"
+   [Gauge technical level]
+
+3. "Who trusts the AI research reports?"
+   [Open answers]
+
+TRANSITION:
+"Great! So we all know the problem. Let's look at how people have been
+trying to solve it."
+
+--------------------------------------------------------------------------------
+SECTION 4: TIMELINE OF DEEP RESEARCH AGENTS (10-15 MINUTES)
+--------------------------------------------------------------------------------
+
+SLIDE: "The Evolution of Research Agents"
+
+[VISUAL: Horizontal timeline with key systems]
+
+TIMELINE ENTRIES:
+
+JAN 2022 | Chain-of-Thought (Google)
+         | "Show your work" - step-by-step reasoning
+         | Foundation for all agentic AI
+
+OCT 2022 | ReAct (Google Research)
+         | Reasoning + Acting interleaved
+         | First pattern combining thought with tools
+
+JUL 2023 | ToolLLM (Alibaba/Stanford)
+         | Teaching LLMs to use 16,000+ APIs
+         | Enabled specialized tool use at scale
+
+2023     | GPT Researcher (Open Source)
+         | Planner + Executor pattern
+         | First popular open-source research agent
+
+FEB 2024 | STORM (Stanford) ⭐
+         | Multi-perspective conversations
+         | Wikipedia-style article generation
+         | [Will demo this]
+
+FEB 2025 | OpenAI Deep Research
+         | Commercial research agent
+         | Set the industry benchmark
+
+2025     | Perplexity Deep Research
+         | Test-time compute expansion
+         | Real-time search integration
+
+JUL 2025 | Diffusion Deep Research (Google) ⭐
+         | Research as iterative denoising
+         | Self-balancing test-time compute
+         | [Will demo this]
+
+JAN 2026 | OpenClaw crazyness
+
+SCRIPT:
+"Let me walk you through how we got here..."
+
+[Walk through each entry with 30-60 seconds explanation]
+
+KEY INSIGHT:
+"Notice the pattern? We've gone from:
+- Single LLM calls → Chain of thought
+- Static reasoning → Dynamic tool use
+- Single agent → Multi-agent orchestration
+- Linear pipelines → Iterative refinement
+
+The trend is clear: more sophisticated coordination, more iteration,
+more self-correction."
+
+--------------------------------------------------------------------------------
+SECTION 5: CHAIN-OF-THOUGHT & REACT (5 MINUTES)
+--------------------------------------------------------------------------------
+
+SLIDE: "Chain-of-Thought: Show Your Work"
+
+CORE CONCEPT:
+"Before agents could research, they needed to reason. Chain-of-Thought
+(Wei et al., Jan 2022) was the breakthrough that made that possible."
+
+HOW IT WORKS:
+• Standard prompting: Question → Answer (single hop, no reasoning trace)
+• CoT prompting: Question → Step-by-step reasoning → Answer
+
+MECHANISM:
+1. Append "Let's think step by step" (or provide a worked example)
+2. The model generates intermediate reasoning tokens BEFORE the answer
+3. Each reasoning step conditions the next, building a logical chain
+4. The final answer is grounded in the explicit reasoning trace
+
+WHY IT MATTERS:
+• Accuracy jumps dramatically on multi-step problems
+  (GSM8K: 17.9% → 58.1% with CoT on PaLM 540B)
+• The reasoning is inspectable - you can see WHERE it went wrong
+• Foundation for every agent architecture: if a model can't reason
+  through sub-steps, it can't plan or self-correct
+
+EXAMPLE (canonical Roger's tennis balls):
+
+  Standard:
+  Q: "Roger has 5 tennis balls. He buys 2 cans of 3. How many now?"
+  A: "11"
+  (Correct, but no reasoning visible. Fails on harder problems.)
+
+  With CoT:
+  Q: "Roger has 5 tennis balls. He buys 2 cans of 3. How many now?
+      Let's think step by step."
+  A: "1. Roger starts with 5 balls.
+      2. 2 cans × 3 balls = 6 new balls.
+      3. 5 + 6 = 11.
+      Answer: 11"
+  (Same answer, but the reasoning chain scales to harder problems.)
+
+SCRIPT:
+"This seems almost trivially simple, but it's the single most important
+idea behind every research agent that followed. If the model can't show
+its work, it can't plan research, evaluate its own findings, or decide
+when to stop. CoT is the foundation."
+
+---
+
+SLIDE: "ReAct: Reasoning + Acting"
+
+CORE CONCEPT:
+"CoT gave models reasoning. ReAct (Yao et al., Oct 2022) gave them
+the ability to ACT on that reasoning - search, fetch, compute - and
+then reason about what they observed. This is the Think-Act-Observe loop."
+
+HOW IT WORKS:
+The model interleaves three phases in a loop:
+
+  THINK  → Internal reasoning about what to do next
+  ACT    → Call an external tool (search, API, calculator, etc.)
+  OBSERVE → Read the tool's output back into context
+
+The loop repeats until the model decides it has enough information
+to produce a final answer.
+
+MECHANISM:
+1. Model receives a question + access to tools (search, lookup, etc.)
+2. Instead of answering directly, it generates a THOUGHT
+3. Based on the thought, it emits an ACTION (tool call + arguments)
+4. The tool executes and returns an OBSERVATION
+5. The observation is appended to context
+6. Model generates next THOUGHT conditioned on everything so far
+7. Repeat until the model emits a FINISH action with the answer
+
+CONCRETE TRACE:
+
+  THINK   "I need to find when WASM 2.0 was released"
+  ACT     search("WebAssembly 2.0 release date")
+  OBSERVE "W3C published the recommendation April 2024"
+  THINK   "Now I can answer with a verified fact."
+  ACT     finish("WebAssembly 2.0 was released April 2024")
+
+WHY IT MATTERS:
+• Grounding: answers backed by real retrieved data, not just training
+• Composability: any tool can be plugged in (search, code exec, APIs)
+• Self-correction: if an observation contradicts a thought, the model
+  can revise its approach in the next iteration
+• THIS is the moment LLMs became agents - reasoning + tool use in a loop
+
+KEY DISTINCTION FROM COT:
+• CoT = pure internal reasoning (no external data)
+• ReAct = reasoning interleaved with external actions
+• CoT can hallucinate confidently. ReAct can verify against reality.
+
+SCRIPT:
+"CoT gave LLMs reasoning. ReAct gave them hands. Every research agent
+you'll see today - STORM, GPT Researcher, Diffusion - is built on this
+Think-Act-Observe loop. The only difference is how they orchestrate it."
+
+DEMO:
+
+Command:
+uv run main.py --agent=react "I am giving a presentation at Foo Café
+in Malmö about deep research AI agents. Research the community and what
+they like, and tell me how to give a good presentation that the audience
+will like. Tailored to this community"
+
+[Show: Think → Search → Observe loop in action, cost tracking]
+
+TRANSITION:
+"Now that we understand the building blocks - reasoning chains and
+tool-augmented loops - let's see how STORM used these to simulate
+expert conversations."
+
+--------------------------------------------------------------------------------
+SECTION 6: STORM ARCHITECTURE (10 MIN + DEMO)
+--------------------------------------------------------------------------------
+
+SLIDE: "STORM: Multi-Perspective Research"
+
+REFERENCE: Stanford OVAL — Shao et al., 2024
+"Assisting in Writing Wikipedia-like Articles From Scratch with LLMs"
+
+CORE CONCEPT:
+"Wikipedia articles are comprehensive because they synthesize MULTIPLE expert
+viewpoints. STORM simulates this by having different expert personas research
+the topic through multi-turn conversations with a search-grounded TopicExpert."
+
+ARCHITECTURE (matches reference implementation):
+  START → discover_perspectives → conduct_interviews (×N parallel via Send)
+        → generate_outline (2-stage) → write_sections (per-section)
+        → write_lead_section → END
+
+---
+
+SLIDE: "STORM: Five Phases" (progressive reveal — 5 steps)
+
+[VISUAL: Vertical flowchart with 5 phase cards connected by down-arrows.
+ Each card shows the inner data flow. Revealed progressively.]
+
+STEP 0 — PHASE 1: DISCOVER PERSPECTIVES (visible immediately)
+
+  Topic → Search related context → Generate 3 expert personas + 1 default
+
+  HOW THIS ACTUALLY WORKS:
+  - Reference: persona_generator.py — FindRelatedTopic + GenPersona
+  - The reference searches for related Wikipedia articles, extracts their
+    TABLE OF CONTENTS (structural skeleton), and uses those outlines as
+    context to generate diverse expert personas
+  - Our implementation: search Tavily for related content, use results as
+    context for persona generation via structured JSON output
+  - A default "Basic fact writer" persona is ALWAYS prepended (reference
+    does this at persona_generator.py:152) — ensures broad factual coverage
+  - Output: 4 named perspectives (1 default + 3 generated), each with a
+    name and description of their expertise and angle
+
+  SCRIPT:
+  "The clever part of STORM starts here. It doesn't hallucinate perspectives —
+  it looks at how humans already structured content on similar topics to figure
+  out which expert viewpoints are needed. Plus, there's always a 'Basic fact
+  writer' — the generalist who covers the fundamentals."
+
+STEP 1 — PHASE 2: CONDUCT INTERVIEWS (parallel via Send())
+
+  [4 lanes side-by-side, each: WikiWriter ↔ TopicExpert (×3 turns)]
+
+  THE CONVERSATION LOOP (reference: knowledge_curation.py — ConvSimulator):
+  - For EACH perspective, STORM spawns a conversation between:
+    • WikiWriter — asks questions from that perspective's viewpoint
+    • TopicExpert — a 2-STEP process:
+      1. QuestionToQuery: generates 1-3 search queries from the question
+      2. Search + AnswerQuestion: executes searches, then synthesizes an
+         answer with INLINE CITATIONS [1], [2], [3] referencing sources
+  - They converse for 3 turns (configurable MAX_CONV_TURNS)
+  - Conversation ends when: max turns reached, WikiWriter says
+    "Thank you so much for your help!", or empty utterance
+  - History truncation (reference: knowledge_curation.py:103-110):
+    last 4 turns show full Q&A, earlier turns show question only with
+    "[Omit the answer here due to space limit.]"
+  - All perspective conversations run IN PARALLEL via LangGraph Send()
+    (reference uses ThreadPoolExecutor for the same effect)
+  - After each interview: compiled into a structured summary preserving
+    all facts and inline citations
+  - Output: 4 interview summaries + all [idx]: snippet pairs + all URLs
+
+  SCRIPT:
+  "This is the core innovation. Instead of one agent doing all the research,
+  STORM simulates a panel of experts each having a focused conversation.
+  The TopicExpert doesn't just search — it first generates targeted search
+  queries from the question, executes them, then synthesizes an answer with
+  proper [1], [2] citations. Each conversation builds on prior turns.
+  The conversations run in parallel — they can't see each other."
+
+STEP 2 — PHASE 3: GENERATE OUTLINE (Two-Stage)
+
+  Draft (LLM knowledge only) → Refine (+ conversation data)
+
+  TWO-STAGE OUTLINE GENERATION (reference: outline_generation.py):
+  - Stage 1 — WritePageOutline: LLM generates a draft outline from its OWN
+    parametric knowledge (no conversation data). This ensures structural
+    coherence — the LLM knows what a good article structure looks like.
+  - Stage 2 — WritePageOutlineFromConv: The outline is refined by folding in
+    the actual conversation data. Sections are added, reordered, or merged
+    based on what the experts actually found.
+  - "Introduction", "Conclusion", "References" sections are filtered out
+  - This two-stage approach prevents the outline from being biased by which
+    perspective happened to find the most data.
+
+  SCRIPT:
+  "Notice the outline is built in two stages — first from the LLM's own
+  knowledge of 'what a good article looks like,' then refined with the
+  actual research data. This prevents the structure from being dominated by
+  whichever expert found the most material."
+
+STEP 3 — PHASE 4: WRITE SECTIONS (Per-Section, reference: article_generation.py)
+
+  For each top-level section: section outline + collected info → section text
+
+  PER-SECTION ARTICLE WRITING:
+  - Each top-level section is written INDEPENDENTLY with inline citations
+    [1], [2] referencing the collected snippets from all interviews
+  - Reference uses SentenceTransformer cosine similarity to retrieve the
+    most relevant snippets per section. Our demo passes all collected info
+    (fine for demo-scale queries)
+  - Reference writes sections in parallel (ThreadPoolExecutor). Our demo
+    writes sequentially for clearer logging.
+
+STEP 4 — PHASE 5: LEAD SECTION + ASSEMBLY (reference: article_polish.py)
+
+  Full body → Write lead section → Prepend lead → Build references → Done
+
+  LEAD SECTION + ASSEMBLY:
+  - Lead section is written AFTER the body (so it reflects actual content)
+  - Lead: max 4 paragraphs, standalone overview, sourced with inline cites
+  - References section built from all collected URLs (deduplicated)
+  - Final article: lead + body sections + references
+
+  SCRIPT:
+  "The lead section comes LAST. That might seem backwards, but it makes
+  perfect sense — you can't summarize an article you haven't written yet."
+
+BOTTOM CALLOUT:
+
+  "Linear pipeline — each phase runs exactly once. No backtracking."
+
+  SCRIPT:
+  "And here's the thing to hold in your mind: this entire pipeline runs
+  exactly once. DISCOVER runs once. INTERVIEW runs once. OUTLINE runs once.
+  WRITE runs once. If Phase 2 missed something, there's no way to go back.
+  That's both its strength — it's simple and predictable — and its weakness.
+  We'll come back to this."
+
+---
+
+DEMO:
+"Let me show you this in action..."
+
+Command:
+uv run main.py --agent=storm "I am giving a presentation at Foo Café
+in Malmö about deep research AI agents. Research the community and what
+they like, and tell me how to give a good presentation that the audience
+will like. Tailored to this community"
+
+Expected results: ~75s, ~$0.05, ~48 LLM calls, 60+ sources
+[Show: perspective generation, parallel conversations with citations,
+ two-stage outline, per-section writing, lead section, final output]
+
+--------------------------------------------------------------------------------
+SECTION 7: PLAN-RESEARCH-REPORT PATTERN (5 MINUTES)
+--------------------------------------------------------------------------------
+
+SLIDE: "The Standard Pattern"
+
+SCRIPT:
+"Before we get to diffusion, let me show you the pattern that emerged
+across most implementations. I call it Plan-Research-Report."
+
+THE PATTERN:
+
+1. PLANNING PHASE
+   ├── LLM breaks objective into 3-7 sub-questions
+   └── Assigns questions to specialized agents
+
+2. RESEARCH PHASE
+   ├── Source Finder agent searches web
+   ├── Returns: titles, URLs, summaries, content
+   └── Each sub-question researched in parallel
+
+3. PROCESSING PHASE
+   ├── Summarization agent extracts relevant facts
+   ├── Reviewer scans coverage, flags gaps
+   └── Proposes new questions if needed
+
+4. REPORT PHASE
+   └── Professional writer synthesizes final report
+
+USED BY:
+• OpenAI Deep Research
+• Perplexity Deep Research
+• GPT Researcher
+• Many others
+
+THE PROBLEM:
+"This works... but it's still essentially a linear pipeline.
+If you discover something important late in the process,
+it can't influence earlier decisions.
+
+And the sub-agents researching different topics? They can't
+see each other's work. Sound familiar?"
+
+[Callback to group project problem]
+
+--------------------------------------------------------------------------------
+SECTION 8: DIFFUSION DEEP RESEARCH (15 MIN + DEMO)
+--------------------------------------------------------------------------------
+
+SLIDE: "Research as Diffusion"
+
+THE INSIGHT:
+"What if we treated research like image generation?
+
+In diffusion models for images:
+- Start with random noise
+- Gradually denoise through iterations
+- Use guidance signals to steer the result
+
+For research:
+- Start with a 'noisy' draft (from model knowledge)
+- Gradually refine through research iterations
+- Use retrieved information as guidance"
+
+[VISUAL: Side-by-side comparison table]
+
+Classical Diffusion          | Research Diffusion
+-----------------------------|---------------------------
+Random noise (xₜ)             | Initial draft from LLM
+Denoising step               | Research + draft refinement
+Guidance signal              | Retrieved web information
+Clean output (x₀)            | Comprehensive research report
+
+HOW IT ACTUALLY WORKS (Reference: Google TTD-DR / thinkdepthai/Deep_Research):
+
+The implementation uses a SUPERVISOR + SUB-AGENT architecture built with
+LangGraph. There are 5 phases:
+
+PHASE 1: RESEARCH BRIEF
+├── User query → LLM → detailed research brief
+├── Maximizes specificity — dimensions to investigate, sources to prioritize
+└── Sets scope and constraints for all subsequent phases
+
+PHASE 2: NOISY DRAFT (the "noise" in diffusion)
+├── Research brief → LLM (higher temperature, ~0.7) → draft report
+├── Generated from LLM's INTERNAL KNOWLEDGE ONLY — no search!
+├── Intentionally speculative — higher temperature encourages coverage
+├── May contain outdated info, gaps, hallucinations
+└── This IS the noise we will "denoise" away
+
+PHASE 3: SUPERVISOR LOOP ⭐ (the "denoising" process)
+├── A SUPERVISOR LLM with TOOL-CALLING orchestrates the research
+│   The supervisor sees the draft + brief and decides what to do next
+│   using TOOLS, not free-form text:
+│
+│   Available tools:
+│   ├── ConductResearch(topic) — spawn a sub-agent for a specific topic
+│   ├── think_tool(reflection) — reflect on progress, plan next steps
+│   └── ResearchComplete() — signal that research is done
+│
+├── When supervisor calls ConductResearch:
+│   ├── A ReAct sub-agent is spawned (LLM + search + think_tool loop)
+│   ├── Sub-agent runs Think → Search → Observe → Think → ... loop
+│   ├── Uses Tavily web search for real-time information
+│   ├── After sub-agent finishes, findings are COMPRESSED
+│   │   (raw conversation → clean summary preserving ALL facts + URLs)
+│   └── Compressed research is returned to supervisor as a tool result
+│
+├── After research completes, draft is REFINED with new findings
+│   (this is the actual "denoising" step — replacing speculation with evidence)
+│
+├── Supervisor loops: think → research → refine → think → research → ...
+│   Until it calls ResearchComplete or hits max iterations (8)
+│
+└── Up to 3 sub-agents can be dispatched per iteration (parallel research)
+
+PHASE 4: FINAL REPORT GENERATION
+├── All research is done — draft has been refined with real evidence
+├── Final polish pass: proper headings, inline [Source: URL] citations
+├── Comprehensive Sources section listing all URLs
+└── The refined draft + findings + brief → final professional report
+
+PHASE 5: OUTPUT
+└── Return the final report with cost and timing metadata
+
+WHY THIS ARCHITECTURE WORKS:
+
+1. TOOL-CALLING SUPERVISOR:
+   The supervisor doesn't generate free-form plans. It calls structured tools.
+   ConductResearch, think_tool, ResearchComplete. This prevents the supervisor
+   from hallucinating a plan — it must take concrete actions.
+
+2. REACT SUB-AGENTS:
+   Each sub-agent is a full ReAct loop (Think-Act-Observe). It reasons about
+   what to search, executes the search, reads results, and iterates. This is
+   the same pattern from Section 5 — nested inside the diffusion loop.
+
+3. COMPRESSION BEFORE RETURN:
+   Raw sub-agent conversations contain tool calls, search results, reflections.
+   Passing all of this to the supervisor would create context overload.
+   Instead, findings are compressed into a clean summary preserving ALL facts
+   and source URLs. This is critical for keeping the supervisor's context clean.
+
+4. DRAFT REFINEMENT AS DENOISING:
+   After each batch of research, the draft is refined with the new findings.
+   Claims contradicted by research are corrected. Gaps are filled. Sources
+   are cited. Each refinement step replaces speculation with verified facts.
+   This IS the denoising — each iteration reduces uncertainty in the draft.
+
+5. EVIDENCE-BASED COMPLETION:
+   The supervisor calls ResearchComplete only when it judges the findings
+   are comprehensive. The criteria is about evidence quality, not draft
+   appearance. A polished-looking draft can still hide missing information.
+
+THE CRITICAL INSIGHT:
+"Notice: the supervisor checks if FINDINGS are comprehensive,
+NOT if the draft looks good.
+
+This is crucial. If you stop when the draft looks polished,
+you might stop before you've actually found all the information.
+The completion criteria is about EVIDENCE, not AESTHETICS."
+
+[VISUAL: Draft evolution animation - use DraftDenoising component]
+
+PARALLEL SUB-AGENTS:
+
+[VISUAL: ParallelAgents component]
+
+"When the supervisor calls ConductResearch multiple times in one turn,
+it spawns up to 3 sub-agents in parallel.
+
+Each sub-agent:
+- Has isolated context (can't see others' work)
+- Runs its own ReAct loop (LLM + search + think_tool)
+- Findings are compressed before returning to supervisor
+
+The isolation is intentional - prevents topic A from
+biasing topic B's research. The compression ensures the
+supervisor's context stays manageable."
+
+THE TWO GAPS:
+
+[VISUAL: TwoStageGap component]
+
+INFORMATION GAP (Phase 3 - Supervisor Loop)
+├── Focus: WHAT information exists
+├── Draft updates are functional, not polished
+├── Prioritizes breadth of coverage
+└── Based on findings completeness, not appearance
+
+GENERATION GAP (Phase 4 - Final Report)
+├── Focus: HOW to present information
+├── All information already gathered
+├── Polish for readability, citations, structure
+└── Professional formatting and source listing
+
+"There's a trade-off between these gaps. You can't optimize
+for pretty writing while you're still hunting for facts.
+Otherwise you're polishing hallucinations."
+
+DEMO:
+
+Command:
+uv run main.py --agent=diffusion "I am giving a presentation at Foo Café
+in Malmö about deep research AI agents. Research the community and what
+they like, and tell me how to give a good presentation that the audience
+will like. Tailored to this community"
+
+[Show:
+- Phase 1: Brief generation (query → structured research plan)
+- Phase 2: Noisy draft from LLM knowledge only
+- Supervisor loop iterations:
+  - think_tool reflections
+  - ConductResearch calls spawning sub-agents
+  - Sub-agents searching and compressing
+  - Draft refinement after each research batch
+- Final report generation
+- Cost + timing summary]
+
+--------------------------------------------------------------------------------
+SECTION 9: WHAT DRIVES PERFORMANCE (10 MINUTES)
+--------------------------------------------------------------------------------
+
+SLIDE: "Benchmark Performance"
+
+DEEPRESEARCH BENCH:
+• 100 PhD-level research tasks
+• Designed by domain experts
+• Two evaluation frameworks
+
+RACE FRAMEWORK (Report Quality):
+├── Comprehensiveness - coverage breadth and depth
+├── Insight/Depth - quality, originality of analysis
+├── Instruction Following - adherence to requirements
+└── Readability - clarity, structure, fluency
+
+FACT FRAMEWORK (Citation Quality):
+├── Citation Accuracy - % correctly supported
+└── Effective Citations - average verified per task
+
+RESULTS:
+Google TTD-DR (Diffusion) vs OpenAI Deep Research:
+• 74.5% win rate
+• +7.7% on one dataset
+• +1.7% on another
+
+WHY DIFFUSION WINS:
+
+[Table format]
+
+Factor                      | Impact
+----------------------------|---------------------------
+Iterative refinement        | Catches gaps → Comprehensiveness
+Parallel execution          | Diverse perspectives → Coverage
+Explicit completion criteria| Evidence-based → Validated
+Self-balancing adaptivity   | Right-sized research
+Draft as context anchor     | Persistent context → Readability
+Quality rules in final gen  | Systematic → Insight
+
+CONTEXT ENGINEERING:
+
+[Table format]
+
+Problem              | Description                    | Solution
+---------------------|--------------------------------|------------------
+Context Poisoning    | Hallucinations enter context   | Draft as verified state
+Context Distraction  | Too much context               | Parallel isolated agents
+Context Confusion    | Superfluous context influences | Structured compression
+Context Clash        | Parts of context disagree      | Supervisor resolution
+
+--------------------------------------------------------------------------------
+SECTION 10: PRACTICAL TAKEAWAYS (5 MINUTES)
+--------------------------------------------------------------------------------
+
+SLIDE: "What You Can Apply Today"
+
+1. START WITH A DRAFT
+   Even a rough draft from internal knowledge reveals gaps faster
+   than starting from scratch.
+
+2. DEDUPLICATE BY URL BEFORE SYNTHESIS
+   Same source cited with different wording = noise.
+   Deduplicate to keep signal high.
+
+3. COMPLETION = EVIDENCE, NOT AESTHETICS
+   Run diverse queries. Only stop when they yield no new facts.
+   Pretty writing can hide missing information.
+
+4. CAP ITERATIONS AND CONCURRENCY
+   8 supervisor loops max, 3 concurrent sub-agents max.
+   Prevents thrash, keeps costs predictable (~$0.06 per run).
+
+5. SEPARATE INFORMATION FROM GENERATION
+   Don't polish until facts are locked.
+   Otherwise you're polishing hallucinations.
+
+6. ISOLATE SUB-AGENT CONTEXTS
+   Each sub-researcher needs complete, standalone instructions.
+   They can't see other agents' work - and that's a feature.
+
+7. COMPRESS FINDINGS, PRESERVE EVERYTHING
+   When returning to supervisor, remove duplicates only.
+   Never summarize or paraphrase research findings.
+
+--------------------------------------------------------------------------------
+SECTION 11: Q&A AND DISCUSSION (10-15 MINUTES)
+--------------------------------------------------------------------------------
+
+SLIDE: "Questions?"
+
+PREPARED QUESTIONS TO PROMPT DISCUSSION:
+
+• "What research tasks would you want to automate?"
+• "Anyone have experience with the commercial products?"
+• "What concerns do you have about automated research?"
+
+RESOURCES:
+
+Blog Post (deeper dive):
+https://addcommitpush.io/blog/diffusion-deep-research
+
+Reference Implementation (Diffusion Deep Research):
+https://github.com/thinkdepthai/Deep_Research
+
+STORM (Stanford):
+https://github.com/stanford-oval/storm
+
+DeepResearch Bench:
+https://huggingface.co/spaces/muset-ai/DeepResearch-Bench-Leaderboard
+
+CLOSING:
+"Thanks for listening! The code is open source if you want to try it.
+And there's pizza - let's chat!"
+
+================================================================================
+END OF PRESENTATION
+================================================================================
+
+TOTAL TIME: ~75-85 minutes (adjustable based on Q&A)
+
+DEMO PREPARATION CHECKLIST:
+□ Python demos tested (uv run main.py --agent=react/storm/diffusion)
+□ API keys funded (OpenRouter for LLMs, Tavily for search)
+□ .env file in demos/ directory with OPENROUTER_API_KEY + TAVILY_API_KEY
+□ Pre-run queries to warm up cache and verify costs
+□ Backup screenshots/recordings if demos fail
+□ Test projector/screen resolution (presentation at localhost:3001)
+
+EQUIPMENT NEEDED:
+□ Laptop with demos ready
+□ USB backup
+□ Presentation slides (localhost:3001/presentations/deep-research)
+□ Terminal ready in presentations/deep-research/demos/ directory
+□ Water for speaking

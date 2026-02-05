@@ -12,17 +12,17 @@ interface ParallelAgentsProps {
 const agents = [
   {
     name: 'Sub-Agent 1',
-    focus: 'Global or section-level query',
+    focus: 'ReAct loop: search + think',
     topic: 'Topic A',
   },
   {
     name: 'Sub-Agent 2',
-    focus: 'Section-specific deep dive',
+    focus: 'ReAct loop: search + think',
     topic: 'Topic B',
   },
   {
     name: 'Sub-Agent 3',
-    focus: 'Comparative or incident-focused',
+    focus: 'ReAct loop: search + think',
     topic: 'Topic C',
   },
 ];
@@ -349,22 +349,22 @@ export function ParallelAgents({ className }: ParallelAgentsProps) {
           <div className="flex items-start gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" />
             <div>
-              <span className="font-medium">1. Assign:</span> Supervisor generates research
-              questions and delegates to sub-agents (max 3 parallel)
+              <span className="font-medium">1. Assign:</span> Supervisor calls ConductResearch
+              tool to delegate topics (max 3 parallel)
             </div>
           </div>
           <div className="flex items-start gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" />
             <div>
-              <span className="font-medium">2. Research:</span> Sub-agents work independently with
-              isolated contexts, return compressed findings
+              <span className="font-medium">2. Research:</span> Each sub-agent runs a ReAct loop
+              (search + think), then compresses findings
             </div>
           </div>
           <div className="flex items-start gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" />
             <div>
-              <span className="font-medium">3. Refine:</span> Findings converge, draft updated with
-              citations, completeness assessed
+              <span className="font-medium">3. Refine:</span> Draft updated with evidence and
+              citations. Supervisor calls ResearchComplete when done.
             </div>
           </div>
         </div>
