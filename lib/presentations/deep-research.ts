@@ -1,8 +1,4 @@
-export interface Slide {
-  slug: string;
-  title: string;
-  steps: number;
-}
+import { type Slide, createSlideRegistry } from './types';
 
 const slides: Slide[] = [
   { slug: '01-title', title: 'Learn to build Deep Research Agents', steps: 0 },
@@ -29,30 +25,12 @@ const slides: Slide[] = [
   { slug: '19-resources', title: 'Questions & Resources', steps: 0 },
 ];
 
-export function getAllSlides(): Slide[] {
-  return slides;
-}
+const registry = createSlideRegistry(slides);
 
-export function getSlideBySlug(slug: string): Slide | null {
-  return slides.find((s) => s.slug === slug) ?? null;
-}
-
-export function getAllSlideSlugs(): string[] {
-  return slides.map((s) => s.slug);
-}
-
-export function getSlideIndex(slug: string): number {
-  return slides.findIndex((s) => s.slug === slug);
-}
-
-export function getAdjacentSlugs(slug: string): { prev: string | null; next: string | null } {
-  const idx = getSlideIndex(slug);
-  return {
-    prev: idx > 0 ? slides[idx - 1].slug : null,
-    next: idx < slides.length - 1 ? slides[idx + 1].slug : null,
-  };
-}
-
-export function getSlideSteps(slug: string): number {
-  return slides.find((s) => s.slug === slug)?.steps ?? 0;
-}
+export type { Slide };
+export const getAllSlides = registry.getAllSlides;
+export const getSlideBySlug = registry.getSlideBySlug;
+export const getAllSlideSlugs = registry.getAllSlideSlugs;
+export const getSlideIndex = registry.getSlideIndex;
+export const getAdjacentSlugs = registry.getAdjacentSlugs;
+export const getSlideSteps = registry.getSlideSteps;
