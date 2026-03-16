@@ -358,9 +358,9 @@ public/presentations/voice-agents/
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] Build succeeds: `pnpm build` (all 19 slides statically generated)
-- [ ] Linting passes: `pnpm lint`
-- [ ] Type checks pass: `pnpm exec tsc --noEmit`
+- [x] Build succeeds: `pnpm build` (all 19 slides statically generated)
+- [x] Linting passes: `pnpm lint`
+- [x] Type checks pass: `pnpm exec tsc --noEmit`
 
 #### Manual Verification:
 - [ ] `/presentations/` shows both presentations

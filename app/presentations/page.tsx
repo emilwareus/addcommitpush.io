@@ -29,6 +29,14 @@ interface PresentationEntry {
 
 const presentations: PresentationEntry[] = [
   {
+    title: 'Building Real-Time Voice Agents',
+    description:
+      'Explore STT, TTS, VAD, and WebSockets — and meet Jarvis, the AI co-presenter built with Whisper, Kokoro, and Groq.',
+    href: '/presentations/voice-agents',
+    venue: 'Malmö AI Devs',
+    date: 'TBD 2026',
+  },
+  {
     title: 'Deep Research Agents — Architecture Walkthrough',
     description:
       'An exploration of STORM, ReACT, and diffusion-based architectures for autonomous deep research agents. Includes live demos and benchmark comparisons.',
