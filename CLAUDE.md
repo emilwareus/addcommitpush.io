@@ -12,6 +12,7 @@ Follow this playbook precisely. Be bold: prefer single, clean solutions. Remove 
 - Render posts as fully static. Prefer SSG. Enforce with `export const dynamic = "error"` and `export const revalidate = false` on blog routes.
 - Default to Server Components. Mark Client Components explicitly with `"use client"` only when necessary.
 - TypeScript strictly typed. No `any`. Clear, descriptive names; early returns; minimal nesting; no unnecessary try/catch.
+- **No fallback code paths. Ever.** No graceful degradation, no try/except recovery wrappers, no "fallback to X if Y fails." If the primary code path doesn't work, fix it — don't add a backup. Fallback code means the original code is broken and doesn't deserve to exist.
 - Keep dependencies lean. Prefer built-in Next features and well-supported libs only.
 
 ---

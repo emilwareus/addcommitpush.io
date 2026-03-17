@@ -1,0 +1,99 @@
+{
+  "slides": [
+    {
+      "slug": "01-title",
+      "title": "Building Real-Time Voice Agents",
+      "notes": "Opening slide. Emil introduces the talk about building real-time voice agents from scratch using open-source tools."
+    },
+    {
+      "slug": "02-about",
+      "title": "Emil Wåreus",
+      "notes": "About the presenter. Co-founder of oaiz (AI consultancy). Built Podidex (talk to your podcasts). Former Debricked (open-source security, acquired by Micro Focus). Writes at addcommitpush.io."
+    },
+    {
+      "slug": "03-the-dream",
+      "title": "Hey Jarvis... — What We're Building",
+      "notes": "The hook: building a voice assistant that listens, thinks, and speaks. Introduces the Jarvis sidebar concept. Tech stack reveal: Whisper STT, Kokoro TTS, Silero VAD, Groq LLM, WebSocket."
+    },
+    {
+      "slug": "04-architecture-overview",
+      "title": "The Voice Agent Pipeline",
+      "notes": "6-stage pipeline: Microphone -> VAD (detect speech) -> STT (transcribe) -> LLM (reason) -> TTS (synthesize) -> Speaker. Each stage revealed progressively. The core abstraction for any voice agent."
+    },
+    {
+      "slug": "05-stt-landscape",
+      "title": "Speech-to-Text: The Ears",
+      "notes": "Survey of STT options: OpenAI Whisper (the gold standard), faster-whisper (our pick — CTranslate2, 4x faster), Moonshine (ultra-lightweight), Deepgram (cloud, lowest latency), Google Cloud STT. We choose faster-whisper for local CPU inference."
+    },
+    {
+      "slug": "06-whisper-deep-dive",
+      "title": "Whisper: How It Works",
+      "notes": "Whisper architecture: Audio -> Log-Mel Spectrogram -> Encoder -> Decoder -> Text. Model size comparison table: tiny (39M, fastest) through large-v3 (1.5B, most accurate). We pick 'small' (244M) as the sweet spot. Code snippet shows faster-whisper initialization with int8 quantization for CPU."
+    },
+    {
+      "slug": "07-tts-landscape",
+      "title": "Text-to-Speech: The Voice",
+      "notes": "Survey of TTS options: Kokoro-82M (our pick — only 82M params, Apache 2.0), Bark (high quality but slow), Piper (ultra-fast, lower quality), XTTS v2 (voice cloning), ElevenLabs (best quality, cloud), Google Cloud TTS. We choose Kokoro for its speed and open license."
+    },
+    {
+      "slug": "08-kokoro-deep-dive",
+      "title": "Kokoro-82M: Fast & Open TTS",
+      "notes": "Kokoro stats: 82M parameters, Apache 2.0 license, 24kHz output, ONNX runtime (no PyTorch needed), 50+ voices, ~200ms latency for first audio. Code snippet: 3 lines to synthesize speech. Supports streaming synthesis for lower perceived latency."
+    },
+    {
+      "slug": "09-vad",
+      "title": "Voice Activity Detection",
+      "notes": "Three VAD approaches compared: Energy-Based (simple RMS threshold), Silero VAD (our pick — neural network, 1.8MB, highly accurate), webrtcvad (Google's C library). Turn-taking flow: SPEECH detected -> accumulate audio -> 700ms silence -> UTTERANCE END -> send to STT. The silence threshold is a UX knob: shorter = more responsive, longer = fewer false triggers."
+    },
+    {
+      "slug": "10-realtime-transport",
+      "title": "Making It Feel Real-Time",
+      "notes": "WebSocket vs WebRTC comparison. WebSocket: simpler, good enough for localhost, binary frames. WebRTC: NAT traversal, built-in echo cancellation, overkill for our use case. Binary frame protocol: 4-byte flags header (bit 0 = isTtsPlaying for echo suppression) + PCM int16 data. AudioWorklet: runs on audio thread, no glitches. Echo suppression: skip processing mic audio while TTS is playing."
+    },
+    {
+      "slug": "11-latency-budget",
+      "title": "The Latency Budget",
+      "notes": "End-to-end latency breakdown: VAD silence detection 700ms + Whisper STT 300ms + Groq TTFT 150ms + Sentence buffer 100ms + Kokoro TTS 200ms + WebSocket ~1ms = Total ~1.5s to first audio. Optimizations: reduce VAD silence threshold, speculative execution (start LLM before final STT), sentence-chunked TTS streaming, pre-warm models at startup."
+    },
+    {
+      "slug": "12-podidex-architecture",
+      "title": "Podidex: Talk to Your Podcast",
+      "notes": "Real-world production example. Backend pipeline: faster-whisper + Groq + kokoro on RunPod GPU. Frontend: React, AudioWorklet capture, PCM playback. Key patterns to reuse: binary WebSocket protocol, sentence-chunked TTS, echo suppression, model manager singleton. Jarvis adapts these patterns for local macOS CPU inference."
+    },
+    {
+      "slug": "13-podidex-demo",
+      "title": "Live Demo: Podidex Voice Chat",
+      "notes": "Live demo — switch to the Podidex app and show voice chat with a podcast. Demonstrate the real-time conversation experience."
+    },
+    {
+      "slug": "14-homegrown-vs-api",
+      "title": "Homegrown vs API: Trade-offs",
+      "notes": "Seven-dimension comparison: Latency (homegrown ~1.5s vs API ~0.5s), Cost (fixed hardware vs per-minute), Quality (good vs excellent), Privacy (full control vs data leaves device), Setup (complex vs simple), Customization (total vs limited), Offline (yes vs no). Conclusion: homegrown when you need privacy, customization, or offline; API when you need lowest latency and best quality."
+    },
+    {
+      "slug": "15-code-walkthrough",
+      "title": "Let's Build It",
+      "notes": "Live coding walkthrough of 5 example scripts: 01-whisper-basic.py (record + transcribe), 02-vad-streaming.py (real-time VAD), 03-kokoro-tts.py (text to speech), 04-groq-streaming.py (streaming LLM), 05-full-pipeline.py (complete VAD -> STT -> LLM -> TTS loop). Switch to terminal for live demo."
+    },
+    {
+      "slug": "16-jarvis-reveal",
+      "title": "Jarvis, what have we talked about?",
+      "notes": "The dramatic reveal moment. Jarvis has been listening the entire presentation. The presenter asks Jarvis to summarize what has been discussed. Jarvis responds with a contextual spoken summary. Check the sidebar — Jarvis has been showing thinking observations throughout."
+    },
+    {
+      "slug": "17-how-jarvis-works",
+      "title": "How Jarvis Was Built",
+      "notes": "Self-referential architecture diagram showing the Jarvis stack: Browser (AudioWorklet mic capture + WebSocket) -> Silero VAD (1.8MB, 30ms chunks) -> faster-whisper small (244M, CPU int8) -> Groq GPT-OSS 120B (tool use: respond + update_thinking) -> Kokoro-82M (ONNX, streaming) -> Speaker. Agent behavior: always listening, 'Hey Jarvis' trigger, slide context awareness. Total code: ~500 lines Python + ~300 lines TypeScript."
+    },
+    {
+      "slug": "18-takeaways",
+      "title": "What You Can Build Today",
+      "notes": "Five key takeaways: 1) Voice agents are accessible with open-source tools. 2) The pipeline pattern (VAD -> STT -> LLM -> TTS) is universal. 3) Latency optimization is about chunking and streaming. 4) WebSockets are good enough for most use cases. 5) Start with the simplest thing that works, then optimize."
+    },
+    {
+      "slug": "19-resources",
+      "title": "Questions & Resources",
+      "notes": "Q&A and resources: faster-whisper GitHub, kokoro-onnx GitHub, Silero VAD GitHub, Groq API docs, Podidex app. Speaker: Emil Wåreus, addcommitpush.io."
+    }
+  ]
+}

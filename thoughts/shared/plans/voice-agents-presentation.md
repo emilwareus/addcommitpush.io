@@ -882,8 +882,8 @@ Quick setup guide:
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] `cd presentations/voice-agents/jarvis && python -c "from jarvis.config import *; print('Config OK')"` succeeds
-- [ ] `python -c "from jarvis.models import ModelManager; print('Imports OK')"` succeeds
+- [x] `cd presentations/voice-agents/jarvis && python -c "from jarvis.config import *; print('Config OK')"` succeeds
+- [x] `python -c "from jarvis.models import ModelManager; print('Imports OK')"` succeeds
 
 #### Manual Verification:
 - [ ] `python -m jarvis.server` starts without errors, prints "Jarvis is ready"
@@ -1058,9 +1058,9 @@ useEffect(() => {
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] Build succeeds: `pnpm build`
-- [ ] Linting passes: `pnpm lint`
-- [ ] Type checks pass: `pnpm exec tsc --noEmit`
+- [x] Build succeeds: `pnpm build`
+- [x] Linting passes: `pnpm lint`
+- [x] Type checks pass: `pnpm exec tsc --noEmit`
 
 #### Manual Verification:
 - [ ] Jarvis sidebar renders on all slides (right side, 320px wide)
@@ -1104,7 +1104,7 @@ Shared requirements for all examples.
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] All scripts parse without syntax errors: `python -m py_compile presentations/voice-agents/examples/01-whisper-basic.py` (for each)
+- [x] All scripts parse without syntax errors: `python -m py_compile presentations/voice-agents/examples/01-whisper-basic.py` (for each)
 
 #### Manual Verification:
 - [ ] Each script runs successfully on macOS with the venv activated
@@ -1168,9 +1168,9 @@ Create a slide content summary that gets loaded into the Jarvis agent's system p
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] Build succeeds: `pnpm build`
-- [ ] Linting passes: `pnpm lint`
-- [ ] Type checks pass: `pnpm exec tsc --noEmit`
+- [x] Build succeeds: `pnpm build`
+- [x] Linting passes: `pnpm lint`
+- [x] Type checks pass: `pnpm exec tsc --noEmit`
 
 #### Manual Verification:
 - [ ] Complete presentation run-through with Jarvis active
