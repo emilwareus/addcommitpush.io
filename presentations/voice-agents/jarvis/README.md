@@ -1,7 +1,9 @@
 # Jarvis — AI Co-Presenter Backend
 
 Local Python backend for the Jarvis AI co-presenter. Runs the full voice pipeline:
-**Silero VAD → faster-whisper STT → Groq LLM (with tools) → Kokoro TTS**
+**Silero VAD → faster-whisper STT → Groq LLM (with tools) → Kokoro TTS (MPS/GPU)**
+
+Kokoro TTS runs on Apple Silicon GPU (MPS) when available, faster-whisper on CPU (int8).
 
 ## Prerequisites
 
@@ -12,7 +14,16 @@ Local Python backend for the Jarvis AI co-presenter. Runs the full voice pipelin
 - `mkcert` (for WSS from HTTPS sites)
 - Groq API key
 
-## Setup
+## Quick Start
+
+```bash
+cd presentations/voice-agents/jarvis
+make setup   # installs deps, certs, creates .env
+# Edit .env and add your GROQ_API_KEY
+make run
+```
+
+## Manual Setup
 
 ```bash
 # 1. Install system dependencies
@@ -26,25 +37,25 @@ mkcert localhost 127.0.0.1
 # 3. Install dependencies with uv
 uv sync
 
-# 4. Download Kokoro models
-mkdir -p models
-cd models
-curl -LO https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/kokoro-v1.0.onnx
-curl -LO https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0/voices-v1.0.bin
-cd ..
+# 4. Configure API key
+cp .env.example .env
+# Edit .env and add your GROQ_API_KEY
 
-# 5. Set Groq API key
-export GROQ_API_KEY=your-key-here
+# 5. Run
+make run
 ```
+
+Kokoro models are downloaded automatically from HuggingFace on first run.
 
 ## Run
 
 ```bash
 cd presentations/voice-agents/jarvis
-uv run jarvis
+make run
 ```
 
 Jarvis starts on `wss://localhost:8765` (or `ws://` without SSL certs).
+On Apple Silicon, you should see: `Devices: STT=cpu, TTS=mps, VAD=cpu`
 
 ## Protocol
 
@@ -73,12 +84,12 @@ Jarvis starts on `wss://localhost:8765` (or `ws://` without SSL certs).
 ```
 Browser (mic) → [PCM 16kHz + flags] → WebSocket
                                           ↓
-                                    Silero VAD (30ms chunks)
+                                    Silero VAD (30ms chunks, CPU)
                                           ↓ (on silence)
-                                    faster-whisper STT
+                                    faster-whisper STT (CPU, int8)
                                           ↓
-                                    Groq LLM (tool use)
+                                    Groq LLM (tool use, cloud API)
                                      ↙          ↘
               update_thinking        respond
-              (sidebar text)    (TTS → audio → WebSocket → browser speakers)
+              (sidebar text)    (Kokoro TTS on MPS/GPU → audio → WebSocket → speakers)
 ```

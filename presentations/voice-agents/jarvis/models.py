@@ -1,21 +1,43 @@
 """ModelManager — loads and manages Whisper, Kokoro, and Silero VAD models.
 
-Adapted from Podidex's ModelManager pattern. Simplified for CPU-only macOS.
+Adapted from Podidex's ModelManager pattern.
+Uses MPS (Apple Silicon GPU) for Kokoro TTS, CPU for faster-whisper and VAD.
 Thread-safe access via per-model locks.
 """
 
+import platform
 import threading
 import time
 
 import numpy as np
 
 from .config import (
-    KOKORO_LANG,
     KOKORO_SPEED,
     KOKORO_VOICE,
+    OUTPUT_SAMPLE_RATE,
     WHISPER_COMPUTE_TYPE,
     WHISPER_MODEL,
 )
+
+
+def _is_mps_available() -> bool:
+    """Check if Apple Silicon MPS is available."""
+    try:
+        import torch
+
+        backends = getattr(torch, "backends", None)
+        mps_module = getattr(backends, "mps", None)
+        is_available = getattr(mps_module, "is_available", None)
+        return bool(callable(is_available) and is_available())
+    except Exception:
+        return False
+
+
+def _detect_tts_device() -> str:
+    """Detect the best device for Kokoro TTS (supports MPS)."""
+    if _is_mps_available() and platform.system() == "Darwin":
+        return "mps"
+    return "cpu"
 
 
 class ModelManager:
@@ -27,6 +49,7 @@ class ModelManager:
         self._whisper = None
         self._kokoro = None
         self._vad = None
+        self._tts_device = "cpu"
 
     def load_all(self) -> None:
         """Load all models. Call once at startup."""
@@ -34,14 +57,14 @@ class ModelManager:
 
         # Silero VAD (1.8MB, instant load)
         print("  Loading Silero VAD...")
-        import torch  # noqa: F811
+        import torch
         from silero_vad import load_silero_vad
 
         self._vad = load_silero_vad()
         self._torch = torch
         print(f"  VAD loaded in {time.time() - t0:.1f}s")
 
-        # faster-whisper (small model, CPU int8)
+        # faster-whisper (CPU only — no MPS support in CTranslate2)
         t1 = time.time()
         print(f"  Loading faster-whisper ({WHISPER_MODEL}, {WHISPER_COMPUTE_TYPE})...")
         from faster_whisper import WhisperModel
@@ -53,50 +76,36 @@ class ModelManager:
         )
         print(f"  Whisper loaded in {time.time() - t1:.1f}s")
 
-        # kokoro-onnx (CPU, ~80MB quantized)
+        # Kokoro TTS (PyTorch — supports MPS on Apple Silicon)
         t2 = time.time()
-        print("  Loading Kokoro TTS...")
-        import kokoro_onnx
+        self._tts_device = _detect_tts_device()
+        print(f"  Loading Kokoro TTS (device={self._tts_device})...")
+        from kokoro import KPipeline
 
-        self._kokoro = kokoro_onnx.Kokoro(
-            "models/kokoro-v1.0.onnx",
-            "models/voices-v1.0.bin",
-        )
+        self._kokoro = KPipeline(lang_code="a", device=self._tts_device)
         print(f"  Kokoro loaded in {time.time() - t2:.1f}s")
 
         # Pre-warm TTS to avoid first-call latency
         print("  Warming up TTS...")
-        self._kokoro.create(
-            "warmup",
-            voice=KOKORO_VOICE,
-            speed=KOKORO_SPEED,
-            lang=KOKORO_LANG,
-        )
+        for _, _, audio in self._kokoro("warmup", voice=KOKORO_VOICE):
+            if audio is not None:
+                break
 
         print(f"  All models loaded in {time.time() - t0:.1f}s")
+        print(f"  Devices: STT=cpu, TTS={self._tts_device}, VAD=cpu")
+
+    @property
+    def tts_device(self) -> str:
+        """The device Kokoro TTS is running on."""
+        return self._tts_device
 
     def vad_predict(self, audio_chunk: np.ndarray, sample_rate: int) -> float:
-        """Returns speech probability for a 30ms chunk.
-
-        Args:
-            audio_chunk: float32 audio, 480 samples at 16kHz.
-            sample_rate: Sample rate (16000).
-
-        Returns:
-            Speech probability [0, 1].
-        """
+        """Returns speech probability for a 30ms chunk."""
         tensor = self._torch.from_numpy(audio_chunk).float()
         return self._vad(tensor, sample_rate).item()
 
     def transcribe(self, audio: np.ndarray) -> str:
-        """Transcribe audio with Whisper. Thread-safe.
-
-        Args:
-            audio: float32 normalized audio at 16kHz.
-
-        Returns:
-            Transcribed text.
-        """
+        """Transcribe audio with Whisper. Thread-safe."""
         with self._stt_lock:
             segments, _ = self._whisper.transcribe(
                 audio,
@@ -109,33 +118,30 @@ class ModelManager:
     def synthesize(self, text: str) -> tuple[np.ndarray, int]:
         """Synthesize text to audio with Kokoro. Thread-safe.
 
-        Args:
-            text: Text to synthesize.
-
         Returns:
             Tuple of (float32 audio samples, sample_rate).
         """
         with self._tts_lock:
-            samples, sr = self._kokoro.create(
-                text,
-                voice=KOKORO_VOICE,
-                speed=KOKORO_SPEED,
-                lang=KOKORO_LANG,
-            )
-            return samples, sr
+            audio_chunks = []
+            for _, _, audio in self._kokoro(
+                text, voice=KOKORO_VOICE, speed=KOKORO_SPEED
+            ):
+                if audio is not None:
+                    audio_chunks.append(audio.numpy() if hasattr(audio, "numpy") else audio)
+            if audio_chunks:
+                return np.concatenate(audio_chunks), OUTPUT_SAMPLE_RATE
+            return np.array([], dtype=np.float32), OUTPUT_SAMPLE_RATE
 
     async def synthesize_stream(self, text: str):
         """Async generator yielding (samples, sample_rate) chunks.
 
-        Uses Kokoro's streaming API for lower time-to-first-audio.
+        Uses Kokoro's generator API for lower time-to-first-audio.
         Holds the TTS lock for the entire stream.
         """
         with self._tts_lock:
-            stream = self._kokoro.create_stream(
-                text,
-                voice=KOKORO_VOICE,
-                speed=KOKORO_SPEED,
-                lang=KOKORO_LANG,
-            )
-            async for samples, sr in stream:
-                yield samples, sr
+            for _, _, audio in self._kokoro(
+                text, voice=KOKORO_VOICE, speed=KOKORO_SPEED
+            ):
+                if audio is not None:
+                    samples = audio.numpy() if hasattr(audio, "numpy") else audio
+                    yield samples, OUTPUT_SAMPLE_RATE

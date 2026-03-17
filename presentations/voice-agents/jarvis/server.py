@@ -13,7 +13,10 @@ import json
 import os
 import struct
 
+from dotenv import load_dotenv
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+
+load_dotenv()
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import WS_PORT

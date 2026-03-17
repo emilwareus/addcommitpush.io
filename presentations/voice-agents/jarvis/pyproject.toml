@@ -2,18 +2,30 @@
 name = "jarvis"
 version = "0.1.0"
 description = "Jarvis AI co-presenter — local voice agent backend"
-requires-python = ">=3.11"
+requires-python = ">=3.12,<3.14"
 dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.30.0",
     "faster-whisper>=1.0.0",
-    "kokoro-onnx>=0.4.0",
+    "kokoro>=0.9.4",
     "silero-vad>=5.1",
     "groq>=0.11.0",
     "numpy>=1.24.0",
     "soundfile>=0.12.0",
     "torch>=2.0.0",
+    "python-dotenv>=1.0.0",
+    "en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl",
 ]
 
 [project.scripts]
 jarvis = "jarvis.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]

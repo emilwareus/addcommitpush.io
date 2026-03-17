@@ -20,7 +20,7 @@ export async function generateMetadata({
 
   return {
     title: `${slideData.title} — Building Real-Time Voice Agents`,
-    description: 'Building Real-Time Voice Agents — Malmö AI Devs',
+    description: 'Building Real-Time Voice Agents — Barrel.ai',
   };
 }
 
@@ -79,36 +79,20 @@ export default async function SlidePage({
         const { LatencyBudgetSlide } = await import('@/components/presentations/voice-agents/slides/11-latency-budget');
         return <LatencyBudgetSlide />;
       }
-      case '12-podidex-architecture': {
-        const { PodidexArchitectureSlide } = await import('@/components/presentations/voice-agents/slides/12-podidex-architecture');
-        return <PodidexArchitectureSlide />;
-      }
-      case '13-podidex-demo': {
-        const { PodidexDemoSlide } = await import('@/components/presentations/voice-agents/slides/13-podidex-demo');
-        return <PodidexDemoSlide />;
-      }
-      case '14-homegrown-vs-api': {
-        const { HomegrownVsApiSlide } = await import('@/components/presentations/voice-agents/slides/14-homegrown-vs-api');
-        return <HomegrownVsApiSlide />;
-      }
-      case '15-code-walkthrough': {
-        const { CodeWalkthroughSlide } = await import('@/components/presentations/voice-agents/slides/15-code-walkthrough');
+      case '12-code-walkthrough': {
+        const { CodeWalkthroughSlide } = await import('@/components/presentations/voice-agents/slides/12-code-walkthrough');
         return <CodeWalkthroughSlide />;
       }
-      case '16-jarvis-reveal': {
-        const { JarvisRevealSlide } = await import('@/components/presentations/voice-agents/slides/16-jarvis-reveal');
-        return <JarvisRevealSlide />;
+      case '13-homegrown-vs-api': {
+        const { HomegrownVsApiSlide } = await import('@/components/presentations/voice-agents/slides/13-homegrown-vs-api');
+        return <HomegrownVsApiSlide />;
       }
-      case '17-how-jarvis-works': {
-        const { HowJarvisWorksSlide } = await import('@/components/presentations/voice-agents/slides/17-how-jarvis-works');
+      case '14-how-jarvis-works': {
+        const { HowJarvisWorksSlide } = await import('@/components/presentations/voice-agents/slides/14-how-jarvis-works');
         return <HowJarvisWorksSlide />;
       }
-      case '18-takeaways': {
-        const { TakeawaysSlide } = await import('@/components/presentations/voice-agents/slides/18-takeaways');
-        return <TakeawaysSlide />;
-      }
-      case '19-resources': {
-        const { ResourcesSlide } = await import('@/components/presentations/voice-agents/slides/19-resources');
+      case '15-resources': {
+        const { ResourcesSlide } = await import('@/components/presentations/voice-agents/slides/15-resources');
         return <ResourcesSlide />;
       }
       default:

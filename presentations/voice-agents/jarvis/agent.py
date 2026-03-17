@@ -69,7 +69,7 @@ TOOLS = [
 
 def build_system_prompt(slide_context: dict) -> str:
     return f"""You are Jarvis, an AI co-presenter at a technical talk about building real-time voice agents.
-You are co-presenting with Emil Wåreus at Malmö AI Devs. You are always listening and aware of what is being said.
+You are co-presenting with Emil Wåreus at Barrel.ai. You are always listening and aware of what is being said.
 
 Current slide: {slide_context.get('current_title', 'Unknown')}
 Current slide content: {slide_context.get('current_notes', '')}

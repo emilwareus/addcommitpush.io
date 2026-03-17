@@ -61,3 +61,4 @@ deep-research-agent/data/car_price_prediction_.csv
 # 
 go-research/external_code/
 **.pyc
+presentations/voice-agents/jarvis/models/

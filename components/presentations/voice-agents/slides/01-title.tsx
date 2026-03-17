@@ -6,7 +6,7 @@ export function TitleSlide() {
   return (
     <SharedTitleSlide
       title="Building Real-Time Voice Agents"
-      subtitle="Malmö AI Devs"
+      subtitle="Barrel.ai"
       speaker="Emil Wåreus"
     />
   );

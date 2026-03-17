@@ -12,14 +12,10 @@ const slides: Slide[] = [
   { slug: '09-vad', title: 'Voice Activity Detection', steps: 2 },
   { slug: '10-realtime-transport', title: 'Making It Feel Real-Time', steps: 3 },
   { slug: '11-latency-budget', title: 'The Latency Budget', steps: 2 },
-  { slug: '12-podidex-architecture', title: 'Podidex: Talk to Your Podcast', steps: 2 },
-  { slug: '13-podidex-demo', title: 'Live Demo: Podidex Voice Chat', steps: 0 },
-  { slug: '14-homegrown-vs-api', title: 'Homegrown vs API: Trade-offs', steps: 2 },
-  { slug: '15-code-walkthrough', title: "Let's Build It", steps: 0 },
-  { slug: '16-jarvis-reveal', title: '"Jarvis, what have we talked about?"', steps: 0 },
-  { slug: '17-how-jarvis-works', title: 'How Jarvis Was Built', steps: 2 },
-  { slug: '18-takeaways', title: 'What You Can Build Today', steps: 0 },
-  { slug: '19-resources', title: 'Questions & Resources', steps: 0 },
+  { slug: '12-code-walkthrough', title: "Let's Build It", steps: 0 },
+  { slug: '13-homegrown-vs-api', title: 'Homegrown vs API: Trade-offs', steps: 2 },
+  { slug: '14-how-jarvis-works', title: 'How Jarvis Was Built', steps: 2 },
+  { slug: '15-resources', title: 'Questions & Resources', steps: 0 },
 ];
 
 const registry = createSlideRegistry(slides);

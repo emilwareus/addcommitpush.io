@@ -18,10 +18,9 @@ GROQ_MODEL = "openai/gpt-oss-120b"
 MAX_TOKENS = 300  # Keep responses concise for voice
 TEMPERATURE = 0.7
 
-# TTS
+# TTS (kokoro PyTorch — lang_code set at pipeline init, not per-call)
 KOKORO_VOICE = "am_adam"  # Male American — Jarvis voice
 KOKORO_SPEED = 1.0
-KOKORO_LANG = "en-us"
 
 # Server
 WS_PORT = 8765

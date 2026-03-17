@@ -56,42 +56,22 @@
       "notes": "End-to-end latency breakdown: VAD silence detection 700ms + Whisper STT 300ms + Groq TTFT 150ms + Sentence buffer 100ms + Kokoro TTS 200ms + WebSocket ~1ms = Total ~1.5s to first audio. Optimizations: reduce VAD silence threshold, speculative execution (start LLM before final STT), sentence-chunked TTS streaming, pre-warm models at startup."
     },
     {
-      "slug": "12-podidex-architecture",
-      "title": "Podidex: Talk to Your Podcast",
-      "notes": "Real-world production example. Backend pipeline: faster-whisper + Groq + kokoro on RunPod GPU. Frontend: React, AudioWorklet capture, PCM playback. Key patterns to reuse: binary WebSocket protocol, sentence-chunked TTS, echo suppression, model manager singleton. Jarvis adapts these patterns for local macOS CPU inference."
-    },
-    {
-      "slug": "13-podidex-demo",
-      "title": "Live Demo: Podidex Voice Chat",
-      "notes": "Live demo — switch to the Podidex app and show voice chat with a podcast. Demonstrate the real-time conversation experience."
-    },
-    {
-      "slug": "14-homegrown-vs-api",
-      "title": "Homegrown vs API: Trade-offs",
-      "notes": "Seven-dimension comparison: Latency (homegrown ~1.5s vs API ~0.5s), Cost (fixed hardware vs per-minute), Quality (good vs excellent), Privacy (full control vs data leaves device), Setup (complex vs simple), Customization (total vs limited), Offline (yes vs no). Conclusion: homegrown when you need privacy, customization, or offline; API when you need lowest latency and best quality."
-    },
-    {
-      "slug": "15-code-walkthrough",
+      "slug": "12-code-walkthrough",
       "title": "Let's Build It",
       "notes": "Live coding walkthrough of 5 example scripts: 01-whisper-basic.py (record + transcribe), 02-vad-streaming.py (real-time VAD), 03-kokoro-tts.py (text to speech), 04-groq-streaming.py (streaming LLM), 05-full-pipeline.py (complete VAD -> STT -> LLM -> TTS loop). Switch to terminal for live demo."
     },
     {
-      "slug": "16-jarvis-reveal",
-      "title": "Jarvis, what have we talked about?",
-      "notes": "The dramatic reveal moment. Jarvis has been listening the entire presentation. The presenter asks Jarvis to summarize what has been discussed. Jarvis responds with a contextual spoken summary. Check the sidebar — Jarvis has been showing thinking observations throughout."
+      "slug": "13-homegrown-vs-api",
+      "title": "Homegrown vs API: Trade-offs",
+      "notes": "Seven-dimension comparison: Latency (homegrown ~1.5s vs API ~0.5s), Cost (fixed hardware vs per-minute), Quality (good vs excellent), Privacy (full control vs data leaves device), Setup (complex vs simple), Customization (total vs limited), Offline (yes vs no). Conclusion: homegrown when you need privacy, customization, or offline; API when you need lowest latency and best quality."
     },
     {
-      "slug": "17-how-jarvis-works",
+      "slug": "14-how-jarvis-works",
       "title": "How Jarvis Was Built",
       "notes": "Self-referential architecture diagram showing the Jarvis stack: Browser (AudioWorklet mic capture + WebSocket) -> Silero VAD (1.8MB, 30ms chunks) -> faster-whisper small (244M, CPU int8) -> Groq GPT-OSS 120B (tool use: respond + update_thinking) -> Kokoro-82M (ONNX, streaming) -> Speaker. Agent behavior: always listening, 'Hey Jarvis' trigger, slide context awareness. Total code: ~500 lines Python + ~300 lines TypeScript."
     },
     {
-      "slug": "18-takeaways",
-      "title": "What You Can Build Today",
-      "notes": "Five key takeaways: 1) Voice agents are accessible with open-source tools. 2) The pipeline pattern (VAD -> STT -> LLM -> TTS) is universal. 3) Latency optimization is about chunking and streaming. 4) WebSockets are good enough for most use cases. 5) Start with the simplest thing that works, then optimize."
-    },
-    {
-      "slug": "19-resources",
+      "slug": "15-resources",
       "title": "Questions & Resources",
       "notes": "Q&A and resources: faster-whisper GitHub, kokoro-onnx GitHub, Silero VAD GitHub, Groq API docs, Podidex app. Speaker: Emil Wåreus, addcommitpush.io."
     }
