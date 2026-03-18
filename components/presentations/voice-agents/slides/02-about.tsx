@@ -21,8 +21,8 @@ const cards: AboutCard[] = [
       </div>
     ),
     rotate: -4,
-    x: -540,
-    y: -200,
+    x: -490,
+    y: -190,
     bg: 'bg-zinc-900',
     border: 'border-zinc-700',
     width: 'w-60',
@@ -46,8 +46,8 @@ const cards: AboutCard[] = [
       </div>
     ),
     rotate: 5,
-    x: 280,
-    y: -200,
+    x: 250,
+    y: -190,
     bg: 'bg-zinc-900',
     border: 'border-primary/30',
     width: 'w-56',
@@ -72,8 +72,8 @@ const cards: AboutCard[] = [
       </div>
     ),
     rotate: -2,
-    x: -540,
-    y: 150,
+    x: -490,
+    y: 140,
     bg: 'bg-zinc-900',
     border: 'border-zinc-700',
     width: 'w-64',
@@ -87,8 +87,8 @@ const cards: AboutCard[] = [
       </div>
     ),
     rotate: 3,
-    x: 300,
-    y: 130,
+    x: 200,
+    y: 170,
     bg: 'bg-zinc-900',
     border: 'border-primary/30',
     width: 'w-56',

@@ -43,6 +43,9 @@ function messageStyle(msg: JarvisMessage): string {
   if (msg.type === 'thinking') {
     return `${base} bg-blue-500/10 border border-blue-500/20 text-blue-300/80`;
   }
+  if (msg.type === 'partial') {
+    return `${base} bg-muted/20 text-muted-foreground/50 italic`;
+  }
   if (msg.role === 'assistant') {
     return `${base} bg-primary/10 border border-primary/20 text-primary`;
   }
@@ -50,8 +53,42 @@ function messageStyle(msg: JarvisMessage): string {
   return `${base} bg-muted/30 text-muted-foreground`;
 }
 
+function StreamingToggle({
+  label,
+  enabled,
+  disabled,
+  onChange,
+}: {
+  label: string;
+  enabled: boolean;
+  disabled: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={() => onChange(!enabled)}
+      className="flex items-center justify-between w-full py-1 cursor-pointer disabled:cursor-not-allowed disabled:opacity-40"
+    >
+      <span className="text-xs font-mono text-muted-foreground">{label}</span>
+      <div
+        className={`w-8 h-4 rounded-full transition-colors relative ${
+          enabled ? 'bg-primary/60' : 'bg-muted-foreground/30'
+        }`}
+      >
+        <div
+          className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform ${
+            enabled ? 'translate-x-4' : 'translate-x-0.5'
+          }`}
+        />
+      </div>
+    </button>
+  );
+}
+
 export function JarvisSidebar() {
-  const { messages, status, isConnected, connect, disconnect } = useJarvis();
+  const { messages, status, isConnected, streamingConfig, connect, disconnect, setStreamingConfig } = useJarvis();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to latest message
@@ -76,6 +113,31 @@ export function JarvisSidebar() {
         </span>
       </div>
 
+      {/* Streaming Knobs */}
+      <div className="px-4 py-2 border-b border-primary/20 space-y-1">
+        <span className="text-xs font-mono text-muted-foreground/60 uppercase tracking-wider">
+          Streaming
+        </span>
+        <StreamingToggle
+          label="STT"
+          enabled={streamingConfig.stt}
+          disabled={!isConnected}
+          onChange={(v) => setStreamingConfig({ ...streamingConfig, stt: v })}
+        />
+        <StreamingToggle
+          label="LLM"
+          enabled={streamingConfig.llm}
+          disabled={!isConnected}
+          onChange={(v) => setStreamingConfig({ ...streamingConfig, llm: v })}
+        />
+        <StreamingToggle
+          label="TTS"
+          enabled={streamingConfig.tts}
+          disabled={!isConnected}
+          onChange={(v) => setStreamingConfig({ ...streamingConfig, tts: v })}
+        />
+      </div>
+
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-2">
         {messages.length === 0 && isConnected && (
@@ -97,7 +159,12 @@ export function JarvisSidebar() {
                   thinking
                 </span>
               )}
-              {msg.role === 'user' && (
+              {msg.type === 'partial' && (
+                <span className="text-xs text-muted-foreground/40 block mb-0.5 font-mono">
+                  hearing...
+                </span>
+              )}
+              {msg.type !== 'partial' && msg.role === 'user' && (
                 <span className="text-xs text-muted-foreground/60 block mb-0.5 font-mono">
                   heard
                 </span>

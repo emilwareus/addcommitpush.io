@@ -14,10 +14,16 @@ import {
 
 export interface JarvisMessage {
   id: string;
-  type: 'transcript' | 'thinking' | 'status';
+  type: 'transcript' | 'thinking' | 'status' | 'partial';
   role?: 'user' | 'assistant';
   text: string;
   timestamp: number;
+}
+
+export interface StreamingConfig {
+  stt: boolean;
+  llm: boolean;
+  tts: boolean;
 }
 
 export interface SlideContext {
@@ -39,9 +45,11 @@ interface JarvisContextType {
   messages: JarvisMessage[];
   status: JarvisStatus;
   isConnected: boolean;
+  streamingConfig: StreamingConfig;
   connect: () => Promise<void>;
   disconnect: () => void;
   sendSlideContext: (context: SlideContext) => void;
+  setStreamingConfig: (config: StreamingConfig) => void;
 }
 
 const JarvisContext = createContext<JarvisContextType | null>(null);
@@ -112,7 +120,10 @@ class AudioQueue {
 
 // ─── WebSocket URL ───────────────────────────────────────────────────────────
 
-const WS_URL = 'wss://localhost:8765/ws';
+function getWsUrl(): string {
+  const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss' : 'ws';
+  return `${protocol}://localhost:8765/ws`;
+}
 const HEADER_SIZE = 4; // 4-byte uint32 LE flags
 
 // ─── Provider ────────────────────────────────────────────────────────────────
@@ -121,6 +132,11 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<JarvisMessage[]>([]);
   const [status, setStatus] = useState<JarvisStatus>('disconnected');
   const [isConnected, setIsConnected] = useState(false);
+  const [streamingConfig, setStreamingConfigState] = useState<StreamingConfig>({
+    stt: false,
+    llm: false,
+    tts: false,
+  });
 
   const wsRef = useRef<WebSocket | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -128,6 +144,7 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
   const isTtsPlayingRef = useRef(false);
   const streamRef = useRef<MediaStream | null>(null);
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
+  const streamingDeltaIdRef = useRef<string | null>(null);
 
   const addMessage = useCallback(
     (type: JarvisMessage['type'], text: string, role?: 'user' | 'assistant') => {
@@ -144,6 +161,15 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
     },
     [],
   );
+
+  const setStreamingConfig = useCallback((config: StreamingConfig) => {
+    setStreamingConfigState(config);
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(
+        JSON.stringify({ type: 'set_streaming', ...config }),
+      );
+    }
+  }, []);
 
   // ── Cleanup ──────────────────────────────────────────────────────────────
 
@@ -217,7 +243,7 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
     silentGain.connect(audioCtx.destination);
 
     // 5. Open WebSocket
-    const ws = new WebSocket(WS_URL);
+    const ws = new WebSocket(getWsUrl());
     ws.binaryType = 'arraybuffer';
     wsRef.current = ws;
 
@@ -239,8 +265,71 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
             break;
 
           case 'transcript':
+            // Remove any partial transcript when final arrives
+            if (msg.role === 'user') {
+              setMessages((prev) => prev.filter((m) => m.type !== 'partial'));
+            }
+            // If we were streaming deltas, replace the delta message with final text
+            if (msg.role === 'assistant' && streamingDeltaIdRef.current) {
+              const deltaId = streamingDeltaIdRef.current;
+              streamingDeltaIdRef.current = null;
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === deltaId ? { ...m, text: msg.text } : m,
+                ),
+              );
+              break;
+            }
             addMessage('transcript', msg.text, msg.role);
             break;
+
+          case 'partial_transcript':
+            // Replace existing partial or add new one
+            setMessages((prev) => {
+              const existing = prev.find((m) => m.type === 'partial');
+              if (existing) {
+                return prev.map((m) =>
+                  m.type === 'partial' ? { ...m, text: msg.text } : m,
+                );
+              }
+              return [
+                ...prev,
+                {
+                  id: `partial-${Date.now()}`,
+                  type: 'partial' as const,
+                  role: 'user' as const,
+                  text: msg.text,
+                  timestamp: Date.now(),
+                },
+              ];
+            });
+            break;
+
+          case 'response_delta': {
+            // Streaming LLM tokens — append to existing or create new message
+            const deltaId = streamingDeltaIdRef.current;
+            if (deltaId) {
+              setMessages((prev) =>
+                prev.map((m) =>
+                  m.id === deltaId ? { ...m, text: m.text + msg.text } : m,
+                ),
+              );
+            } else {
+              const newId = `delta-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+              streamingDeltaIdRef.current = newId;
+              setMessages((prev) => [
+                ...prev,
+                {
+                  id: newId,
+                  type: 'transcript',
+                  role: 'assistant',
+                  text: msg.text,
+                  timestamp: Date.now(),
+                },
+              ]);
+            }
+            break;
+          }
 
           case 'thinking':
             addMessage('thinking', msg.text);
@@ -322,7 +411,7 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
 
   return (
     <JarvisContext.Provider
-      value={{ messages, status, isConnected, connect, disconnect, sendSlideContext }}
+      value={{ messages, status, isConnected, streamingConfig, connect, disconnect, sendSlideContext, setStreamingConfig }}
     >
       {children}
     </JarvisContext.Provider>

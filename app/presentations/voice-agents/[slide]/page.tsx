@@ -51,25 +51,33 @@ export default async function SlidePage({
         const { ArchitectureOverviewSlide } = await import('@/components/presentations/voice-agents/slides/04-architecture-overview');
         return <ArchitectureOverviewSlide />;
       }
-      case '05-stt-landscape': {
-        const { SttLandscapeSlide } = await import('@/components/presentations/voice-agents/slides/05-stt-landscape');
+      case '05-vad': {
+        const { VadSlide } = await import('@/components/presentations/voice-agents/slides/05-vad');
+        return <VadSlide />;
+      }
+      case '06-stt-landscape': {
+        const { SttLandscapeSlide } = await import('@/components/presentations/voice-agents/slides/06-stt-landscape');
         return <SttLandscapeSlide />;
       }
-      case '06-whisper-deep-dive': {
-        const { WhisperDeepDiveSlide } = await import('@/components/presentations/voice-agents/slides/06-whisper-deep-dive');
+      case '06b-stt-benchmarks': {
+        const { SttBenchmarksSlide } = await import('@/components/presentations/voice-agents/slides/06b-stt-benchmarks');
+        return <SttBenchmarksSlide />;
+      }
+      case '07-whisper-deep-dive': {
+        const { WhisperDeepDiveSlide } = await import('@/components/presentations/voice-agents/slides/07-whisper-deep-dive');
         return <WhisperDeepDiveSlide />;
       }
-      case '07-tts-landscape': {
-        const { TtsLandscapeSlide } = await import('@/components/presentations/voice-agents/slides/07-tts-landscape');
+      case '08-tts-landscape': {
+        const { TtsLandscapeSlide } = await import('@/components/presentations/voice-agents/slides/08-tts-landscape');
         return <TtsLandscapeSlide />;
       }
-      case '08-kokoro-deep-dive': {
-        const { KokoroDeepDiveSlide } = await import('@/components/presentations/voice-agents/slides/08-kokoro-deep-dive');
-        return <KokoroDeepDiveSlide />;
+      case '08b-tts-benchmarks': {
+        const { TtsBenchmarksSlide } = await import('@/components/presentations/voice-agents/slides/08b-tts-benchmarks');
+        return <TtsBenchmarksSlide />;
       }
-      case '09-vad': {
-        const { VadSlide } = await import('@/components/presentations/voice-agents/slides/09-vad');
-        return <VadSlide />;
+      case '09-kokoro-deep-dive': {
+        const { KokoroDeepDiveSlide } = await import('@/components/presentations/voice-agents/slides/09-kokoro-deep-dive');
+        return <KokoroDeepDiveSlide />;
       }
       case '10-realtime-transport': {
         const { RealtimeTransportSlide } = await import('@/components/presentations/voice-agents/slides/10-realtime-transport');

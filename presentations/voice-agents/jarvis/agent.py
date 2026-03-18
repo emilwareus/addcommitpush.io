@@ -7,6 +7,7 @@ The agent processes transcribed utterances and decides whether to:
 """
 
 import json
+import re
 from pathlib import Path
 
 from groq import Groq
@@ -181,3 +182,115 @@ class JarvisAgent:
             })
 
         return tool_calls
+
+    def process_utterance_streaming(self, transcript: str):
+        """Process an utterance with streaming LLM response.
+
+        Yields dicts:
+          {"type": "delta", "text": str}       — incremental *text content* (not raw JSON)
+          {"type": "tool_call", "name": str, "args": dict} — completed tool call
+        """
+        self.append_transcript(transcript)
+        self.conversation_history.append({"role": "user", "content": transcript})
+
+        if len(self.conversation_history) > 20:
+            self.conversation_history = self.conversation_history[-20:]
+
+        system_prompt = build_system_prompt(self.slide_context)
+        system_prompt += self.transcript_buffer
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            *self.conversation_history,
+        ]
+
+        stream = self.client.chat.completions.create(
+            model=GROQ_MODEL,
+            messages=messages,
+            tools=TOOLS,
+            tool_choice="auto",
+            max_tokens=MAX_TOKENS,
+            temperature=TEMPERATURE,
+            stream=True,
+        )
+
+        # Accumulate tool call fragments by index
+        tool_call_buffers: dict[int, dict] = {}
+        content_buffer = ""
+
+        for chunk in stream:
+            delta = chunk.choices[0].delta if chunk.choices else None
+            if not delta:
+                continue
+
+            if delta.content:
+                content_buffer += delta.content
+
+            if delta.tool_calls:
+                for tc_delta in delta.tool_calls:
+                    idx = tc_delta.index
+                    if idx not in tool_call_buffers:
+                        tool_call_buffers[idx] = {"name": "", "arguments": ""}
+                    if tc_delta.function:
+                        if tc_delta.function.name:
+                            tool_call_buffers[idx]["name"] = tc_delta.function.name
+                        if tc_delta.function.arguments:
+                            tool_call_buffers[idx]["arguments"] += tc_delta.function.arguments
+
+                            # For respond tool, extract and yield only the text
+                            # value content — not the raw JSON wrapper.
+                            buf = tool_call_buffers[idx]
+                            if buf["name"] == "respond":
+                                text = _extract_respond_delta(buf)
+                                if text:
+                                    yield {"type": "delta", "text": text}
+
+        # Emit completed tool calls
+        for _idx, buf in sorted(tool_call_buffers.items()):
+            args = json.loads(buf["arguments"])
+            yield {"type": "tool_call", "name": buf["name"], "args": args}
+
+        # Record in history
+        if tool_call_buffers:
+            self.conversation_history.append({
+                "role": "assistant",
+                "content": content_buffer,
+            })
+        elif content_buffer:
+            self.conversation_history.append({
+                "role": "assistant",
+                "content": content_buffer,
+            })
+
+
+_VALUE_PREFIX = re.compile(r'"text"\s*:\s*"')
+
+
+def _extract_respond_delta(buf: dict) -> str:
+    """Extract new text content from the accumulated respond arguments.
+
+    The JSON arguments are always {"text": "CONTENT"}. We track where the
+    text value starts and how much we've already yielded. We hold back 2
+    characters to avoid yielding the closing '"}' of the JSON.
+    """
+    args_str = buf["arguments"]
+
+    # Find where the text value starts (only once)
+    if "_vstart" not in buf:
+        m = _VALUE_PREFIX.search(args_str)
+        if m:
+            buf["_vstart"] = m.end()
+            buf["_yielded"] = 0
+        else:
+            return ""
+
+    vstart = buf["_vstart"]
+    # Hold back 2 chars to avoid yielding closing "}
+    safe_end = max(0, len(args_str) - vstart - 2)
+
+    if safe_end <= buf["_yielded"]:
+        return ""
+
+    new_text = args_str[vstart + buf["_yielded"] : vstart + safe_end]
+    buf["_yielded"] = safe_end
+    return new_text

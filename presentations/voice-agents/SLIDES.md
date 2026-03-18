@@ -16,7 +16,7 @@ Jarvis is your co-presenter from the very first slide. Introduce him early, inte
 |-----|--------|---------|----------|--------------|
 | 1 | 1-3 | **Intro + Meet Jarvis** | ~5 min | Title, about me, introduce Jarvis live — chat with him |
 | 2 | 4 | **The Pipeline** | ~3 min | 6-stage pipeline overview |
-| 3 | 5-9 | **Building Blocks** | ~6 min | STT, TTS, VAD — 1-2 min each |
+| 3 | 5-9 | **Building Blocks** | ~6 min | VAD, STT, TTS — following the pipeline order |
 | 4 | 10-11 | **Transport & Latency** | ~3 min | WebSocket, echo suppression, latency budget |
 | 5 | 12 | **Live Coding** | ~5 min | Run 1-2 example scripts |
 | 6 | 13 | **Homegrown vs API** | ~2 min | Quick trade-off discussion |
@@ -91,7 +91,24 @@ Six stages. Each one adds latency. The art is making the total feel instant. Let
 
 ---
 
-## SLIDE 5: Speech-to-Text: The Ears
+## SLIDE 5: Voice Activity Detection
+**Duration:** 2 minutes
+
+### Visual
+VAD approaches, turn-taking flow diagram.
+
+### Speaker Notes
+"VAD — the unsung hero. Silero VAD is a 1.8MB neural network that tells us: is someone speaking right now?
+
+We feed it 30ms audio chunks. When speech probability exceeds 0.5, we accumulate. When we get 700ms of silence — utterance complete, send to STT.
+
+That 700ms is a UX knob. Shorter = more responsive but more false triggers. You can feel this with Jarvis — there's a beat after I stop talking before he processes."
+
+[Optionally ask Jarvis something to demonstrate the VAD delay]
+
+---
+
+## SLIDE 6: Speech-to-Text: The Ears
 **Duration:** 2 minutes
 
 ### Visual
@@ -111,7 +128,7 @@ Alternatives: Deepgram if you want cloud with lowest latency, Moonshine for edge
 
 ---
 
-## SLIDE 6: Whisper: How It Works
+## SLIDE 7: Whisper: How It Works
 **Duration:** 1 minute
 
 ### Visual
@@ -125,7 +142,7 @@ Model sizes from tiny at 39M to large-v3 at 1.5B. We pick small — fast enough 
 
 ---
 
-## SLIDE 7: Text-to-Speech: The Voice
+## SLIDE 8: Text-to-Speech: The Voice
 **Duration:** 2 minutes
 
 ### Visual
@@ -142,7 +159,7 @@ ElevenLabs is better quality if you're okay with cloud. But we want local."
 
 ---
 
-## SLIDE 8: Kokoro-82M: Fast & Open TTS
+## SLIDE 9: Kokoro-82M: Fast & Open TTS
 **Duration:** 1 minute
 
 ### Visual
@@ -152,23 +169,6 @@ Kokoro stats card, streaming synthesis diagram.
 "Key numbers: 82M params, 24kHz output, ONNX runtime — no PyTorch at inference.
 
 Streaming synthesis is the critical feature — start playing audio before the full response is generated. You just heard it in action with Jarvis. That's the real demo."
-
----
-
-## SLIDE 9: Voice Activity Detection
-**Duration:** 2 minutes
-
-### Visual
-VAD approaches, turn-taking flow diagram.
-
-### Speaker Notes
-"VAD — the unsung hero. Silero VAD is a 1.8MB neural network that tells us: is someone speaking right now?
-
-We feed it 30ms audio chunks. When speech probability exceeds 0.5, we accumulate. When we get 700ms of silence — utterance complete, send to STT.
-
-That 700ms is a UX knob. Shorter = more responsive but more false triggers. You can feel this with Jarvis — there's a beat after I stop talking before he processes."
-
-[Optionally ask Jarvis something to demonstrate the VAD delay]
 
 ---
 
@@ -302,11 +302,11 @@ Thanks everyone!"
 | 2 | About | 2 min |
 | 3 | Meet Jarvis + tech stack | 2 min |
 | 4 | Pipeline overview | 3 min |
-| 5 | STT / faster-whisper | 2 min |
-| 6 | Whisper architecture | 1 min |
-| 7 | TTS / Kokoro | 2 min |
-| 8 | Kokoro deep dive | 1 min |
-| 9 | VAD / Silero | 2 min |
+| 5 | VAD / Silero | 2 min |
+| 6 | STT / faster-whisper | 2 min |
+| 7 | Whisper architecture | 1 min |
+| 8 | TTS / Kokoro | 2 min |
+| 9 | Kokoro deep dive | 1 min |
 | 10 | Transport + echo suppression | 2 min |
 | 11 | Latency budget | 1 min |
 | 12 | Live coding | 5 min |
@@ -322,7 +322,7 @@ Thanks everyone!"
 | When | What | Notes |
 |------|------|-------|
 | Slide 3 | Jarvis says hello | First interaction — audience sees it's real |
-| Slide 9 | VAD demo with Jarvis | Ask Jarvis something to show the delay |
+| Slide 5 | VAD demo with Jarvis | Ask Jarvis something to show the delay |
 | Slide 12 | Live coding | Run full pipeline script, ~100 lines |
 | Slide 14 | Agent design | "Two tools: respond and update_thinking" |
 | Slide 15 | Q&A with Jarvis | Audience can ask Jarvis questions |

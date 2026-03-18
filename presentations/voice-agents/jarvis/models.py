@@ -115,6 +115,17 @@ class ModelManager:
             )
             return " ".join(s.text for s in segments).strip()
 
+    def transcribe_fast(self, audio: np.ndarray) -> str:
+        """Fast transcription with beam_size=1 for partial/interim results."""
+        with self._stt_lock:
+            segments, _ = self._whisper.transcribe(
+                audio,
+                beam_size=1,
+                language="en",
+                vad_filter=False,
+            )
+            return " ".join(s.text for s in segments).strip()
+
     def synthesize(self, text: str) -> tuple[np.ndarray, int]:
         """Synthesize text to audio with Kokoro. Thread-safe.
 

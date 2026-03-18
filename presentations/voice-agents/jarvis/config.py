@@ -1,13 +1,13 @@
 # Audio
 INPUT_SAMPLE_RATE = 16000  # Browser sends 16kHz mono PCM
 OUTPUT_SAMPLE_RATE = 24000  # Kokoro outputs 24kHz
-CHUNK_MS = 30  # VAD chunk size
-CHUNK_SAMPLES = int(INPUT_SAMPLE_RATE * CHUNK_MS / 1000)  # 480
+CHUNK_MS = 32  # VAD chunk size (Silero v5 requires exactly 512 samples at 16kHz)
+CHUNK_SAMPLES = 512  # Silero v5: exactly 512 for 16kHz, 256 for 8kHz
 
 # VAD
 VAD_THRESHOLD = 0.5  # Silero confidence threshold
 SILENCE_DURATION_MS = 700  # ms of silence before utterance end
-SILENCE_CHUNKS = int(SILENCE_DURATION_MS / CHUNK_MS)  # ~23 chunks
+SILENCE_CHUNKS = int(SILENCE_DURATION_MS / CHUNK_MS)  # ~21 chunks
 
 # STT
 WHISPER_MODEL = "small"

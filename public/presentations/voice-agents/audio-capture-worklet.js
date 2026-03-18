@@ -1,7 +1,7 @@
 /**
  * AudioWorklet processor for mic capture.
  *
- * - Accumulates device-rate samples into 30ms frames
+ * - Accumulates device-rate samples into 32ms frames (512 samples at 16kHz)
  * - Downsamples to 16kHz mono via linear interpolation
  * - Posts Int16 PCM frames to main thread
  *
@@ -12,11 +12,11 @@ class AudioCaptureProcessor extends AudioWorkletProcessor {
     super();
     this._enabled = false;
     this._buffer = new Float32Array(0);
-    // 30ms at device sample rate
-    this._frameSize = Math.ceil(sampleRate * 0.03);
-    // Target: 16kHz, 30ms = 480 samples
+    // 32ms at device sample rate (Silero VAD v5 requires exactly 512 samples at 16kHz)
+    this._frameSize = Math.ceil(sampleRate * 0.032);
+    // Target: 16kHz, 32ms = 512 samples
     this._targetRate = 16000;
-    this._targetFrameSize = Math.ceil(this._targetRate * 0.03); // 480
+    this._targetFrameSize = 512;
 
     this.port.onmessage = (e) => {
       if (e.data && e.data.type === 'set_enabled') {

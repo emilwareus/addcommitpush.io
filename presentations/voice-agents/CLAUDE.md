@@ -1,0 +1,1 @@
+This is a presentation for the Barrel.ai community, an ML/AI native community in Malmö. Assume everyone knows a lot about AI and trains their own models. We need to engage them in a fun way that let's them walk away with new knowledge.

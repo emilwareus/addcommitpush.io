@@ -21,29 +21,29 @@
       "notes": "6-stage pipeline: Microphone -> VAD (detect speech) -> STT (transcribe) -> LLM (reason) -> TTS (synthesize) -> Speaker. Each stage revealed progressively. The core abstraction for any voice agent."
     },
     {
-      "slug": "05-stt-landscape",
+      "slug": "05-vad",
+      "title": "Voice Activity Detection",
+      "notes": "Three VAD approaches compared: Energy-Based (simple RMS threshold), Silero VAD (our pick — neural network, 1.8MB, highly accurate), webrtcvad (Google's C library). Turn-taking flow: SPEECH detected -> accumulate audio -> 700ms silence -> UTTERANCE END -> send to STT. The silence threshold is a UX knob: shorter = more responsive, longer = fewer false triggers."
+    },
+    {
+      "slug": "06-stt-landscape",
       "title": "Speech-to-Text: The Ears",
       "notes": "Survey of STT options: OpenAI Whisper (the gold standard), faster-whisper (our pick — CTranslate2, 4x faster), Moonshine (ultra-lightweight), Deepgram (cloud, lowest latency), Google Cloud STT. We choose faster-whisper for local CPU inference."
     },
     {
-      "slug": "06-whisper-deep-dive",
+      "slug": "07-whisper-deep-dive",
       "title": "Whisper: How It Works",
       "notes": "Whisper architecture: Audio -> Log-Mel Spectrogram -> Encoder -> Decoder -> Text. Model size comparison table: tiny (39M, fastest) through large-v3 (1.5B, most accurate). We pick 'small' (244M) as the sweet spot. Code snippet shows faster-whisper initialization with int8 quantization for CPU."
     },
     {
-      "slug": "07-tts-landscape",
+      "slug": "08-tts-landscape",
       "title": "Text-to-Speech: The Voice",
       "notes": "Survey of TTS options: Kokoro-82M (our pick — only 82M params, Apache 2.0), Bark (high quality but slow), Piper (ultra-fast, lower quality), XTTS v2 (voice cloning), ElevenLabs (best quality, cloud), Google Cloud TTS. We choose Kokoro for its speed and open license."
     },
     {
-      "slug": "08-kokoro-deep-dive",
+      "slug": "09-kokoro-deep-dive",
       "title": "Kokoro-82M: Fast & Open TTS",
       "notes": "Kokoro stats: 82M parameters, Apache 2.0 license, 24kHz output, ONNX runtime (no PyTorch needed), 50+ voices, ~200ms latency for first audio. Code snippet: 3 lines to synthesize speech. Supports streaming synthesis for lower perceived latency."
-    },
-    {
-      "slug": "09-vad",
-      "title": "Voice Activity Detection",
-      "notes": "Three VAD approaches compared: Energy-Based (simple RMS threshold), Silero VAD (our pick — neural network, 1.8MB, highly accurate), webrtcvad (Google's C library). Turn-taking flow: SPEECH detected -> accumulate audio -> 700ms silence -> UTTERANCE END -> send to STT. The silence threshold is a UX knob: shorter = more responsive, longer = fewer false triggers."
     },
     {
       "slug": "10-realtime-transport",

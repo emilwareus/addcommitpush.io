@@ -13,10 +13,13 @@ import json
 import os
 import struct
 
+from pathlib import Path
+
 from dotenv import load_dotenv
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
-load_dotenv()
+# Load .env from the jarvis/ directory (where this file lives)
+load_dotenv(Path(__file__).parent / ".env")
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import WS_PORT
@@ -89,6 +92,9 @@ async def websocket_endpoint(ws: WebSocket) -> None:
                 if msg_type == "slide_context":
                     pipeline.update_slide_context(msg.get("context", {}))
                     print(f"Slide context updated: {msg.get('context', {}).get('current_title', '?')}")
+                elif msg_type == "set_streaming":
+                    pipeline.update_streaming_config(msg)
+                    print(f"Streaming config updated: {pipeline.streaming_config}")
                 elif msg_type == "shutdown":
                     print("Shutdown requested")
                     break
@@ -100,13 +106,19 @@ async def websocket_endpoint(ws: WebSocket) -> None:
 
 
 def main() -> None:
-    """Entry point for `python -m jarvis.server`."""
+    """Entry point for `python -m jarvis`."""
     import uvicorn
 
-    ssl_keyfile = os.environ.get("SSL_KEYFILE", "localhost+1-key.pem")
-    ssl_certfile = os.environ.get("SSL_CERTFILE", "localhost+1.pem")
+    # Resolve SSL cert paths relative to the jarvis/ directory
+    jarvis_dir = Path(__file__).parent
+    ssl_keyfile = os.environ.get("SSL_KEYFILE", str(jarvis_dir / "localhost+1-key.pem"))
+    ssl_certfile = os.environ.get("SSL_CERTFILE", str(jarvis_dir / "localhost+1.pem"))
 
-    use_ssl = os.path.exists(ssl_certfile) and os.path.exists(ssl_keyfile)
+    use_ssl = (
+        os.path.exists(ssl_certfile)
+        and os.path.exists(ssl_keyfile)
+        and not os.environ.get("JARVIS_NO_SSL")
+    )
 
     protocol = "wss" if use_ssl else "ws"
     print(f"Starting Jarvis on {protocol}://localhost:{WS_PORT}")
