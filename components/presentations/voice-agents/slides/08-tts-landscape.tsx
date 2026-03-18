@@ -2,7 +2,7 @@ const models = [
   {
     name: 'Kokoro-82M',
     params: '82M',
-    note: 'StyleTTS 2 + iSTFTNet. MOS 3.87 surpasses human on LJSpeech (StyleTTS 2 paper). #1 open-weights on TTS Arena (ELO 1072). 5x RT on CPU. Apache 2.0.',
+    note: 'StyleTTS 2 + iSTFTNet. Human-level quality, #1 open-weights on TTS Arena, ~5x RT on CPU. Apache 2.0.',
     highlight: true,
     href: 'https://huggingface.co/hexgrad/Kokoro-82M',
   },
@@ -52,44 +52,42 @@ const models = [
 
 export function TtsLandscapeSlide() {
   return (
-    <div className="flex flex-col items-center justify-center h-full w-full max-w-5xl mx-auto px-8">
-      <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary neon-glow text-center">
+    <div className="flex flex-col items-start justify-center h-full w-full max-w-[58rem] mr-auto ml-20 px-6">
+      <h2 className="text-[2.6rem] md:text-[3rem] font-bold mb-4 text-primary neon-glow text-left w-full">
         Open-Source TTS Landscape
       </h2>
 
-      <p className="text-lg text-muted-foreground mb-8 text-center max-w-2xl">
+      <p className="text-xl text-muted-foreground mb-4 text-left max-w-3xl">
         Seven families worth knowing -- all run locally, no API keys needed
       </p>
 
-      <div className="grid gap-3 w-full max-w-3xl">
+      <div className="grid gap-2 w-full max-w-[52rem]">
         {models.map((m) => (
           <a
             key={m.name}
             href={m.href}
             target="_blank"
             rel="noopener noreferrer"
-            className={`flex items-start gap-4 p-4 rounded-lg border transition-colors ${
+            className={`flex items-center gap-3 px-3 py-3 rounded-lg border transition-colors ${
               m.highlight
                 ? 'bg-primary/10 border-primary/40'
                 : 'bg-zinc-900/60 border-zinc-800 hover:border-zinc-700'
             }`}
           >
-            <div className="flex flex-col gap-1 min-w-0">
-              <div className="flex items-center gap-3">
-                <span className={`font-semibold text-base ${m.highlight ? 'text-primary' : ''}`}>
-                  {m.name}
-                </span>
-                <span className="text-xs font-mono px-2 py-0.5 rounded bg-zinc-800 text-muted-foreground whitespace-nowrap">
-                  {m.params}
-                </span>
-              </div>
-              <span className="text-sm text-muted-foreground">{m.note}</span>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className={`font-semibold text-lg ${m.highlight ? 'text-primary' : ''}`}>
+                {m.name}
+              </span>
+              <span className="text-sm font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-muted-foreground whitespace-nowrap">
+                {m.params}
+              </span>
             </div>
+            <span className="text-base text-muted-foreground truncate">{m.note}</span>
           </a>
         ))}
       </div>
 
-      <p className="mt-6 text-base text-primary/70 font-mono text-center">
+      <p className="mt-4 text-lg text-primary/70 font-mono text-left">
         We use Kokoro-82M (ONNX, CPU) for Jarvis -- 82M params, real-time streaming
       </p>
     </div>

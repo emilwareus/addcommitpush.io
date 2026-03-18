@@ -1,7 +1,7 @@
-"""ModelManager — loads and manages Whisper, Kokoro, and Silero VAD models.
+"""ModelManager — loads and manages STT backends, Kokoro TTS, and Silero VAD.
 
 Adapted from Podidex's ModelManager pattern.
-Uses MPS (Apple Silicon GPU) for Kokoro TTS, CPU for faster-whisper and VAD.
+Uses MPS (Apple Silicon GPU) for Kokoro TTS, CPU for STT and VAD.
 Thread-safe access via per-model locks.
 """
 
@@ -12,12 +12,15 @@ import time
 import numpy as np
 
 from .config import (
+    DEFAULT_STT_MODEL,
     KOKORO_SPEED,
     KOKORO_VOICE,
     OUTPUT_SAMPLE_RATE,
+    STT_MODELS,
     WHISPER_COMPUTE_TYPE,
     WHISPER_MODEL,
 )
+from .stt import MoonshineBackend, STTBackend, WhisperBackend
 
 
 def _is_mps_available() -> bool:
@@ -46,7 +49,8 @@ class ModelManager:
     def __init__(self) -> None:
         self._stt_lock = threading.Lock()
         self._tts_lock = threading.Lock()
-        self._whisper = None
+        self._stt_backends: dict[str, STTBackend] = {}
+        self._active_stt: str = DEFAULT_STT_MODEL
         self._kokoro = None
         self._vad = None
         self._tts_device = "cpu"
@@ -64,26 +68,32 @@ class ModelManager:
         self._torch = torch
         print(f"  VAD loaded in {time.time() - t0:.1f}s")
 
-        # faster-whisper (CPU only — no MPS support in CTranslate2)
+        # STT backends — all pre-loaded for instant hot-swap
         t1 = time.time()
-        print(f"  Loading faster-whisper ({WHISPER_MODEL}, {WHISPER_COMPUTE_TYPE})...")
-        from faster_whisper import WhisperModel
+        print(f"  Loading whisper-small ({WHISPER_MODEL}, {WHISPER_COMPUTE_TYPE})...")
+        self._stt_backends["whisper-small"] = WhisperBackend(WHISPER_MODEL, WHISPER_COMPUTE_TYPE)
+        print(f"  whisper-small loaded in {time.time() - t1:.1f}s")
 
-        self._whisper = WhisperModel(
-            WHISPER_MODEL,
-            device="cpu",
-            compute_type=WHISPER_COMPUTE_TYPE,
-        )
-        print(f"  Whisper loaded in {time.time() - t1:.1f}s")
+        t2 = time.time()
+        print("  Loading moonshine-small...")
+        self._stt_backends["moonshine-small"] = MoonshineBackend("moonshine-small", "SMALL_STREAMING")
+        print(f"  moonshine-small loaded in {time.time() - t2:.1f}s")
+
+        t3 = time.time()
+        print("  Loading moonshine-medium...")
+        self._stt_backends["moonshine-medium"] = MoonshineBackend("moonshine-medium", "MEDIUM_STREAMING")
+        print(f"  moonshine-medium loaded in {time.time() - t3:.1f}s")
+
+        self._active_stt = DEFAULT_STT_MODEL
 
         # Kokoro TTS (PyTorch — supports MPS on Apple Silicon)
-        t2 = time.time()
+        t4 = time.time()
         self._tts_device = _detect_tts_device()
         print(f"  Loading Kokoro TTS (device={self._tts_device})...")
         from kokoro import KPipeline
 
         self._kokoro = KPipeline(lang_code="a", device=self._tts_device)
-        print(f"  Kokoro loaded in {time.time() - t2:.1f}s")
+        print(f"  Kokoro loaded in {time.time() - t4:.1f}s")
 
         # Pre-warm TTS to avoid first-call latency
         print("  Warming up TTS...")
@@ -92,6 +102,7 @@ class ModelManager:
                 break
 
         print(f"  All models loaded in {time.time() - t0:.1f}s")
+        print(f"  STT backends: {list(self._stt_backends.keys())} (active: {self._active_stt})")
         print(f"  Devices: STT=cpu, TTS={self._tts_device}, VAD=cpu")
 
     @property
@@ -104,27 +115,32 @@ class ModelManager:
         tensor = self._torch.from_numpy(audio_chunk).float()
         return self._vad(tensor, sample_rate).item()
 
-    def transcribe(self, audio: np.ndarray) -> str:
-        """Transcribe audio with Whisper. Thread-safe."""
+    @property
+    def stt_model(self) -> str:
+        """Name of the active STT backend."""
+        return self._active_stt
+
+    @property
+    def available_stt_models(self) -> list[str]:
+        """Names of all loaded STT backends."""
+        return list(self._stt_backends.keys())
+
+    def set_stt_model(self, name: str) -> None:
+        """Switch the active STT backend. Thread-safe."""
+        if name not in self._stt_backends:
+            raise ValueError(f"Unknown STT model: {name!r}. Available: {list(self._stt_backends.keys())}")
         with self._stt_lock:
-            segments, _ = self._whisper.transcribe(
-                audio,
-                beam_size=5,
-                language="en",
-                vad_filter=False,
-            )
-            return " ".join(s.text for s in segments).strip()
+            self._active_stt = name
+
+    def transcribe(self, audio: np.ndarray) -> str:
+        """Transcribe audio with the active STT backend. Thread-safe."""
+        with self._stt_lock:
+            return self._stt_backends[self._active_stt].transcribe(audio)
 
     def transcribe_fast(self, audio: np.ndarray) -> str:
-        """Fast transcription with beam_size=1 for partial/interim results."""
+        """Fast transcription with the active STT backend. Thread-safe."""
         with self._stt_lock:
-            segments, _ = self._whisper.transcribe(
-                audio,
-                beam_size=1,
-                language="en",
-                vad_filter=False,
-            )
-            return " ".join(s.text for s in segments).strip()
+            return self._stt_backends[self._active_stt].transcribe_fast(audio)
 
     def synthesize(self, text: str) -> tuple[np.ndarray, int]:
         """Synthesize text to audio with Kokoro. Thread-safe.

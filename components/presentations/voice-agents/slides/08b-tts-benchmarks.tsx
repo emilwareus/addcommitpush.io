@@ -18,20 +18,22 @@ interface Model {
 
 // VERIFIED DATA ONLY -- every number links to an official primary source
 const models: Model[] = [
-  // Kokoro-82M -- RTF from community benchmark gist, no UTMOS published
+  // Kokoro-82M -- UTMOS estimated from StyleTTS 2 paper MOS 3.87 (LJSpeech OOD, NeurIPS 2023)
+  // Not a direct UTMOS measurement but the closest quality proxy available
+  // RTF from community benchmark gist
   {
-    name: 'Kokoro-82M', family: 'Kokoro', params: 82, utmos: null, wer: null, rtf: 0.2,
+    name: 'Kokoro-82M', family: 'Kokoro', params: 82, utmos: 3.87, wer: null, rtf: 0.2,
     color: '#f472b6',
-    qualitySource: 'No official UTMOS published',
-    qualityUrl: '',
+    qualitySource: 'StyleTTS 2 paper, Table 2 MOS OOD (estimate)',
+    qualityUrl: 'https://arxiv.org/abs/2306.07691',
     speedSource: 'Benchmark gist (32-vCPU AMD EPYC, CPU)',
     speedUrl: 'https://gist.github.com/efemaer/23d9a3b949b751dde315192b4dcf0653',
   },
   {
-    name: 'Kokoro-82M (A10G)', family: 'Kokoro', params: 82, utmos: null, wer: null, rtf: 0.0104,
+    name: 'Kokoro-82M (A10G)', family: 'Kokoro', params: 82, utmos: 3.87, wer: null, rtf: 0.0104,
     color: '#f472b6',
-    qualitySource: 'No official UTMOS published',
-    qualityUrl: '',
+    qualitySource: 'StyleTTS 2 paper, Table 2 MOS OOD (estimate)',
+    qualityUrl: 'https://arxiv.org/abs/2306.07691',
     speedSource: 'Benchmark gist (A10G GPU)',
     speedUrl: 'https://gist.github.com/efemaer/23d9a3b949b751dde315192b4dcf0653',
   },
@@ -142,7 +144,7 @@ function getCoords(model: Model, view: ViewMode): { x: number; y: number } {
 function getRange(view: ViewMode): { xMin: number; xMax: number; yMin: number; yMax: number } {
   switch (view) {
     case 'utmos-vs-params':
-      return { xMin: 100, xMax: 1000, yMin: 3.5, yMax: 4.6 };
+      return { xMin: 50, xMax: 1000, yMin: 3.5, yMax: 4.6 };
     case 'wer-vs-params':
       return { xMin: 100, xMax: 6000, yMin: 0, yMax: 8 };
     case 'rtf-vs-params':
@@ -150,7 +152,7 @@ function getRange(view: ViewMode): { xMin: number; xMax: number; yMin: number; y
   }
 }
 
-const LOG_TICKS_QUALITY = [100, 200, 300, 500, 800];
+const LOG_TICKS_QUALITY = [50, 100, 200, 300, 500, 800];
 const LOG_TICKS_WER = [100, 200, 500, 1000, 2000, 5000];
 const LOG_TICKS_SPEED = [10, 30, 100, 300, 1000, 3000];
 

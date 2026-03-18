@@ -3,7 +3,7 @@
 
 **Event:** Barrel.ai | March 2026
 **Speaker:** Emil Wareus (+ Jarvis AI co-presenter)
-**Total Duration:** ~30 minutes (including Q&A)
+**Total Duration:** ~31 minutes (including Q&A)
 
 **IMPORTANT:** Jarvis must be running before you start. `cd jarvis && make run`
 Jarvis is your co-presenter from the very first slide. Introduce him early, interact throughout.
@@ -16,8 +16,8 @@ Jarvis is your co-presenter from the very first slide. Introduce him early, inte
 |-----|--------|---------|----------|--------------|
 | 1 | 1-3 | **Intro + Meet Jarvis** | ~5 min | Title, about me, introduce Jarvis live — chat with him |
 | 2 | 4 | **The Pipeline** | ~3 min | 6-stage pipeline overview |
-| 3 | 5-9 | **Building Blocks** | ~6 min | VAD, STT, TTS — following the pipeline order |
-| 4 | 10-11 | **Transport & Latency** | ~3 min | WebSocket, echo suppression, latency budget |
+| 3 | 5-9B | **Building Blocks** | ~7 min | VAD, STT, TTS — following the pipeline order |
+| 4 | 10-11B | **Transport & Latency** | ~5 min | WebSocket, WebRTC hot-swap demo, echo suppression, latency budget |
 | 5 | 12 | **Live Coding** | ~5 min | Run 1-2 example scripts |
 | 6 | 13 | **Homegrown vs API** | ~2 min | Quick trade-off discussion |
 | 7 | 14 | **How Jarvis Was Built** | ~2 min | Agent design — two tools, slide context |
@@ -159,42 +159,120 @@ ElevenLabs is better quality if you're okay with cloud. But we want local."
 
 ---
 
-## SLIDE 9: Kokoro-82M: Fast & Open TTS
-**Duration:** 1 minute
+## SLIDE 9: Kokoro: How Inference Works
+**Duration:** 1.5 minutes
 
 ### Visual
-Kokoro stats card, streaming synthesis diagram.
+Inference pipeline: text -> phonemes -> acoustic path + prosody path -> iSTFTNet vocoder -> waveform.
 
 ### Speaker Notes
-"Key numbers: 82M params, 24kHz output, ONNX runtime — no PyTorch at inference.
+"This is the slide that explains how Kokoro actually works at inference time.
 
-Streaming synthesis is the critical feature — start playing audio before the full response is generated. You just heard it in action with Jarvis. That's the real demo."
+The flow is: text to phonemes, then two learned paths. One path builds acoustic features for the decoder. The other is the prosody path, which means it decides how the speech should be delivered over time: duration, pitch, and energy.
+
+A phoneme is just a unit of sound, not a letter. For example, the word 'cat' is three phonemes: k, ae, t. That's useful because TTS cares about how words sound, not how they are spelled.
+
+That split is important. Instead of asking one giant autoregressive model to do everything, Kokoro predicts the structure of speech explicitly. It decides how long each phoneme lasts, what the F0 contour should be, and how the energy should vary, then hands that to the vocoder.
+
+If someone here has done classic speech or DSP, you can think of this as putting the latent structure of speech back into the architecture instead of hoping a giant decoder rediscovers it.
+
+So slide 9 is really the pipeline view: what sounds to say, how to say them, and then how to turn that plan into actual audio."
 
 ---
 
-## SLIDE 10: Making It Feel Real-Time
+## SLIDE 9B: Why 82M Still Sounds Good
+**Duration:** 1 minute
+
+### Visual
+Pipeline view of Kokoro's main submodules with parameter allocation and training-status labels: external G2P, pre-trained/fine-tuned PLBERT, and end-to-end trained TextEncoder, ProsodyPredictor, and Decoder/iSTFTNet.
+
+### Speaker Notes
+"Now the obvious question: why does such a small model sound this good?
+
+This slide is meant to be read left to right as the model, not as a list of disconnected ideas.
+
+Start with phoneme tokens. Those feed two paths.
+
+Also notice the labels on the slide. The grapheme-to-phoneme front-end is external preprocessing, not something Kokoro trains itself.
+
+The upper path is PLBERT plus a projection layer. This is the pre-trained language-model-like part, then adapted to Kokoro. It gives contextual features for the prosody side. Then the prosody predictor explicitly predicts duration, pitch, and energy.
+
+The lower path is the TextEncoder, which is trained end-to-end with the rest of the acoustic model and builds acoustic content features for the decoder.
+
+Both paths meet in the decoder, which is also trained end-to-end, and that is where most of the parameters live. That's the main message of the slide: Kokoro spends most of its capacity on waveform generation, not on a giant language-style backbone.
+
+The core conditioning trick is the 256-dimensional style vector injected throughout the network with adaptive normalization. Half mainly controls timbre, meaning the color or character of the voice, and half controls prosody, meaning rhythm, pitch, and emphasis over time.
+
+Then the other big idea is the vocoder: iSTFTNet. Instead of directly predicting raw waveform samples, it predicts spectral magnitude and phase, then uses inverse STFT to reconstruct audio. That's a really smart inductive bias. You're letting DSP do the mathematically solved part, and using the neural net for the hard perceptual part.
+
+And one subtle but important detail: in full StyleTTS 2, style is sampled from a diffusion model. Kokoro simplifies that for inference by using precomputed voice packs. So you keep much of the naturalness benefit of style conditioning without paying diffusion-time latency at runtime.
+
+So the reason 82M works is not magic. It's good decomposition: explicit speech structure, strong style conditioning, and most of the parameter budget concentrated in the DSP-aware vocoder where the audio quality problem is hardest.
+
+And yes, the practical payoff is streaming synthesis. Jarvis can start speaking before the full response is finished, but the reason that feels good is the architecture underneath, not just the API."
+
+---
+
+## SLIDE 10: Making It Feel Real-Time — WebSocket
 **Duration:** 2 minutes
 
 ### Visual
-WebSocket protocol diagram, binary frame format, echo suppression.
+WebSocket protocol diagram, binary frame format, echo suppression hack.
 
 ### Speaker Notes
-"Transport: WebSocket, not WebRTC. Simpler, good enough for our use case.
+"Transport is the last piece of the pipeline. Jarvis currently runs on WebSocket. Let me show you the protocol.
 
-Binary protocol: 4-byte flags header plus PCM int16 audio. Bit 0 in the header = 'is TTS playing.' AudioWorklet runs on the browser's audio thread — no glitches from JS garbage collection.
+Binary frames: 4-byte flags header plus PCM int16 audio. Bit 0 in that header is 'is TTS playing.' The AudioWorklet runs on the browser's dedicated audio thread — no glitches from JS garbage collection.
 
-Echo suppression: when Jarvis speaks, the browser sets that flag, and the backend skips VAD. Otherwise Jarvis would hear himself and start a conversation with himself."
+Here's the hack: echo suppression. When Jarvis speaks, the browser sets that flag, and the backend skips VAD entirely. Otherwise Jarvis would hear himself through the speakers and start a conversation with himself.
+
+It works. But it means you cannot interrupt Jarvis while he's speaking. No barge-in. The mic is effectively muted during TTS playback. For a co-presenter that speaks rarely, that's fine. For a conversational agent, it's a dealbreaker."
 
 ---
 
-## SLIDE 11: The Latency Budget
+## SLIDE 11: WebRTC — What Changes
+**Duration:** 2 minutes
+
+### Visual
+Side-by-side: WebSocket vs WebRTC. Key differences highlighted: native AEC, Opus codec, UDP transport, jitter buffer.
+
+### Speaker Notes
+"So what does WebRTC give us that WebSocket doesn't?
+
+Five things.
+
+First: native echo cancellation. The browser's AEC has access to both the mic input and the speaker output at the audio driver level. It can subtract the echo signal properly. No is_tts_playing hack, no mic muting. Barge-in just works — you can talk while Jarvis is speaking.
+
+Second: Opus codec. WebSocket sends raw PCM — 256 kbps for 16kHz int16 mono. WebRTC negotiates Opus, which compresses that down to 16-32 kbps. Ten times less bandwidth. Includes built-in forward error correction.
+
+Third: UDP transport. WebSocket runs on TCP. If one packet is lost, everything behind it stalls until the retransmit arrives — head-of-line blocking. WebRTC uses UDP via SRTP. Lost packets are just skipped. For real-time audio, a dropped 20ms frame is better than a 50ms stall.
+
+Fourth: adaptive jitter buffer. The browser automatically smooths out timing variations in incoming audio. With WebSocket you'd build that yourself.
+
+Fifth: no AudioWorklet needed for capture. The browser's WebRTC stack captures, encodes, and sends mic audio natively through the RTP track.
+
+Let me show you the difference live."
+
+[Switch transport dropdown in Jarvis sidebar from WebSocket to WebRTC]
+
+"Watch: Jarvis disconnects, reconnects over WebRTC. Same pipeline on the server — same VAD, same Whisper, same Groq, same Kokoro. Only the transport changed."
+
+[Speak to Jarvis, demonstrate it working]
+
+"Now try talking while Jarvis is speaking. On WebSocket that was impossible — the mic was muted. On WebRTC, AEC handles it."
+
+---
+
+## SLIDE 11B: The Latency Budget
 **Duration:** 1 minute
 
 ### Visual
-Latency waterfall: VAD 700ms + Whisper 300ms + Groq 150ms + Buffer 100ms + Kokoro 200ms + WS ~1ms = ~1.5s
+Latency waterfall: VAD 700ms + Whisper 300ms + Groq 150ms + Buffer 100ms + Kokoro 200ms + Transport ~1ms = ~1.5s
 
 ### Speaker Notes
 "The full budget: about 1.5 seconds from when you stop speaking to first audio back.
+
+Notice the transport line: ~1ms. Whether that's WebSocket or WebRTC on localhost, it's the same. Transport is 0.07% of total latency. The win from WebRTC is not speed — it's the features: AEC, Opus, jitter buffering.
 
 Biggest cost is the 700ms silence threshold — we're literally waiting for you to stop talking. Optimizations exist: reduce silence threshold, speculative execution, sentence-chunked TTS. But 1.5s already feels conversational."
 
@@ -306,14 +384,16 @@ Thanks everyone!"
 | 6 | STT / faster-whisper | 2 min |
 | 7 | Whisper architecture | 1 min |
 | 8 | TTS / Kokoro | 2 min |
-| 9 | Kokoro deep dive | 1 min |
-| 10 | Transport + echo suppression | 2 min |
-| 11 | Latency budget | 1 min |
+| 9 | Kokoro inference pipeline | 1.5 min |
+| 9B | Why Kokoro works | 1 min |
+| 10 | WebSocket transport + echo hack | 2 min |
+| 11 | WebRTC — what changes + live hot-swap | 2 min |
+| 11B | Latency budget | 1 min |
 | 12 | Live coding | 5 min |
 | 13 | Homegrown vs API | 2 min |
 | 14 | How Jarvis was built | 2 min |
 | 15 | Q&A + Resources | 4+ min |
-| **TOTAL** | **15 slides** | **~32 min** |
+| **TOTAL** | **17 slides** | **~35 min** |
 
 ---
 
@@ -323,6 +403,7 @@ Thanks everyone!"
 |------|------|-------|
 | Slide 3 | Jarvis says hello | First interaction — audience sees it's real |
 | Slide 5 | VAD demo with Jarvis | Ask Jarvis something to show the delay |
+| Slide 11 | WebRTC hot-swap | Live toggle WebSocket->WebRTC, demo barge-in with AEC |
 | Slide 12 | Live coding | Run full pipeline script, ~100 lines |
 | Slide 14 | Agent design | "Two tools: respond and update_thinking" |
 | Slide 15 | Q&A with Jarvis | Audience can ask Jarvis questions |

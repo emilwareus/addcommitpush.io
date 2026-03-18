@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useJarvis, type JarvisMessage } from './jarvis-context';
+import { Settings } from 'lucide-react';
+import { useJarvis, type JarvisMessage, type Transport } from './jarvis-context';
 
 function statusColor(status: string): string {
   switch (status) {
@@ -88,8 +89,9 @@ function StreamingToggle({
 }
 
 export function JarvisSidebar() {
-  const { messages, status, isConnected, streamingConfig, connect, disconnect, setStreamingConfig } = useJarvis();
+  const { messages, status, isConnected, streamingConfig, sttModel, sttModels, llmModel, llmModels, transport, connect, disconnect, setStreamingConfig, setSttModel, setLlmModel, setTransport } = useJarvis();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Auto-scroll to latest message
   useEffect(() => {
@@ -108,35 +110,119 @@ export function JarvisSidebar() {
             JARVIS
           </h3>
         </div>
-        <span className="text-xs text-muted-foreground font-mono">
-          {statusLabel(status)}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted-foreground font-mono">
+            {statusLabel(status)}
+          </span>
+          <button
+            type="button"
+            onClick={() => setSettingsOpen((o) => !o)}
+            className={`p-1 rounded transition-colors cursor-pointer ${
+              settingsOpen ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
+            }`}
+            aria-label="Settings"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
-      {/* Streaming Knobs */}
-      <div className="px-4 py-2 border-b border-primary/20 space-y-1">
-        <span className="text-xs font-mono text-muted-foreground/60 uppercase tracking-wider">
-          Streaming
-        </span>
-        <StreamingToggle
-          label="STT"
-          enabled={streamingConfig.stt}
-          disabled={!isConnected}
-          onChange={(v) => setStreamingConfig({ ...streamingConfig, stt: v })}
-        />
-        <StreamingToggle
-          label="LLM"
-          enabled={streamingConfig.llm}
-          disabled={!isConnected}
-          onChange={(v) => setStreamingConfig({ ...streamingConfig, llm: v })}
-        />
-        <StreamingToggle
-          label="TTS"
-          enabled={streamingConfig.tts}
-          disabled={!isConnected}
-          onChange={(v) => setStreamingConfig({ ...streamingConfig, tts: v })}
-        />
-      </div>
+      {/* Settings panel (STT Model + Streaming) */}
+      <AnimatePresence>
+        {settingsOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden border-b border-primary/20"
+          >
+            <div className="px-4 py-2 space-y-2">
+              {/* Transport Selector */}
+              <div className="space-y-1">
+                <span className="text-xs font-mono text-muted-foreground/60 uppercase tracking-wider">
+                  Transport
+                </span>
+                <select
+                  value={transport}
+                  onChange={(e) => setTransport(e.target.value as Transport)}
+                  className="w-full bg-muted/30 border border-primary/30 rounded px-2 py-1.5 text-xs font-mono text-foreground cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary/50"
+                >
+                  <option value="websocket">WebSocket</option>
+                  <option value="webrtc">WebRTC</option>
+                </select>
+              </div>
+
+              {/* LLM Model Selector */}
+              <div className="space-y-1">
+                <span className="text-xs font-mono text-muted-foreground/60 uppercase tracking-wider">
+                  LLM Model
+                </span>
+                <select
+                  value={llmModels.includes(llmModel) ? llmModel : (llmModels[0] ?? '')}
+                  onChange={(e) => setLlmModel(e.target.value)}
+                  disabled={!isConnected || llmModels.length === 0}
+                  className="w-full bg-muted/30 border border-primary/30 rounded px-2 py-1.5 text-xs font-mono text-foreground disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary/50"
+                >
+                  {llmModels.length === 0 ? (
+                    <option value="">{isConnected ? 'No models' : 'Connect to load'}</option>
+                  ) : (
+                    llmModels.map((m) => (
+                      <option key={m} value={m}>{m}</option>
+                    ))
+                  )}
+                </select>
+              </div>
+
+              {/* STT Model Selector */}
+              <div className="space-y-1">
+                <span className="text-xs font-mono text-muted-foreground/60 uppercase tracking-wider">
+                  STT Model
+                </span>
+                <select
+                  value={sttModels.includes(sttModel) ? sttModel : (sttModels[0] ?? '')}
+                  onChange={(e) => setSttModel(e.target.value)}
+                  disabled={!isConnected || sttModels.length === 0}
+                  className="w-full bg-muted/30 border border-primary/30 rounded px-2 py-1.5 text-xs font-mono text-foreground disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary/50"
+                >
+                  {sttModels.length === 0 ? (
+                    <option value="">{isConnected ? 'No models' : 'Connect to load'}</option>
+                  ) : (
+                    sttModels.map((m) => (
+                      <option key={m} value={m}>{m}</option>
+                    ))
+                  )}
+                </select>
+              </div>
+
+              {/* Streaming Knobs */}
+              <div className="space-y-1">
+                <span className="text-xs font-mono text-muted-foreground/60 uppercase tracking-wider">
+                  Streaming
+                </span>
+                <StreamingToggle
+                  label="STT"
+                  enabled={streamingConfig.stt}
+                  disabled={!isConnected}
+                  onChange={(v) => setStreamingConfig({ ...streamingConfig, stt: v })}
+                />
+                <StreamingToggle
+                  label="LLM"
+                  enabled={streamingConfig.llm}
+                  disabled={!isConnected}
+                  onChange={(v) => setStreamingConfig({ ...streamingConfig, llm: v })}
+                />
+                <StreamingToggle
+                  label="TTS"
+                  enabled={streamingConfig.tts}
+                  disabled={!isConnected}
+                  onChange={(v) => setStreamingConfig({ ...streamingConfig, tts: v })}
+                />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-2">

@@ -353,6 +353,54 @@ class TextEncoder(nn.Module):
         return x
 ```
 
+### Deep-learning view — what this actually is
+
+If you come from a modern DL background, it helps to translate the prose description into a more concrete architecture summary.
+
+At inference time, Kokoro is **not** "one 82M model" in the sense of one uniform backbone. It is a composition of several sub-networks with very different inductive biases:
+
+| Submodule | Params | Share of total | What kind of network is it? | Responsible for |
+|-----------|--------|----------------|------------------------------|-----------------|
+| **PLBERT** | 6.3M | ~8% | 12-layer ALBERT-style transformer over phoneme tokens | Providing contextual phoneme embeddings for the prosody path |
+| **BERT projection** | 0.39M | <1% | Linear 768 -> 512 projection | Mapping PLBERT outputs into Kokoro's internal hidden dimension |
+| **Prosody predictor** | 16.2M | ~20% | BiLSTM + style-conditioned residual conv blocks for duration, F0, and energy | Predicting timing, pitch contour, and loudness over time |
+| **TextEncoder** | 5.6M | ~7% | Embedding + 3 Conv1d blocks + 1 BiLSTM | Building acoustic content features that the decoder consumes |
+| **Decoder / vocoder** | 53.3M | ~65% | CNN-heavy generator with AdaIN residual blocks, transposed conv upsampling, harmonic source injection, iSTFT reconstruction | Turning acoustic features plus F0 and energy into the final waveform |
+
+These counts come from loading the actual `hexgrad/Kokoro-82M` weights and summing parameters per top-level module.
+
+So the parameter story is already interesting:
+
+- Most of the model capacity is **not** in the language-model-like part.
+- The biggest chunk is the **decoder/vocoder**, because generating plausible audio is still the hardest part.
+- The transformer component is relatively small; it provides contextual phoneme embeddings, but it is not the main capacity sink.
+
+For the **TextEncoder** specifically, the architecture is:
+
+```text
+114-symbol phoneme vocab
+-> 512-dim embedding
+-> 3 x [Conv1d(512 -> 512, kernel=5) + LayerNorm + LeakyReLU + Dropout]
+-> 1 x BiLSTM(input=512, hidden=256 per direction)
+-> output shape [B, 512, T]
+```
+
+From a deep-learning perspective, this means:
+
+- The **embedding table** is tiny: `114 x 512 = 58,368` parameters.
+- The **3 Conv1d blocks** are where most of the TextEncoder params go:
+  each `Conv1d(512, 512, kernel_size=5)` is about `512 * 512 * 5 = 1.31M` weights.
+  Three of them account for roughly **3.9M** parameters.
+- The **BiLSTM** adds the remaining ~**1.6M** parameters and gives the encoder full left-right context.
+
+So this encoder is much closer to a **classical speech front-end with learned sequence modeling** than to a modern all-transformer stack:
+
+- **Conv1d layers** model local coarticulation patterns: what nearby phonemes do to each other.
+- The **BiLSTM** adds global bidirectional context over the whole phoneme sequence.
+- There is no self-attention here; Kokoro reserves the transformer-style contextual modeling for **PLBERT**, which serves the prosody path.
+
+This split is deliberate. The acoustic text encoder does not try to solve everything. It just produces a good frame-aligned representation for the decoder. Linguistic/contextual richness comes from PLBERT on the prosody side.
+
 ### PLBERT — Pre-trained Language Model for Prosody
 
 [`modules.py:179-183`](../../../go-research/external_code/kokoro/kokoro/modules.py)
@@ -526,7 +574,7 @@ All three problems are solved implicitly by a black-box CNN — expensive and re
 
 ### The iSTFTNet insight
 
-Instead of predicting raw waveforms, **predict magnitude and phase in the STFT domain**, then use the mathematically exact inverse STFT to reconstruct the waveform.
+Instead of predicting raw waveforms, **predict magnitude and phase in the STFT (Short-Time Fourier Transform) domain**, then use the mathematically exact inverse STFT to reconstruct the waveform.
 
 ### Decoder — The full vocoder pipeline
 

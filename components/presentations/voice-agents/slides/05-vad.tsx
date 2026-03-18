@@ -1,46 +1,73 @@
 export function VadSlide() {
   return (
     <div className="flex flex-col items-center justify-center h-full w-full max-w-5xl mx-auto px-8">
-      <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary neon-glow text-center">
-        Voice Activity Detection
+      <h2 className="text-3xl md:text-4xl font-bold mb-2 text-primary neon-glow text-center max-w-4xl">
+        VAD controls when the agent listens and when it responds --
+        its silence threshold is the biggest latency knob
       </h2>
 
-      <p className="text-lg text-muted-foreground mb-10 text-center max-w-3xl">
-        Knowing <em>when</em> someone is speaking
-        <br />
-        is just as important as understanding <em>what</em> they say
+      <p className="text-base text-muted-foreground mb-8 text-center max-w-3xl">
+        Silero VAD: 2 MB neural net, 32ms chunks, &lt;1ms on CPU, 0.97 ROC-AUC
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl w-full mb-8">
-        <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg p-5">
-          <h3 className="text-lg font-semibold mb-2">Energy-Based</h3>
-          <p className="text-sm text-muted-foreground">Simple RMS threshold. Fast but noisy in real environments.</p>
-        </div>
-        <div className="bg-primary/10 border border-primary/40 rounded-lg p-5">
-          <h3 className="text-lg font-semibold text-primary mb-2">Silero VAD</h3>
-          <p className="text-sm text-muted-foreground">ML-based, 1.8MB model. 30ms chunks. Our pick.</p>
-        </div>
-        <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg p-5">
-          <h3 className="text-lg font-semibold mb-2">webrtcvad</h3>
-          <p className="text-sm text-muted-foreground">C library from Google. Good but less accurate than ML.</p>
+      {/* The pipeline -- the core visual evidence */}
+      <div className="w-full mb-8">
+        <div className="flex items-stretch justify-center gap-1">
+          {/* Pre-buffer */}
+          <div className="flex flex-col items-center gap-1.5 px-4 py-3 rounded-xl bg-zinc-900/80 border border-zinc-800 min-w-[120px]">
+            <span className="text-xs text-muted-foreground">Pre-buffer</span>
+            <span className="text-xl font-mono font-bold text-zinc-300">500ms</span>
+            <span className="text-[11px] text-muted-foreground text-center">Circular buffer captures audio before VAD fires</span>
+          </div>
+
+          <div className="flex items-center text-primary/40 text-xl px-1">-&gt;</div>
+
+          {/* Speech */}
+          <div className="flex flex-col items-center gap-1.5 px-4 py-3 rounded-xl bg-green-500/10 border border-green-500/25 min-w-[120px]">
+            <span className="text-xs text-green-400/80">Speech</span>
+            <span className="text-xl font-mono font-bold text-green-400">p &gt;= 0.5</span>
+            <span className="text-[11px] text-muted-foreground text-center">Accumulate audio, stream to STT</span>
+          </div>
+
+          <div className="flex items-center text-primary/40 text-xl px-1">-&gt;</div>
+
+          {/* Silence */}
+          <div className="flex flex-col items-center gap-1.5 px-4 py-3 rounded-xl bg-zinc-900/80 border border-primary/30 min-w-[120px]">
+            <span className="text-xs text-zinc-400">Silence</span>
+            <span className="text-xl font-mono font-bold text-primary">700ms</span>
+            <span className="text-[11px] text-muted-foreground text-center">Wait for user to finish speaking</span>
+          </div>
+
+          <div className="flex items-center text-primary/40 text-xl px-1">-&gt;</div>
+
+          {/* Process */}
+          <div className="flex flex-col items-center gap-1.5 px-4 py-3 rounded-xl bg-blue-500/10 border border-blue-500/25 min-w-[120px]">
+            <span className="text-xs text-blue-400/80">Process</span>
+            <span className="text-xl font-mono font-bold text-blue-400">STT</span>
+            <span className="text-[11px] text-muted-foreground text-center">Transcribe, then LLM + TTS</span>
+          </div>
         </div>
       </div>
 
-      <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg p-5 max-w-3xl w-full">
-        <h3 className="text-lg font-semibold mb-3">The Turn-Taking Problem</h3>
-        <div className="flex items-center gap-3 text-sm text-muted-foreground">
-          <span className="px-2 py-1 bg-green-500/20 rounded text-green-400 font-mono">SPEECH</span>
-          <span>→</span>
-          <span className="px-2 py-1 bg-zinc-800 rounded font-mono">silence (700ms)</span>
-          <span>→</span>
-          <span className="px-2 py-1 bg-primary/20 rounded text-primary font-mono">UTTERANCE END</span>
-          <span>→</span>
-          <span className="px-2 py-1 bg-blue-500/20 rounded text-blue-400 font-mono">Transcribe</span>
+      {/* The tradeoff -- two sides */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full max-w-3xl">
+        <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4">
+          <div className="text-sm font-semibold text-zinc-300 mb-2">Silence too short (200ms)</div>
+          <p className="text-sm text-muted-foreground">
+            Cuts users off mid-sentence. Natural pauses trigger false endpoints. Frustrating.
+          </p>
+        </div>
+        <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4">
+          <div className="text-sm font-semibold text-zinc-300 mb-2">Silence too long (1000ms+)</div>
+          <p className="text-sm text-muted-foreground">
+            Agent feels sluggish. Users start repeating themselves. Conversation loses flow.
+          </p>
         </div>
       </div>
 
-      <p className="mt-6 text-base text-muted-foreground text-center max-w-2xl">
-        Silence threshold is a key UX knob: too short → cuts people off, too long → feels sluggish
+      <p className="mt-6 text-sm font-mono text-primary/80 text-center max-w-3xl">
+        Jarvis uses 700ms -- nearly half the total turn latency. This one number matters more
+        than any model optimization.
       </p>
     </div>
   );

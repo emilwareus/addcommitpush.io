@@ -42,8 +42,13 @@
     },
     {
       "slug": "09-kokoro-deep-dive",
-      "title": "Kokoro-82M: Fast & Open TTS",
-      "notes": "Kokoro stats: 82M parameters, Apache 2.0 license, 24kHz output, ONNX runtime (no PyTorch needed), 50+ voices, ~200ms latency for first audio. Code snippet: 3 lines to synthesize speech. Supports streaming synthesis for lower perceived latency."
+      "title": "Kokoro: How Inference Works",
+      "notes": "Inference path: text -> phonemes (units of sound, not letters) -> acoustic path + prosody path -> iSTFTNet vocoder -> waveform. Acoustic path builds decoder features. Prosody path predicts duration, pitch, and energy explicitly."
+    },
+    {
+      "slug": "09b-kokoro-core-ideas",
+      "title": "Why 82M Still Sounds Good",
+      "notes": "Pipeline view of Kokoro's main submodules and parameter allocation. Phoneme tokens feed PLBERT/projection for contextual prosody features and TextEncoder for acoustic content. ProsodyPredictor explicitly predicts duration, pitch, and energy. Most parameters live in the Decoder/iSTFTNet vocoder, which predicts spectral structure and reconstructs the waveform."
     },
     {
       "slug": "10-realtime-transport",

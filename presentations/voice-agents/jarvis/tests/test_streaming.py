@@ -25,10 +25,25 @@ class FakeAgent:
 
     def __init__(self) -> None:
         self.slide_context: dict = {}
+        self._active_llm = "gpt-oss-120b"
+        self._llm_models = ["gpt-oss-120b", "gpt-4.1-nano", "o4-mini"]
         # Configurable response for testing
         self.batch_response: list[dict] = [
             {"name": "respond", "args": {"text": "Hello! I am Jarvis. Nice to meet you."}}
         ]
+
+    @property
+    def llm_model(self) -> str:
+        return self._active_llm
+
+    @property
+    def available_llm_models(self) -> list[str]:
+        return list(self._llm_models)
+
+    def set_llm_model(self, name: str) -> None:
+        if name not in self._llm_models:
+            raise ValueError(f"Unknown LLM model: {name!r}")
+        self._active_llm = name
 
     def update_slide_context(self, context: dict) -> None:
         self.slide_context = context
@@ -56,6 +71,21 @@ class FakeModelManager:
     def __init__(self) -> None:
         self._transcribe_result = "Hey Jarvis, tell me about yourself"
         self._transcribe_fast_result = "Hey Jarvis tell"
+        self._active_stt = "whisper-small"
+        self._stt_models = ["whisper-small", "moonshine-small", "moonshine-medium"]
+
+    @property
+    def stt_model(self) -> str:
+        return self._active_stt
+
+    @property
+    def available_stt_models(self) -> list[str]:
+        return list(self._stt_models)
+
+    def set_stt_model(self, name: str) -> None:
+        if name not in self._stt_models:
+            raise ValueError(f"Unknown STT model: {name!r}")
+        self._active_stt = name
 
     def vad_predict(self, audio_chunk: np.ndarray, sample_rate: int) -> float:
         """Always returns speech detected."""
@@ -507,3 +537,90 @@ class TestPipelineStreamingRealAPI:
 
         deltas = collector.messages_of_type("response_delta")
         assert len(deltas) == 0, "Batch mode should not produce response_delta messages"
+
+
+# ─── STT model switching tests ────────────────────────────────────────────────
+
+
+class TestSTTModelSwitching:
+    """Test STT model switching via FakeModelManager and pipeline."""
+
+    def test_default_stt_model(self) -> None:
+        models = FakeModelManager()
+        assert models.stt_model == "whisper-small"
+
+    def test_available_stt_models(self) -> None:
+        models = FakeModelManager()
+        assert models.available_stt_models == ["whisper-small", "moonshine-small", "moonshine-medium"]
+
+    def test_set_stt_model(self) -> None:
+        models = FakeModelManager()
+        models.set_stt_model("moonshine-small")
+        assert models.stt_model == "moonshine-small"
+
+    def test_set_stt_model_unknown_raises(self) -> None:
+        models = FakeModelManager()
+        with pytest.raises(ValueError, match="Unknown STT model"):
+            models.set_stt_model("nonexistent")
+
+    def test_pipeline_set_stt_model_delegates(self) -> None:
+        collector = MessageCollector()
+        models = FakeModelManager()
+        pipeline = JarvisPipeline(
+            models, collector.send_json, collector.send_audio, agent=FakeAgent()
+        )
+        pipeline.set_stt_model("moonshine-medium")
+        assert models.stt_model == "moonshine-medium"
+
+    def test_pipeline_set_stt_model_invalid_raises(self) -> None:
+        collector = MessageCollector()
+        models = FakeModelManager()
+        pipeline = JarvisPipeline(
+            models, collector.send_json, collector.send_audio, agent=FakeAgent()
+        )
+        with pytest.raises(ValueError):
+            pipeline.set_stt_model("bad-model")
+
+
+# ─── LLM model switching tests ───────────────────────────────────────────────
+
+
+class TestLLMModelSwitching:
+    """Test LLM model switching via FakeAgent and pipeline."""
+
+    def test_default_llm_model(self) -> None:
+        agent = FakeAgent()
+        assert agent.llm_model == "gpt-oss-120b"
+
+    def test_available_llm_models(self) -> None:
+        agent = FakeAgent()
+        assert agent.available_llm_models == ["gpt-oss-120b", "gpt-4.1-nano", "o4-mini"]
+
+    def test_set_llm_model(self) -> None:
+        agent = FakeAgent()
+        agent.set_llm_model("gpt-4.1-nano")
+        assert agent.llm_model == "gpt-4.1-nano"
+
+    def test_set_llm_model_unknown_raises(self) -> None:
+        agent = FakeAgent()
+        with pytest.raises(ValueError, match="Unknown LLM model"):
+            agent.set_llm_model("nonexistent")
+
+    def test_pipeline_set_llm_model_delegates(self) -> None:
+        collector = MessageCollector()
+        models = FakeModelManager()
+        agent = FakeAgent()
+        pipeline = JarvisPipeline(
+            models, collector.send_json, collector.send_audio, agent=agent
+        )
+        pipeline.set_llm_model("o4-mini")
+        assert agent.llm_model == "o4-mini"
+
+    def test_pipeline_set_llm_model_invalid_raises(self) -> None:
+        collector = MessageCollector()
+        models = FakeModelManager()
+        pipeline = JarvisPipeline(
+            models, collector.send_json, collector.send_audio, agent=FakeAgent()
+        )
+        with pytest.raises(ValueError):
+            pipeline.set_llm_model("bad-model")

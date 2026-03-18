@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 // Use ws:// for dev (JARVIS_NO_SSL=1), wss:// for production
-const WS_URL = process.env.JARVIS_NO_SSL ? 'ws://localhost:8765/ws' : 'wss://localhost:8765/ws';
+const WS_URL = process.env.JARVIS_NO_SSL ? 'ws://localhost:8770/ws' : 'wss://localhost:8770/ws';
 
 test('WebSocket connects to Jarvis and receives ready message', async ({ page }) => {
   await page.goto('about:blank');

@@ -25,6 +25,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import WS_PORT
 from .models import ModelManager
 from .pipeline import JarvisPipeline
+from .webrtc import rtc_router
+from . import webrtc as webrtc_module
 
 HEADER_SIZE = 4  # 4 bytes for uint32 flags
 
@@ -35,6 +37,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.include_router(rtc_router)
 
 # Shared model manager — loaded once at startup
 models = ModelManager()
@@ -44,6 +47,7 @@ models = ModelManager()
 async def startup() -> None:
     print("Loading models...")
     models.load_all()
+    webrtc_module.models = models
     print("Models loaded. Jarvis is ready.")
 
 
@@ -66,8 +70,14 @@ async def websocket_endpoint(ws: WebSocket) -> None:
 
     pipeline = JarvisPipeline(models, send_json, send_audio)
 
-    # Signal readiness
-    await send_json({"type": "ready"})
+    # Signal readiness with available models
+    await send_json({
+        "type": "ready",
+        "stt_models": models.available_stt_models,
+        "active_stt_model": models.stt_model,
+        "llm_models": pipeline.agent.available_llm_models,
+        "active_llm_model": pipeline.agent.llm_model,
+    })
 
     try:
         while True:
@@ -95,6 +105,16 @@ async def websocket_endpoint(ws: WebSocket) -> None:
                 elif msg_type == "set_streaming":
                     pipeline.update_streaming_config(msg)
                     print(f"Streaming config updated: {pipeline.streaming_config}")
+                elif msg_type == "set_stt_model":
+                    model_name = msg.get("model", "")
+                    pipeline.set_stt_model(model_name)
+                    await send_json({"type": "stt_model_changed", "model": model_name})
+                    print(f"STT model changed to: {model_name}")
+                elif msg_type == "set_llm_model":
+                    model_name = msg.get("model", "")
+                    pipeline.set_llm_model(model_name)
+                    await send_json({"type": "llm_model_changed", "model": model_name})
+                    print(f"LLM model changed to: {model_name}")
                 elif msg_type == "shutdown":
                     print("Shutdown requested")
                     break

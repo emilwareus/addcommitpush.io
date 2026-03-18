@@ -67,6 +67,18 @@ export default async function SlidePage({
         const { WhisperDeepDiveSlide } = await import('@/components/presentations/voice-agents/slides/07-whisper-deep-dive');
         return <WhisperDeepDiveSlide />;
       }
+      case '07b-whisper-innovation': {
+        const { WhisperInnovationSlide } = await import('@/components/presentations/voice-agents/slides/07b-whisper-innovation');
+        return <WhisperInnovationSlide />;
+      }
+      case '07c-moonshine-deep-dive': {
+        const { MoonshineDeepDiveSlide } = await import('@/components/presentations/voice-agents/slides/07c-moonshine-deep-dive');
+        return <MoonshineDeepDiveSlide />;
+      }
+      case '07d-moonshine-innovation': {
+        const { MoonshineInnovationSlide } = await import('@/components/presentations/voice-agents/slides/07d-moonshine-innovation');
+        return <MoonshineInnovationSlide />;
+      }
       case '08-tts-landscape': {
         const { TtsLandscapeSlide } = await import('@/components/presentations/voice-agents/slides/08-tts-landscape');
         return <TtsLandscapeSlide />;
@@ -79,25 +91,13 @@ export default async function SlidePage({
         const { KokoroDeepDiveSlide } = await import('@/components/presentations/voice-agents/slides/09-kokoro-deep-dive');
         return <KokoroDeepDiveSlide />;
       }
+      case '09b-kokoro-core-ideas': {
+        const { KokoroCoreIdeasSlide } = await import('@/components/presentations/voice-agents/slides/09b-kokoro-core-ideas');
+        return <KokoroCoreIdeasSlide />;
+      }
       case '10-realtime-transport': {
         const { RealtimeTransportSlide } = await import('@/components/presentations/voice-agents/slides/10-realtime-transport');
         return <RealtimeTransportSlide />;
-      }
-      case '11-latency-budget': {
-        const { LatencyBudgetSlide } = await import('@/components/presentations/voice-agents/slides/11-latency-budget');
-        return <LatencyBudgetSlide />;
-      }
-      case '12-code-walkthrough': {
-        const { CodeWalkthroughSlide } = await import('@/components/presentations/voice-agents/slides/12-code-walkthrough');
-        return <CodeWalkthroughSlide />;
-      }
-      case '13-homegrown-vs-api': {
-        const { HomegrownVsApiSlide } = await import('@/components/presentations/voice-agents/slides/13-homegrown-vs-api');
-        return <HomegrownVsApiSlide />;
-      }
-      case '14-how-jarvis-works': {
-        const { HowJarvisWorksSlide } = await import('@/components/presentations/voice-agents/slides/14-how-jarvis-works');
-        return <HowJarvisWorksSlide />;
       }
       case '15-resources': {
         const { ResourcesSlide } = await import('@/components/presentations/voice-agents/slides/15-resources');

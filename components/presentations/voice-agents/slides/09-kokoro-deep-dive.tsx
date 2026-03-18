@@ -1,54 +1,60 @@
-const stats = [
-  { label: 'Parameters', value: '82M' },
-  { label: 'License', value: 'Apache 2.0' },
-  { label: 'Output', value: '24kHz' },
-  { label: 'Runtime', value: 'ONNX (CPU)' },
-  { label: 'Voices', value: '54+ built-in' },
-  { label: 'Latency', value: '~200ms/sentence' },
-];
-
 export function KokoroDeepDiveSlide() {
   return (
     <div className="flex flex-col items-center justify-center h-full w-full max-w-5xl mx-auto px-8">
       <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary neon-glow text-center">
-        Kokoro-82M: Fast &amp; Open TTS
+        Kokoro: How Inference Works
       </h2>
 
-      <p className="text-lg text-muted-foreground mb-10 text-center max-w-3xl">
-        A tiny model that sounds surprisingly good
+      <p className="text-lg text-muted-foreground mb-8 text-center max-w-4xl">
+        Text -&gt; phonemes -&gt; acoustic path + prosody path -&gt; iSTFTNet vocoder -&gt; waveform
       </p>
 
-      <div className="grid grid-cols-3 gap-4 max-w-3xl w-full mb-10">
-        {stats.map((stat) => (
-          <div
-            key={stat.label}
-            className="bg-zinc-900/80 border border-zinc-800 rounded-lg p-4 text-center"
-          >
-            <div className="text-2xl font-bold text-primary font-mono">{stat.value}</div>
-            <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
-          </div>
-        ))}
+      <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
+        <div className="px-4 py-2 rounded-full bg-zinc-900/80 border border-zinc-800 text-sm">
+          <span className="text-muted-foreground">Phoneme:</span>{' '}
+          <span className="font-mono text-primary">cat -&gt; k ae t</span>
+        </div>
+        <div className="px-4 py-2 rounded-full bg-primary/10 border border-primary/30 text-sm">
+          TTS works on <span className="font-semibold">sounds</span>, not spelling
+        </div>
       </div>
 
-      <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg p-4 max-w-2xl font-mono text-sm">
-        <span className="text-muted-foreground"># kokoro-onnx: 3 lines to speech</span>
-        <br />
-        <span className="text-primary">kokoro = Kokoro(</span>
-        <span className="text-green-400">&quot;kokoro-v1.0.onnx&quot;</span>
-        <span className="text-primary">, </span>
-        <span className="text-green-400">&quot;voices-v1.0.bin&quot;</span>
-        <span className="text-primary">)</span>
-        <br />
-        <span className="text-primary">samples, sr = kokoro.create(</span>
-        <span className="text-green-400">&quot;Hello world&quot;</span>
-        <span className="text-primary">, voice=</span>
-        <span className="text-green-400">&quot;am_adam&quot;</span>
-        <span className="text-primary">)</span>
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 w-full mb-8 items-stretch">
+        <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg p-5">
+          <h3 className="text-xl font-bold mb-3 text-primary">Acoustic Path</h3>
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            <li>TextEncoder builds decoder-friendly speech features</li>
+            <li>Represents what should be said at the frame level</li>
+            <li>Feeds the vocoder with acoustic content</li>
+          </ul>
+        </div>
+
+        <div className="hidden md:flex items-center justify-center text-3xl text-primary/70">+</div>
+
+        <div className="bg-zinc-900/80 border border-zinc-800 rounded-lg p-5">
+          <h3 className="text-xl font-bold mb-3 text-primary">Prosody Path</h3>
+          <p className="text-xs text-primary/80 mb-3">
+            Decides how the speech should be delivered over time
+          </p>
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            <li>Predicts duration: how long each phoneme lasts</li>
+            <li>Predicts F0: pitch contour over time</li>
+            <li>Predicts energy: loudness envelope over time</li>
+          </ul>
+        </div>
       </div>
 
-      <p className="mt-6 text-base text-muted-foreground text-center max-w-2xl">
-        Key feature: <span className="text-primary font-semibold">streaming synthesis</span> —
-        start playing audio before the full sentence is generated
+      <div className="w-full max-w-4xl bg-primary/10 border border-primary/30 rounded-lg p-5 mb-6">
+        <h3 className="text-xl font-bold text-primary text-center mb-3">iSTFTNet Vocoder</h3>
+        <p className="text-sm text-center text-muted-foreground max-w-3xl mx-auto">
+          Takes acoustic features plus predicted duration, pitch, and energy, then generates
+          audio by predicting spectral structure and reconstructing the waveform.
+        </p>
+      </div>
+
+      <p className="text-base text-primary/80 font-mono text-center max-w-3xl">
+        Takeaway: Kokoro does not learn speech as one black box. It breaks the job into
+        what sounds to say, how to say them, and how to turn that plan into audio.
       </p>
     </div>
   );

@@ -36,6 +36,27 @@ def resample_to_16k(audio: np.ndarray, source_rate: int) -> np.ndarray:
     return filtered[::factor]
 
 
+def upsample_to_48k(audio: np.ndarray) -> np.ndarray:
+    """Upsample audio from 24kHz to 48kHz using linear interpolation.
+
+    Args:
+        audio: Audio samples at 24kHz (any dtype).
+
+    Returns:
+        Audio at 48kHz (same dtype).
+    """
+    n = len(audio)
+    out = np.empty(n * 2, dtype=audio.dtype)
+    out[0::2] = audio
+    # Interpolate midpoints
+    out[1:-1:2] = (audio[:-1].astype(np.float32) + audio[1:].astype(np.float32)) / 2
+    if audio.dtype != np.float32:
+        out[1:-1:2] = out[1:-1:2].astype(audio.dtype)
+    # Last sample: duplicate
+    out[-1] = audio[-1]
+    return out
+
+
 def float32_to_int16(audio: np.ndarray) -> np.ndarray:
     """Convert float32 [-1, 1] audio to int16 PCM."""
     return (np.clip(audio, -1.0, 1.0) * 32767).astype(np.int16)

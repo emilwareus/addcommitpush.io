@@ -296,6 +296,14 @@ class JarvisPipeline:
             int16_samples = float32_to_int16(samples)
             await self.send_audio(int16_samples.tobytes())
 
+    def set_stt_model(self, model_name: str) -> None:
+        """Switch the active STT model."""
+        self.models.set_stt_model(model_name)
+
+    def set_llm_model(self, model_name: str) -> None:
+        """Switch the active LLM model."""
+        self.agent.set_llm_model(model_name)
+
     def update_slide_context(self, context: dict) -> None:
         """Update the agent's knowledge of the current slide."""
         self.agent.update_slide_context(context)
