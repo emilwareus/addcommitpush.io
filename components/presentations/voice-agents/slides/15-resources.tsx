@@ -32,6 +32,14 @@ export function ResourcesSlide() {
           <p className="text-2xl font-mono font-bold text-primary">
             addcommitpush.io
           </p>
+          <a
+            href="https://github.com/emilwareus/addcommitpush.io/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xl font-mono text-primary/80 hover:text-primary transition-colors underline"
+          >
+            github.com/emilwareus/addcommitpush.io
+          </a>
         </div>
       </div>
     </div>

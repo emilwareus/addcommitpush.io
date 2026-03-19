@@ -186,6 +186,8 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const audioQueueRef = useRef<AudioQueue | null>(null);
   const isTtsPlayingRef = useRef(false);
+  const bargeInEnabledRef = useRef(false);
+  const suppressTtsRef = useRef(false);
   const streamRef = useRef<MediaStream | null>(null);
   const workletNodeRef = useRef<AudioWorkletNode | null>(null);
   const streamingDeltaIdRef = useRef<string | null>(null);
@@ -194,6 +196,7 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const dataChannelRef = useRef<RTCDataChannel | null>(null);
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
+  const rtcBargeInIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const addMessage = useCallback(
     (type: JarvisMessage['type'], text: string, role?: 'user' | 'assistant') => {
@@ -231,6 +234,7 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
             }
             if (msg.barge_in_enabled != null) {
               setBargeInEnabledState(msg.barge_in_enabled);
+              bargeInEnabledRef.current = msg.barge_in_enabled;
             }
             // Enable mic capture for WebSocket (worklet may not exist for WebRTC)
             workletNodeRef.current?.port.postMessage({ type: 'set_enabled', enabled: true });
@@ -250,10 +254,19 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
 
           case 'barge_in_changed':
             setBargeInEnabledState(msg.enabled);
+            bargeInEnabledRef.current = msg.enabled;
             break;
 
           case 'clear_audio':
+            suppressTtsRef.current = false;
+            // WebSocket: flush the AudioQueue
             audioQueueRef.current?.clear();
+            // WebRTC: pause and reset the remote audio element
+            if (remoteAudioRef.current) {
+              remoteAudioRef.current.pause();
+              remoteAudioRef.current.currentTime = 0;
+              remoteAudioRef.current.play().catch(() => {});
+            }
             break;
 
           case 'transcript':
@@ -329,6 +342,9 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
               msg.status === 'thinking' ||
               msg.status === 'speaking'
             ) {
+              if (msg.status === 'idle') {
+                suppressTtsRef.current = false;
+              }
               setStatus(msg.status);
             }
             break;
@@ -341,7 +357,10 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
         }
       } else {
         // Binary: TTS audio from server (raw PCM int16, 24kHz) — WebSocket only
-        audioQueueRef.current?.enqueue(data);
+        // Skip if barge-in has suppressed playback (server is still flushing)
+        if (!suppressTtsRef.current) {
+          audioQueueRef.current?.enqueue(data);
+        }
       }
     },
     [addMessage],
@@ -380,6 +399,7 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
 
   const setBargeInEnabled = useCallback((enabled: boolean) => {
     setBargeInEnabledState(enabled);
+    bargeInEnabledRef.current = enabled;
     sendControlMessage({ type: 'set_barge_in', enabled });
   }, [sendControlMessage]);
 
@@ -397,6 +417,10 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
     wsRef.current = null;
 
     // WebRTC cleanup
+    if (rtcBargeInIntervalRef.current) {
+      clearInterval(rtcBargeInIntervalRef.current);
+      rtcBargeInIntervalRef.current = null;
+    }
     if (remoteAudioRef.current) {
       remoteAudioRef.current.pause();
       remoteAudioRef.current.srcObject = null;
@@ -482,9 +506,36 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
       cleanup();
     };
 
+    let bargeInHotFrames = 0;
     workletNode.port.onmessage = (e) => {
       if (e.data?.type === 'audio' && wsRef.current?.readyState === WebSocket.OPEN) {
         const samples: Int16Array = e.data.samples;
+
+        // Frontend barge-in: if TTS is playing and barge-in is ON,
+        // check mic RMS and stop playback when sustained speech detected.
+        // Require consecutive loud frames to avoid echo-triggered false positives.
+        if (isTtsPlayingRef.current && bargeInEnabledRef.current) {
+          let sumSq = 0;
+          for (let i = 0; i < samples.length; i++) {
+            const s = samples[i] / 32768;
+            sumSq += s * s;
+          }
+          const rms = Math.sqrt(sumSq / samples.length);
+          if (rms > 0.06) {
+            bargeInHotFrames++;
+          } else {
+            bargeInHotFrames = 0;
+          }
+          // 3 consecutive frames (~96ms) above threshold = real speech, not echo
+          if (bargeInHotFrames >= 3) {
+            suppressTtsRef.current = true;
+            audioQueueRef.current?.clear();
+            wsRef.current?.send(JSON.stringify({ type: 'barge_in_interrupt' }));
+            bargeInHotFrames = 0;
+          }
+        } else {
+          bargeInHotFrames = 0;
+        }
 
         const flags = isTtsPlayingRef.current ? 1 : 0;
         const header = new ArrayBuffer(HEADER_SIZE);
@@ -558,6 +609,42 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
         cleanup();
       }
     };
+
+    // WebRTC barge-in: monitor mic RMS via AnalyserNode
+    const rtcAudioCtx = new AudioContext();
+    audioCtxRef.current = rtcAudioCtx;
+    const micSource = rtcAudioCtx.createMediaStreamSource(stream);
+    const analyser = rtcAudioCtx.createAnalyser();
+    analyser.fftSize = 512;
+    micSource.connect(analyser);
+    const pcmBuf = new Float32Array(analyser.fftSize);
+    let rtcHotFrames = 0;
+
+    rtcBargeInIntervalRef.current = setInterval(() => {
+      if (!bargeInEnabledRef.current || !remoteAudioRef.current || remoteAudioRef.current.paused) {
+        rtcHotFrames = 0;
+        return;
+      }
+      analyser.getFloatTimeDomainData(pcmBuf);
+      let sumSq = 0;
+      for (let i = 0; i < pcmBuf.length; i++) {
+        sumSq += pcmBuf[i] * pcmBuf[i];
+      }
+      const rms = Math.sqrt(sumSq / pcmBuf.length);
+      if (rms > 0.06) {
+        rtcHotFrames++;
+      } else {
+        rtcHotFrames = 0;
+      }
+      if (rtcHotFrames >= 3) {
+        suppressTtsRef.current = true;
+        remoteAudioRef.current.pause();
+        remoteAudioRef.current.currentTime = 0;
+        remoteAudioRef.current.play().catch(() => {});
+        sendControlMessage({ type: 'barge_in_interrupt' });
+        rtcHotFrames = 0;
+      }
+    }, 32); // ~32ms intervals to match worklet frame rate
 
     // Create offer and exchange SDP
     const offer = await pc.createOffer();

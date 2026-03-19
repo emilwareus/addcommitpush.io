@@ -149,6 +149,7 @@ Rules:
 - Reference specific things that were said earlier in the talk
 - If asked about yourself, explain how you were built (the tech stack above)
 - Use SOME context knowledge of when to respond. it is not that the user has to always say "hey Jarvis" or "Jarvis" for you to respond, that is only a queue for you that you MUST respond.
+- If you are asked to stop talking/shut up, you must stop talking and not respond with any message. Just think "I need to stop talking".
 
 Conversation so far (what you've heard):
 """
@@ -283,13 +284,17 @@ class JarvisAgent:
 
         # Allow up to 2 rounds (research lookup + final response)
         for _ in range(2):
-            response = self._chat_create(
-                messages=messages,
-                tools=TOOLS,
-                tool_choice="auto",
-                max_tokens=MAX_TOKENS,
-                temperature=TEMPERATURE,
-            )
+            try:
+                response = self._chat_create(
+                    messages=messages,
+                    tools=TOOLS,
+                    tool_choice="auto",
+                    max_tokens=MAX_TOKENS,
+                    temperature=TEMPERATURE,
+                )
+            except Exception as e:
+                print(f"  LLM call failed: {e}")
+                return []
 
             message = response.choices[0].message
             tool_calls = []
@@ -352,13 +357,17 @@ class JarvisAgent:
         messages = self._build_messages(system_prompt)
 
         # First pass: non-streaming to check for lookup_research
-        first_response = self._chat_create(
-            messages=messages,
-            tools=TOOLS,
-            tool_choice="auto",
-            max_tokens=MAX_TOKENS,
-            temperature=TEMPERATURE,
-        )
+        try:
+            first_response = self._chat_create(
+                messages=messages,
+                tools=TOOLS,
+                tool_choice="auto",
+                max_tokens=MAX_TOKENS,
+                temperature=TEMPERATURE,
+            )
+        except Exception as e:
+            print(f"  LLM call failed: {e}")
+            return
 
         first_message = first_response.choices[0].message
         has_research_lookup = False
@@ -402,14 +411,18 @@ class JarvisAgent:
 
     def _stream_llm(self, messages: list[dict]):
         """Stream an LLM call, yielding delta and tool_call events."""
-        stream = self._chat_create(
-            messages=messages,
-            tools=TOOLS,
-            tool_choice="auto",
-            max_tokens=MAX_TOKENS,
-            temperature=TEMPERATURE,
-            stream=True,
-        )
+        try:
+            stream = self._chat_create(
+                messages=messages,
+                tools=TOOLS,
+                tool_choice="auto",
+                max_tokens=MAX_TOKENS,
+                temperature=TEMPERATURE,
+                stream=True,
+            )
+        except Exception as e:
+            print(f"  LLM stream call failed: {e}")
+            return
 
         tool_call_buffers: dict[int, dict] = {}
         content_buffer = ""

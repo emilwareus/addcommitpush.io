@@ -23,7 +23,7 @@ from aiortc.rtcconfiguration import RTCConfiguration
 from fastapi import APIRouter
 
 from .audio import upsample_to_48k
-from .config import CHUNK_SAMPLES, WEBRTC_SAMPLE_RATE
+from .config import CHUNK_SAMPLES, VAD_THRESHOLD, SILENCE_DURATION_MS, WEBRTC_SAMPLE_RATE
 from .pipeline import JarvisPipeline
 
 if TYPE_CHECKING:
@@ -75,6 +75,15 @@ class AudioSendTrack(MediaStreamTrack):
             chunk = self._buffer[: self._bytes_per_frame]
             self._buffer = self._buffer[self._bytes_per_frame :]
             self._queue.put_nowait(chunk)
+
+    def clear(self) -> None:
+        """Flush all queued TTS audio (barge-in)."""
+        while not self._queue.empty():
+            try:
+                self._queue.get_nowait()
+            except asyncio.QueueEmpty:
+                break
+        self._buffer = b""
 
     async def recv(self) -> av.AudioFrame:
         """Called by aiortc to pull the next audio frame to send."""
@@ -136,6 +145,14 @@ async def handle_rtc_session(offer_sdp: str, *, agent: object | None = None) -> 
     async def send_audio(pcm_bytes: bytes) -> None:
         audio_send.push_tts(pcm_bytes)
 
+    original_send_json = send_json
+
+    async def send_json_with_clear(data: dict) -> None:
+        """Wraps send_json to also flush audio queue on clear_audio."""
+        if data.get("type") == "clear_audio":
+            audio_send.clear()
+        await original_send_json(data)
+
     # Resampler: Opus 48kHz stereo/mono -> 16kHz mono for STT
     resampler = av.AudioResampler(format="s16", layout="mono", rate=16000)
 
@@ -145,15 +162,20 @@ async def handle_rtc_session(offer_sdp: str, *, agent: object | None = None) -> 
         dc_ref.clear()
         dc_ref.append(channel)
 
-        pipeline = JarvisPipeline(models, send_json, send_audio, agent=agent)
+        pipeline = JarvisPipeline(models, send_json_with_clear, send_audio, agent=agent)
 
-        # Signal readiness
+        # Signal readiness (same shape as WebSocket ready message)
         channel.send(
             json.dumps(
                 {
                     "type": "ready",
                     "stt_models": models.available_stt_models,
                     "active_stt_model": models.stt_model,
+                    "llm_models": pipeline.agent.available_llm_models,
+                    "active_llm_model": pipeline.agent.llm_model,
+                    "vad_threshold": VAD_THRESHOLD,
+                    "vad_silence_ms": SILENCE_DURATION_MS,
+                    "barge_in_enabled": False,
                 }
             )
         )
@@ -177,6 +199,32 @@ async def handle_rtc_session(offer_sdp: str, *, agent: object | None = None) -> 
                 pipeline.set_stt_model(model_name)
                 channel.send(
                     json.dumps({"type": "stt_model_changed", "model": model_name})
+                )
+            elif msg_type == "set_llm_model":
+                model_name = msg.get("model", "")
+                pipeline.set_llm_model(model_name)
+                channel.send(
+                    json.dumps({"type": "llm_model_changed", "model": model_name})
+                )
+            elif msg_type == "set_barge_in":
+                enabled = bool(msg.get("enabled", False))
+                pipeline.update_barge_in(enabled)
+                channel.send(
+                    json.dumps({"type": "barge_in_changed", "enabled": enabled})
+                )
+            elif msg_type == "barge_in_interrupt":
+                if pipeline.barge_in_enabled:
+                    pipeline._tts_cancel.set()
+                    audio_send.clear()
+                    channel.send(json.dumps({"type": "clear_audio"}))
+            elif msg_type == "set_vad_config":
+                pipeline.update_vad_config(msg)
+                channel.send(
+                    json.dumps({
+                        "type": "vad_config_changed",
+                        "threshold": pipeline.vad_threshold,
+                        "silence_ms": pipeline.silence_duration_ms,
+                    })
                 )
             elif msg_type == "shutdown":
                 asyncio.ensure_future(_close_pc(pc))

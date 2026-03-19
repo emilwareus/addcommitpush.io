@@ -70,7 +70,7 @@ class JarvisPipeline:
         # Barge-in (user interrupts TTS)
         self.barge_in_enabled: bool = False
         self._tts_cancel = threading.Event()
-        self._barge_in_vad_threshold = 0.75
+        self._barge_in_vad_threshold = 0.85
 
         # STT streaming state
         self._chunks_since_partial = 0

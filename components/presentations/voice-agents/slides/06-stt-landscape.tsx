@@ -46,11 +46,11 @@ const models = [
 export function SttLandscapeSlide() {
   return (
     <div className="flex flex-col items-center justify-center h-full w-full max-w-5xl mx-auto px-8">
-      <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary neon-glow text-center">
+      <h2 className="text-5xl md:text-6xl font-bold mb-4 text-primary neon-glow text-center">
         Open-Source STT Landscape
       </h2>
 
-      <p className="text-lg text-muted-foreground mb-8 text-center max-w-2xl">
+      <p className="text-xl text-muted-foreground mb-8 text-center max-w-2xl">
         Six families worth knowing -- all run locally, no API keys needed
       </p>
 
@@ -69,20 +69,20 @@ export function SttLandscapeSlide() {
           >
             <div className="flex flex-col gap-1 min-w-0">
               <div className="flex items-center gap-3">
-                <span className={`font-semibold text-base ${m.highlight ? 'text-primary' : ''}`}>
+                <span className={`font-semibold text-lg ${m.highlight ? 'text-primary' : ''}`}>
                   {m.name}
                 </span>
-                <span className="text-xs font-mono px-2 py-0.5 rounded bg-zinc-800 text-muted-foreground whitespace-nowrap">
+                <span className="text-sm font-mono px-2 py-0.5 rounded bg-zinc-800 text-muted-foreground whitespace-nowrap">
                   {m.params}
                 </span>
               </div>
-              <span className="text-sm text-muted-foreground">{m.note}</span>
+              <span className="text-base text-muted-foreground">{m.note}</span>
             </div>
           </a>
         ))}
       </div>
 
-      <p className="mt-6 text-base text-primary/70 font-mono text-center">
+      <p className="mt-6 text-lg text-primary/70 font-mono text-center">
         We use faster-whisper (small, int8, CPU) + VAD chunking for Jarvis
       </p>
     </div>

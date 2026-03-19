@@ -12,6 +12,9 @@ JSON protocol (text frames):
 import json
 import os
 import struct
+import warnings
+
+warnings.filterwarnings("ignore", message=".*output with one or more elements was resized.*")
 
 from pathlib import Path
 
@@ -123,6 +126,10 @@ async def websocket_endpoint(ws: WebSocket) -> None:
                     pipeline.update_barge_in(enabled)
                     await send_json({"type": "barge_in_changed", "enabled": enabled})
                     print(f"Barge-in {'enabled' if enabled else 'disabled'}")
+                elif msg_type == "barge_in_interrupt":
+                    if pipeline.barge_in_enabled:
+                        pipeline._tts_cancel.set()
+                        await send_json({"type": "clear_audio"})
                 elif msg_type == "set_vad_config":
                     pipeline.update_vad_config(msg)
                     await send_json({

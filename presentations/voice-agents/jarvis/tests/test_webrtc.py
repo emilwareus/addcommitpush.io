@@ -33,6 +33,16 @@ class FakeAgent:
         self.batch_response: list[dict] = [
             {"name": "respond", "args": {"text": "Hello from Jarvis."}}
         ]
+        self._active_llm = "gpt-oss-120b"
+        self._llm_models = ["gpt-oss-120b", "gpt-5.4"]
+
+    @property
+    def available_llm_models(self) -> list[str]:
+        return list(self._llm_models)
+
+    @property
+    def llm_model(self) -> str:
+        return self._active_llm
 
     def update_slide_context(self, context: dict) -> None:
         self.slide_context = context
