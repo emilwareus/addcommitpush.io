@@ -23,8 +23,7 @@ TEMPERATURE = 0.7
 # provider is "groq" or "openai" — determines which client to use
 LLM_MODELS: list[dict] = [
     {"name": "gpt-oss-120b", "provider": "groq", "model": "openai/gpt-oss-120b"},
-    {"name": "gpt-4.1-nano", "provider": "openai", "model": "gpt-4.1-nano"},
-    {"name": "o4-mini", "provider": "openai", "model": "o4-mini"},
+    {"name": "gpt-5.4", "provider": "openai", "model": "gpt-5.4"},
 ]
 DEFAULT_LLM_MODEL = "gpt-oss-120b"
 

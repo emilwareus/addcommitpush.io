@@ -26,7 +26,7 @@ class FakeAgent:
     def __init__(self) -> None:
         self.slide_context: dict = {}
         self._active_llm = "gpt-oss-120b"
-        self._llm_models = ["gpt-oss-120b", "gpt-4.1-nano", "o4-mini"]
+        self._llm_models = ["gpt-oss-120b", "gpt-5.4"]
         # Configurable response for testing
         self.batch_response: list[dict] = [
             {"name": "respond", "args": {"text": "Hello! I am Jarvis. Nice to meet you."}}
@@ -97,7 +97,7 @@ class FakeModelManager:
     def transcribe_fast(self, audio: np.ndarray) -> str:
         return self._transcribe_fast_result
 
-    async def synthesize_stream(self, text: str):
+    async def synthesize_stream(self, text: str, cancel_event=None):
         """Yield a small chunk of fake audio for each call."""
         samples = np.zeros(2400, dtype=np.float32)  # 100ms at 24kHz
         yield samples, 24000
@@ -594,12 +594,12 @@ class TestLLMModelSwitching:
 
     def test_available_llm_models(self) -> None:
         agent = FakeAgent()
-        assert agent.available_llm_models == ["gpt-oss-120b", "gpt-4.1-nano", "o4-mini"]
+        assert agent.available_llm_models == ["gpt-oss-120b", "gpt-5.4"]
 
     def test_set_llm_model(self) -> None:
         agent = FakeAgent()
-        agent.set_llm_model("gpt-4.1-nano")
-        assert agent.llm_model == "gpt-4.1-nano"
+        agent.set_llm_model("gpt-5.4")
+        assert agent.llm_model == "gpt-5.4"
 
     def test_set_llm_model_unknown_raises(self) -> None:
         agent = FakeAgent()
@@ -613,8 +613,8 @@ class TestLLMModelSwitching:
         pipeline = JarvisPipeline(
             models, collector.send_json, collector.send_audio, agent=agent
         )
-        pipeline.set_llm_model("o4-mini")
-        assert agent.llm_model == "o4-mini"
+        pipeline.set_llm_model("gpt-5.4")
+        assert agent.llm_model == "gpt-5.4"
 
     def test_pipeline_set_llm_model_invalid_raises(self) -> None:
         collector = MessageCollector()
@@ -624,3 +624,55 @@ class TestLLMModelSwitching:
         )
         with pytest.raises(ValueError):
             pipeline.set_llm_model("bad-model")
+
+
+# ─── OpenAI gpt-5.4 integration test (requires OPENAI_API_KEY) ──────────────
+
+
+@pytest.mark.skipif(
+    not __import__("os").environ.get("OPENAI_API_KEY"),
+    reason="OPENAI_API_KEY not set",
+)
+class TestOpenAIGPT54:
+    """Integration test: real call to gpt-5.4 via JarvisAgent."""
+
+    def test_gpt54_responds_to_hi(self) -> None:
+        """Send 'Hey Jarvis, hi' to gpt-5.4 and verify we get a valid response."""
+        agent = JarvisAgent()
+        agent.set_llm_model("gpt-5.4")
+        agent.slide_context = {"current_title": "Test Slide", "remaining": 1}
+
+        result = agent.process_utterance("Hey Jarvis, hi")
+
+        assert isinstance(result, list)
+        assert len(result) >= 1
+
+        # Should have a respond or update_thinking tool call
+        names = [tc["name"] for tc in result]
+        assert any(n in ("respond", "update_thinking") for n in names), (
+            f"Expected respond or update_thinking, got: {names}"
+        )
+
+        # If there's a respond call, text should be non-empty
+        respond_calls = [tc for tc in result if tc["name"] == "respond"]
+        for tc in respond_calls:
+            assert "text" in tc["args"]
+            assert len(tc["args"]["text"].strip()) > 0
+
+    def test_gpt54_streaming_responds(self) -> None:
+        """Stream 'Hey Jarvis, hi' to gpt-5.4 and verify delta + tool_call events."""
+        agent = JarvisAgent()
+        agent.set_llm_model("gpt-5.4")
+        agent.slide_context = {"current_title": "Test Slide", "remaining": 1}
+
+        events = list(agent.process_utterance_streaming("Hey Jarvis, hi"))
+
+        assert len(events) > 0
+
+        tool_calls = [e for e in events if e["type"] == "tool_call"]
+        assert len(tool_calls) >= 1
+
+        names = [tc["name"] for tc in tool_calls]
+        assert any(n in ("respond", "update_thinking") for n in names), (
+            f"Expected respond or update_thinking, got: {names}"
+        )

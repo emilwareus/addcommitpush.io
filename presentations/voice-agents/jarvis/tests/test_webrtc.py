@@ -78,7 +78,7 @@ class FakeModelManager:
     def transcribe_fast(self, audio: np.ndarray) -> str:
         return self._transcribe_fast_result
 
-    async def synthesize_stream(self, text: str):
+    async def synthesize_stream(self, text: str, cancel_event=None):
         samples = np.zeros(2400, dtype=np.float32)
         yield samples, 24000
 

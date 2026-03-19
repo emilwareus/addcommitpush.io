@@ -22,7 +22,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 load_dotenv(Path(__file__).parent / ".env")
 from fastapi.middleware.cors import CORSMiddleware
 
-from .config import WS_PORT
+from .config import WS_PORT, VAD_THRESHOLD, SILENCE_DURATION_MS
 from .models import ModelManager
 from .pipeline import JarvisPipeline
 from .webrtc import rtc_router
@@ -77,6 +77,9 @@ async def websocket_endpoint(ws: WebSocket) -> None:
         "active_stt_model": models.stt_model,
         "llm_models": pipeline.agent.available_llm_models,
         "active_llm_model": pipeline.agent.llm_model,
+        "vad_threshold": VAD_THRESHOLD,
+        "vad_silence_ms": SILENCE_DURATION_MS,
+        "barge_in_enabled": False,
     })
 
     try:
@@ -115,6 +118,19 @@ async def websocket_endpoint(ws: WebSocket) -> None:
                     pipeline.set_llm_model(model_name)
                     await send_json({"type": "llm_model_changed", "model": model_name})
                     print(f"LLM model changed to: {model_name}")
+                elif msg_type == "set_barge_in":
+                    enabled = bool(msg.get("enabled", False))
+                    pipeline.update_barge_in(enabled)
+                    await send_json({"type": "barge_in_changed", "enabled": enabled})
+                    print(f"Barge-in {'enabled' if enabled else 'disabled'}")
+                elif msg_type == "set_vad_config":
+                    pipeline.update_vad_config(msg)
+                    await send_json({
+                        "type": "vad_config_changed",
+                        "threshold": pipeline.vad_threshold,
+                        "silence_ms": pipeline.silence_duration_ms,
+                    })
+                    print(f"VAD config updated: threshold={pipeline.vad_threshold}, silence={pipeline.silence_duration_ms}ms")
                 elif msg_type == "shutdown":
                     print("Shutdown requested")
                     break

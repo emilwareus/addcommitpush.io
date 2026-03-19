@@ -159,16 +159,22 @@ class ModelManager:
                 return np.concatenate(audio_chunks), OUTPUT_SAMPLE_RATE
             return np.array([], dtype=np.float32), OUTPUT_SAMPLE_RATE
 
-    async def synthesize_stream(self, text: str):
+    async def synthesize_stream(self, text: str, cancel_event: threading.Event | None = None):
         """Async generator yielding (samples, sample_rate) chunks.
 
         Uses Kokoro's generator API for lower time-to-first-audio.
         Holds the TTS lock for the entire stream.
+
+        Args:
+            text: Text to synthesize.
+            cancel_event: If set, stops synthesis between chunks (barge-in).
         """
         with self._tts_lock:
             for _, _, audio in self._kokoro(
                 text, voice=KOKORO_VOICE, speed=KOKORO_SPEED
             ):
+                if cancel_event and cancel_event.is_set():
+                    break
                 if audio is not None:
                     samples = audio.numpy() if hasattr(audio, "numpy") else audio
                     yield samples, OUTPUT_SAMPLE_RATE

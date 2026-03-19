@@ -9,6 +9,7 @@ Adapted from Podidex's SpeechPipeline but simplified:
 
 import asyncio
 import re
+import threading
 
 import numpy as np
 
@@ -18,7 +19,9 @@ from .config import (
     CHUNK_SAMPLES,
     INPUT_SAMPLE_RATE,
     SILENCE_CHUNKS,
+    SILENCE_DURATION_MS,
     VAD_THRESHOLD,
+    CHUNK_MS,
 )
 from .models import ModelManager
 
@@ -45,6 +48,11 @@ class JarvisPipeline:
         self.send_audio = send_audio
         self.agent = agent if agent is not None else JarvisAgent()
 
+        # VAD config (mutable from frontend)
+        self.vad_threshold = VAD_THRESHOLD
+        self.silence_duration_ms = SILENCE_DURATION_MS
+        self.silence_chunks = SILENCE_CHUNKS
+
         # VAD state
         self.audio_buffer: list[np.ndarray] = []
         self.is_speaking = False
@@ -58,6 +66,11 @@ class JarvisPipeline:
 
         # Streaming config (all OFF by default = current batch behavior)
         self.streaming_config = {"stt": False, "llm": False, "tts": False}
+
+        # Barge-in (user interrupts TTS)
+        self.barge_in_enabled: bool = False
+        self._tts_cancel = threading.Event()
+        self._barge_in_vad_threshold = 0.75
 
         # STT streaming state
         self._chunks_since_partial = 0
@@ -77,17 +90,16 @@ class JarvisPipeline:
         """
         self.is_tts_playing = is_tts_playing
 
-        # Echo suppression: skip processing while TTS is playing
-        if is_tts_playing:
-            # Reset VAD state so we don't carry over stale speech
+        # Echo suppression: skip processing while TTS is playing (unless barge-in)
+        if is_tts_playing and not self.barge_in_enabled:
             if self.is_speaking:
                 self.audio_buffer = []
                 self.is_speaking = False
                 self.silence_count = 0
             return
 
-        # Don't accumulate audio while we're processing an utterance
-        if self._processing:
+        # Don't accumulate audio while processing (unless barge-in during TTS)
+        if self._processing and not (self.barge_in_enabled and is_tts_playing):
             return
 
         # Convert int16 PCM to float32 normalized
@@ -110,7 +122,14 @@ class JarvisPipeline:
         """Process a single VAD-sized chunk."""
         speech_prob = self.models.vad_predict(chunk, INPUT_SAMPLE_RATE)
 
-        if speech_prob >= VAD_THRESHOLD:
+        # Use higher threshold during TTS to filter echo residue
+        threshold = self._barge_in_vad_threshold if self.is_tts_playing else self.vad_threshold
+
+        if speech_prob >= threshold:
+            # Barge-in: cancel TTS if user speaks over it
+            if self.barge_in_enabled and self.is_tts_playing and self._processing:
+                self._tts_cancel.set()
+                await self.send_json({"type": "clear_audio"})
             self.is_speaking = True
             self.silence_count = 0
             self.audio_buffer.append(chunk)
@@ -140,7 +159,7 @@ class JarvisPipeline:
             self.silence_count += 1
             self.audio_buffer.append(chunk)
 
-            if self.silence_count >= SILENCE_CHUNKS:
+            if self.silence_count >= self.silence_chunks:
                 # Utterance complete — process it
                 self._chunks_since_partial = 0
                 await self.send_json({"type": "listening", "active": False})
@@ -292,7 +311,10 @@ class JarvisPipeline:
 
     async def _synthesize_and_send(self, text: str) -> None:
         """Synthesize text with Kokoro and stream audio to the browser."""
-        async for samples, _sr in self.models.synthesize_stream(text):
+        self._tts_cancel.clear()
+        async for samples, _sr in self.models.synthesize_stream(text, self._tts_cancel):
+            if self._tts_cancel.is_set():
+                break
             int16_samples = float32_to_int16(samples)
             await self.send_audio(int16_samples.tobytes())
 
@@ -303,6 +325,18 @@ class JarvisPipeline:
     def set_llm_model(self, model_name: str) -> None:
         """Switch the active LLM model."""
         self.agent.set_llm_model(model_name)
+
+    def update_vad_config(self, config: dict) -> None:
+        """Update VAD threshold and silence duration from browser."""
+        if "threshold" in config:
+            self.vad_threshold = float(config["threshold"])
+        if "silence_ms" in config:
+            self.silence_duration_ms = int(config["silence_ms"])
+            self.silence_chunks = int(self.silence_duration_ms / CHUNK_MS)
+
+    def update_barge_in(self, enabled: bool) -> None:
+        """Enable or disable barge-in (user can interrupt TTS)."""
+        self.barge_in_enabled = enabled
 
     def update_slide_context(self, context: dict) -> None:
         """Update the agent's knowledge of the current slide."""

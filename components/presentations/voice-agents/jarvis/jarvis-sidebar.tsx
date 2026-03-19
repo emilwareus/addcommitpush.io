@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Settings } from 'lucide-react';
-import { useJarvis, type JarvisMessage, type Transport } from './jarvis-context';
+import { useJarvis, type JarvisMessage, type Transport, type VadConfig } from './jarvis-context';
 
 function statusColor(status: string): string {
   switch (status) {
@@ -89,7 +89,7 @@ function StreamingToggle({
 }
 
 export function JarvisSidebar() {
-  const { messages, status, isConnected, streamingConfig, sttModel, sttModels, llmModel, llmModels, transport, connect, disconnect, setStreamingConfig, setSttModel, setLlmModel, setTransport } = useJarvis();
+  const { messages, status, isConnected, streamingConfig, vadConfig, sttModel, sttModels, llmModel, llmModels, transport, bargeInEnabled, connect, disconnect, setStreamingConfig, setVadConfig, setSttModel, setLlmModel, setTransport, setBargeInEnabled } = useJarvis();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -218,6 +218,58 @@ export function JarvisSidebar() {
                   disabled={!isConnected}
                   onChange={(v) => setStreamingConfig({ ...streamingConfig, tts: v })}
                 />
+              </div>
+
+              {/* Interruption */}
+              <div className="space-y-1">
+                <span className="text-xs font-mono text-muted-foreground/60 uppercase tracking-wider">
+                  Interruption
+                </span>
+                <StreamingToggle
+                  label="Barge-in"
+                  enabled={bargeInEnabled}
+                  disabled={!isConnected}
+                  onChange={(v) => setBargeInEnabled(v)}
+                />
+              </div>
+
+              {/* VAD Config */}
+              <div className="space-y-2">
+                <span className="text-xs font-mono text-muted-foreground/60 uppercase tracking-wider">
+                  VAD
+                </span>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono text-muted-foreground">Threshold</span>
+                    <span className="text-xs font-mono text-muted-foreground">{vadConfig.threshold.toFixed(2)}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0.1"
+                    max="0.95"
+                    step="0.05"
+                    value={vadConfig.threshold}
+                    disabled={!isConnected}
+                    onChange={(e) => setVadConfig({ ...vadConfig, threshold: parseFloat(e.target.value) })}
+                    className="w-full h-1 bg-muted-foreground/30 rounded-full appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed accent-primary"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono text-muted-foreground">Silence (ms)</span>
+                    <span className="text-xs font-mono text-muted-foreground">{vadConfig.silenceMs}</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="200"
+                    max="2000"
+                    step="100"
+                    value={vadConfig.silenceMs}
+                    disabled={!isConnected}
+                    onChange={(e) => setVadConfig({ ...vadConfig, silenceMs: parseInt(e.target.value, 10) })}
+                    className="w-full h-1 bg-muted-foreground/30 rounded-full appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed accent-primary"
+                  />
+                </div>
               </div>
             </div>
           </motion.div>

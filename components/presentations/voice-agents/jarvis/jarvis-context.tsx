@@ -33,6 +33,11 @@ export interface SlideContext {
   remaining: number;
 }
 
+export interface VadConfig {
+  threshold: number;
+  silenceMs: number;
+}
+
 export type Transport = 'websocket' | 'webrtc';
 
 type JarvisStatus =
@@ -48,18 +53,22 @@ interface JarvisContextType {
   status: JarvisStatus;
   isConnected: boolean;
   streamingConfig: StreamingConfig;
+  vadConfig: VadConfig;
   sttModel: string;
   sttModels: string[];
   llmModel: string;
   llmModels: string[];
   transport: Transport;
+  bargeInEnabled: boolean;
   connect: () => Promise<void>;
   disconnect: () => void;
   sendSlideContext: (context: SlideContext) => void;
   setStreamingConfig: (config: StreamingConfig) => void;
+  setVadConfig: (config: VadConfig) => void;
   setSttModel: (model: string) => void;
   setLlmModel: (model: string) => void;
   setTransport: (t: Transport) => void;
+  setBargeInEnabled: (enabled: boolean) => void;
 }
 
 const JarvisContext = createContext<JarvisContextType | null>(null);
@@ -79,6 +88,7 @@ class AudioQueue {
   private isPlaying = false;
   private ctx: AudioContext;
   private onPlayingChange: (playing: boolean) => void;
+  private currentSource: AudioBufferSourceNode | null = null;
 
   constructor(ctx: AudioContext, onPlayingChange: (playing: boolean) => void) {
     this.ctx = ctx;
@@ -117,12 +127,21 @@ class AudioQueue {
     const source = this.ctx.createBufferSource();
     source.buffer = buffer;
     source.connect(this.ctx.destination);
-    source.onended = () => this.playNext();
+    source.onended = () => {
+      this.currentSource = null;
+      this.playNext();
+    };
+    this.currentSource = source;
     source.start();
   }
 
   clear(): void {
     this.queue = [];
+    if (this.currentSource) {
+      this.currentSource.onended = null;
+      this.currentSource.stop();
+      this.currentSource = null;
+    }
     this.isPlaying = false;
     this.onPlayingChange(false);
   }
@@ -130,14 +149,13 @@ class AudioQueue {
 
 // ─── URLs ─────────────────────────────────────────────────────────────────────
 
+// Jarvis backend always runs with SSL (mkcert) so always use wss/https
 function getWsUrl(): string {
-  const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss' : 'ws';
-  return `${protocol}://localhost:8770/ws`;
+  return 'wss://localhost:8770/ws';
 }
 
 function getRtcOfferUrl(): string {
-  const protocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'https' : 'http';
-  return `${protocol}://localhost:8770/rtc/offer`;
+  return 'https://localhost:8770/rtc/offer';
 }
 
 const HEADER_SIZE = 4; // 4-byte uint32 LE flags
@@ -153,11 +171,16 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
     llm: false,
     tts: false,
   });
+  const [vadConfig, setVadConfigState] = useState<VadConfig>({
+    threshold: 0.5,
+    silenceMs: 700,
+  });
   const [sttModel, setSttModelState] = useState('');
   const [sttModels, setSttModels] = useState<string[]>([]);
   const [llmModel, setLlmModelState] = useState('');
   const [llmModels, setLlmModels] = useState<string[]>([]);
   const [transport, setTransportState] = useState<Transport>('websocket');
+  const [bargeInEnabled, setBargeInEnabledState] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -203,6 +226,12 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
             if (msg.active_stt_model) setSttModelState(msg.active_stt_model);
             if (msg.llm_models) setLlmModels(msg.llm_models);
             if (msg.active_llm_model) setLlmModelState(msg.active_llm_model);
+            if (msg.vad_threshold != null && msg.vad_silence_ms != null) {
+              setVadConfigState({ threshold: msg.vad_threshold, silenceMs: msg.vad_silence_ms });
+            }
+            if (msg.barge_in_enabled != null) {
+              setBargeInEnabledState(msg.barge_in_enabled);
+            }
             // Enable mic capture for WebSocket (worklet may not exist for WebRTC)
             workletNodeRef.current?.port.postMessage({ type: 'set_enabled', enabled: true });
             break;
@@ -213,6 +242,18 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
 
           case 'llm_model_changed':
             setLlmModelState(msg.model);
+            break;
+
+          case 'vad_config_changed':
+            setVadConfigState({ threshold: msg.threshold, silenceMs: msg.silence_ms });
+            break;
+
+          case 'barge_in_changed':
+            setBargeInEnabledState(msg.enabled);
+            break;
+
+          case 'clear_audio':
+            audioQueueRef.current?.clear();
             break;
 
           case 'transcript':
@@ -322,6 +363,11 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
     sendControlMessage({ type: 'set_streaming', ...config });
   }, [sendControlMessage]);
 
+  const setVadConfig = useCallback((config: VadConfig) => {
+    setVadConfigState(config);
+    sendControlMessage({ type: 'set_vad_config', threshold: config.threshold, silence_ms: config.silenceMs });
+  }, [sendControlMessage]);
+
   const setSttModel = useCallback((model: string) => {
     setSttModelState(model);
     sendControlMessage({ type: 'set_stt_model', model });
@@ -330,6 +376,11 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
   const setLlmModel = useCallback((model: string) => {
     setLlmModelState(model);
     sendControlMessage({ type: 'set_llm_model', model });
+  }, [sendControlMessage]);
+
+  const setBargeInEnabled = useCallback((enabled: boolean) => {
+    setBargeInEnabledState(enabled);
+    sendControlMessage({ type: 'set_barge_in', enabled });
   }, [sendControlMessage]);
 
   // ── Cleanup ──────────────────────────────────────────────────────────────
@@ -589,7 +640,7 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
 
   return (
     <JarvisContext.Provider
-      value={{ messages, status, isConnected, streamingConfig, sttModel, sttModels, llmModel, llmModels, transport, connect, disconnect, sendSlideContext, setStreamingConfig, setSttModel, setLlmModel, setTransport }}
+      value={{ messages, status, isConnected, streamingConfig, vadConfig, sttModel, sttModels, llmModel, llmModels, transport, bargeInEnabled, connect, disconnect, sendSlideContext, setStreamingConfig, setVadConfig, setSttModel, setLlmModel, setTransport, setBargeInEnabled }}
     >
       {children}
     </JarvisContext.Provider>

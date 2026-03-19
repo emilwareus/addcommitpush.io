@@ -37,6 +37,7 @@ def _load_research_docs() -> dict[str, str]:
         ("Moonshine STT", "MOONSHINE-DEEP-DIVE.md"),
         ("STT Landscape", "STT-DEEP-DIVE.md"),
         ("TTS Landscape", "TTS-DEEP-DIVE.md"),
+        ("VAD (Voice Activity Detection)", "VAD-DEEP-DIVE.md"),
     ]:
         path = RESEARCH_DIR / filename
         if path.exists():
@@ -134,32 +135,47 @@ You have been built using:
 You have deep research available on: {RESEARCH_TOPIC_LIST}.
 Use the lookup_research tool when you need detailed technical knowledge to answer a question.
 
+Tool usage:
+- When someone addresses you ("hey Jarvis", "Jarvis", or any direct question to you): use the respond tool IMMEDIATELY. Do NOT use update_thinking first — go straight to respond.
+- When asked a deep technical question: use lookup_research first, then respond with specifics.
+- Use update_thinking ONLY for passive observations when nobody is talking to you (e.g. noting what the presenter is discussing, sidebar commentary for the audience).
+- Never combine update_thinking and respond for the same utterance. If addressed, respond. If not addressed, think.
+
 Rules:
 - You are ALWAYS listening and processing what you hear
-- Use update_thinking to show your observations in the sidebar (the audience can see this)
-- ONLY use the respond tool when you hear "hey Jarvis" or are directly addressed by name
 - When responding, keep it concise (1-3 sentences) — you're speaking aloud
 - You know the full presentation content and can preview upcoming topics
 - Be witty, sharp, and technically knowledgeable
 - Reference specific things that were said earlier in the talk
 - If asked about yourself, explain how you were built (the tech stack above)
-- When asked a deep technical question, use lookup_research first, then respond with specifics
+- Use SOME context knowledge of when to respond. it is not that the user has to always say "hey Jarvis" or "Jarvis" for you to respond, that is only a queue for you that you MUST respond.
 
 Conversation so far (what you've heard):
 """
 
 
 def _build_llm_clients() -> dict[str, dict]:
-    """Build client instances for each configured LLM model."""
+    """Build client instances for each configured LLM model.
+
+    Skips providers whose API key is not set in the environment.
+    """
+    import os
+
     clients: dict[str, dict] = {}
     groq_client: Groq | None = None
     openai_client: OpenAI | None = None
     for cfg in LLM_MODELS:
         if cfg["provider"] == "groq":
+            if not os.environ.get("GROQ_API_KEY"):
+                print(f"  Skipping {cfg['name']}: GROQ_API_KEY not set")
+                continue
             if groq_client is None:
                 groq_client = Groq()
             clients[cfg["name"]] = {"client": groq_client, "model": cfg["model"]}
         elif cfg["provider"] == "openai":
+            if not os.environ.get("OPENAI_API_KEY"):
+                print(f"  Skipping {cfg['name']}: OPENAI_API_KEY not set")
+                continue
             if openai_client is None:
                 openai_client = OpenAI()
             clients[cfg["name"]] = {"client": openai_client, "model": cfg["model"]}
@@ -195,6 +211,10 @@ class JarvisAgent:
     def _chat_create(self, *, stream: bool = False, **kwargs):
         """Create a chat completion using the active LLM backend."""
         entry = self._llm_clients[self._active_llm]
+        # OpenAI newer models (gpt-4o+, o-series, gpt-5+) require
+        # max_completion_tokens instead of max_tokens.
+        if isinstance(entry["client"], OpenAI) and "max_tokens" in kwargs:
+            kwargs["max_completion_tokens"] = kwargs.pop("max_tokens")
         return entry["client"].chat.completions.create(
             model=entry["model"],
             stream=stream,
