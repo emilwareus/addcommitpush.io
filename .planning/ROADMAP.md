@@ -36,7 +36,7 @@ and only then finalize the install surfaces for Codex and Claude Code.
 **Plans**: 4 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Establish the Wave 0 harness, typecheck script, and Phase 1 spec scaffolds
+- [x] 01-01-PLAN.md — Establish the Wave 0 harness, typecheck script, and Phase 1 spec scaffolds
 - [ ] 01-02-PLAN.md — Freeze the workspace contract, validators, and path guards
 - [ ] 01-03-PLAN.md — Implement deterministic new-research initialization and seeding
 - [ ] 01-04-PLAN.md — Implement disk-only resume and next-action summary
@@ -128,7 +128,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Research Workspace Bootstrap | 0/4 | Not started | - |
+| 1. Research Workspace Bootstrap | 1/4 | In Progress | - |
 | 2. Source Registry & Evidence Capture | 0/3 | Not started | - |
 | 3. Insights & Analysis Graph | 0/3 | Not started | - |
 | 4. Report Generation | 0/3 | Not started | - |

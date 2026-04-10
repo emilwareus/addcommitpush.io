@@ -17,11 +17,11 @@
 
 ### Research Workspace
 
-- [ ] **RSCH-01**: User can initialize a new research with a bounded brief and a fixed folder
+- [x] **RSCH-01**: User can initialize a new research with a bounded brief and a fixed folder
   structure for insights, data, analysis, and reports.
 - [ ] **RSCH-02**: User can inspect a research manifest that shows status, freshness debt, and
   active report inventory.
-- [ ] **RSCH-03**: User can resume an existing research without rebuilding its context from chat
+- [x] **RSCH-03**: User can resume an existing research without rebuilding its context from chat
   history.
 
 ### Source Provenance
@@ -100,9 +100,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INST-02 | Phase 6 | Pending |
 | INST-03 | Phase 6 | Pending |
 | INST-04 | Phase 6 | Pending |
-| RSCH-01 | Phase 1 | Pending |
+| RSCH-01 | Phase 1 | Complete |
 | RSCH-02 | Phase 5 | Pending |
-| RSCH-03 | Phase 1 | Pending |
+| RSCH-03 | Phase 1 | Complete |
 | SRC-01 | Phase 2 | Pending |
 | SRC-02 | Phase 2 | Pending |
 | SRC-03 | Phase 2 | Pending |
