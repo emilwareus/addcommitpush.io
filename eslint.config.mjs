@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     'out/**',
     'build/**',
     'next-env.d.ts',
+    // Generated and vendored code should not block repo-owned source verification.
+    '**/.venv/**',
+    'go-research/external_code/**',
+    'researcher/**',
   ]),
 ]);
 
