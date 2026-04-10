@@ -394,17 +394,15 @@ addFormats(ajv);
 | A5 | `add-source` should remain provider-neutral and allow metadata-only source creation with `accessed_at: null` until a capture is recorded. | Architecture Patterns; Open Questions | Medium: if add must always fetch, Phase 2 scope expands into provider integration. |
 | A6 | Adding `ajv-formats` is the cleanest fix for the current format-validation gap. | Standard Stack; Common Pitfalls | Low: equivalent explicit core validation is possible, but planner must choose one path. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should `research-source-refresh` write capture bytes itself, or only register already-written files?**
-   - What we know: Phase 2 locks the durable storage model and thin core boundary, not a specific search or fetch provider. [VERIFIED: .planning/phases/02-source-registry-evidence-capture/02-CONTEXT.md]
-   - What's unclear: Whether this phase should also own a small provider-neutral byte-write helper for text/file inputs. [ASSUMED]
-   - Recommendation: Let `02-03` include a small provider-neutral capture writer for file or text payloads, but do not integrate outbound HTTP fetching in core. [VERIFIED: researcher/DESIGN.md] [ASSUMED]
+   - Resolution: Phase 2 should include a small provider-neutral capture writer for text or file payloads so the core can durably store evidence under `data/` without depending on any specific web-fetch backend. Outbound HTTP fetching and provider integrations still remain outside the shared core boundary. [VERIFIED: .planning/phases/02-source-registry-evidence-capture/02-CONTEXT.md] [VERIFIED: researcher/DESIGN.md]
+   - Planning impact: `02-03` should own append-only capture writes plus registry updates, while keeping provider/search logic outside `internal/tools/researcher/core`.
 
 2. **Should Phase 2 rename `credibility` to `confidence` in one edit, or carry both for compatibility?**
-   - What we know: Current schema uses `credibility`, while the requirement and phase context use `confidence`. [VERIFIED: researcher/schemas/sources.schema.json] [VERIFIED: .planning/REQUIREMENTS.md] [VERIFIED: .planning/phases/02-source-registry-evidence-capture/02-CONTEXT.md]
-   - What's unclear: Whether any external runtime already depends on the Phase 1 field name. [VERIFIED: rg search in `internal/tools/researcher`, `scripts`, and `researcher/` on 2026-04-11]
-   - Recommendation: Rename in `02-01` and update local docs/tests in the same plan; there is no in-repo consumer that justifies a dual field. [VERIFIED: rg search in `internal/tools/researcher`, `scripts`, and `researcher/` on 2026-04-11] [ASSUMED]
+   - Resolution: Rename the trust field to `confidence` in `02-01` and update the local schema, tests, and docs in the same plan. There is no in-repo consumer that justifies carrying both names in parallel. [VERIFIED: researcher/schemas/sources.schema.json] [VERIFIED: .planning/REQUIREMENTS.md] [VERIFIED: rg search in `internal/tools/researcher`, `scripts`, and `researcher/` on 2026-04-11]
+   - Planning impact: `02-01` should make one contract edit and treat `confidence` as the canonical Phase 2 field everywhere downstream.
 
 ## Environment Availability
 
