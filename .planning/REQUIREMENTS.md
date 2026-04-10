@@ -96,32 +96,32 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INST-01 | Phase TBD | Pending |
-| INST-02 | Phase TBD | Pending |
-| INST-03 | Phase TBD | Pending |
-| INST-04 | Phase TBD | Pending |
-| RSCH-01 | Phase TBD | Pending |
-| RSCH-02 | Phase TBD | Pending |
-| RSCH-03 | Phase TBD | Pending |
-| SRC-01 | Phase TBD | Pending |
-| SRC-02 | Phase TBD | Pending |
-| SRC-03 | Phase TBD | Pending |
-| SRC-04 | Phase TBD | Pending |
-| INS-01 | Phase TBD | Pending |
-| INS-02 | Phase TBD | Pending |
-| INS-03 | Phase TBD | Pending |
-| INS-04 | Phase TBD | Pending |
-| RPT-01 | Phase TBD | Pending |
-| RPT-02 | Phase TBD | Pending |
-| RPT-03 | Phase TBD | Pending |
-| STAT-01 | Phase TBD | Pending |
-| STAT-02 | Phase TBD | Pending |
-| STAT-03 | Phase TBD | Pending |
+| INST-01 | Phase 6 | Pending |
+| INST-02 | Phase 6 | Pending |
+| INST-03 | Phase 6 | Pending |
+| INST-04 | Phase 6 | Pending |
+| RSCH-01 | Phase 1 | Pending |
+| RSCH-02 | Phase 5 | Pending |
+| RSCH-03 | Phase 1 | Pending |
+| SRC-01 | Phase 2 | Pending |
+| SRC-02 | Phase 2 | Pending |
+| SRC-03 | Phase 2 | Pending |
+| SRC-04 | Phase 2 | Pending |
+| INS-01 | Phase 3 | Pending |
+| INS-02 | Phase 3 | Pending |
+| INS-03 | Phase 3 | Pending |
+| INS-04 | Phase 3 | Pending |
+| RPT-01 | Phase 4 | Pending |
+| RPT-02 | Phase 4 | Pending |
+| RPT-03 | Phase 4 | Pending |
+| STAT-01 | Phase 5 | Pending |
+| STAT-02 | Phase 5 | Pending |
+| STAT-03 | Phase 5 | Pending |
 
 **Coverage:**
 - v1 requirements: 21 total
-- Mapped to phases: 0
-- Unmapped: 21 ⚠️
+- Mapped to phases: 21
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-04-10*

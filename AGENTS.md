@@ -272,3 +272,144 @@ Keep this document up to date as the source of truth for how this blog is struct
 # Thoughts:
 
 All thoughs (even in sub-projects) should be in thoughts/shared/ (root), not in the sub projects.
+
+<!-- GSD:project-start source:PROJECT.md -->
+## Project
+
+**Researcher**
+
+Researcher is an installable deep-research operating system for AI runtimes like Codex and
+Claude Code. It is modeled directly on GSD's strengths: commands, skills, scripts, workflows,
+hooks, and file-based state, but aimed at web research, evidence capture, insight synthesis,
+and multi-angle report generation instead of code delivery alone.
+
+The product should let a user install Researcher into a project and work through durable,
+structured research flows that turn sources into reusable insights, analysis, and many Markdown
+reports from one research base.
+
+**Core Value:** Turn research from one-off chat output into durable, source-backed knowledge that can be reused,
+extended, and repackaged into multiple high-quality reports.
+
+### Constraints
+
+- **Runtime Compatibility**: Must be installable into Codex and Claude Code first — these are the
+  primary target runtimes.
+- **Local-First State**: Core state must live in files, not require a database or hosted backend.
+- **Artifact Discipline**: Reports must be Markdown, and the source registry must be structured and
+  machine-readable.
+- **GSD Alignment**: The product should feel structurally similar to GSD so users can transfer the
+  same mental model.
+- **Extensibility**: One research must remain open to additional sources, insights, analysis, and
+  reports over time.
+- **Source Provenance**: Every report-worthy claim must be traceable back through insights to
+  concrete sources.
+<!-- GSD:project-end -->
+
+<!-- GSD:stack-start source:research/STACK.md -->
+## Technology Stack
+
+## Recommended Stack
+### Core Technologies
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| Node.js | 24.x LTS | Primary runtime for CLI, installer, hooks, and asset generation | Stable LTS baseline for an installable workflow product, while keeping modern runtime features |
+| TypeScript | 5.x | Implementation language for CLI, adapters, schemas, and build tooling | Strong typing matters because the system manipulates structured artifacts and multiple runtime adapters |
+| Markdown + YAML frontmatter | N/A | Human-readable source format for briefs, insights, analysis, and reports | Git-friendly, inspectable, and natural for agent-authored artifacts |
+| JSON / JSONL + JSON Schema | Draft 2020-12 | Canonical machine-readable state for manifests, source registries, and validation | Needed for deterministic mutation, validation, lineage tracking, and freshness propagation |
+### Supporting Libraries
+| Library | Version | Purpose | When to Use |
+|---------|---------|---------|-------------|
+| `ajv` | 8.x | Validate `sources.json`, manifests, and contract payloads | Required for all structured registry writes |
+| `zod` | 3.x or 4.x | Author runtime-safe schema definitions that can align with JSON Schema validation | Use when the core graph engine needs stronger typed validation in code |
+| `gray-matter` or minimal frontmatter parser | 4.x | Parse Markdown frontmatter safely | Use when reading/writing insight, analysis, and report metadata |
+| `fast-glob` | 3.x | Scan research trees and install assets | Use for indexing, refresh checks, and installer copy logic |
+| `tsx` | 4.x | Run TypeScript scripts without heavy bundling overhead | Use for dev scripts and local automation |
+| `vitest` | 4.x | Test the graph engine, installer, and validators | Use for CLI and artifact-graph correctness |
+| Python + `uv` + `marimo` + DuckDB | 3.12+ | Optional analysis/notebook runtime | Use only for richer analysis tasks, local analytical queries, and `.py`-backed notebooks under `analysis/` |
+### Development Tools
+| Tool | Purpose | Notes |
+|------|---------|-------|
+| pnpm | Package and publish the installer | Best fit for a workspace-oriented Node/TypeScript toolchain |
+| `esbuild` | Bundle small helper scripts when useful | Keep runtime lean and installation fast |
+| JSON Schema validation in CI | Prevent registry drift | Run on example artifacts and fixtures |
+| Markdown linting or repo conventions | Keep prompt and artifact files consistent | Useful once the prompt surface grows |
+## Installation
+# Core
+# Dev dependencies
+# Optional analysis runtime
+# Python 3.12+ with uv, marimo, and DuckDB for richer analysis tooling
+## Alternatives Considered
+| Recommended | Alternative | When to Use Alternative |
+|-------------|-------------|-------------------------|
+| Node.js + TypeScript CLI core | Python-first core | Use Python-first only if notebooks and data pipelines become the dominant product surface |
+| JSON registries + Markdown artifacts | SQLite-first state | Use a database later only if cross-research scale and concurrent mutation outgrow file-based state |
+| Thin runtime adapters | Separate codebases per runtime | Avoid unless runtime behavior diverges more than expected |
+| `sources.jsonl` or append-friendly source records | single monolithic `sources.json` | Use a single JSON file only while the source registry remains small and low-concurrency |
+## What NOT to Use
+| Avoid | Why | Use Instead |
+|-------|-----|-------------|
+| Database-first primary state | Hides the artifact graph and weakens inspectability | File-based manifests and registries with validation |
+| Runtime-specific business logic in prompt files | Leads to Codex/Claude drift and prompt sprawl | Runtime-neutral core library plus thin adapters |
+| Hidden citation state in agent memory | Breaks refresh, lineage, and reuse | Explicit source IDs, insight IDs, and analysis/report lineage |
+| A giant append-heavy `sources.json` as the only long-term registry shape | Likely merge-conflict and update hotspot as research grows | `sources.jsonl` or another append-friendly structured source ledger |
+## Stack Patterns by Variant
+- Keep Node.js + TypeScript as the main implementation layer
+- Keep prompts declarative and push mutations into deterministic tooling
+- Add stronger Python support under `analysis/`
+- Keep Python optional and isolated from the install/runtime core
+- Move the source ledger from single-file JSON to append-friendly JSONL
+- Keep report, insight, and manifest semantics unchanged
+## Version Compatibility
+| Package A | Compatible With | Notes |
+|-----------|-----------------|-------|
+| Node.js 24.x LTS | modern TypeScript toolchains | Preferred stable baseline as of 2026-04-10 |
+| JSON Schema Draft 2020-12 | AJV 8.x | Good fit for registry validation |
+| Codex + Claude Code adapters | local file-based artifact graph | The shared core should stay runtime-neutral |
+## Sources
+- Internal project context: `.planning/PROJECT.md`, `researcher/DESIGN.md`, `researcher/ARTIFACT-MODEL.md`
+- OpenAI Codex docs for customization, config, AGENTS, skills, subagents, plugins, and MCP
+- Anthropic Claude Code docs for skills, subagents, hooks, settings, and MCP
+- Node.js release schedule and pnpm documentation
+- Optional analysis/data tooling docs for `uv`, `marimo`, DuckDB, and Parquet
+- Exa and Firecrawl MCP docs for search and extraction integration boundaries
+<!-- GSD:stack-end -->
+
+<!-- GSD:conventions-start source:CONVENTIONS.md -->
+## Conventions
+
+Conventions not yet established. Will populate as patterns emerge during development.
+<!-- GSD:conventions-end -->
+
+<!-- GSD:architecture-start source:ARCHITECTURE.md -->
+## Architecture
+
+Architecture not yet mapped. Follow existing patterns found in the codebase.
+<!-- GSD:architecture-end -->
+
+<!-- GSD:skills-start source:skills/ -->
+## Project Skills
+
+| Skill | Description | Path |
+|-------|-------------|------|
+| playwright-cli | Automates browser interactions for web testing, form filling, screenshots, and data extraction. Use when the user needs to navigate websites, interact with web pages, fill forms, take screenshots, test web applications, or extract information from web pages. | `.claude/skills/playwright-cli/SKILL.md` |
+<!-- GSD:skills-end -->
+
+<!-- GSD:workflow-start source:GSD defaults -->
+## GSD Workflow Enforcement
+
+Before using Edit, Write, or other file-changing tools, start work through a GSD command so planning artifacts and execution context stay in sync.
+
+Use these entry points:
+- `/gsd-quick` for small fixes, doc updates, and ad-hoc tasks
+- `/gsd-debug` for investigation and bug fixing
+- `/gsd-execute-phase` for planned phase work
+
+Do not make direct repo edits outside a GSD workflow unless the user explicitly asks to bypass it.
+<!-- GSD:workflow-end -->
+
+<!-- GSD:profile-start -->
+## Developer Profile
+
+> Profile not yet configured. Run `/gsd-profile-user` to generate your developer profile.
+> This section is managed by `generate-claude-profile` -- do not edit manually.
+<!-- GSD:profile-end -->
