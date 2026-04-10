@@ -39,7 +39,7 @@ Plans:
 - [x] 01-01-PLAN.md — Establish the Wave 0 harness, typecheck script, and Phase 1 spec scaffolds
 - [x] 01-02-PLAN.md — Freeze the workspace contract, validators, and path guards
 - [x] 01-03-PLAN.md — Implement deterministic new-research initialization and seeding
-- [ ] 01-04-PLAN.md — Implement disk-only resume and next-action summary
+- [x] 01-04-PLAN.md — Implement disk-only resume and next-action summary
 
 ### Phase 2: Source Registry & Evidence Capture
 **Goal**: Users can maintain a central, refreshable source registry with durable evidence capture.

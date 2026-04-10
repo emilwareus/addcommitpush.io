@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 01-03-PLAN.md
-last_updated: "2026-04-10T14:45:14.502Z"
+status: verifying
+stopped_at: Completed 01-04-PLAN.md
+last_updated: "2026-04-10T14:54:20.235Z"
 last_activity: 2026-04-10
 progress:
   total_phases: 6
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 4
-  completed_plans: 3
-  percent: 75
+  completed_plans: 4
+  percent: 100
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-04-10)
 
 Phase: 01 (research-workspace-bootstrap) — EXECUTING
 Plan: 4 of 4
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-04-10
 
 Progress: [███░░░░░░░] 25%
@@ -53,6 +53,7 @@ Progress: [███░░░░░░░] 25%
 
 | Phase 01 P02 | 3 min | 2 tasks | 8 files |
 | Phase 01 P03 | 3 min | 2 tasks | 7 files |
+| Phase 01 P04 | 4 min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,9 @@ Recent decisions affecting current work:
 - [Phase 01]: Keep initialization in one shared core service and expose runtime entrypoints as thin argv parsers only.
 - [Phase 01]: Validate the seeded manifest and empty sources envelope before any write so new workspaces start schema-valid.
 - [Phase 01]: Extend the existing path helper with absolute workspace paths instead of rebuilding filesystem layout logic inside init.
+- [Phase 01]: Resume derives inventory from sources.json and on-disk artifact scans instead of trusting manifest inventory counters.
+- [Phase 01]: nextRecommendedAction stays machine-readable and prioritizes freshness debt once a research has recorded sources.
+- [Phase 01]: The resume CLI prints the shared core payload directly so init and resume stay aligned on one public contract.
 
 ### Pending Todos
 
@@ -84,6 +88,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-10T14:45:14.500Z
-Stopped at: Completed 01-03-PLAN.md
+Last session: 2026-04-10T14:54:20.232Z
+Stopped at: Completed 01-04-PLAN.md
 Resume file: None
