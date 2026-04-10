@@ -10,7 +10,7 @@ and only then finalize the install surfaces for Codex and Claude Code.
 
 ## Phases
 
-- [ ] **Phase 1: Research Workspace Bootstrap** - Create the bounded research folder contract,
+- [x] **Phase 1: Research Workspace Bootstrap** - Create the bounded research folder contract,
   manifest seed, and resumeable workspace flows.
 - [ ] **Phase 2: Source Registry & Evidence Capture** - Build the source ledger and durable local
   evidence capture model.
@@ -128,7 +128,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Research Workspace Bootstrap | 1/4 | In Progress | - |
+| 1. Research Workspace Bootstrap | 4/4 | Complete | 2026-04-10 |
 | 2. Source Registry & Evidence Capture | 0/3 | Not started | - |
 | 3. Insights & Analysis Graph | 0/3 | Not started | - |
 | 4. Report Generation | 0/3 | Not started | - |
