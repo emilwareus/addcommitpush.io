@@ -372,17 +372,15 @@ export async function summarizeWorkspace(workspaceDir: string) {
 | A3 | `next_recommended_action` should be computed during resume and returned as structured data. | Architecture Patterns | Low — this can move to Phase 5 if the planner wants Phase 1 resume to stop at raw context restoration. |
 | A4 | Write-to-temp then rename is worth planning for if any Phase 1 write updates more than one structured file per operation. | Common Pitfalls | Low — Phase 1 can start simpler if writes stay single-file and serialized. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should Phase 1 upgrade existing dependencies or stay on installed versions?**
-   - What we know: The repo already has `zod@4.1.13`, `typescript@5.9.3`, and `tsx@4.21.0`, while newer versions exist in the registry. [VERIFIED: package.json] [VERIFIED: npm registry]
-   - What's unclear: Whether the user wants dependency churn bundled into an early infrastructure phase. [ASSUMED]
-   - Recommendation: Keep installed versions for Phase 1 unless a specific feature gap appears; add only missing packages (`ajv`, `vitest`) needed by the plan. [VERIFIED: package.json] [ASSUMED]
+   - Resolution: Stay on the installed `zod`, `typescript`, and `tsx` versions for Phase 1 and add only the missing packages required by the phase (`ajv`, `vitest`). This keeps the early infrastructure phase focused on the workspace contract instead of bundling unrelated dependency churn. [VERIFIED: package.json] [VERIFIED: npm registry]
+   - Planning impact: Plan 01-01 may add `ajv`, `vitest`, and the repo-required `typecheck` script, but Phase 1 should not include opportunistic upgrades of already-installed dependencies. [VERIFIED: .planning/phases/01-research-workspace-bootstrap/01-01-PLAN.md]
 
 2. **Should resume compute `next_recommended_action` now or only return raw state?**
-   - What we know: The design docs want progress routing and later `/research-status`, but RSCH-03 only requires context restoration from files. [VERIFIED: researcher/DESIGN.md] [VERIFIED: researcher/WORKFLOWS.md] [VERIFIED: .planning/REQUIREMENTS.md]
-   - What's unclear: Whether Phase 1 should stop at raw resume data or also take the first step toward status routing. [ASSUMED]
-   - Recommendation: Return a lightweight `next_recommended_action` string now if it can be computed from manifest stage and inventory without adding status-dashboard scope. [VERIFIED: researcher/WORKFLOWS.md] [ASSUMED]
+   - Resolution: Phase 1 should return a lightweight `next_recommended_action` derived from manifest stage, open questions, and actual artifact inventory. This stays inside RSCH-03 because it is computed from disk state only and does not add a broader status-dashboard feature. [VERIFIED: researcher/DESIGN.md] [VERIFIED: researcher/WORKFLOWS.md] [VERIFIED: .planning/REQUIREMENTS.md]
+   - Planning impact: The resume plan should explicitly produce this field from validated disk artifacts and the init plan should seed the manifest fields that make the computation deterministic. [VERIFIED: .planning/phases/01-research-workspace-bootstrap/01-04-PLAN.md] [VERIFIED: .planning/phases/01-research-workspace-bootstrap/01-03-PLAN.md]
 
 ## Environment Availability
 
