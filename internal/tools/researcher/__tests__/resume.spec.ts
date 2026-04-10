@@ -129,7 +129,7 @@ describe("research workspace resume flow", () => {
       analysis: 1,
       reports: 1,
     });
-    expect(result.nextRecommendedAction).toBe("synthesize-analysis");
+    expect(result.nextRecommendedAction).toBe("refresh-sources");
   });
 
   test("fails hard for missing brief, invalid machine state, and traversal slugs", async () => {
