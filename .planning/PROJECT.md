@@ -20,22 +20,31 @@ extended, and repackaged into multiple high-quality reports.
 
 ### Validated
 
-(None yet — ship to validate)
+- Phase 1 validated the bounded research workspace contract and disk-only resume flow.
+- `RSCH-01`: Users can initialize a new research with a bounded brief and a fixed folder structure.
+- `RSCH-03`: Users can resume an existing research without rebuilding context from chat history.
 
 ### Active
 
 - [ ] Users can install Researcher into Codex and Claude Code as commands, skills, scripts,
   and supporting workflow assets.
-- [ ] Users can initialize a new research with a bounded brief, source registry, and required
-  artifact folders.
 - [ ] Users can harvest and track external sources centrally with structured provenance.
 - [ ] Users can promote gathered material into reusable insight artifacts and deeper analysis
   artifacts with clear lineage.
 - [ ] Users can generate multiple Markdown reports from a single research base without repeating
   the same research.
-- [ ] Users can continue an existing research over time by adding new sources, insights, and
-  analysis without breaking prior work.
 - [ ] Users can inspect status, freshness debt, and next suggested action for a research.
+
+## Current State
+
+Phase 1 is complete. The repo now has:
+
+- a fixed per-research workspace under `researcher/researches/<slug>/`
+- a versioned manifest contract and shared `sources.json` envelope validation
+- deterministic `research-init` and `research-resume` CLIs backed by a shared core
+- disk-only resume that reconstructs stage, inventory, freshness debt, and next action from files
+
+Next focus: Phase 2, Source Registry & Evidence Capture.
 
 ### Out of Scope
 
@@ -89,9 +98,9 @@ must coexist with that reality without assuming a blank repo.
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Build Researcher as a GSD-style installable system | The user wants the same operating model as GSD, not a standalone ad hoc prompt pack | — Pending |
-| Use file-based artifacts as the primary state model | This preserves inspectability, git friendliness, and durability across context resets | — Pending |
-| Center the artifact chain on sources -> insights -> analysis -> reports | This is the core architectural inversion from one-shot chat output to reusable knowledge | — Pending |
+| Build Researcher as a GSD-style installable system | The user wants the same operating model as GSD, not a standalone ad hoc prompt pack | Validated in Phase 1 |
+| Use file-based artifacts as the primary state model | This preserves inspectability, git friendliness, and durability across context resets | Validated in Phase 1 |
+| Center the artifact chain on sources -> insights -> analysis -> reports | This is the core architectural inversion from one-shot chat output to reusable knowledge | Workspace foundation validated in Phase 1 |
 | Treat multiple reports from one research as a first-class requirement | This is the defining user value and should shape every artifact contract | — Pending |
 | Start with Codex and Claude Code support before broader runtime expansion | This keeps the first implementation focused while matching the intended install surface | — Pending |
 
@@ -113,4 +122,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-10 after initialization*
+*Last updated: 2026-04-10 after Phase 1 completion*
