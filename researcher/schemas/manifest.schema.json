@@ -1,0 +1,178 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://addcommitpush.io/researcher/schemas/manifest.schema.json",
+  "title": "Researcher Manifest",
+  "type": "object",
+  "required": [
+    "contract_version",
+    "research",
+    "status",
+    "questions",
+    "freshness",
+    "inventory",
+    "paths",
+    "next_ids"
+  ],
+  "properties": {
+    "contract_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "research": {
+      "type": "object",
+      "required": ["id", "slug", "title"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^RES-[0-9]{8}-[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "status": {
+      "type": "object",
+      "required": ["state", "stage"],
+      "properties": {
+        "state": {
+          "type": "string",
+          "enum": ["active", "paused", "archived"]
+        },
+        "stage": {
+          "type": "string",
+          "enum": ["intake", "harvest", "extract", "synthesize", "package", "refresh"]
+        }
+      },
+      "additionalProperties": false
+    },
+    "questions": {
+      "type": "object",
+      "required": ["active"],
+      "properties": {
+        "active": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "freshness": {
+      "type": "object",
+      "required": ["window_days", "last_source_sync_at", "debt"],
+      "properties": {
+        "window_days": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "last_source_sync_at": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        },
+        "debt": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "inventory": {
+      "type": "object",
+      "required": ["sources", "insights", "analysis", "reports"],
+      "properties": {
+        "sources": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "insights": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "analysis": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reports": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "paths": {
+      "type": "object",
+      "required": ["root", "brief", "manifest", "sources", "insights", "data", "analysis", "reports"],
+      "properties": {
+        "root": {
+          "type": "string",
+          "pattern": "^researcher/researches/[a-z0-9]+(?:-[a-z0-9]+)*$"
+        },
+        "brief": {
+          "type": "string",
+          "pattern": "^researcher/researches/[a-z0-9]+(?:-[a-z0-9]+)*/brief\\.md$"
+        },
+        "manifest": {
+          "type": "string",
+          "pattern": "^researcher/researches/[a-z0-9]+(?:-[a-z0-9]+)*/manifest\\.json$"
+        },
+        "sources": {
+          "type": "string",
+          "pattern": "^researcher/researches/[a-z0-9]+(?:-[a-z0-9]+)*/sources\\.json$"
+        },
+        "insights": {
+          "type": "string",
+          "pattern": "^researcher/researches/[a-z0-9]+(?:-[a-z0-9]+)*/insights$"
+        },
+        "data": {
+          "type": "string",
+          "pattern": "^researcher/researches/[a-z0-9]+(?:-[a-z0-9]+)*/data$"
+        },
+        "analysis": {
+          "type": "string",
+          "pattern": "^researcher/researches/[a-z0-9]+(?:-[a-z0-9]+)*/analysis$"
+        },
+        "reports": {
+          "type": "string",
+          "pattern": "^researcher/researches/[a-z0-9]+(?:-[a-z0-9]+)*/reports$"
+        }
+      },
+      "additionalProperties": false
+    },
+    "next_ids": {
+      "type": "object",
+      "required": ["source", "insight", "analysis", "report", "task"],
+      "properties": {
+        "source": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "insight": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "analysis": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "report": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "task": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

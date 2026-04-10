@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://addcommitpush.io/researcher/schemas/sources.schema.json",
+  "title": "Researcher Source Registry",
+  "type": "object",
+  "required": ["research_id", "updated_at", "sources"],
+  "properties": {
+    "research_id": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": ["string", "null"],
+      "format": "date-time"
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "url",
+          "type",
+          "credibility",
+          "accessed_at",
+          "status",
+          "linked_insights"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^SRC-[0-9]{4}$"
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["webpage", "paper", "repo", "video", "podcast", "dataset", "book", "other"]
+          },
+          "credibility": {
+            "type": "string",
+            "enum": ["primary", "secondary", "tertiary", "unknown"]
+          },
+          "published_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "accessed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["queued", "read", "quoted", "rejected", "stale", "superseded"]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "snapshot_path": {
+            "type": ["string", "null"]
+          },
+          "linked_insights": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^INS-[0-9]{4}$"
+            }
+          },
+          "notes": {
+            "type": ["string", "null"]
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}
