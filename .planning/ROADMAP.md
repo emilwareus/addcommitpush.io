@@ -53,9 +53,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: Define source registry schema and IDs
-- [ ] 02-02: Build source add and metadata update flows
-- [ ] 02-03: Add evidence capture storage and refresh handling
+- [ ] 02-01-PLAN.md — Freeze the enriched source registry contract, validation, and `data/` path guardrails
+- [ ] 02-02-PLAN.md — Build canonical source add/upsert and thin metadata-update CLI flows
+- [ ] 02-03-PLAN.md — Add append-only evidence capture storage and source refresh handling
 
 ### Phase 3: Insights & Analysis Graph
 **Goal**: Users can turn sourced evidence into reusable insights and higher-order analysis with explicit lineage.
