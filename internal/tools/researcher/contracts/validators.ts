@@ -1,4 +1,5 @@
 import Ajv2020, { type ErrorObject, type ValidateFunction } from "ajv/dist/2020";
+import addFormats from "ajv-formats";
 
 import manifestSchema from "../../../../researcher/schemas/manifest.schema.json";
 import sourcesSchema from "../../../../researcher/schemas/sources.schema.json";
@@ -9,8 +10,8 @@ import type { SourcesEnvelope } from "./sources";
 const ajv = new Ajv2020({
   allErrors: true,
   strict: false,
-  validateFormats: false,
 });
+addFormats(ajv);
 
 const manifestValidator = ajv.compile<ResearchManifest>(manifestSchema);
 const sourcesValidator = ajv.compile<SourcesEnvelope>(sourcesSchema);

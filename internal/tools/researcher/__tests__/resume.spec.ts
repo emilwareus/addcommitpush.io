@@ -103,11 +103,31 @@ describe("research workspace resume flow", () => {
       id: "SRC-0001",
       title: "Research systems design",
       url: "https://example.com/research-systems-design",
+      canonical_url: "https://example.com/research-systems-design",
+      origin: {
+        type: "manual",
+        value: "resume-spec",
+      },
       type: "webpage",
-      credibility: "primary",
-      accessed_at: "2026-04-09T00:00:00.000Z",
+      confidence: "high",
       status: "read",
+      side_states: ["stale"],
+      published_at: null,
+      created_at: "2026-04-09T00:00:00.000Z",
+      updated_at: "2026-04-09T00:00:00.000Z",
+      accessed_at: "2026-04-09T00:00:00.000Z",
+      last_checked_at: "2026-04-09T00:00:00.000Z",
+      latest_capture_path: "data/snapshots/SRC-0001/20260409T000000Z/source.html",
+      captures: [
+        {
+          kind: "snapshot",
+          path: "data/snapshots/SRC-0001/20260409T000000Z/source.html",
+          captured_at: "2026-04-09T00:00:00.000Z",
+        },
+      ],
+      tags: ["research-systems"],
       linked_insights: [],
+      notes: null,
     });
 
     await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");

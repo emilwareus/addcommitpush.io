@@ -64,6 +64,19 @@ export async function resolveWorkspacePath(
   return resolvedPath;
 }
 
+export function normalizeDataCaptureRef(captureRef: string): string {
+  const normalizedCaptureRef = normalizeWorkspaceRelativePath(captureRef);
+
+  if (
+    normalizedCaptureRef !== "data" &&
+    !normalizedCaptureRef.startsWith("data/")
+  ) {
+    throw new Error("Capture refs must stay under data/");
+  }
+
+  return normalizedCaptureRef;
+}
+
 function assertProjectRoot(projectRoot: string): void {
   if (projectRoot.trim().length === 0) {
     throw new Error("Project root is required");

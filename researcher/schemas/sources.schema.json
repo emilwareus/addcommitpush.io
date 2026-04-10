@@ -20,11 +20,22 @@
           "id",
           "title",
           "url",
+          "canonical_url",
+          "origin",
           "type",
-          "credibility",
-          "accessed_at",
+          "confidence",
           "status",
-          "linked_insights"
+          "side_states",
+          "published_at",
+          "created_at",
+          "updated_at",
+          "accessed_at",
+          "last_checked_at",
+          "latest_capture_path",
+          "captures",
+          "linked_insights",
+          "tags",
+          "notes"
         ],
         "properties": {
           "id": {
@@ -38,25 +49,63 @@
             "type": "string",
             "format": "uri"
           },
+          "canonical_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "origin": {
+            "type": "object",
+            "required": ["type", "value"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["manual", "search", "import", "agent", "other"]
+              },
+              "value": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
           "type": {
             "type": "string",
             "enum": ["webpage", "paper", "repo", "video", "podcast", "dataset", "book", "other"]
           },
-          "credibility": {
+          "confidence": {
             "type": "string",
-            "enum": ["primary", "secondary", "tertiary", "unknown"]
+            "enum": ["high", "medium", "low", "unknown"]
           },
           "published_at": {
             "type": ["string", "null"],
             "format": "date-time"
           },
-          "accessed_at": {
+          "created_at": {
             "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "accessed_at": {
+            "type": ["string", "null"],
+            "format": "date-time"
+          },
+          "last_checked_at": {
+            "type": ["string", "null"],
             "format": "date-time"
           },
           "status": {
             "type": "string",
-            "enum": ["queued", "read", "quoted", "rejected", "stale", "superseded"]
+            "enum": ["queued", "read", "quoted"]
+          },
+          "side_states": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["rejected", "stale", "superseded"]
+            },
+            "uniqueItems": true
           },
           "tags": {
             "type": "array",
@@ -64,8 +113,31 @@
               "type": "string"
             }
           },
-          "snapshot_path": {
-            "type": ["string", "null"]
+          "latest_capture_path": {
+            "type": ["string", "null"],
+            "pattern": "^data(?:\\/[^/]+)+$"
+          },
+          "captures": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["kind", "path", "captured_at"],
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": ["snapshot", "export", "transcript", "dataset"]
+                },
+                "path": {
+                  "type": "string",
+                  "pattern": "^data(?:\\/[^/]+)+$"
+                },
+                "captured_at": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              },
+              "additionalProperties": false
+            }
           },
           "linked_insights": {
             "type": "array",
@@ -78,7 +150,7 @@
             "type": ["string", "null"]
           }
         },
-        "additionalProperties": true
+        "additionalProperties": false
       }
     }
   },
