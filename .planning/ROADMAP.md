@@ -38,7 +38,7 @@ and only then finalize the install surfaces for Codex and Claude Code.
 Plans:
 - [x] 01-01-PLAN.md — Establish the Wave 0 harness, typecheck script, and Phase 1 spec scaffolds
 - [x] 01-02-PLAN.md — Freeze the workspace contract, validators, and path guards
-- [ ] 01-03-PLAN.md — Implement deterministic new-research initialization and seeding
+- [x] 01-03-PLAN.md — Implement deterministic new-research initialization and seeding
 - [ ] 01-04-PLAN.md — Implement disk-only resume and next-action summary
 
 ### Phase 2: Source Registry & Evidence Capture
