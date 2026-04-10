@@ -65,7 +65,7 @@ export async function resumeResearchWorkspace(
     resolveWorkspacePath(normalizedInput.projectRoot, normalizedInput.slug, "reports"),
   ]);
 
-  const [briefContent, manifest, sources, insightCount, analysisCount, reportCount] =
+  const [, manifest, sources, insightCount, analysisCount, reportCount] =
     await Promise.all([
       readRequiredMarkdownFile(briefPath, "brief.md"),
       readValidatedManifest(manifestPath),
