@@ -426,24 +426,24 @@ addFormats(ajv);
 |----------|-------|
 | Framework | `vitest 4.1.4` [VERIFIED: local runtime] |
 | Config file | `vitest.config.ts` [VERIFIED: vitest.config.ts] |
-| Quick run command | `pnpm exec vitest run internal/tools/researcher/__tests__/sources-contract.spec.ts internal/tools/researcher/__tests__/source-add.spec.ts internal/tools/researcher/__tests__/source-refresh.spec.ts` [ASSUMED] |
+| Quick run command | `pnpm exec vitest run internal/tools/researcher/__tests__/contracts.spec.ts internal/tools/researcher/__tests__/source-add.spec.ts internal/tools/researcher/__tests__/source-refresh.spec.ts internal/tools/researcher/__tests__/resume.spec.ts` [ASSUMED] |
 | Full suite command | `pnpm exec vitest run` [VERIFIED: vitest.config.ts] |
 
 ### Phase Requirements -> Test Map
 | Req ID | Behavior | Test Type | Automated Command | File Exists? |
 |--------|----------|-----------|-------------------|-------------|
 | SRC-01 | Add a source once, dedupe the second add, keep one stable `SRC-*` record | integration | `pnpm exec vitest run internal/tools/researcher/__tests__/source-add.spec.ts -x` | ❌ Wave 0 |
-| SRC-02 | Persist origin, type, confidence, status, and timestamp metadata in a schema-valid record | unit | `pnpm exec vitest run internal/tools/researcher/__tests__/sources-contract.spec.ts -x` | ❌ Wave 0 |
+| SRC-02 | Persist origin, type, confidence, status, and timestamp metadata in a schema-valid record | unit | `pnpm exec vitest run internal/tools/researcher/__tests__/contracts.spec.ts -x` | ✅ existing |
 | SRC-03 | Write captures under `data/` and store root-relative refs in the registry | integration | `pnpm exec vitest run internal/tools/researcher/__tests__/source-refresh.spec.ts -x` | ❌ Wave 0 |
 | SRC-04 | Refresh appends history, marks stale source state, and preserves source identity | integration | `pnpm exec vitest run internal/tools/researcher/__tests__/source-refresh.spec.ts -x` | ❌ Wave 0 |
 
 ### Sampling Rate
-- **Per task commit:** `pnpm exec vitest run internal/tools/researcher/__tests__/sources-contract.spec.ts internal/tools/researcher/__tests__/source-add.spec.ts internal/tools/researcher/__tests__/source-refresh.spec.ts`
+- **Per task commit:** `pnpm exec vitest run internal/tools/researcher/__tests__/contracts.spec.ts internal/tools/researcher/__tests__/source-add.spec.ts internal/tools/researcher/__tests__/source-refresh.spec.ts internal/tools/researcher/__tests__/resume.spec.ts`
 - **Per wave merge:** `pnpm exec vitest run`
 - **Phase gate:** `pnpm typecheck && pnpm exec vitest run`
 
 ### Wave 0 Gaps
-- [ ] `internal/tools/researcher/__tests__/sources-contract.spec.ts` - schema and type coverage for the Phase 2 source record contract
+- [ ] Extend `internal/tools/researcher/__tests__/contracts.spec.ts` - schema and type coverage for the Phase 2 source record contract
 - [ ] `internal/tools/researcher/__tests__/source-add.spec.ts` - add/update/dedupe and manifest counter synchronization
 - [ ] `internal/tools/researcher/__tests__/source-refresh.spec.ts` - capture path layout, append-only refresh, and stale-state behavior
 - [ ] Extend `internal/tools/researcher/__tests__/resume.spec.ts` - verify resume still reports correct source inventory and next action after Phase 2 schema expansion

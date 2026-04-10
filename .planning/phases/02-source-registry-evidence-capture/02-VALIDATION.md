@@ -19,7 +19,7 @@ created: 2026-04-11
 |----------|-------|
 | **Framework** | `vitest` |
 | **Config file** | `vitest.config.ts` |
-| **Quick run command** | `pnpm exec vitest run internal/tools/researcher/__tests__/sources-contract.spec.ts internal/tools/researcher/__tests__/source-add.spec.ts internal/tools/researcher/__tests__/source-refresh.spec.ts` |
+| **Quick run command** | `pnpm exec vitest run internal/tools/researcher/__tests__/contracts.spec.ts internal/tools/researcher/__tests__/source-add.spec.ts internal/tools/researcher/__tests__/source-refresh.spec.ts internal/tools/researcher/__tests__/resume.spec.ts` |
 | **Full suite command** | `pnpm exec vitest run` |
 | **Estimated runtime** | ~20 seconds |
 
@@ -27,7 +27,7 @@ created: 2026-04-11
 
 ## Sampling Rate
 
-- **After every task commit:** Run `pnpm exec vitest run internal/tools/researcher/__tests__/sources-contract.spec.ts internal/tools/researcher/__tests__/source-add.spec.ts internal/tools/researcher/__tests__/source-refresh.spec.ts`
+- **After every task commit:** Run `pnpm exec vitest run internal/tools/researcher/__tests__/contracts.spec.ts internal/tools/researcher/__tests__/source-add.spec.ts internal/tools/researcher/__tests__/source-refresh.spec.ts internal/tools/researcher/__tests__/resume.spec.ts`
 - **After every plan wave:** Run `pnpm exec vitest run`
 - **Before `/gsd-verify-work`:** Full suite must be green
 - **Max feedback latency:** 20 seconds
@@ -38,7 +38,7 @@ created: 2026-04-11
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 02-01-01 | 01 | 1 | SRC-01, SRC-02 | T-02-01 | Source registry schema rejects invalid IDs, bad timestamps, and malformed URLs before disk mutation. | unit | `pnpm exec vitest run internal/tools/researcher/__tests__/sources-contract.spec.ts` | ❌ W0 | ⬜ pending |
+| 02-01-01 | 01 | 1 | SRC-01, SRC-02 | T-02-01 | Source registry schema rejects invalid IDs, bad timestamps, and malformed URLs before disk mutation. | unit | `pnpm exec vitest run internal/tools/researcher/__tests__/contracts.spec.ts` | ✅ existing | ⬜ pending |
 | 02-02-01 | 02 | 2 | SRC-01, SRC-02 | T-02-02 | Add/update flow dedupes by canonical locator and persists schema-valid source metadata through the shared contract. | integration | `pnpm exec vitest run internal/tools/researcher/__tests__/source-add.spec.ts` | ❌ W0 | ⬜ pending |
 | 02-03-01 | 03 | 3 | SRC-03, SRC-04 | T-02-03 | Refresh appends new captures, keeps source identity stable, and marks stale evidence through source-level metadata only. | integration | `pnpm exec vitest run internal/tools/researcher/__tests__/source-refresh.spec.ts` | ❌ W0 | ⬜ pending |
 | 02-03-02 | 03 | 3 | SRC-04 | T-02-04 | Resume still reports correct source inventory and next-action routing after the richer source contract lands. | integration | `pnpm exec vitest run internal/tools/researcher/__tests__/resume.spec.ts` | ✅ existing | ⬜ pending |
@@ -49,7 +49,7 @@ created: 2026-04-11
 
 ## Wave 0 Requirements
 
-- [ ] `internal/tools/researcher/__tests__/sources-contract.spec.ts` — schema and type coverage for the Phase 2 source record contract
+- [ ] Extend `internal/tools/researcher/__tests__/contracts.spec.ts` — schema and type coverage for the Phase 2 source record contract
 - [ ] `internal/tools/researcher/__tests__/source-add.spec.ts` — add/update/dedupe and manifest/source synchronization
 - [ ] `internal/tools/researcher/__tests__/source-refresh.spec.ts` — capture layout, append-only refresh, and stale-source behavior
 - [ ] Extend `internal/tools/researcher/__tests__/resume.spec.ts` — prove resume still works after Phase 2 schema expansion
