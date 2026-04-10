@@ -1,3 +1,5 @@
+import { validateSourcesDocument } from "./validators";
+
 export interface SourceRecord {
   id: string;
   title: string;
@@ -32,31 +34,5 @@ export function createEmptySourcesEnvelope(researchId: string): SourcesEnvelope 
 }
 
 export function validateSourcesEnvelope(input: unknown): SourcesEnvelope {
-  if (!isRecord(input)) {
-    throw new Error("sources.json must be an object");
-  }
-
-  const { research_id, updated_at, sources } = input;
-
-  if (typeof research_id !== "string" || research_id.trim().length === 0) {
-    throw new Error("sources.json research_id must be a non-empty string");
-  }
-
-  if (updated_at !== null && typeof updated_at !== "string") {
-    throw new Error("sources.json updated_at must be a string or null");
-  }
-
-  if (!Array.isArray(sources)) {
-    throw new Error("sources.json sources must be an array");
-  }
-
-  return {
-    research_id,
-    updated_at,
-    sources: sources as SourceRecord[],
-  };
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+  return validateSourcesDocument(input);
 }
