@@ -1,14 +1,50 @@
 import { lstat, realpath } from "node:fs/promises";
 import { isAbsolute, join, relative, resolve } from "node:path";
 
-import { RESEARCH_WORKSPACE_ROOT } from "../contracts/workspace";
+import {
+  RESEARCHER_ROOT_DIRECTORY,
+  RESEARCH_WORKSPACES_DIRECTORY,
+  RESEARCH_WORKSPACE_ROOT,
+} from "../contracts/workspace";
 
 const SAFE_RESEARCH_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
+export interface ResearchWorkspacePaths {
+  projectRoot: string;
+  researcherRoot: string;
+  researchesRoot: string;
+  workspaceRoot: string;
+  briefPath: string;
+  manifestPath: string;
+  sourcesPath: string;
+}
 
 export function resolveWorkspaceRoot(slug: string): string {
   assertSafeResearchSlug(slug);
 
   return `${RESEARCH_WORKSPACE_ROOT}/${slug}`;
+}
+
+export function resolveResearchWorkspacePaths(
+  projectRoot: string,
+  slug: string,
+): ResearchWorkspacePaths {
+  assertProjectRoot(projectRoot);
+
+  const resolvedProjectRoot = resolve(projectRoot);
+  const workspaceRoot = resolve(resolvedProjectRoot, resolveWorkspaceRoot(slug));
+  const researcherRoot = join(resolvedProjectRoot, RESEARCHER_ROOT_DIRECTORY);
+  const researchesRoot = join(researcherRoot, RESEARCH_WORKSPACES_DIRECTORY);
+
+  return {
+    projectRoot: resolvedProjectRoot,
+    researcherRoot,
+    researchesRoot,
+    workspaceRoot,
+    briefPath: join(workspaceRoot, "brief.md"),
+    manifestPath: join(workspaceRoot, "manifest.json"),
+    sourcesPath: join(workspaceRoot, "sources.json"),
+  };
 }
 
 export async function resolveWorkspacePath(
