@@ -33,12 +33,13 @@ and only then finalize the install surfaces for Codex and Claude Code.
   1. User can initialize a new research with a brief and the required folder structure.
   2. User can reopen an existing research and recover its working context from files, not chat history.
   3. A newly created research has a consistent manifest and artifact layout that later flows can rely on.
-**Plans**: 3 plans
+**Plans**: 4 plans
 
 Plans:
-- [ ] 01-01: Define research folder contract and manifest seed
-- [ ] 01-02: Build init flow for new researches
-- [ ] 01-03: Build resume flow for existing researches
+- [ ] 01-01-PLAN.md — Establish the Wave 0 harness, typecheck script, and Phase 1 spec scaffolds
+- [ ] 01-02-PLAN.md — Freeze the workspace contract, validators, and path guards
+- [ ] 01-03-PLAN.md — Implement deterministic new-research initialization and seeding
+- [ ] 01-04-PLAN.md — Implement disk-only resume and next-action summary
 
 ### Phase 2: Source Registry & Evidence Capture
 **Goal**: Users can maintain a central, refreshable source registry with durable evidence capture.
@@ -127,7 +128,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Research Workspace Bootstrap | 0/3 | Not started | - |
+| 1. Research Workspace Bootstrap | 0/4 | Not started | - |
 | 2. Source Registry & Evidence Capture | 0/3 | Not started | - |
 | 3. Insights & Analysis Graph | 0/3 | Not started | - |
 | 4. Report Generation | 0/3 | Not started | - |
