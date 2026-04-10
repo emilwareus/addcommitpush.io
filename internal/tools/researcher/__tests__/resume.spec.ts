@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { initResearchWorkspace } from "../core/init";
 import { resumeResearchWorkspace } from "../core/resume";
+import { addSource } from "../core/sources/add";
+import { refreshSource } from "../core/sources/refresh";
 
 import {
   createTemporaryWorkspace,
@@ -212,5 +214,43 @@ describe("research workspace resume flow", () => {
         slug: "../escape",
       }),
     ).rejects.toThrow("Unsafe research slug");
+  });
+
+  test("stays resume-compatible after phase 2 source refresh metadata lands", async () => {
+    await initResearchWorkspace({
+      projectRoot: temporaryWorkspace.rootDir,
+      slug: "refresh-compatible",
+      title: "Refresh Compatible",
+      question: "How should refresh metadata affect resume?",
+    });
+
+    await addSource({
+      projectRoot: temporaryWorkspace.rootDir,
+      slug: "refresh-compatible",
+      title: "Ajv format validation",
+      url: "https://ajv.js.org/guide/formats.html",
+      type: "webpage",
+      origin: {
+        type: "manual",
+        value: "resume-spec",
+      },
+      now: new Date("2026-04-10T00:00:00Z"),
+    });
+    await refreshSource({
+      projectRoot: temporaryWorkspace.rootDir,
+      slug: "refresh-compatible",
+      sourceId: "SRC-0001",
+      markStale: true,
+      now: new Date("2026-05-20T00:00:00Z"),
+    });
+
+    const result = await resumeResearchWorkspace({
+      projectRoot: temporaryWorkspace.rootDir,
+      slug: "refresh-compatible",
+    });
+
+    expect(result.inventory.sources).toBe(1);
+    expect(result.freshnessDebt).toBe("overdue:1");
+    expect(result.nextRecommendedAction).toBe("refresh-sources");
   });
 });
