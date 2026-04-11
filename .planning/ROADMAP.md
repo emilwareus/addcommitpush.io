@@ -69,9 +69,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 03-01: Define insight and analysis artifact schemas
-- [ ] 03-02: Build lineage linking from sources to insights
-- [ ] 03-03: Add contradiction and caveat tracking
+- [ ] 03-01-PLAN.md — Define insight and analysis artifact schemas
+- [ ] 03-02-PLAN.md — Build lineage linking from sources to insights
+- [ ] 03-03-PLAN.md — Add contradiction and caveat tracking
 
 ### Phase 4: Report Generation
 **Goal**: Users can compile multiple Markdown reports from one research base with traceable support.
