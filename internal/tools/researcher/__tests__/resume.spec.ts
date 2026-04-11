@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { initResearchWorkspace } from "../core/init";
 import { resumeResearchWorkspace } from "../core/resume";
+import { upsertAnalysis } from "../core/analysis/upsert";
+import { upsertInsight } from "../core/insights/upsert";
 import { addSource } from "../core/sources/add";
 import { refreshSource } from "../core/sources/refresh";
 
@@ -253,4 +255,168 @@ describe("research workspace resume flow", () => {
     expect(result.freshnessDebt).toBe("overdue:1");
     expect(result.nextRecommendedAction).toBe("refresh-sources");
   });
+
+  test("routes extract-stage research with sources, insights, and analysis to package-report", async () => {
+    await initResearchWorkspace({
+      projectRoot: temporaryWorkspace.rootDir,
+      slug: "phase-3-package",
+      title: "Phase 3 Package",
+      question: "How should phase 3 resume with analysis on disk?",
+    });
+
+    await addPhaseThreeArtifacts("phase-3-package");
+    await updateWorkspaceManifest("phase-3-package", (manifest) => {
+      manifest.status.stage = "extract";
+      manifest.freshness.debt = 0;
+      manifest.freshness.last_source_sync_at = "2026-04-11T02:30:00.000Z";
+    });
+
+    const result = await resumeResearchWorkspace({
+      projectRoot: temporaryWorkspace.rootDir,
+      slug: "phase-3-package",
+    });
+
+    expect(result.inventory).toEqual({
+      sources: 2,
+      insights: 2,
+      analysis: 1,
+      reports: 0,
+    });
+    expect(result.nextRecommendedAction).toBe("package-report");
+  });
+
+  test("prioritizes refresh-sources over package-report when stale debt exists after phase 3", async () => {
+    await initResearchWorkspace({
+      projectRoot: temporaryWorkspace.rootDir,
+      slug: "phase-3-refresh",
+      title: "Phase 3 Refresh",
+      question: "How should stale debt outrank downstream artifacts?",
+    });
+
+    await addPhaseThreeArtifacts("phase-3-refresh");
+    await refreshSource({
+      projectRoot: temporaryWorkspace.rootDir,
+      slug: "phase-3-refresh",
+      sourceId: "SRC-0001",
+      markStale: true,
+      now: new Date("2026-05-20T00:00:00Z"),
+    });
+    await updateWorkspaceManifest("phase-3-refresh", (manifest) => {
+      manifest.status.stage = "extract";
+    });
+
+    const result = await resumeResearchWorkspace({
+      projectRoot: temporaryWorkspace.rootDir,
+      slug: "phase-3-refresh",
+    });
+
+    expect(result.inventory).toEqual({
+      sources: 2,
+      insights: 2,
+      analysis: 1,
+      reports: 0,
+    });
+    expect(result.freshnessDebt).toBe("overdue:1");
+    expect(result.nextRecommendedAction).toBe("refresh-sources");
+  });
+
+  async function addPhaseThreeArtifacts(slug: string): Promise<void> {
+    await addSource({
+      projectRoot: temporaryWorkspace.rootDir,
+      slug,
+      title: "Pricing report",
+      url: "https://example.com/pricing-report",
+      type: "webpage",
+      origin: {
+        type: "manual",
+        value: "resume-spec",
+      },
+      now: new Date("2026-04-11T00:00:00Z"),
+    });
+    await addSource({
+      projectRoot: temporaryWorkspace.rootDir,
+      slug,
+      title: "Competitive teardown",
+      url: "https://example.com/competitive-teardown",
+      type: "webpage",
+      origin: {
+        type: "manual",
+        value: "resume-spec",
+      },
+      now: new Date("2026-04-11T00:01:00Z"),
+    });
+    await upsertInsight({
+      projectRoot: temporaryWorkspace.rootDir,
+      slug,
+      title: "Pricing compression",
+      sourceIds: ["SRC-0001"],
+      claim: "Margins are tightening across coding-agent products.",
+      whyItMatters: "This signal should be reusable across reports.",
+      evidence: [
+        {
+          sourceId: "SRC-0001",
+          note: "Public pricing dropped year over year.",
+        },
+      ],
+      caveats: ["None noted yet."],
+      reuseNotes: "Use this in pricing and market-map reports.",
+      now: new Date("2026-04-11T01:00:00Z"),
+    });
+    await upsertInsight({
+      projectRoot: temporaryWorkspace.rootDir,
+      slug,
+      title: "Feature bundling pressure",
+      sourceIds: ["SRC-0002"],
+      claim: "Vendors are expanding feature bundles without raising list price.",
+      whyItMatters: "This reframes pricing pressure as a packaging problem.",
+      evidence: [
+        {
+          sourceId: "SRC-0002",
+          note: "Feature bundles grew while prices stayed flat.",
+        },
+      ],
+      caveats: ["None noted yet."],
+      reuseNotes: "Use this in competitive analysis.",
+      now: new Date("2026-04-11T01:10:00Z"),
+    });
+    await upsertAnalysis({
+      projectRoot: temporaryWorkspace.rootDir,
+      slug,
+      title: "Pricing landscape",
+      insightIds: ["INS-0001", "INS-0002"],
+      question: "What does pricing pressure imply for positioning?",
+      synthesis:
+        "The combined insights suggest margins are tightening while feature bundles expand.",
+      contradictions: ["Some vendors hold list price steady and shift packaging instead."],
+      caveats: ["Public pricing pages may lag behind enterprise negotiations."],
+      openQuestions: ["Which price moves are durable versus promotional?"],
+      nextMoves: ["Compare enterprise SKU changes over the last two quarters."],
+      now: new Date("2026-04-11T02:00:00Z"),
+    });
+  }
+
+  async function updateWorkspaceManifest(
+    slug: string,
+    mutate: (manifest: {
+      freshness: { debt: number; last_source_sync_at: string | null; window_days: number };
+      inventory: { sources: number; insights: number; analysis: number; reports: number };
+      status: { stage: string; state: string };
+    }) => void,
+  ): Promise<void> {
+    const workspacePath = join(
+      temporaryWorkspace.rootDir,
+      "researcher",
+      "researches",
+      slug,
+    );
+    const manifestPath = join(workspacePath, "manifest.json");
+    const manifest = JSON.parse(await readFile(manifestPath, "utf8")) as {
+      freshness: { debt: number; last_source_sync_at: string | null; window_days: number };
+      inventory: { sources: number; insights: number; analysis: number; reports: number };
+      status: { stage: string; state: string };
+    };
+
+    mutate(manifest);
+    await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+  }
 });
