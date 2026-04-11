@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Phase 6 context gathered
-last_updated: "2026-04-11T09:20:11.599Z"
-last_activity: 2026-04-11 -- Phase 05 complete
+status: planning
+stopped_at: Phase 6 planning complete
+last_updated: "2026-04-11T10:05:00.000Z"
+last_activity: 2026-04-11 -- Phase 06 planned
 progress:
   total_phases: 6
   completed_phases: 5
-  total_plans: 16
+  total_plans: 19
   completed_plans: 16
-  percent: 100
+  percent: 84
 ---
 
 # Project State
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-04-11)
 
 ## Current Position
 
-Phase: 06 (runtime-installation-&-lifecycle) — READY
+Phase: 06 (runtime-installation-&-lifecycle) — PLANNED
 Plan: 0 of 3
 Status: Ready to execute Phase 06
-Last activity: 2026-04-11 -- Phase 05 complete
+Last activity: 2026-04-11 -- Phase 06 planned
 
 Progress: [████████░░] 84%
 
@@ -95,6 +95,10 @@ Recent decisions affecting current work:
 - [Phase 05]: Keep `/research-status` as a progress-router surface with one primary next action rather than a static dashboard.
 - [Phase 05]: Persist Phase 5 health `side_states` on insights and reports, while analyses remain derived-impact only.
 - [Phase 05]: Keep verification debt deterministic and file-based, blocking ship-readiness but not draft generation.
+- [Phase 06]: Make project-local installation the primary v1 path for both Codex and Claude Code.
+- [Phase 06]: Keep one runtime-neutral command catalog and render thin native adapters per runtime.
+- [Phase 06]: Persist installer ownership in a manifest so update and inspect stay deterministic.
+- [Phase 06]: Merge runtime settings non-destructively and keep hooks opt-in.
 
 ### Pending Todos
 
@@ -106,6 +110,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-11T09:20:11.596Z
-Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-runtime-installation-lifecycle/06-CONTEXT.md
+Last session: 2026-04-11T10:05:00.000Z
+Stopped at: Phase 6 planning complete
+Resume file: .planning/phases/06-runtime-installation-lifecycle/06-01-PLAN.md
