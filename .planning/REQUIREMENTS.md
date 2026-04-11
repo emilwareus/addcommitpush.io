@@ -26,21 +26,21 @@
 
 ### Source Provenance
 
-- [ ] **SRC-01**: User can add external sources to a central structured source registry for a
+- [x] **SRC-01**: User can add external sources to a central structured source registry for a
   research.
-- [ ] **SRC-02**: User can record source metadata including origin, access time, type, status, and
+- [x] **SRC-02**: User can record source metadata including origin, access time, type, status, and
   confidence.
-- [ ] **SRC-03**: User can store captured evidence or extracted material alongside the research in
+- [x] **SRC-03**: User can store captured evidence or extracted material alongside the research in
   a durable local structure.
-- [ ] **SRC-04**: User can refresh sources later and detect when evidence may have gone stale.
+- [x] **SRC-04**: User can refresh sources later and detect when evidence may have gone stale.
 
 ### Insights & Analysis
 
-- [ ] **INS-01**: User can promote gathered material into reusable insight artifacts with stable
+- [x] **INS-01**: User can promote gathered material into reusable insight artifacts with stable
   IDs.
-- [ ] **INS-02**: User can link each insight to one or more supporting source records.
-- [ ] **INS-03**: User can group multiple insights into higher-order analysis artifacts.
-- [ ] **INS-04**: User can inspect contradictions, caveats, or unresolved questions in analysis
+- [x] **INS-02**: User can link each insight to one or more supporting source records.
+- [x] **INS-03**: User can group multiple insights into higher-order analysis artifacts.
+- [x] **INS-04**: User can inspect contradictions, caveats, or unresolved questions in analysis
   artifacts.
 
 ### Reporting
@@ -103,14 +103,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RSCH-01 | Phase 1 | Complete |
 | RSCH-02 | Phase 5 | Pending |
 | RSCH-03 | Phase 1 | Complete |
-| SRC-01 | Phase 2 | Pending |
-| SRC-02 | Phase 2 | Pending |
-| SRC-03 | Phase 2 | Pending |
-| SRC-04 | Phase 2 | Pending |
-| INS-01 | Phase 3 | Pending |
-| INS-02 | Phase 3 | Pending |
-| INS-03 | Phase 3 | Pending |
-| INS-04 | Phase 3 | Pending |
+| SRC-01 | Phase 2 | Complete |
+| SRC-02 | Phase 2 | Complete |
+| SRC-03 | Phase 2 | Complete |
+| SRC-04 | Phase 2 | Complete |
+| INS-01 | Phase 3 | Complete |
+| INS-02 | Phase 3 | Complete |
+| INS-03 | Phase 3 | Complete |
+| INS-04 | Phase 3 | Complete |
 | RPT-01 | Phase 4 | Pending |
 | RPT-02 | Phase 4 | Pending |
 | RPT-03 | Phase 4 | Pending |
@@ -125,4 +125,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-10*
-*Last updated: 2026-04-10 after initialization*
+*Last updated: 2026-04-11 after Phase 3 completion*

@@ -14,8 +14,8 @@ and only then finalize the install surfaces for Codex and Claude Code.
   manifest seed, and resumeable workspace flows.
 - [x] **Phase 2: Source Registry & Evidence Capture** - Build the source ledger and durable local (completed 2026-04-11)
   evidence capture model.
-- [ ] **Phase 3: Insights & Analysis Graph** - Turn sourced evidence into reusable insights and
-  higher-order analysis with explicit lineage.
+- [x] **Phase 3: Insights & Analysis Graph** - Turn sourced evidence into reusable insights and
+  higher-order analysis with explicit lineage. (completed 2026-04-11)
 - [ ] **Phase 4: Report Generation** - Compile many Markdown reports from one research base with
   traceable support.
 - [ ] **Phase 5: Status, Freshness & Verification** - Surface research health, freshness debt, and
@@ -69,9 +69,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Define insight and analysis artifact schemas
-- [ ] 03-02-PLAN.md — Build lineage linking from sources to insights
-- [ ] 03-03-PLAN.md — Add contradiction and caveat tracking
+- [x] 03-01-PLAN.md — Define insight and analysis artifact schemas
+- [x] 03-02-PLAN.md — Build lineage linking from sources to insights
+- [x] 03-03-PLAN.md — Add contradiction and caveat tracking
 
 ### Phase 4: Report Generation
 **Goal**: Users can compile multiple Markdown reports from one research base with traceable support.
@@ -130,7 +130,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 |-------|----------------|--------|-----------|
 | 1. Research Workspace Bootstrap | 4/4 | Complete | 2026-04-10 |
 | 2. Source Registry & Evidence Capture | 3/3 | Complete    | 2026-04-11 |
-| 3. Insights & Analysis Graph | 0/3 | Not started | - |
+| 3. Insights & Analysis Graph | 3/3 | Complete | 2026-04-11 |
 | 4. Report Generation | 0/3 | Not started | - |
 | 5. Status, Freshness & Verification | 0/3 | Not started | - |
 | 6. Runtime Installation & Lifecycle | 0/3 | Not started | - |
