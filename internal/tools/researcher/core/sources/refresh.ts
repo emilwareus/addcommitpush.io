@@ -13,6 +13,7 @@ import {
   persistSourceStore,
   syncSourceManifestState,
 } from "./store";
+import { propagateFreshness } from "../freshness/propagation";
 import { normalizeCanonicalUrl } from "./normalize";
 import { writeSourceCapture } from "./captures";
 
@@ -78,6 +79,11 @@ export async function refreshSource(input: RefreshSourceInput): Promise<RefreshS
   store.sources.updated_at = normalizedInput.operationTimestamp;
   syncSourceManifestState(store.manifest, store.sources, normalizedInput.operationTimestamp);
   await persistSourceStore(store);
+  await propagateFreshness({
+    projectRoot: normalizedInput.projectRoot,
+    slug: normalizedInput.slug,
+    sources: store.sources.sources,
+  });
 
   return {
     sourceId: source.id,

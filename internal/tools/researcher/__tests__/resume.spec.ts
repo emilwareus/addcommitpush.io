@@ -365,6 +365,83 @@ describe("research workspace resume flow", () => {
     expect(result.nextRecommendedAction).toBe("review-existing-reports");
   });
 
+  test("prioritizes refresh-sources over review-existing-reports when stale debt exists after phase 4", async () => {
+    await initResearchWorkspace({
+      projectRoot: temporaryWorkspace.rootDir,
+      slug: "phase-4-refresh",
+      title: "Phase 4 Refresh",
+      question: "How should stale debt outrank existing reports?",
+    });
+
+    await addPhaseFourArtifacts("phase-4-refresh");
+    await refreshSource({
+      projectRoot: temporaryWorkspace.rootDir,
+      slug: "phase-4-refresh",
+      sourceId: "SRC-0001",
+      markStale: true,
+      now: new Date("2026-05-20T00:00:00Z"),
+    });
+    await updateWorkspaceManifest("phase-4-refresh", (manifest) => {
+      manifest.status.stage = "package";
+    });
+
+    const result = await resumeResearchWorkspace({
+      projectRoot: temporaryWorkspace.rootDir,
+      slug: "phase-4-refresh",
+    });
+
+    expect(result.inventory).toEqual({
+      sources: 2,
+      insights: 2,
+      analysis: 1,
+      reports: 1,
+    });
+    expect(result.freshnessDebt).toBe("overdue:1");
+    expect(result.nextRecommendedAction).toBe("refresh-sources");
+  });
+
+  test("routes back to report review after stale debt clears with downstream reports still on disk", async () => {
+    await initResearchWorkspace({
+      projectRoot: temporaryWorkspace.rootDir,
+      slug: "phase-4-cleared",
+      title: "Phase 4 Cleared",
+      question: "How should routing behave after refreshed sources clear debt?",
+    });
+
+    await addPhaseFourArtifacts("phase-4-cleared");
+    await refreshSource({
+      projectRoot: temporaryWorkspace.rootDir,
+      slug: "phase-4-cleared",
+      sourceId: "SRC-0001",
+      markStale: true,
+      now: new Date("2026-05-20T00:00:00Z"),
+    });
+
+    const capturePath = join(temporaryWorkspace.rootDir, "phase-4-cleared-source.html");
+    await writeFile(capturePath, "<html>fresh</html>\n", "utf8");
+    await refreshSource({
+      projectRoot: temporaryWorkspace.rootDir,
+      slug: "phase-4-cleared",
+      sourceId: "SRC-0001",
+      captureKind: "snapshot",
+      captureFile: capturePath,
+      capturedAt: "2026-05-20T00:00:00.000Z",
+      clearStale: true,
+      now: new Date("2026-05-20T00:00:00Z"),
+    });
+    await updateWorkspaceManifest("phase-4-cleared", (manifest) => {
+      manifest.status.stage = "package";
+    });
+
+    const result = await resumeResearchWorkspace({
+      projectRoot: temporaryWorkspace.rootDir,
+      slug: "phase-4-cleared",
+    });
+
+    expect(result.freshnessDebt).toBe("clear");
+    expect(result.nextRecommendedAction).toBe("review-existing-reports");
+  });
+
   async function addPhaseThreeArtifacts(slug: string): Promise<void> {
     await addSource({
       projectRoot: temporaryWorkspace.rootDir,
@@ -437,6 +514,25 @@ describe("research workspace resume flow", () => {
       openQuestions: ["Which price moves are durable versus promotional?"],
       nextMoves: ["Compare enterprise SKU changes over the last two quarters."],
       now: new Date("2026-04-11T02:00:00Z"),
+    });
+  }
+
+  async function addPhaseFourArtifacts(slug: string): Promise<void> {
+    await addPhaseThreeArtifacts(slug);
+    await upsertReport({
+      projectRoot: temporaryWorkspace.rootDir,
+      slug,
+      title: "Founder pricing brief",
+      audience: "founder",
+      angle: "pricing-pressure",
+      thesis: "Pricing is compressing while bundle complexity grows.",
+      analysisIds: ["ANL-0001"],
+      insightIds: [],
+      summary: "Margins are tightening while packaging complexity increases.",
+      keyPoints: ["Pricing compression is visible in public packaging."],
+      body: "The report packages the current pricing analysis.",
+      limitations: ["Public pricing pages may lag enterprise negotiation behavior."],
+      now: new Date("2026-04-11T03:00:00Z"),
     });
   }
 
