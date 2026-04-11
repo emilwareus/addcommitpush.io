@@ -7,15 +7,22 @@ export const INSIGHT_STATUS_VALUES = [
   "superseded",
 ] as const;
 export const INSIGHT_CONFIDENCE_VALUES = SOURCE_CONFIDENCE_VALUES;
+export const ARTIFACT_SIDE_STATE_VALUES = [
+  "stale",
+  "unsupported",
+  "superseded",
+] as const;
 
 export type InsightStatus = (typeof INSIGHT_STATUS_VALUES)[number];
 export type InsightConfidence = (typeof INSIGHT_CONFIDENCE_VALUES)[number];
+export type ArtifactSideState = (typeof ARTIFACT_SIDE_STATE_VALUES)[number];
 
 export interface InsightFrontmatter {
   id: string;
   title: string;
   status: InsightStatus;
   confidence: InsightConfidence;
+  side_states: ArtifactSideState[];
   derived_from_sources: string[];
   tags: string[];
   linked_analysis: string[];

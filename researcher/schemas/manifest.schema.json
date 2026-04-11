@@ -9,6 +9,7 @@
     "status",
     "questions",
     "freshness",
+    "verification",
     "inventory",
     "paths",
     "next_ids"
@@ -78,6 +79,39 @@
           "format": "date-time"
         },
         "debt": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false
+    },
+    "verification": {
+      "type": "object",
+      "required": [
+        "debt",
+        "unsupported_insights",
+        "unsupported_reports",
+        "contradicted_analysis",
+        "unresolved_analysis_questions"
+      ],
+      "properties": {
+        "debt": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unsupported_insights": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unsupported_reports": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "contradicted_analysis": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "unresolved_analysis_questions": {
           "type": "integer",
           "minimum": 0
         }

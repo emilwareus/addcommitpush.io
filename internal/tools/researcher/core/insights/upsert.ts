@@ -295,6 +295,7 @@ function buildInsightDocument(
       title: input.title,
       status: input.status,
       confidence: input.confidence,
+      side_states: existingInsight?.frontmatter.side_states ?? [],
       derived_from_sources: input.sourceIds,
       tags: input.tags,
       linked_analysis: existingInsight?.frontmatter.linked_analysis ?? [],

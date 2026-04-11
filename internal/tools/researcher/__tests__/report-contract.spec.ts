@@ -11,6 +11,8 @@ audience: founder
 angle: pricing-pressure
 thesis: Pricing is compressing while bundle complexity grows.
 status: draft
+side_states:
+  - stale
 derived_from_analysis:
   - ANL-0001
 derived_from_insights:
@@ -57,6 +59,7 @@ The analysis and direct insights point to the same operating reality.
 
     expect(document.frontmatter.derived_from_analysis).toEqual(["ANL-0001"]);
     expect(document.frontmatter.derived_from_insights).toEqual(["INS-0001", "INS-0002"]);
+    expect(document.frontmatter.side_states).toEqual(["stale"]);
     expect(document.sections.keyPoints).toHaveLength(2);
     expect(document.sections.analysisInputs).toEqual(["`ANL-0001` Pricing landscape"]);
   });
@@ -70,6 +73,7 @@ audience: founder
 angle: broken
 thesis: Missing lineage
 status: draft
+side_states: []
 derived_from_analysis: []
 derived_from_insights: []
 fresh_as_of: 2026-04-11
@@ -117,6 +121,7 @@ audience: founder
 angle: pricing
 thesis: Sections are wrong.
 status: draft
+side_states: []
 derived_from_analysis:
   - ANL-0001
 derived_from_insights: []
@@ -167,6 +172,7 @@ Body.
         angle: "pricing-pressure",
         thesis: "Pricing is compressing while bundle complexity grows.",
         status: "draft",
+        side_states: ["unsupported", "stale"],
         derived_from_analysis: ["ANL-0002", "ANL-0001"],
         derived_from_insights: ["INS-0002", "INS-0001"],
         fresh_as_of: "2026-04-11",
@@ -186,6 +192,7 @@ Body.
 
     expect(rendered).toContain('derived_from_analysis:\n  - "ANL-0001"\n  - "ANL-0002"');
     expect(rendered).toContain('derived_from_insights:\n  - "INS-0001"\n  - "INS-0002"');
+    expect(rendered).toContain('side_states:\n  - "stale"\n  - "unsupported"');
     expect(rendered).toContain("## Source References");
   });
 });

@@ -33,6 +33,14 @@ export interface NextResearchIds {
   task: number;
 }
 
+export interface ManifestVerificationSummary {
+  debt: number;
+  unsupported_insights: number;
+  unsupported_reports: number;
+  contradicted_analysis: number;
+  unresolved_analysis_questions: number;
+}
+
 export interface ResearchManifest {
   contract_version: typeof MANIFEST_CONTRACT_VERSION;
   research: {
@@ -52,6 +60,7 @@ export interface ResearchManifest {
     last_source_sync_at: string | null;
     debt: number;
   };
+  verification: ManifestVerificationSummary;
   inventory: {
     sources: number;
     insights: number;
@@ -72,6 +81,16 @@ export const INITIAL_NEXT_RESEARCH_IDS: Readonly<NextResearchIds> = Object.freez
 
 export function createInitialNextResearchIds(): NextResearchIds {
   return { ...INITIAL_NEXT_RESEARCH_IDS };
+}
+
+export function createInitialVerificationSummary(): ManifestVerificationSummary {
+  return {
+    debt: 0,
+    unsupported_insights: 0,
+    unsupported_reports: 0,
+    contradicted_analysis: 0,
+    unresolved_analysis_questions: 0,
+  };
 }
 
 export function formatArtifactId(kind: ArtifactKind, counter: number): string {

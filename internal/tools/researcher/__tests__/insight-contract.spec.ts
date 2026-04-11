@@ -10,6 +10,8 @@ id: INS-0001
 title: Pricing compression
 status: draft
 confidence: medium
+side_states:
+  - stale
 derived_from_sources:
   - SRC-0002
   - SRC-0001
@@ -50,6 +52,7 @@ Use this insight in competitive landscape and pricing reports.
 `);
 
     expect(document.frontmatter.derived_from_sources).toEqual(["SRC-0001", "SRC-0002"]);
+    expect(document.frontmatter.side_states).toEqual(["stale"]);
     expect(document.frontmatter.linked_analysis).toEqual(["ANL-0001", "ANL-0002"]);
     expect(document.sections.evidence).toEqual([
       {
@@ -70,6 +73,7 @@ id: INS-99
 title: Broken insight
 status: draft
 confidence: medium
+side_states: []
 derived_from_sources:
   - SRC-0001
 tags: []
@@ -109,6 +113,7 @@ id: INS-0001
 title: Missing caveats
 status: draft
 confidence: medium
+side_states: []
 derived_from_sources:
   - SRC-0001
 tags: []
@@ -144,6 +149,7 @@ id: INS-0001
 title: Drift
 status: draft
 confidence: medium
+side_states: []
 derived_from_sources:
   - SRC-0001
 tags: []
@@ -195,6 +201,7 @@ Reuse notes.
         title: "Pricing compression",
         status: "draft",
         confidence: "medium",
+        side_states: ["stale"],
         derived_from_sources: ["SRC-0002", "SRC-0001"],
         tags: ["pricing", "ai-agents"],
         linked_analysis: [],
@@ -221,6 +228,7 @@ Reuse notes.
     });
 
     expect(rendered).toContain("derived_from_sources:");
+    expect(rendered).toContain("side_states:");
     expect(rendered).toContain('- `SRC-0001`: Competitors bundle more features at the same price.');
     expect(rendered).toContain("## Reuse Notes");
   });

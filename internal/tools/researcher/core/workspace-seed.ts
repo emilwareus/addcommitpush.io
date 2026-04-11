@@ -3,6 +3,7 @@ import { join } from "node:path";
 
 import {
   MANIFEST_CONTRACT_VERSION,
+  createInitialVerificationSummary,
   createInitialNextResearchIds,
   createManifestPaths,
   type ResearchManifest,
@@ -50,6 +51,7 @@ export function createInitialResearchManifest(
       last_source_sync_at: null,
       debt: 0,
     },
+    verification: createInitialVerificationSummary(),
     inventory: {
       sources: 0,
       insights: 0,

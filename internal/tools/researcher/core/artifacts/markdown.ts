@@ -1,9 +1,8 @@
 import matter from "gray-matter";
 
+import type { ParsedAnalysisDocument } from "../../contracts/analysis";
 import type {
-  ParsedAnalysisDocument,
-} from "../../contracts/analysis";
-import type {
+  ArtifactSideState,
   InsightEvidenceItem,
   ParsedInsightDocument,
 } from "../../contracts/insights";
@@ -68,6 +67,7 @@ export function parseInsightArtifact(document: string): ParsedInsightDocument {
   return {
     frontmatter: {
       ...frontmatter,
+      side_states: sortArtifactSideStates(frontmatter.side_states),
       derived_from_sources: derivedFromSources,
       tags: sortUnique(frontmatter.tags),
       linked_analysis: sortUnique(frontmatter.linked_analysis),
@@ -98,6 +98,7 @@ export function renderInsightArtifact(document: ParsedInsightDocument): string {
       ["title", frontmatter.title],
       ["status", frontmatter.status],
       ["confidence", frontmatter.confidence],
+      ["side_states", sortArtifactSideStates(frontmatter.side_states)],
       ["derived_from_sources", frontmatter.derived_from_sources],
       ["tags", frontmatter.tags],
       ["linked_analysis", frontmatter.linked_analysis],
@@ -247,6 +248,7 @@ export function parseReportArtifact(document: string): ParsedReportDocument {
   return {
     frontmatter: {
       ...frontmatter,
+      side_states: sortArtifactSideStates(frontmatter.side_states),
       derived_from_analysis: derivedFromAnalysis,
       derived_from_insights: derivedFromInsights,
     },
@@ -288,6 +290,7 @@ export function renderReportArtifact(document: ParsedReportDocument): string {
       ["angle", frontmatter.angle],
       ["thesis", frontmatter.thesis],
       ["status", frontmatter.status],
+      ["side_states", sortArtifactSideStates(frontmatter.side_states)],
       ["derived_from_analysis", frontmatter.derived_from_analysis],
       ["derived_from_insights", frontmatter.derived_from_insights],
       ["fresh_as_of", frontmatter.fresh_as_of],
@@ -582,6 +585,10 @@ function sortUnique(values: string[]): string[] {
         .filter((value) => value.length > 0),
     ),
   ).sort((left, right) => left.localeCompare(right));
+}
+
+function sortArtifactSideStates(sideStates: ArtifactSideState[]): ArtifactSideState[] {
+  return Array.from(new Set(sideStates)).sort((left, right) => left.localeCompare(right));
 }
 
 function assertReportLineage(

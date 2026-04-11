@@ -11,6 +11,10 @@ import type { AnalysisFrontmatter } from "./analysis";
 import type { InsightFrontmatter } from "./insights";
 import type { ResearchManifest } from "./manifest";
 import type { ReportFrontmatter } from "./reports";
+import {
+  STATUS_SUMMARY_SCHEMA,
+  type StatusSummary,
+} from "./status";
 import type { SourcesEnvelope } from "./sources";
 
 const ajv = new Ajv2020({
@@ -26,6 +30,7 @@ const analysisFrontmatterValidator = ajv.compile<AnalysisFrontmatter>(
   analysisFrontmatterSchema,
 );
 const reportFrontmatterValidator = ajv.compile<ReportFrontmatter>(reportFrontmatterSchema);
+const statusSummaryValidator = ajv.compile<StatusSummary>(STATUS_SUMMARY_SCHEMA);
 
 export function validateManifest(input: unknown): ResearchManifest {
   return validateDocument(input, manifestValidator, "manifest.json");
@@ -45,6 +50,10 @@ export function validateAnalysisFrontmatter(input: unknown): AnalysisFrontmatter
 
 export function validateReportFrontmatter(input: unknown): ReportFrontmatter {
   return validateDocument(input, reportFrontmatterValidator, "report frontmatter");
+}
+
+export function validateStatusSummary(input: unknown): StatusSummary {
+  return validateDocument(input, statusSummaryValidator, "status summary");
 }
 
 function validateDocument<T>(

@@ -8,6 +8,7 @@
     "title",
     "status",
     "confidence",
+    "side_states",
     "derived_from_sources",
     "tags",
     "linked_analysis",
@@ -31,6 +32,14 @@
     "confidence": {
       "type": "string",
       "enum": ["high", "medium", "low", "unknown"]
+    },
+    "side_states": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["stale", "unsupported", "superseded"]
+      }
     },
     "derived_from_sources": {
       "type": "array",

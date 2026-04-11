@@ -365,6 +365,7 @@ function buildReportDocument(
       angle: input.angle,
       thesis: input.thesis,
       status: input.status,
+      side_states: existingReport?.frontmatter.side_states ?? [],
       derived_from_analysis: input.analysisIds,
       derived_from_insights: input.insightIds,
       fresh_as_of: input.freshAsOf,

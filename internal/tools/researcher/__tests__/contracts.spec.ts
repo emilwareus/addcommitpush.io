@@ -6,6 +6,7 @@ import { describe, expect, test } from "vitest";
 import {
   ARTIFACT_ID_PREFIXES,
   MANIFEST_CONTRACT_VERSION,
+  createInitialVerificationSummary,
   createInitialNextResearchIds,
   createManifestPaths,
   createResearchId,
@@ -49,6 +50,7 @@ describe("research workspace contract", () => {
         last_source_sync_at: null,
         debt: 0,
       },
+      verification: createInitialVerificationSummary(),
       inventory: {
         sources: 0,
         insights: 0,

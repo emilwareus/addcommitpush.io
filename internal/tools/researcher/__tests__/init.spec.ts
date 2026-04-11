@@ -90,6 +90,13 @@ describe("research workspace init flow", () => {
       last_source_sync_at: null,
       debt: 0,
     });
+    expect(manifest.verification).toEqual({
+      debt: 0,
+      unsupported_insights: 0,
+      unsupported_reports: 0,
+      contradicted_analysis: 0,
+      unresolved_analysis_questions: 0,
+    });
     expect(manifest.next_ids).toEqual({
       source: 1,
       insight: 1,

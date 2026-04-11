@@ -10,6 +10,7 @@
     "angle",
     "thesis",
     "status",
+    "side_states",
     "derived_from_analysis",
     "derived_from_insights",
     "fresh_as_of",
@@ -40,6 +41,14 @@
     "status": {
       "type": "string",
       "enum": ["draft", "validated", "disputed", "superseded"]
+    },
+    "side_states": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": ["stale", "unsupported", "superseded"]
+      }
     },
     "derived_from_analysis": {
       "type": "array",
