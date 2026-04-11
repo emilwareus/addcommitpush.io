@@ -7,9 +7,11 @@ import type {
   InsightEvidenceItem,
   ParsedInsightDocument,
 } from "../../contracts/insights";
+import type { ParsedReportDocument } from "../../contracts/reports";
 import {
   validateAnalysisFrontmatter,
   validateInsightFrontmatter,
+  validateReportFrontmatter,
 } from "../../contracts/validators";
 
 const INSIGHT_HEADING_SEQUENCE = [
@@ -27,6 +29,15 @@ const ANALYSIS_HEADING_SEQUENCE = [
   "Open Questions",
   "Next Moves",
 ] as const;
+const REPORT_HEADING_SEQUENCE = [
+  "Summary",
+  "Key Points",
+  "Body",
+  "Limitations",
+  "Analysis Inputs",
+  "Insight References",
+  "Source References",
+] as const;
 const NONE_NOTED_YET = "None noted yet.";
 
 interface ParsedMarkdownSections<THeading extends string> {
@@ -37,9 +48,15 @@ interface ParsedMarkdownSections<THeading extends string> {
 export function parseInsightArtifact(document: string): ParsedInsightDocument {
   const parsedDocument = matter(normalizeDocument(document));
   const frontmatter = validateInsightFrontmatter(
-    normalizeTimestampFields(parsedDocument.data, ["created_at", "updated_at"]),
+    normalizeFrontmatterDateFields(parsedDocument.data, {
+      dateTime: ["created_at", "updated_at"],
+    }),
   );
-  const sections = parseSections(parsedDocument.content, INSIGHT_HEADING_SEQUENCE);
+  const sections = parseSections(
+    parsedDocument.content,
+    "Insight",
+    INSIGHT_HEADING_SEQUENCE,
+  );
   const evidence = parseInsightEvidence(sections.sections.Evidence);
   const derivedFromSources = sortUnique(frontmatter.derived_from_sources);
   const evidenceSourceIds = sortUnique(evidence.map((item) => item.sourceId));
@@ -116,9 +133,15 @@ export function renderInsightArtifact(document: ParsedInsightDocument): string {
 export function parseAnalysisArtifact(document: string): ParsedAnalysisDocument {
   const parsedDocument = matter(normalizeDocument(document));
   const frontmatter = validateAnalysisFrontmatter(
-    normalizeTimestampFields(parsedDocument.data, ["created_at", "updated_at"]),
+    normalizeFrontmatterDateFields(parsedDocument.data, {
+      dateTime: ["created_at", "updated_at"],
+    }),
   );
-  const sections = parseSections(parsedDocument.content, ANALYSIS_HEADING_SEQUENCE);
+  const sections = parseSections(
+    parsedDocument.content,
+    "Analysis",
+    ANALYSIS_HEADING_SEQUENCE,
+  );
   const derivedFromInsights = sortUnique(frontmatter.derived_from_insights);
 
   if (!frontmatter.transitional_scaffold && derivedFromInsights.length < 2) {
@@ -207,8 +230,106 @@ export function renderAnalysisArtifact(document: ParsedAnalysisDocument): string
   ].join("\n");
 }
 
+export function parseReportArtifact(document: string): ParsedReportDocument {
+  const parsedDocument = matter(normalizeDocument(document));
+  const frontmatter = validateReportFrontmatter(
+    normalizeFrontmatterDateFields(parsedDocument.data, {
+      date: ["fresh_as_of"],
+      dateTime: ["created_at", "updated_at"],
+    }),
+  );
+  const sections = parseSections(parsedDocument.content, "Report", REPORT_HEADING_SEQUENCE);
+  const derivedFromAnalysis = sortUnique(frontmatter.derived_from_analysis);
+  const derivedFromInsights = sortUnique(frontmatter.derived_from_insights);
+
+  assertReportLineage(derivedFromAnalysis, derivedFromInsights);
+
+  return {
+    frontmatter: {
+      ...frontmatter,
+      derived_from_analysis: derivedFromAnalysis,
+      derived_from_insights: derivedFromInsights,
+    },
+    sections: {
+      summary: requireTextSection(sections.sections.Summary, "Summary"),
+      keyPoints: parseBulletListSection(sections.sections["Key Points"], "Key Points"),
+      body: requireTextSection(sections.sections.Body, "Body"),
+      limitations: parseBulletListSection(sections.sections.Limitations, "Limitations"),
+      analysisInputs: parseBulletListSection(
+        sections.sections["Analysis Inputs"],
+        "Analysis Inputs",
+      ),
+      insightReferences: parseBulletListSection(
+        sections.sections["Insight References"],
+        "Insight References",
+      ),
+      sourceReferences: parseBulletListSection(
+        sections.sections["Source References"],
+        "Source References",
+      ),
+    },
+  };
+}
+
+export function renderReportArtifact(document: ParsedReportDocument): string {
+  const frontmatter = validateReportFrontmatter({
+    ...document.frontmatter,
+    derived_from_analysis: sortUnique(document.frontmatter.derived_from_analysis),
+    derived_from_insights: sortUnique(document.frontmatter.derived_from_insights),
+  });
+
+  assertReportLineage(frontmatter.derived_from_analysis, frontmatter.derived_from_insights);
+
+  return [
+    renderFrontmatter([
+      ["id", frontmatter.id],
+      ["title", frontmatter.title],
+      ["audience", frontmatter.audience],
+      ["angle", frontmatter.angle],
+      ["thesis", frontmatter.thesis],
+      ["status", frontmatter.status],
+      ["derived_from_analysis", frontmatter.derived_from_analysis],
+      ["derived_from_insights", frontmatter.derived_from_insights],
+      ["fresh_as_of", frontmatter.fresh_as_of],
+      ["created_at", frontmatter.created_at],
+      ["updated_at", frontmatter.updated_at],
+    ]),
+    "# Report",
+    "",
+    "## Summary",
+    "",
+    requireTextSection(document.sections.summary, "Summary"),
+    "",
+    "## Key Points",
+    "",
+    ...renderBulletList(document.sections.keyPoints, "Key Points"),
+    "",
+    "## Body",
+    "",
+    requireTextSection(document.sections.body, "Body"),
+    "",
+    "## Limitations",
+    "",
+    ...renderBulletList(document.sections.limitations, "Limitations"),
+    "",
+    "## Analysis Inputs",
+    "",
+    ...renderBulletList(document.sections.analysisInputs, "Analysis Inputs"),
+    "",
+    "## Insight References",
+    "",
+    ...renderBulletList(document.sections.insightReferences, "Insight References"),
+    "",
+    "## Source References",
+    "",
+    ...renderBulletList(document.sections.sourceReferences, "Source References"),
+    "",
+  ].join("\n");
+}
+
 function parseSections<THeading extends string>(
   markdownBody: string,
+  topLevelHeading: string,
   expectedHeadings: readonly THeading[],
 ): ParsedMarkdownSections<THeading> {
   const lines = normalizeDocument(markdownBody).split("\n");
@@ -261,7 +382,7 @@ function parseSections<THeading extends string>(
 
   if (preamble.some((line) => {
     const trimmedLine = line.trim();
-    return trimmedLine.length > 0 && trimmedLine !== "# Insight" && trimmedLine !== "# Analysis";
+    return trimmedLine.length > 0 && trimmedLine !== `# ${topLevelHeading}`;
   })) {
     throw new Error("Artifact preamble may only contain the canonical top-level heading");
   }
@@ -411,9 +532,12 @@ function normalizeDocument(document: string): string {
   return document.replace(/\r\n?/g, "\n");
 }
 
-function normalizeTimestampFields(
+function normalizeFrontmatterDateFields(
   value: unknown,
-  keys: readonly string[],
+  keys: {
+    date?: readonly string[];
+    dateTime?: readonly string[];
+  },
 ): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return {};
@@ -421,11 +545,19 @@ function normalizeTimestampFields(
 
   const normalizedValue = { ...value } as Record<string, unknown>;
 
-  for (const key of keys) {
+  for (const key of keys.dateTime ?? []) {
     const currentValue = normalizedValue[key];
 
     if (currentValue instanceof Date) {
       normalizedValue[key] = currentValue.toISOString();
+    }
+  }
+
+  for (const key of keys.date ?? []) {
+    const currentValue = normalizedValue[key];
+
+    if (currentValue instanceof Date) {
+      normalizedValue[key] = currentValue.toISOString().slice(0, 10);
     }
   }
 
@@ -450,6 +582,17 @@ function sortUnique(values: string[]): string[] {
         .filter((value) => value.length > 0),
     ),
   ).sort((left, right) => left.localeCompare(right));
+}
+
+function assertReportLineage(
+  derivedFromAnalysis: string[],
+  derivedFromInsights: string[],
+): void {
+  if (derivedFromAnalysis.length === 0 && derivedFromInsights.length === 0) {
+    throw new Error(
+      "Report must reference at least one analysis or one insight",
+    );
+  }
 }
 
 export function isNoneNotedYet(value: string): boolean {

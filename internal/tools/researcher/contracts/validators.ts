@@ -4,11 +4,13 @@ import addFormats from "ajv-formats";
 import analysisFrontmatterSchema from "../../../../researcher/schemas/analysis-frontmatter.schema.json";
 import insightFrontmatterSchema from "../../../../researcher/schemas/insight-frontmatter.schema.json";
 import manifestSchema from "../../../../researcher/schemas/manifest.schema.json";
+import reportFrontmatterSchema from "../../../../researcher/schemas/report-frontmatter.schema.json";
 import sourcesSchema from "../../../../researcher/schemas/sources.schema.json";
 
 import type { AnalysisFrontmatter } from "./analysis";
 import type { InsightFrontmatter } from "./insights";
 import type { ResearchManifest } from "./manifest";
+import type { ReportFrontmatter } from "./reports";
 import type { SourcesEnvelope } from "./sources";
 
 const ajv = new Ajv2020({
@@ -23,6 +25,7 @@ const insightFrontmatterValidator = ajv.compile<InsightFrontmatter>(insightFront
 const analysisFrontmatterValidator = ajv.compile<AnalysisFrontmatter>(
   analysisFrontmatterSchema,
 );
+const reportFrontmatterValidator = ajv.compile<ReportFrontmatter>(reportFrontmatterSchema);
 
 export function validateManifest(input: unknown): ResearchManifest {
   return validateDocument(input, manifestValidator, "manifest.json");
@@ -38,6 +41,10 @@ export function validateInsightFrontmatter(input: unknown): InsightFrontmatter {
 
 export function validateAnalysisFrontmatter(input: unknown): AnalysisFrontmatter {
   return validateDocument(input, analysisFrontmatterValidator, "analysis frontmatter");
+}
+
+export function validateReportFrontmatter(input: unknown): ReportFrontmatter {
+  return validateDocument(input, reportFrontmatterValidator, "report frontmatter");
 }
 
 function validateDocument<T>(

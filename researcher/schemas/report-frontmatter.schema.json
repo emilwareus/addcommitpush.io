@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://addcommitpush.io/researcher/schemas/report-frontmatter.schema.json",
+  "title": "Researcher Report Frontmatter",
+  "type": "object",
+  "required": [
+    "id",
+    "title",
+    "audience",
+    "angle",
+    "thesis",
+    "status",
+    "derived_from_analysis",
+    "derived_from_insights",
+    "fresh_as_of",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^RPT-[0-9]{4}$"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "audience": {
+      "type": "string",
+      "minLength": 1
+    },
+    "angle": {
+      "type": "string",
+      "minLength": 1
+    },
+    "thesis": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "validated", "disputed", "superseded"]
+    },
+    "derived_from_analysis": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^ANL-[0-9]{4}$"
+      }
+    },
+    "derived_from_insights": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^INS-[0-9]{4}$"
+      }
+    },
+    "fresh_as_of": {
+      "type": "string",
+      "format": "date"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "additionalProperties": false
+}
