@@ -18,8 +18,8 @@ and only then finalize the install surfaces for Codex and Claude Code.
   higher-order analysis with explicit lineage. (completed 2026-04-11)
 - [x] **Phase 4: Report Generation** - Compile many Markdown reports from one research base with
   traceable support. (completed 2026-04-11)
-- [ ] **Phase 5: Status, Freshness & Verification** - Surface research health, freshness debt, and
-  downstream impact before shipping outputs.
+- [x] **Phase 5: Status, Freshness & Verification** - Surface research health, freshness debt, and
+  downstream impact before shipping outputs. (completed 2026-04-11)
 - [ ] **Phase 6: Runtime Installation & Lifecycle** - Install, update, and inspect Researcher in
   Codex and Claude Code projects.
 
@@ -101,9 +101,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 05-01: Build manifest and status summary flow
-- [ ] 05-02: Add verification debt and unsupported-claim checks
-- [ ] 05-03: Propagate freshness impact through the artifact graph
+- [x] 05-01: Build manifest and status summary flow
+- [x] 05-02: Add verification debt and unsupported-claim checks
+- [x] 05-03: Propagate freshness impact through the artifact graph
 
 ### Phase 6: Runtime Installation & Lifecycle
 **Goal**: Users can install, update, and inspect Researcher in Codex and Claude Code projects.
@@ -132,5 +132,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 2. Source Registry & Evidence Capture | 3/3 | Complete    | 2026-04-11 |
 | 3. Insights & Analysis Graph | 3/3 | Complete | 2026-04-11 |
 | 4. Report Generation | 3/3 | Complete | 2026-04-11 |
-| 5. Status, Freshness & Verification | 0/3 | Not started | - |
+| 5. Status, Freshness & Verification | 3/3 | Complete | 2026-04-11 |
 | 6. Runtime Installation & Lifecycle | 0/3 | Not started | - |

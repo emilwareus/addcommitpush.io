@@ -37,16 +37,20 @@ extended, and repackaged into multiple high-quality reports.
 - `RPT-01`: Users can generate a Markdown report from existing insights and analysis for a chosen angle or audience.
 - `RPT-02`: Users can generate more than one report from the same research without duplicating the underlying research work.
 - `RPT-03`: Users can trace each report back to the insight and source lineage that supports it.
+- Phase 5 validated deterministic status routing, verification debt, and freshness propagation.
+- `RSCH-02`: Users can inspect a research manifest and status view that show freshness debt, verification debt, and active report inventory.
+- `STAT-01`: Users can run a status flow that surfaces one next recommended action for a research.
+- `STAT-02`: Users can detect stale evidence, unsupported claims, and verification debt before shipping a report.
+- `STAT-03`: Users can see when downstream insights, analysis, and reports are affected by changed source freshness.
 
 ### Active
 
 - [ ] Users can install Researcher into Codex and Claude Code as commands, skills, scripts,
   and supporting workflow assets.
-- [ ] Users can inspect status, freshness debt, and next suggested action for a research.
 
 ## Current State
 
-Phases 1 through 4 are complete. The repo now has:
+Phases 1 through 5 are complete. The repo now has:
 
 - a fixed per-research workspace under `researcher/researches/<slug>/`
 - a versioned manifest contract and a richer shared `sources.json` registry with stable `SRC-*` IDs
@@ -60,8 +64,11 @@ Phases 1 through 4 are complete. The repo now has:
 - refresh semantics that derive stale source state from the manifest freshness window
 - disk-only resume that reconstructs stage, inventory, freshness debt, and next action from files, including `review-existing-reports` routing once reports exist
 - report lineage rendering that expands direct analysis inputs into effective insight and deduped source references
+- persisted insight/report health `side_states`, manifest verification aggregates, and a deterministic `research-status` summary
+- verification debt evaluation for unsupported insights, unresolved report lineage, and contradiction/open-question analysis risk
+- downstream freshness propagation from `SRC-*` into affected `INS-*` and `RPT-*` artifacts with derived impacted analyses
 
-Next focus: Phase 5, Status, Freshness & Verification.
+Next focus: Phase 6, Runtime Installation & Lifecycle.
 
 ### Out of Scope
 
@@ -125,6 +132,9 @@ must coexist with that reality without assuming a blank repo.
 | Keep `RPT-*` canonical as Markdown artifacts with explicit terminal lineage sections | This preserves inspectability while making reports durable packaging artifacts instead of one-shot prose | Validated in Phase 4 |
 | Derive report lineage from explicit `ANL-*` and `INS-*` inputs, then expand through analysis into effective insights and sources | This keeps report support auditable without reintroducing source-level authoring in the report request contract | Validated in Phase 4 |
 | Derive source staleness from manifest freshness windows during refresh | This keeps freshness detection deterministic and file-based without introducing provider-specific logic | Validated in Phase 2 |
+| Keep `research-status` as a compact progress router with one primary next action | This preserves GSD-style operator guidance instead of creating a passive dashboard | Validated in Phase 5 |
+| Persist health `side_states` on insights and reports while analyses stay derived-impact only | Reports and reusable insights need durable health flags, but analyses should remain lightweight and recomputed | Validated in Phase 5 |
+| Keep verification debt deterministic and file-based | Trust and publish-readiness need explicit, inspectable rules rather than model-judged scoring | Validated in Phase 5 |
 | Treat multiple reports from one research as a first-class requirement | This is the defining user value and should shape every artifact contract | Validated in Phase 4 |
 | Start with Codex and Claude Code support before broader runtime expansion | This keeps the first implementation focused while matching the intended install surface | — Pending |
 
@@ -146,4 +156,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-11 after Phase 4 completion*
+*Last updated: 2026-04-11 after Phase 5 completion*

@@ -19,7 +19,7 @@
 
 - [x] **RSCH-01**: User can initialize a new research with a bounded brief and a fixed folder
   structure for insights, data, analysis, and reports.
-- [ ] **RSCH-02**: User can inspect a research manifest that shows status, freshness debt, and
+- [x] **RSCH-02**: User can inspect a research manifest that shows status, freshness debt, and
   active report inventory.
 - [x] **RSCH-03**: User can resume an existing research without rebuilding its context from chat
   history.
@@ -54,11 +54,11 @@
 
 ### Verification & Status
 
-- [ ] **STAT-01**: User can run a status flow that shows the next recommended action for a
+- [x] **STAT-01**: User can run a status flow that shows the next recommended action for a
   research.
-- [ ] **STAT-02**: User can detect stale evidence, unsupported claims, and verification debt before
+- [x] **STAT-02**: User can detect stale evidence, unsupported claims, and verification debt before
   shipping a report.
-- [ ] **STAT-03**: User can see when downstream insights, analysis, or reports are affected by
+- [x] **STAT-03**: User can see when downstream insights, analysis, or reports are affected by
   changed source freshness.
 
 ## v2 Requirements
@@ -101,7 +101,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INST-03 | Phase 6 | Pending |
 | INST-04 | Phase 6 | Pending |
 | RSCH-01 | Phase 1 | Complete |
-| RSCH-02 | Phase 5 | Pending |
+| RSCH-02 | Phase 5 | Complete |
 | RSCH-03 | Phase 1 | Complete |
 | SRC-01 | Phase 2 | Complete |
 | SRC-02 | Phase 2 | Complete |
@@ -114,9 +114,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | RPT-01 | Phase 4 | Complete |
 | RPT-02 | Phase 4 | Complete |
 | RPT-03 | Phase 4 | Complete |
-| STAT-01 | Phase 5 | Pending |
-| STAT-02 | Phase 5 | Pending |
-| STAT-03 | Phase 5 | Pending |
+| STAT-01 | Phase 5 | Complete |
+| STAT-02 | Phase 5 | Complete |
+| STAT-03 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 21 total
@@ -125,4 +125,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-10*
-*Last updated: 2026-04-11 after Phase 4 completion*
+*Last updated: 2026-04-11 after Phase 5 completion*
