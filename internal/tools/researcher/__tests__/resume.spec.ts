@@ -7,6 +7,7 @@ import { initResearchWorkspace } from "../core/init";
 import { resumeResearchWorkspace } from "../core/resume";
 import { upsertAnalysis } from "../core/analysis/upsert";
 import { upsertInsight } from "../core/insights/upsert";
+import { upsertReport } from "../core/reports/upsert";
 import { addSource } from "../core/sources/add";
 import { refreshSource } from "../core/sources/refresh";
 
@@ -318,6 +319,50 @@ describe("research workspace resume flow", () => {
     });
     expect(result.freshnessDebt).toBe("overdue:1");
     expect(result.nextRecommendedAction).toBe("refresh-sources");
+  });
+
+  test("routes package-stage research with reports on disk to review-existing-reports", async () => {
+    await initResearchWorkspace({
+      projectRoot: temporaryWorkspace.rootDir,
+      slug: "phase-4-review",
+      title: "Phase 4 Review",
+      question: "How should resume behave after reports exist?",
+    });
+
+    await addPhaseThreeArtifacts("phase-4-review");
+    await upsertReport({
+      projectRoot: temporaryWorkspace.rootDir,
+      slug: "phase-4-review",
+      title: "Founder pricing brief",
+      audience: "founder",
+      angle: "pricing-pressure",
+      thesis: "Pricing is compressing while bundle complexity grows.",
+      analysisIds: ["ANL-0001"],
+      insightIds: [],
+      summary: "Margins are tightening while packaging complexity increases.",
+      keyPoints: ["Pricing compression is visible in public packaging."],
+      body: "The report packages the current pricing analysis.",
+      limitations: ["Public pricing pages may lag enterprise negotiation behavior."],
+      now: new Date("2026-04-11T03:00:00Z"),
+    });
+    await updateWorkspaceManifest("phase-4-review", (manifest) => {
+      manifest.status.stage = "package";
+      manifest.freshness.debt = 0;
+      manifest.freshness.last_source_sync_at = "2026-04-11T03:00:00.000Z";
+    });
+
+    const result = await resumeResearchWorkspace({
+      projectRoot: temporaryWorkspace.rootDir,
+      slug: "phase-4-review",
+    });
+
+    expect(result.inventory).toEqual({
+      sources: 2,
+      insights: 2,
+      analysis: 1,
+      reports: 1,
+    });
+    expect(result.nextRecommendedAction).toBe("review-existing-reports");
   });
 
   async function addPhaseThreeArtifacts(slug: string): Promise<void> {

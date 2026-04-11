@@ -17,6 +17,7 @@ import {
 import { loadSourceStore, persistSourceStore } from "../sources/store";
 
 import { reconcileReportBacklinks } from "./backlinks";
+import { type ArtifactRecord, buildReportLineage } from "./lineage";
 
 export interface UpsertReportInput {
   projectRoot: string;
@@ -48,11 +49,6 @@ export interface UpsertReportResult {
 interface ExistingReportRecord {
   document: ParsedReportDocument;
   path: string;
-}
-
-interface ArtifactRecord<TDocument> {
-  path: string;
-  document: TDocument;
 }
 
 interface NormalizedUpsertReportInput {
@@ -126,14 +122,49 @@ export async function upsertReport(input: UpsertReportInput): Promise<UpsertRepo
   const reportId = existingReport
     ? existingReport.document.frontmatter.id
     : formatArtifactId("report", store.manifest.next_ids.report);
+  const previousLineage = existingReport
+    ? buildReportLineage({
+        analysisRecords: existingReport.document.frontmatter.derived_from_analysis.map(
+          (analysisId) => {
+            const analysisRecord = analysisRecordsById.get(analysisId);
+
+            if (!analysisRecord) {
+              throw new Error(`Referenced analysis not found: ${analysisId}`);
+            }
+
+            return analysisRecord;
+          },
+        ),
+        directInsightRecords: existingReport.document.frontmatter.derived_from_insights.map(
+          (insightId) => {
+            const insightRecord = insightRecordsById.get(insightId);
+
+            if (!insightRecord) {
+              throw new Error(`Referenced insight not found: ${insightId}`);
+            }
+
+            return insightRecord;
+          },
+        ),
+        allInsightRecords: insightRecords,
+        sourceRecords: store.sources.sources,
+      })
+    : null;
   const nextDocument = buildReportDocument(
     normalizedInput,
     existingReport?.document,
     reportId,
     resolvedAnalyses,
     resolvedInsights,
+    insightRecords,
     store.sources.sources,
   );
+  const nextLineage = buildReportLineage({
+    analysisRecords: resolvedAnalyses,
+    directInsightRecords: resolvedInsights,
+    allInsightRecords: insightRecords,
+    sourceRecords: store.sources.sources,
+  });
   const targetFileName = `${reportId}-${slugifyFileSegment(normalizedInput.title)}.md`;
   const targetPath = await resolveWorkspacePath(
     normalizedInput.projectRoot,
@@ -154,8 +185,8 @@ export async function upsertReport(input: UpsertReportInput): Promise<UpsertRepo
     reportId,
     previousAnalysisIds: existingReport?.document.frontmatter.derived_from_analysis ?? [],
     nextAnalysisIds: nextDocument.frontmatter.derived_from_analysis,
-    previousInsightIds: existingReport?.document.frontmatter.derived_from_insights ?? [],
-    nextInsightIds: nextDocument.frontmatter.derived_from_insights,
+    previousInsightIds: previousLineage?.effectiveInsightIds ?? [],
+    nextInsightIds: nextLineage.effectiveInsightIds,
   });
 
   store.manifest.inventory.reports = await countReportArtifacts(reportsDirectoryPath);
@@ -316,8 +347,16 @@ function buildReportDocument(
   reportId: string,
   analysisRecords: Array<ArtifactRecord<ParsedAnalysisDocument>>,
   insightRecords: Array<ArtifactRecord<ParsedInsightDocument>>,
+  allInsightRecords: Array<ArtifactRecord<ParsedInsightDocument>>,
   sourceRecords: SourceRecord[],
 ): ParsedReportDocument {
+  const lineage = buildReportLineage({
+    analysisRecords,
+    directInsightRecords: insightRecords,
+    allInsightRecords,
+    sourceRecords,
+  });
+
   return {
     frontmatter: {
       id: reportId,
@@ -337,66 +376,11 @@ function buildReportDocument(
       keyPoints: input.keyPoints,
       body: input.body,
       limitations: input.limitations,
-      analysisInputs: renderAnalysisInputs(analysisRecords),
-      insightReferences: renderInsightReferences(insightRecords),
-      sourceReferences: renderSourceReferences(insightRecords, sourceRecords),
+      analysisInputs: lineage.analysisInputs,
+      insightReferences: lineage.insightReferences,
+      sourceReferences: lineage.sourceReferences,
     },
   };
-}
-
-function renderAnalysisInputs(
-  analysisRecords: Array<ArtifactRecord<ParsedAnalysisDocument>>,
-): string[] {
-  if (analysisRecords.length === 0) {
-    return ["None included."];
-  }
-
-  return analysisRecords.map(
-    (analysisRecord) =>
-      `\`${analysisRecord.document.frontmatter.id}\` ${analysisRecord.document.frontmatter.title}`,
-  );
-}
-
-function renderInsightReferences(
-  insightRecords: Array<ArtifactRecord<ParsedInsightDocument>>,
-): string[] {
-  if (insightRecords.length === 0) {
-    return ["None included."];
-  }
-
-  return insightRecords.map((insightRecord) => {
-    const sourceIds = insightRecord.document.frontmatter.derived_from_sources
-      .map((sourceId) => `\`${sourceId}\``)
-      .join(", ");
-
-    return `\`${insightRecord.document.frontmatter.id}\` ${insightRecord.document.frontmatter.title} (sources: ${sourceIds})`;
-  });
-}
-
-function renderSourceReferences(
-  insightRecords: Array<ArtifactRecord<ParsedInsightDocument>>,
-  sourceRecords: SourceRecord[],
-): string[] {
-  const sourceRecordsById = new Map(sourceRecords.map((sourceRecord) => [sourceRecord.id, sourceRecord]));
-  const sourceIds = Array.from(
-    new Set(
-      insightRecords.flatMap((insightRecord) => insightRecord.document.frontmatter.derived_from_sources),
-    ),
-  ).sort((left, right) => left.localeCompare(right));
-
-  if (sourceIds.length === 0) {
-    return ["None included."];
-  }
-
-  return sourceIds.map((sourceId) => {
-    const sourceRecord = sourceRecordsById.get(sourceId);
-
-    if (!sourceRecord) {
-      throw new Error(`Referenced source not found: ${sourceId}`);
-    }
-
-    return `\`${sourceRecord.id}\` ${sourceRecord.title} - ${sourceRecord.canonical_url}`;
-  });
 }
 
 async function countReportArtifacts(directoryPath: string): Promise<number> {
