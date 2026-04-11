@@ -33,30 +33,35 @@ extended, and repackaged into multiple high-quality reports.
 - `INS-02`: Users can link each insight to one or more supporting source records.
 - `INS-03`: Users can group multiple insights into higher-order analysis artifacts.
 - `INS-04`: Users can inspect contradictions, caveats, or unresolved questions in analysis artifacts.
+- Phase 4 validated reusable `RPT-*` report artifacts with explicit report lineage.
+- `RPT-01`: Users can generate a Markdown report from existing insights and analysis for a chosen angle or audience.
+- `RPT-02`: Users can generate more than one report from the same research without duplicating the underlying research work.
+- `RPT-03`: Users can trace each report back to the insight and source lineage that supports it.
 
 ### Active
 
 - [ ] Users can install Researcher into Codex and Claude Code as commands, skills, scripts,
   and supporting workflow assets.
-- [ ] Users can generate multiple Markdown reports from a single research base without repeating
-  the same research.
 - [ ] Users can inspect status, freshness debt, and next suggested action for a research.
 
 ## Current State
 
-Phases 1 through 3 are complete. The repo now has:
+Phases 1 through 4 are complete. The repo now has:
 
 - a fixed per-research workspace under `researcher/researches/<slug>/`
 - a versioned manifest contract and a richer shared `sources.json` registry with stable `SRC-*` IDs
 - deterministic `research-init`, `research-resume`, `research-source-add`, and `research-source-refresh` CLIs backed by shared core services
 - schema-validated `INS-*` and `ANL-*` Markdown contracts with shared parse/render logic
-- deterministic `research-insight` and `research-analysis` CLIs backed by shared upsert services
+- schema-validated `RPT-*` Markdown contracts with shared parse/render logic
+- deterministic `research-insight`, `research-analysis`, and `research-report` CLIs backed by shared upsert services
 - source-to-insight and insight-to-analysis backlink reconciliation through tool-owned lineage updates
+- analysis-to-report and insight-to-report backlink reconciliation through tool-owned lineage updates
 - durable append-only evidence capture under `data/<bucket>/<SRC-ID>/<timestamp>/...`
 - refresh semantics that derive stale source state from the manifest freshness window
-- disk-only resume that reconstructs stage, inventory, freshness debt, and next action from files, including `package-report` routing once analysis exists
+- disk-only resume that reconstructs stage, inventory, freshness debt, and next action from files, including `review-existing-reports` routing once reports exist
+- report lineage rendering that expands direct analysis inputs into effective insight and deduped source references
 
-Next focus: Phase 4, Report Generation.
+Next focus: Phase 5, Status, Freshness & Verification.
 
 ### Out of Scope
 
@@ -117,8 +122,10 @@ must coexist with that reality without assuming a blank repo.
 | Keep `INS-*` and `ANL-*` canonical as Markdown artifacts | This preserves inspectability and lets future reports package durable artifacts instead of transient chat summaries | Validated in Phase 3 |
 | Reconcile provenance from forward lineage instead of maintaining a second graph store | One canonical ledger per edge keeps source, insight, and analysis links auditable and deterministic | Validated in Phase 3 |
 | Make contradictions, caveats, and open questions required analysis sections | This keeps unresolved evidence visible instead of burying it in prose and supports later report/status phases | Validated in Phase 3 |
+| Keep `RPT-*` canonical as Markdown artifacts with explicit terminal lineage sections | This preserves inspectability while making reports durable packaging artifacts instead of one-shot prose | Validated in Phase 4 |
+| Derive report lineage from explicit `ANL-*` and `INS-*` inputs, then expand through analysis into effective insights and sources | This keeps report support auditable without reintroducing source-level authoring in the report request contract | Validated in Phase 4 |
 | Derive source staleness from manifest freshness windows during refresh | This keeps freshness detection deterministic and file-based without introducing provider-specific logic | Validated in Phase 2 |
-| Treat multiple reports from one research as a first-class requirement | This is the defining user value and should shape every artifact contract | — Pending |
+| Treat multiple reports from one research as a first-class requirement | This is the defining user value and should shape every artifact contract | Validated in Phase 4 |
 | Start with Codex and Claude Code support before broader runtime expansion | This keeps the first implementation focused while matching the intended install surface | — Pending |
 
 ## Evolution
@@ -139,4 +146,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-11 after Phase 3 completion*
+*Last updated: 2026-04-11 after Phase 4 completion*

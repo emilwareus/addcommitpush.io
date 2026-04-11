@@ -16,8 +16,8 @@ and only then finalize the install surfaces for Codex and Claude Code.
   evidence capture model.
 - [x] **Phase 3: Insights & Analysis Graph** - Turn sourced evidence into reusable insights and
   higher-order analysis with explicit lineage. (completed 2026-04-11)
-- [ ] **Phase 4: Report Generation** - Compile many Markdown reports from one research base with
-  traceable support.
+- [x] **Phase 4: Report Generation** - Compile many Markdown reports from one research base with
+  traceable support. (completed 2026-04-11)
 - [ ] **Phase 5: Status, Freshness & Verification** - Surface research health, freshness debt, and
   downstream impact before shipping outputs.
 - [ ] **Phase 6: Runtime Installation & Lifecycle** - Install, update, and inspect Researcher in
@@ -85,9 +85,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 04-01: Define report templates and prompt contracts
-- [ ] 04-02: Build report compilation from insight and analysis inputs
-- [ ] 04-03: Add citation and lineage rendering in reports
+- [x] 04-01: Define report templates and prompt contracts
+- [x] 04-02: Build report compilation from insight and analysis inputs
+- [x] 04-03: Add citation and lineage rendering in reports
 
 ### Phase 5: Status, Freshness & Verification
 **Goal**: Users can inspect research health, freshness debt, and downstream impact before shipping.
@@ -131,6 +131,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 1. Research Workspace Bootstrap | 4/4 | Complete | 2026-04-10 |
 | 2. Source Registry & Evidence Capture | 3/3 | Complete    | 2026-04-11 |
 | 3. Insights & Analysis Graph | 3/3 | Complete | 2026-04-11 |
-| 4. Report Generation | 0/3 | Not started | - |
+| 4. Report Generation | 3/3 | Complete | 2026-04-11 |
 | 5. Status, Freshness & Verification | 0/3 | Not started | - |
 | 6. Runtime Installation & Lifecycle | 0/3 | Not started | - |

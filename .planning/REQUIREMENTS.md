@@ -45,11 +45,11 @@
 
 ### Reporting
 
-- [ ] **RPT-01**: User can generate a Markdown report from existing insights and analysis for a
+- [x] **RPT-01**: User can generate a Markdown report from existing insights and analysis for a
   chosen angle or audience.
-- [ ] **RPT-02**: User can generate more than one report from the same research without duplicating
+- [x] **RPT-02**: User can generate more than one report from the same research without duplicating
   the underlying research work.
-- [ ] **RPT-03**: User can trace each report back to the insight and source lineage that supports
+- [x] **RPT-03**: User can trace each report back to the insight and source lineage that supports
   it.
 
 ### Verification & Status
@@ -111,9 +111,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | INS-02 | Phase 3 | Complete |
 | INS-03 | Phase 3 | Complete |
 | INS-04 | Phase 3 | Complete |
-| RPT-01 | Phase 4 | Pending |
-| RPT-02 | Phase 4 | Pending |
-| RPT-03 | Phase 4 | Pending |
+| RPT-01 | Phase 4 | Complete |
+| RPT-02 | Phase 4 | Complete |
+| RPT-03 | Phase 4 | Complete |
 | STAT-01 | Phase 5 | Pending |
 | STAT-02 | Phase 5 | Pending |
 | STAT-03 | Phase 5 | Pending |
@@ -125,4 +125,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-10*
-*Last updated: 2026-04-11 after Phase 3 completion*
+*Last updated: 2026-04-11 after Phase 4 completion*
