@@ -1,12 +1,12 @@
-import Ajv2020, { type ErrorObject, type ValidateFunction } from "ajv/dist/2020";
+import Ajv2020, { type ErrorObject, type ValidateFunction } from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
 
-import analysisFrontmatterSchema from "../../../../researcher/schemas/analysis-frontmatter.schema.json";
-import insightFrontmatterSchema from "../../../../researcher/schemas/insight-frontmatter.schema.json";
-import manifestSchema from "../../../../researcher/schemas/manifest.schema.json";
-import reportFrontmatterSchema from "../../../../researcher/schemas/report-frontmatter.schema.json";
-import runtimeInstallSchema from "../../../../researcher/schemas/runtime-install.schema.json";
-import sourcesSchema from "../../../../researcher/schemas/sources.schema.json";
+import analysisFrontmatterSchema from "../../../../researcher/schemas/analysis-frontmatter.schema.json" with { type: "json" };
+import insightFrontmatterSchema from "../../../../researcher/schemas/insight-frontmatter.schema.json" with { type: "json" };
+import manifestSchema from "../../../../researcher/schemas/manifest.schema.json" with { type: "json" };
+import reportFrontmatterSchema from "../../../../researcher/schemas/report-frontmatter.schema.json" with { type: "json" };
+import runtimeInstallSchema from "../../../../researcher/schemas/runtime-install.schema.json" with { type: "json" };
+import sourcesSchema from "../../../../researcher/schemas/sources.schema.json" with { type: "json" };
 
 import type { AnalysisFrontmatter } from "./analysis";
 import type { InsightFrontmatter } from "./insights";

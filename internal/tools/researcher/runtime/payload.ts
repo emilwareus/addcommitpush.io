@@ -7,6 +7,8 @@ export const RUNTIME_SOURCE_WRAPPER_PATHS = [
   "scripts/research-report.ts",
   "scripts/research-status.ts",
   "scripts/research-resume.ts",
+  "scripts/research-update.ts",
+  "scripts/research-inspect.ts",
 ] as const;
 
 export type RuntimePayloadCatalogKey =
@@ -20,7 +22,9 @@ export type RuntimePayloadCatalogKey =
   | "wrapper:research-analysis"
   | "wrapper:research-report"
   | "wrapper:research-status"
-  | "wrapper:research-resume";
+  | "wrapper:research-resume"
+  | "wrapper:research-update"
+  | "wrapper:research-inspect";
 
 export type RuntimePayloadCatalogKind =
   | "source-tree"
@@ -101,6 +105,18 @@ export const RUNTIME_PAYLOAD_CATALOG: readonly RuntimePayloadCatalogEntry[] = [
     kind: "script-source",
     sourcePath: "scripts/research-resume.ts",
     description: "Thin runtime wrapper for disk-only resume flows.",
+  },
+  {
+    key: "wrapper:research-update",
+    kind: "script-source",
+    sourcePath: "scripts/research-update.ts",
+    description: "Thin runtime wrapper for updating an installed runtime payload.",
+  },
+  {
+    key: "wrapper:research-inspect",
+    kind: "script-source",
+    sourcePath: "scripts/research-inspect.ts",
+    description: "Thin runtime wrapper for inspecting installed runtime state.",
   },
 ] as const;
 

@@ -58,10 +58,7 @@ export function mergeClaudeSettingsDocument(
 
 export function createClaudeSettingsMergeRecord(
   updatedAt: string,
-  managedRoot = RESEARCHER_RUNTIME_MANAGED_ROOT,
 ): RuntimeSettingsMergeRecord {
-  const patch = createClaudeSettingsPatch(managedRoot);
-
   return {
     path: ".claude/settings.local.json",
     owned_keys: ["researcher.runtimeRoot", "researcher.commands"],
