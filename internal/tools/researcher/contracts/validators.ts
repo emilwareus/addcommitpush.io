@@ -5,12 +5,14 @@ import analysisFrontmatterSchema from "../../../../researcher/schemas/analysis-f
 import insightFrontmatterSchema from "../../../../researcher/schemas/insight-frontmatter.schema.json";
 import manifestSchema from "../../../../researcher/schemas/manifest.schema.json";
 import reportFrontmatterSchema from "../../../../researcher/schemas/report-frontmatter.schema.json";
+import runtimeInstallSchema from "../../../../researcher/schemas/runtime-install.schema.json";
 import sourcesSchema from "../../../../researcher/schemas/sources.schema.json";
 
 import type { AnalysisFrontmatter } from "./analysis";
 import type { InsightFrontmatter } from "./insights";
 import type { ResearchManifest } from "./manifest";
 import type { ReportFrontmatter } from "./reports";
+import type { RuntimeInstallManifest, RuntimeInstallRequest } from "./runtime";
 import {
   STATUS_SUMMARY_SCHEMA,
   type StatusSummary,
@@ -31,6 +33,12 @@ const analysisFrontmatterValidator = ajv.compile<AnalysisFrontmatter>(
 );
 const reportFrontmatterValidator = ajv.compile<ReportFrontmatter>(reportFrontmatterSchema);
 const statusSummaryValidator = ajv.compile<StatusSummary>(STATUS_SUMMARY_SCHEMA);
+const runtimeInstallRequestValidator = ajv.compile<RuntimeInstallRequest>(
+  buildRuntimeSchemaValidator("install_request"),
+);
+const runtimeInstallManifestValidator = ajv.compile<RuntimeInstallManifest>(
+  buildRuntimeSchemaValidator("install_manifest"),
+);
 
 export function validateManifest(input: unknown): ResearchManifest {
   return validateDocument(input, manifestValidator, "manifest.json");
@@ -56,6 +64,14 @@ export function validateStatusSummary(input: unknown): StatusSummary {
   return validateDocument(input, statusSummaryValidator, "status summary");
 }
 
+export function validateRuntimeInstallRequest(input: unknown): RuntimeInstallRequest {
+  return validateDocument(input, runtimeInstallRequestValidator, "runtime install request");
+}
+
+export function validateRuntimeInstallManifest(input: unknown): RuntimeInstallManifest {
+  return validateDocument(input, runtimeInstallManifestValidator, "runtime install manifest");
+}
+
 function validateDocument<T>(
   input: unknown,
   validator: ValidateFunction<T>,
@@ -79,4 +95,17 @@ function formatAjvErrors(errors: ErrorObject[] | null | undefined): string {
       return `${instancePath} ${error.message ?? "is invalid"}`.trim();
     })
     .join("; ");
+}
+
+function buildRuntimeSchemaValidator(definitionName: "install_request" | "install_manifest") {
+  const schemaDefinitions = (
+    runtimeInstallSchema as {
+      $defs: Record<string, object>;
+    }
+  ).$defs;
+
+  return {
+    ...schemaDefinitions[definitionName],
+    $defs: schemaDefinitions,
+  };
 }
