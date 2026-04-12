@@ -12,6 +12,16 @@ import {
   validateRuntimeInstallManifest,
   validateRuntimeInstallRequest,
 } from "../contracts/validators";
+import {
+  RUNTIME_COMMAND_CATALOG,
+  validateRuntimeCatalogIntegrity,
+} from "../runtime/catalog";
+import {
+  findInstalledCommand,
+  createRuntimeInstallManifest,
+  listManagedAssetPaths,
+} from "../runtime/manifest";
+import { RUNTIME_PAYLOAD_CATALOG } from "../runtime/payload";
 
 describe("phase 6 runtime contracts", () => {
   test("accepts valid codex and claude install requests", () => {
@@ -195,5 +205,80 @@ describe("phase 6 runtime contracts", () => {
     expect(normalizeRuntimeRelativePath(".claude/settings.local.json")).toBe(
       ".claude/settings.local.json",
     );
+  });
+
+  test("freezes one shared runtime catalog against the current wrapper inventory", () => {
+    expect(
+      validateRuntimeCatalogIntegrity(RUNTIME_COMMAND_CATALOG, RUNTIME_PAYLOAD_CATALOG),
+    ).toEqual(RUNTIME_COMMAND_CATALOG);
+
+    expect([...RUNTIME_COMMAND_CATALOG.map((entry) => entry.id)].sort()).toEqual([
+      "research-analyze",
+      "research-harvest",
+      "research-insight",
+      "research-new",
+      "research-refresh",
+      "research-report",
+      "research-resume",
+      "research-status",
+    ].sort());
+
+    expect(RUNTIME_COMMAND_CATALOG.find((entry) => entry.id === "research-new")).toMatchObject({
+      wrapperScriptSource: "scripts/research-init.ts",
+      payloadKeys: [
+        "core:researcher",
+        "schemas:researcher",
+        "template:research-brief",
+        "wrapper:research-init",
+      ],
+    });
+  });
+
+  test("creates deterministic install manifests from normalized ownership records", () => {
+    const manifest = createRuntimeInstallManifest({
+      runtime: "codex",
+      managedRoot: ".researcher-runtime",
+      generatedAt: "2026-04-12T00:00:00.000Z",
+      sourceIdentity: {
+        version: "0.1.0",
+        source_root: "/repo",
+      },
+      commands: [
+        {
+          id: "research-status",
+          installed_path: ".codex/skills/research-status/SKILL.md",
+          wrapper_script_path: ".researcher-runtime/scripts/research-status.js",
+          payload_keys: ["wrapper:research-status", "schemas:researcher", "core:researcher"],
+        },
+      ],
+      managedAssets: [
+        {
+          runtime: "codex",
+          kind: "runtime-schema",
+          path: ".researcher-runtime/researcher/schemas/manifest.schema.json",
+          source_path: "researcher/schemas/manifest.schema.json",
+          generated_by: "research-install",
+          content_hash: "sha256:schema",
+          command_ids: ["research-status"],
+        },
+        {
+          runtime: "codex",
+          kind: "codex-skill",
+          path: ".codex/skills/research-status/SKILL.md",
+          source_path: "internal/tools/researcher/runtime/adapters/codex.ts",
+          generated_by: "research-install",
+          content_hash: "sha256:skill",
+          command_ids: ["research-status"],
+        },
+      ],
+    });
+
+    expect(findInstalledCommand(manifest, "research-status")).toMatchObject({
+      payload_keys: ["core:researcher", "schemas:researcher", "wrapper:research-status"],
+    });
+    expect(listManagedAssetPaths(manifest)).toEqual([
+      ".codex/skills/research-status/SKILL.md",
+      ".researcher-runtime/researcher/schemas/manifest.schema.json",
+    ]);
   });
 });
