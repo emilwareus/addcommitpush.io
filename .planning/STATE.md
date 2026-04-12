@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 6 planning complete
-last_updated: "2026-04-11T10:05:00.000Z"
-last_activity: 2026-04-11 -- Phase 06 planned
+status: ready_for_milestone_completion
+stopped_at: Phase 6 complete
+last_updated: "2026-04-12T11:00:00.000Z"
+last_activity: 2026-04-12 -- Phase 06 completed
 progress:
   total_phases: 6
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 19
-  completed_plans: 16
-  percent: 84
+  completed_plans: 19
+  percent: 100
 ---
 
 # Project State
@@ -21,22 +21,22 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-11)
 
 **Core value:** Turn research from one-off chat output into durable, source-backed knowledge that can be reused, extended, and repackaged into multiple high-quality reports.
-**Current focus:** Phase 06 — runtime-installation-&-lifecycle
+**Current focus:** Milestone close-out
 
 ## Current Position
 
-Phase: 06 (runtime-installation-&-lifecycle) — PLANNED
-Plan: 0 of 3
-Status: Ready to execute Phase 06
-Last activity: 2026-04-11 -- Phase 06 planned
+Phase: 06 (runtime-installation-lifecycle) — COMPLETE
+Plan: 3 of 3
+Status: Phase 06 complete
+Last activity: 2026-04-12 -- Phase 06 completed
 
-Progress: [████████░░] 84%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 16
+- Total plans completed: 19
 - Average duration: 5 min
 - Total execution time: 0.1 hours
 
@@ -99,6 +99,10 @@ Recent decisions affecting current work:
 - [Phase 06]: Keep one runtime-neutral command catalog and render thin native adapters per runtime.
 - [Phase 06]: Persist installer ownership in a manifest so update and inspect stay deterministic.
 - [Phase 06]: Merge runtime settings non-destructively and keep hooks opt-in.
+- [Phase 06]: Build the installed runtime as a self-contained ESM package with bundled
+  dependencies, schemas, templates, and generated entrypoints.
+- [Phase 06]: Drive update and inspect strictly from the persisted install manifest so drift is
+  surfaced explicitly instead of overwritten.
 
 ### Pending Todos
 
@@ -111,5 +115,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-04-11T10:05:00.000Z
-Stopped at: Phase 6 planning complete
-Resume file: .planning/phases/06-runtime-installation-lifecycle/06-01-PLAN.md
+Stopped at: Phase 6 complete
+Resume file: .planning/phases/06-runtime-installation-lifecycle/06-VERIFICATION.md

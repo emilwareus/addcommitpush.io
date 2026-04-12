@@ -7,13 +7,13 @@
 
 ### Installation & Runtime
 
-- [ ] **INST-01**: User can install Researcher into a Codex project with the required commands,
+- [x] **INST-01**: User can install Researcher into a Codex project with the required commands,
   skills, templates, and supporting runtime assets.
-- [ ] **INST-02**: User can install Researcher into a Claude Code project with the required
+- [x] **INST-02**: User can install Researcher into a Claude Code project with the required
   commands, skills, templates, and supporting runtime assets.
-- [ ] **INST-03**: User can update an existing Researcher installation without manually copying
+- [x] **INST-03**: User can update an existing Researcher installation without manually copying
   files.
-- [ ] **INST-04**: User can inspect which runtime assets were installed and where they live.
+- [x] **INST-04**: User can inspect which runtime assets were installed and where they live.
 
 ### Research Workspace
 
@@ -96,10 +96,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INST-01 | Phase 6 | Pending |
-| INST-02 | Phase 6 | Pending |
-| INST-03 | Phase 6 | Pending |
-| INST-04 | Phase 6 | Pending |
+| INST-01 | Phase 6 | Complete |
+| INST-02 | Phase 6 | Complete |
+| INST-03 | Phase 6 | Complete |
+| INST-04 | Phase 6 | Complete |
 | RSCH-01 | Phase 1 | Complete |
 | RSCH-02 | Phase 5 | Complete |
 | RSCH-03 | Phase 1 | Complete |
@@ -125,4 +125,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-04-10*
-*Last updated: 2026-04-11 after Phase 5 completion*
+*Last updated: 2026-04-12 after Phase 6 completion*

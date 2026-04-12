@@ -42,15 +42,22 @@ extended, and repackaged into multiple high-quality reports.
 - `STAT-01`: Users can run a status flow that surfaces one next recommended action for a research.
 - `STAT-02`: Users can detect stale evidence, unsupported claims, and verification debt before shipping a report.
 - `STAT-03`: Users can see when downstream insights, analysis, and reports are affected by changed source freshness.
+- Phase 6 validated installable Codex and Claude runtime surfaces plus deterministic install, update,
+  and inspect flows.
+- `INST-01`: Users can install Researcher into a Codex project with the required commands, skills,
+  templates, and supporting runtime assets.
+- `INST-02`: Users can install Researcher into a Claude Code project with the required commands,
+  skills, templates, and supporting runtime assets.
+- `INST-03`: Users can update an existing Researcher installation without manually copying files.
+- `INST-04`: Users can inspect which runtime assets were installed and where they live.
 
 ### Active
 
-- [ ] Users can install Researcher into Codex and Claude Code as commands, skills, scripts,
-  and supporting workflow assets.
+- [ ] No active v1 requirements. The next logical step is milestone completion and release shaping.
 
 ## Current State
 
-Phases 1 through 5 are complete. The repo now has:
+Phases 1 through 6 are complete. The repo now has:
 
 - a fixed per-research workspace under `researcher/researches/<slug>/`
 - a versioned manifest contract and a richer shared `sources.json` registry with stable `SRC-*` IDs
@@ -67,8 +74,14 @@ Phases 1 through 5 are complete. The repo now has:
 - persisted insight/report health `side_states`, manifest verification aggregates, and a deterministic `research-status` summary
 - verification debt evaluation for unsupported insights, unresolved report lineage, and contradiction/open-question analysis risk
 - downstream freshness propagation from `SRC-*` into affected `INS-*` and `RPT-*` artifacts with derived impacted analyses
+- a self-contained installed runtime package that compiles the shared core to executable JavaScript,
+  vendors the required dependency subset, and writes managed `bin/*.js` entrypoints
+- manifest-driven `research-install`, `research-update`, and `research-inspect` flows with
+  deterministic managed asset records and runtime-native Codex or Claude surfaces
+- install inspection that reports managed asset inventory, settings merge state, drift, and next
+  action directly from the persisted install manifest
 
-Next focus: Phase 6, Runtime Installation & Lifecycle.
+Next focus: milestone completion, release packaging, and optional runtime expansion work.
 
 ### Out of Scope
 
@@ -136,7 +149,9 @@ must coexist with that reality without assuming a blank repo.
 | Persist health `side_states` on insights and reports while analyses stay derived-impact only | Reports and reusable insights need durable health flags, but analyses should remain lightweight and recomputed | Validated in Phase 5 |
 | Keep verification debt deterministic and file-based | Trust and publish-readiness need explicit, inspectable rules rather than model-judged scoring | Validated in Phase 5 |
 | Treat multiple reports from one research as a first-class requirement | This is the defining user value and should shape every artifact contract | Validated in Phase 4 |
-| Start with Codex and Claude Code support before broader runtime expansion | This keeps the first implementation focused while matching the intended install surface | — Pending |
+| Start with Codex and Claude Code support before broader runtime expansion | This keeps the first implementation focused while matching the intended install surface | Validated in Phase 6 |
+| Build the installed runtime as a self-contained package instead of inheriting the target project's toolchain | Installed execution must work in clean fixture projects without `tsx` or repo-local dependencies | Validated in Phase 6 |
+| Use the install manifest as the single ownership ledger for install, update, and inspect | Deterministic lifecycle behavior depends on one authoritative managed asset inventory | Validated in Phase 6 |
 
 ## Evolution
 
@@ -156,4 +171,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-11 after Phase 5 completion*
+*Last updated: 2026-04-12 after Phase 6 completion*

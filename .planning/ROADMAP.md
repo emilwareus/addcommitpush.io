@@ -20,8 +20,8 @@ and only then finalize the install surfaces for Codex and Claude Code.
   traceable support. (completed 2026-04-11)
 - [x] **Phase 5: Status, Freshness & Verification** - Surface research health, freshness debt, and
   downstream impact before shipping outputs. (completed 2026-04-11)
-- [ ] **Phase 6: Runtime Installation & Lifecycle** - Install, update, and inspect Researcher in
-  Codex and Claude Code projects.
+- [x] **Phase 6: Runtime Installation & Lifecycle** - Install, update, and inspect Researcher in
+  Codex and Claude Code projects. (completed 2026-04-12)
 
 ## Phase Details
 
@@ -119,7 +119,7 @@ Plans:
 Plans:
 - [x] 06-01: Define runtime-neutral workflow contracts
 - [x] 06-02: Build Codex and Claude Code adapters
-- [ ] 06-03: Implement installer, update, and inspect flows
+- [x] 06-03: Implement installer, update, and inspect flows
 
 ## Progress
 
@@ -133,4 +133,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 3. Insights & Analysis Graph | 3/3 | Complete | 2026-04-11 |
 | 4. Report Generation | 3/3 | Complete | 2026-04-11 |
 | 5. Status, Freshness & Verification | 3/3 | Complete | 2026-04-11 |
-| 6. Runtime Installation & Lifecycle | 0/3 | Not started | - |
+| 6. Runtime Installation & Lifecycle | 3/3 | Complete | 2026-04-12 |
