@@ -117,7 +117,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 06-01: Define runtime-neutral workflow contracts
+- [x] 06-01: Define runtime-neutral workflow contracts
 - [ ] 06-02: Build Codex and Claude Code adapters
 - [ ] 06-03: Implement installer, update, and inspect flows
 
