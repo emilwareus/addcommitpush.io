@@ -1,0 +1,23 @@
+<research_brief>
+  <identity>
+    <research_id>RES-20260410-deep-research-os</research_id>
+    <title>Deep research operating system inspired by GSD</title>
+  </identity>
+  <objective>
+    Design a reusable, file-based research workflow for Codex and Claude that supports many
+    reports from one research base.
+  </objective>
+  <scope>
+    <include>source registry</include>
+    <include>insight promotion</include>
+    <include>analysis notebooks</include>
+    <include>report compilation</include>
+    <exclude>frontend UI implementation</exclude>
+  </scope>
+  <success_criteria>
+    <item>One research can produce multiple reports.</item>
+    <item>Every report has traceable lineage.</item>
+    <item>Sources are tracked centrally in one file.</item>
+  </success_criteria>
+</research_brief>
+

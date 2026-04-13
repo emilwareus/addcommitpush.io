@@ -1,0 +1,18 @@
+<report_request>
+  <report_id>RPT-0003</report_id>
+  <audience>blog-readers</audience>
+  <angle>Why research systems should be artifact-first</angle>
+  <thesis>
+    A durable research system should treat reports as packaging and insights as the reusable core.
+  </thesis>
+  <inputs>
+    <analysis ref="ANL-0001" />
+    <insight ref="INS-0003" />
+    <insight ref="INS-0007" />
+    <insight ref="INS-0011" />
+  </inputs>
+  <constraints>
+    <constraint>Output Markdown only.</constraint>
+    <constraint>Reference insight IDs explicitly.</constraint>
+  </constraints>
+</report_request>

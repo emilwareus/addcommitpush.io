@@ -1,0 +1,17 @@
+<task_contract>
+  <task_id>TSK-0012</task_id>
+  <role>insight-extractor</role>
+  <objective>Convert three audited sources into reusable insight files.</objective>
+  <inputs>
+    <source ref="SRC-0004" />
+    <source ref="SRC-0008" />
+    <source ref="SRC-0010" />
+  </inputs>
+  <deliverable type="markdown" path="insights/INS-0012-pricing-trend.md" />
+  <quality_gate>
+    <check>Every claim must cite at least one source ID.</check>
+    <check>Counter-evidence must be listed under caveats.</check>
+    <check>Do not write a report.</check>
+  </quality_gate>
+</task_contract>
+
