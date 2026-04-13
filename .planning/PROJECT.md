@@ -3,172 +3,89 @@
 ## What This Is
 
 Researcher is an installable deep-research operating system for AI runtimes like Codex and
-Claude Code. It is modeled directly on GSD's strengths: commands, skills, scripts, workflows,
-hooks, and file-based state, but aimed at web research, evidence capture, insight synthesis,
-and multi-angle report generation instead of code delivery alone.
-
-The product should let a user install Researcher into a project and work through durable,
-structured research flows that turn sources into reusable insights, analysis, and many Markdown
-reports from one research base.
+Claude Code. It takes the GSD model of commands, skills, scripts, checkpoints, and file-based
+state, then applies it to durable research work: source capture, evidence tracking, insight
+promotion, analysis synthesis, multi-angle report generation, and runtime installation.
 
 ## Core Value
 
 Turn research from one-off chat output into durable, source-backed knowledge that can be reused,
 extended, and repackaged into multiple high-quality reports.
 
+## Current State
+
+v1.0 is shipped and archived in `.planning/milestones/`.
+
+The shipped system now includes:
+
+- bounded per-research workspaces under `researcher/researches/<slug>/`
+- deterministic `sources -> insights -> analysis -> reports` artifact flow
+- append-only evidence capture and freshness propagation
+- manifest-driven status, verification debt, and next-action routing
+- self-contained Codex and Claude runtime installation, update, and inspect flows
+
 ## Requirements
 
 ### Validated
 
-- Phase 1 validated the bounded research workspace contract and disk-only resume flow.
-- `RSCH-01`: Users can initialize a new research with a bounded brief and a fixed folder structure.
-- `RSCH-03`: Users can resume an existing research without rebuilding context from chat history.
-- Phase 2 validated the central source registry, durable evidence capture, and refreshable source state.
-- `SRC-01`: Users can add external sources to one central structured source registry for a research.
-- `SRC-02`: Users can record source metadata including origin, access time, type, status, and confidence.
-- `SRC-03`: Users can store captured evidence or extracted material alongside the research in a durable local structure.
-- `SRC-04`: Users can refresh sources later and detect when evidence may have gone stale.
-- Phase 3 validated reusable insight and analysis artifacts with explicit lineage.
-- `INS-01`: Users can promote gathered material into reusable insight artifacts with stable IDs.
-- `INS-02`: Users can link each insight to one or more supporting source records.
-- `INS-03`: Users can group multiple insights into higher-order analysis artifacts.
-- `INS-04`: Users can inspect contradictions, caveats, or unresolved questions in analysis artifacts.
-- Phase 4 validated reusable `RPT-*` report artifacts with explicit report lineage.
-- `RPT-01`: Users can generate a Markdown report from existing insights and analysis for a chosen angle or audience.
-- `RPT-02`: Users can generate more than one report from the same research without duplicating the underlying research work.
-- `RPT-03`: Users can trace each report back to the insight and source lineage that supports it.
-- Phase 5 validated deterministic status routing, verification debt, and freshness propagation.
-- `RSCH-02`: Users can inspect a research manifest and status view that show freshness debt, verification debt, and active report inventory.
-- `STAT-01`: Users can run a status flow that surfaces one next recommended action for a research.
-- `STAT-02`: Users can detect stale evidence, unsupported claims, and verification debt before shipping a report.
-- `STAT-03`: Users can see when downstream insights, analysis, and reports are affected by changed source freshness.
-- Phase 6 validated installable Codex and Claude runtime surfaces plus deterministic install, update,
-  and inspect flows.
-- `INST-01`: Users can install Researcher into a Codex project with the required commands, skills,
-  templates, and supporting runtime assets.
-- `INST-02`: Users can install Researcher into a Claude Code project with the required commands,
-  skills, templates, and supporting runtime assets.
-- `INST-03`: Users can update an existing Researcher installation without manually copying files.
-- `INST-04`: Users can inspect which runtime assets were installed and where they live.
+- ✓ `RSCH-01` / `RSCH-03` — bounded workspace init and disk-only resume shipped in v1.0
+- ✓ `SRC-01` through `SRC-04` — central source registry, metadata, evidence capture, and refresh
+  shipped in v1.0
+- ✓ `INS-01` through `INS-04` — reusable insight and analysis artifacts with explicit lineage
+  shipped in v1.0
+- ✓ `RPT-01` through `RPT-03` — reusable Markdown report generation with traceable support shipped
+  in v1.0
+- ✓ `RSCH-02` / `STAT-01` through `STAT-03` — status routing, freshness debt, and verification
+  debt shipped in v1.0
+- ✓ `INST-01` through `INST-04` — Codex and Claude install, update, and inspect lifecycle shipped
+  in v1.0
 
 ### Active
 
-- [ ] No active v1 requirements. The next logical step is milestone completion and release shaping.
-
-## Current State
-
-Phases 1 through 6 are complete. The repo now has:
-
-- a fixed per-research workspace under `researcher/researches/<slug>/`
-- a versioned manifest contract and a richer shared `sources.json` registry with stable `SRC-*` IDs
-- deterministic `research-init`, `research-resume`, `research-source-add`, and `research-source-refresh` CLIs backed by shared core services
-- schema-validated `INS-*` and `ANL-*` Markdown contracts with shared parse/render logic
-- schema-validated `RPT-*` Markdown contracts with shared parse/render logic
-- deterministic `research-insight`, `research-analysis`, and `research-report` CLIs backed by shared upsert services
-- source-to-insight and insight-to-analysis backlink reconciliation through tool-owned lineage updates
-- analysis-to-report and insight-to-report backlink reconciliation through tool-owned lineage updates
-- durable append-only evidence capture under `data/<bucket>/<SRC-ID>/<timestamp>/...`
-- refresh semantics that derive stale source state from the manifest freshness window
-- disk-only resume that reconstructs stage, inventory, freshness debt, and next action from files, including `review-existing-reports` routing once reports exist
-- report lineage rendering that expands direct analysis inputs into effective insight and deduped source references
-- persisted insight/report health `side_states`, manifest verification aggregates, and a deterministic `research-status` summary
-- verification debt evaluation for unsupported insights, unresolved report lineage, and contradiction/open-question analysis risk
-- downstream freshness propagation from `SRC-*` into affected `INS-*` and `RPT-*` artifacts with derived impacted analyses
-- a self-contained installed runtime package that compiles the shared core to executable JavaScript,
-  vendors the required dependency subset, and writes managed `bin/*.js` entrypoints
-- manifest-driven `research-install`, `research-update`, and `research-inspect` flows with
-  deterministic managed asset records and runtime-native Codex or Claude surfaces
-- install inspection that reports managed asset inventory, settings merge state, drift, and next
-  action directly from the persisted install manifest
-
-Next focus: milestone completion, release packaging, and optional runtime expansion work.
+- [ ] Define the next milestone with `$gsd-new-milestone`
 
 ### Out of Scope
 
-- Single-use "one prompt, one answer" research flows — they discard too much structure and
-  provenance.
-- SaaS-first hosted architecture — the initial product should be file-based, local-first, and
-  runtime-installable like GSD.
-- Optimizing for only one report type — the core design must support many report angles from one
-  evidence base.
-- Rebuilding GSD's code-execution workflow inside Researcher — Researcher should borrow the
-  orchestration model, not clone the delivery domain.
+- SaaS-first hosted state
+- Generic IDE replacement
+- Audio or slideshow outputs as a primary milestone goal
+- Automatic trust scoring that is not auditable from files
+
+## Next Milestone Goals
+
+- tighten release and packaging ergonomics around the installed runtime
+- decide whether the next milestone should prioritize broader runtime support or deeper research
+  workflows like notebooks and datasets
+- define collaboration, sharing, or import/export boundaries only after the single-user local-first
+  workflow remains stable
 
 ## Context
 
-This project comes from a direct inspection of GSD and a design exercise captured under
-`researcher/`. The current spec already defines a target artifact model:
+Shipped v1.0 as a local-first research system inside this repository with:
 
-- a per-research folder with `brief.md`, `manifest.json`, `sources.json`, `insights/`, `data/`,
-  `analysis/`, and `reports/`
-- Markdown as the main human-readable medium
-- JSON for central source and manifest state
-- XML-style prompt contracts for orchestration between agents and workflows
+- 6 completed phases
+- 19 completed plans
+- full test coverage across the Researcher surface
+- milestone archives in `.planning/milestones/`
 
-The intended operator experience is "just like GSD" for research work:
+Known follow-up themes:
 
-- small command surface
-- thin orchestrators
-- focused subagents with fresh context
-- file-based artifacts with declared consumers
-- progress routing and resumable checkpoints
-- verification debt for stale or weak evidence
-
-This repository already contains a blog project and an existing `AGENTS.md`. GSD initialization
-must coexist with that reality without assuming a blank repo.
-
-## Constraints
-
-- **Runtime Compatibility**: Must be installable into Codex and Claude Code first — these are the
-  primary target runtimes.
-- **Local-First State**: Core state must live in files, not require a database or hosted backend.
-- **Artifact Discipline**: Reports must be Markdown, and the source registry must be structured and
-  machine-readable.
-- **GSD Alignment**: The product should feel structurally similar to GSD so users can transfer the
-  same mental model.
-- **Extensibility**: One research must remain open to additional sources, insights, analysis, and
-  reports over time.
-- **Source Provenance**: Every report-worthy claim must be traceable back through insights to
-  concrete sources.
+- keep Codex and Claude runtime surfaces thin and in parity
+- preserve the manifest as the single ownership ledger for install, update, and inspect
+- avoid reintroducing one-shot prompt workflows that bypass durable artifacts
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Build Researcher as a GSD-style installable system | The user wants the same operating model as GSD, not a standalone ad hoc prompt pack | Validated in Phase 1 |
-| Use file-based artifacts as the primary state model | This preserves inspectability, git friendliness, and durability across context resets | Validated in Phase 1 |
-| Center the artifact chain on sources -> insights -> analysis -> reports | This is the core architectural inversion from one-shot chat output to reusable knowledge | Workspace foundation validated in Phase 1 |
-| Keep `sources.json` as the single public source ledger | This preserves one inspectable registry while still allowing richer per-source metadata and append-only capture history | Validated in Phase 2 |
-| Keep `INS-*` and `ANL-*` canonical as Markdown artifacts | This preserves inspectability and lets future reports package durable artifacts instead of transient chat summaries | Validated in Phase 3 |
-| Reconcile provenance from forward lineage instead of maintaining a second graph store | One canonical ledger per edge keeps source, insight, and analysis links auditable and deterministic | Validated in Phase 3 |
-| Make contradictions, caveats, and open questions required analysis sections | This keeps unresolved evidence visible instead of burying it in prose and supports later report/status phases | Validated in Phase 3 |
-| Keep `RPT-*` canonical as Markdown artifacts with explicit terminal lineage sections | This preserves inspectability while making reports durable packaging artifacts instead of one-shot prose | Validated in Phase 4 |
-| Derive report lineage from explicit `ANL-*` and `INS-*` inputs, then expand through analysis into effective insights and sources | This keeps report support auditable without reintroducing source-level authoring in the report request contract | Validated in Phase 4 |
-| Derive source staleness from manifest freshness windows during refresh | This keeps freshness detection deterministic and file-based without introducing provider-specific logic | Validated in Phase 2 |
-| Keep `research-status` as a compact progress router with one primary next action | This preserves GSD-style operator guidance instead of creating a passive dashboard | Validated in Phase 5 |
-| Persist health `side_states` on insights and reports while analyses stay derived-impact only | Reports and reusable insights need durable health flags, but analyses should remain lightweight and recomputed | Validated in Phase 5 |
-| Keep verification debt deterministic and file-based | Trust and publish-readiness need explicit, inspectable rules rather than model-judged scoring | Validated in Phase 5 |
-| Treat multiple reports from one research as a first-class requirement | This is the defining user value and should shape every artifact contract | Validated in Phase 4 |
-| Start with Codex and Claude Code support before broader runtime expansion | This keeps the first implementation focused while matching the intended install surface | Validated in Phase 6 |
-| Build the installed runtime as a self-contained package instead of inheriting the target project's toolchain | Installed execution must work in clean fixture projects without `tsx` or repo-local dependencies | Validated in Phase 6 |
-| Use the install manifest as the single ownership ledger for install, update, and inspect | Deterministic lifecycle behavior depends on one authoritative managed asset inventory | Validated in Phase 6 |
-
-## Evolution
-
-This document evolves at phase transitions and milestone boundaries.
-
-**After each phase transition**:
-1. Requirements invalidated? -> Move to Out of Scope with reason
-2. Requirements validated? -> Move to Validated with phase reference
-3. New requirements emerged? -> Add to Active
-4. Decisions to log? -> Add to Key Decisions
-5. "What This Is" still accurate? -> Update if drifted
-
-**After each milestone**:
-1. Full review of all sections
-2. Core Value check -> still the right priority?
-3. Audit Out of Scope -> reasons still valid?
-4. Update Context with current state
+| Build Researcher as a GSD-style installable system | The operator model mattered as much as the feature set | Validated in v1.0 |
+| Use file-based artifacts as the primary state model | Durability, git visibility, and inspectability are core product traits | Validated in v1.0 |
+| Center the artifact chain on sources -> insights -> analysis -> reports | Reuse and traceability depend on explicit intermediate artifacts | Validated in v1.0 |
+| Keep `sources.json` as the central source ledger | One public source registry keeps provenance inspectable | Validated in v1.0 |
+| Keep `INS-*`, `ANL-*`, and `RPT-*` canonical as Markdown artifacts | Human-readable durable artifacts are part of the product surface | Validated in v1.0 |
+| Keep `research-status` as a progress router, not a passive dashboard | GSD-style workflows need one decisive next action | Validated in v1.0 |
+| Build the installed runtime as a self-contained package | Installed execution must not depend on the target project's toolchain | Validated in v1.0 |
+| Use the install manifest as the single ownership ledger | Install, update, and inspect need one deterministic source of truth | Validated in v1.0 |
 
 ---
-*Last updated: 2026-04-12 after Phase 6 completion*
+*Last updated: 2026-04-13 after v1.0 milestone*

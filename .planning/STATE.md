@@ -1,11 +1,11 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.0
-milestone_name: milestone
-status: ready_for_milestone_completion
-stopped_at: Phase 6 complete
-last_updated: "2026-04-12T11:00:00.000Z"
-last_activity: 2026-04-12 -- Phase 06 completed
+milestone_name: Researcher MVP
+status: completed
+stopped_at: v1.0 archived
+last_updated: "2026-04-13T05:02:19.602Z"
+last_activity: 2026-04-13
 progress:
   total_phases: 6
   completed_phases: 6
@@ -18,17 +18,17 @@ progress:
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-04-11)
+See: .planning/PROJECT.md (updated 2026-04-13)
 
 **Core value:** Turn research from one-off chat output into durable, source-backed knowledge that can be reused, extended, and repackaged into multiple high-quality reports.
-**Current focus:** Milestone close-out
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 06 (runtime-installation-lifecycle) — COMPLETE
-Plan: 3 of 3
-Status: Phase 06 complete
-Last activity: 2026-04-12 -- Phase 06 completed
+Phase: v1.0 archived
+Plan: milestone complete
+Status: v1.0 archived and ready for next milestone definition
+Last activity: 2026-04-13
 
 Progress: [██████████] 100%
 
@@ -101,12 +101,13 @@ Recent decisions affecting current work:
 - [Phase 06]: Merge runtime settings non-destructively and keep hooks opt-in.
 - [Phase 06]: Build the installed runtime as a self-contained ESM package with bundled
   dependencies, schemas, templates, and generated entrypoints.
+
 - [Phase 06]: Drive update and inspect strictly from the persisted install manifest so drift is
   surfaced explicitly instead of overwritten.
 
 ### Pending Todos
 
-None yet.
+- Define the next milestone with `$gsd-new-milestone`.
 
 ### Blockers/Concerns
 
@@ -115,5 +116,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-04-11T10:05:00.000Z
-Stopped at: Phase 6 complete
-Resume file: .planning/phases/06-runtime-installation-lifecycle/06-VERIFICATION.md
+Stopped at: v1.0 archived
+Resume file: .planning/MILESTONES.md
