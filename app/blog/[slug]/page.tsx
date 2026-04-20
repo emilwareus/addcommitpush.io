@@ -55,6 +55,12 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   // Dynamic content import
   const postContent = await (async () => {
     switch (slug) {
+      case 'valkompass-ai-transparent-demokrati': {
+        const { ValkompassAiTransparentDemokratiContent } = await import(
+          '@/components/blog-posts/valkompass-ai-transparent-demokrati'
+        );
+        return <ValkompassAiTransparentDemokratiContent />;
+      }
       case 'recruiting-engineers-as-a-startup': {
         const { RecruitingEngineersContent } =
           await import('@/components/blog-posts/recruiting-engineers-as-a-startup');
