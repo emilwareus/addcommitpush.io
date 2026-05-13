@@ -1,0 +1,830 @@
+<!doctype html>
+
+
+    
+    
+    
+
+    
+
+
+    
+    
+    
+    
+
+    
+    
+    
+    
+
+    <html lang="en" xml:lang="en" data-cms-lang="en-us">
+    <head>
+        
+<meta charset="utf-8"/>
+
+<title>Reducing our monorepo size to improve developer velocity - Dropbox</title>
+
+
+
+
+<meta name="description" content="Monorepos will continue to grow as products evolve, but growth doesn’t have to mean friction."/>
+<meta name="data-tags" content="AI,storage,Developers,Infrastructure,developer velocity"/>
+<meta name="data-tagTaxonomy" content="AI; Developers; Infrastructure; developer velocity; storage;"/>
+<meta name="page-id" content="infrastructure-reducing-our-monorepo-size-to-improve-developer-velocity"/>
+<meta name="topic" content="Infrastructure"/>
+
+<meta name="publishDate" content="2026-03-25 10:00:00.000-0700"/>
+
+<meta name="author" content="Ishan Mishra"/>
+
+<link rel="canonical" href="https://dropbox.tech/infrastructure/reducing-our-monorepo-size-to-improve-developer-velocity"/>
+
+
+
+
+<link rel="icon" href="/cms/content/dam/dropbox/aem/favicon32.ico" type="image/x-icon"/>
+
+
+
+
+
+<meta property="og:url" content="https://dropbox.tech/infrastructure/reducing-our-monorepo-size-to-improve-developer-velocity"/>
+<meta property="og:type" content="article"/>
+<meta property="og:title" content="Reducing our monorepo size to improve developer velocity"/>
+<meta property="og:description" content="Monorepos will continue to grow as products evolve, but growth doesn’t have to mean friction."/>
+<meta property="og:image" content="https://aem.dropbox.com/cms/content/dam/dropbox/tech-blog/en-us/2026/march/monorepo/social/Reducing%20monorepo%20size_Diagram_Social.png/_jcr_content/renditions/Reducing%20monorepo%20size_Diagram_Social.og.png"/>
+
+
+<meta name="twitter:card" content="summary_large_image"/>
+
+
+
+<meta content="width=device-width,initial-scale=1.0,user-scalable=no" name="viewport"/>
+
+
+
+
+  <link rel="alternate" hreflang="en-us" href="https://dropbox.tech/infrastructure/reducing-our-monorepo-size-to-improve-developer-velocity"/>
+
+
+
+
+  <!-- Adobe Launch Tag
+  <sly data-sly-test.launchScriptUrl="https://assets.adobedtm.com/7c31e7b46b8e/d19004ab8783/launch-9d6b92cf511d.min.js">
+      <script src="" async></script>
+  </sly>-->
+  <input type="hidden" id="launchurl" name="launchurl" value="https://assets.adobedtm.com/7c31e7b46b8e/d19004ab8783/launch-9d6b92cf511d.min.js"/>
+  
+    
+<script type="text/javascript" src="/cms/etc.clientlibs/settings/wcm/designs/adobe-launch.3b900a757fc8048cc37056204e01ba64.js" defer></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!--/* Calling the tealium utag sync to avoid adobe target flickering */ -->
+
+
+
+
+    
+         
+          <!-- CMS-5456 : Optimizing target calls -->
+                
+         
+    
+
+<!-- /* Calling the tealium utag sync to avoid adobe target flickering */  -->
+
+    
+
+
+
+
+
+        
+
+        
+
+
+
+
+
+
+
+
+
+<!-- /* Enable rebrand styles  */
+<sly data-sly-use.inheritUtil="com.dropbox.aem.common.models.utils.InheritanceUtilUse"
+     data-sly-test.pageStyle="" /> -->
+
+     
+    
+<link rel="stylesheet" href="/cms/etc.clientlibs/settings/wcm/designs/dropbox-common/clientlib-cms-common.fe1280fde62f39dc26aa28abd1e11743.css" type="text/css">
+<link rel="stylesheet" href="/cms/etc.clientlibs/settings/wcm/designs/dropbox-tech-blog/clientlib-all.706c697ebfafea32e18a38f788e663e8.css" type="text/css">
+
+
+
+
+    
+<link rel="stylesheet" href="/cms/etc.clientlibs/settings/wcm/designs/dropbox-tech-blog/clientlib-article-content.853221554a5d292bfd31a6140d9662f9.css" type="text/css">
+
+
+
+    </head>
+    <body class="tech-blog-article-page__page    stormcrow-animate   " data-article-uuid="0223a524-00bf-4a90-8fa3-cdc91aafa0b2">
+
+        
+
+        
+        <input type="hidden" id="wcmRunmode" name="wcmRunmode" value="publish,prod"/>
+        
+
+        
+        
+
+<header class="dr-header">
+
+
+
+
+<div class="dr-header__sticky-container">
+  <section class="dr-header__section dr-flex dr-flex--align-center dr-padding-right-40 dr-padding-left-40 dr-header__sticky-content-container dr-header__sticky-content-container--opened dr-container--surface">
+    <div class="dr-flex-1">
+      <a class="dr-link dr-link--no-underline dr-link--no-underline-hover dr-typography-t1" href="https://dropbox.tech/">Dropbox.Tech</a>
+    </div>
+    
+
+<button class="dr-header__item dr-nav__menu-toggle-button dr-button dr-hide-from-md dr-flex dr-flex-align-center dr-flex-justify-center" data-dr-tooltip="Menu" data-dr-tooltip-theme="white">
+  <svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" class="dr-width-100 dr-height-100">
+    <rect x="0.501831" y="8" width="28" height="2" fill="white"></rect>
+    <rect x="0.500977" y="18" width="28" height="2" fill="white"></rect>
+  </svg>
+</button>
+<nav class="dr-show-block-from-md dr-nav__nav">
+  <button class="dr-button dr-nav__menu-close-button">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M19.2875 2.15983L17.6683 0.566406L9.82597 8.28403L2.33211 0.909344L0.71294 2.50277L8.2068 9.87746L0.666992 17.2974L2.28617 18.8908L9.82597 11.4709L17.7143 19.2337L19.3334 17.6403L11.4451 9.87746L19.2875 2.15983Z" fill="white"/>
+    </svg>
+  </button>
+  <ul class="dr-unstyled-list dr-typography-t2 dr-flex dr-nav__nav-list">
+    <li class="dr-header__item dr-position-relative dr-header__item--with-subnav dr-header__list-item">
+      <button class="dr-button dr-button--link dr-header__link--with-subnav">Topics</button>
+      <ul class="dr-unstyled-list dr-display-none dr-header__subnav dr-position-absolute dr-container--surface dr-padding-top-30 dr-padding-left-40 dr-padding-bottom-20 dr-padding-right-40 dr-font-weight-500">
+        <li class="dr-header__list-item dr-header__list-item--subnav"><a href="https://dropbox.tech/application" class="dr-display-block dr-link dr-link--no-underline dr-container--application dr-link--primary">Application</a></li>
+      
+        <li class="dr-header__list-item dr-header__list-item--subnav"><a href="https://dropbox.tech/frontend" class="dr-display-block dr-link dr-link--no-underline dr-container--frontend dr-link--primary">Front End</a></li>
+      
+        <li class="dr-header__list-item dr-header__list-item--subnav"><a href="https://dropbox.tech/infrastructure" class="dr-display-block dr-link dr-link--no-underline dr-container--infrastructure dr-link--primary">Infrastructure</a></li>
+      
+        <li class="dr-header__list-item dr-header__list-item--subnav"><a href="https://dropbox.tech/machine-learning" class="dr-display-block dr-link dr-link--no-underline dr-container--machine-learning dr-link--primary">Machine Learning</a></li>
+      
+        <li class="dr-header__list-item dr-header__list-item--subnav"><a href="https://dropbox.tech/mobile" class="dr-display-block dr-link dr-link--no-underline dr-container--mobile dr-link--primary">Mobile</a></li>
+      
+        <li class="dr-header__list-item dr-header__list-item--subnav"><a href="https://dropbox.tech/security" class="dr-display-block dr-link dr-link--no-underline dr-container--security dr-link--primary">Security</a></li>
+      
+        <li class="dr-header__list-item dr-header__list-item--subnav"><a href="https://dropbox.tech/culture" class="dr-display-block dr-link dr-link--no-underline dr-container--culture dr-link--primary">Culture</a></li>
+      </ul>
+    </li>
+    <li class="dr-header__item dr-header__list-item">
+      <a href="https://dropbox.tech/developers" class="dr-link dr-link--no-underline dr-nav__main-category">Developers</a>
+    </li>
+    <li class="dr-header__item dr-header__list-item">
+      <a class="dr-link dr-link--no-underline dr-header__link" href="http://dropbox.com/jobs" target="_blank">Jobs</a>
+    </li>
+<li class="dr-header__item dr-header__list-item">
+      <a class="dr-link dr-link--no-underline dr-header__link" href="https://dash.dropbox.com/?utm=blogs" target="_self">Dash</a>
+    </li>
+
+  </ul>
+</nav>
+
+    <button data-dark-mode-switcher class="dr-header__item dr-header__dark-mode-switcher dr-button dr-button--link dr-cursor-pointer" data-dr-tooltip="Dark Mode" data-dr-tooltip-theme="white" type="button">
+      <img alt="" height="30" src="/cms/etc.clientlibs/settings/wcm/designs/dropbox-tech-blog/clientlib-all/resources/button_dark-mode-new.svg" width="30" class="dr-header__mode-image"/>
+    </button>
+    <button class="dr-header__item dr-header__search-button dr-button dr-button--link dr-cursor-pointer" data-dr-tooltip="Search" data-dr-tooltip-theme="white" type="button">
+      <img alt="" height="20" src="/cms/etc.clientlibs/settings/wcm/designs/dropbox-tech-blog/clientlib-all/resources/button_search-new.svg" width="20"/>
+    </button>
+    <!--search-result-page-only-->
+    
+    <!--search-result-page-only-->
+    <div class="dr-header__search dr-display-none">
+      <button class="dr-header__search-close-button dr-header__item dr-button dr-button--link dr-cursor-pointer" type="button">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M19.2875 2.15983L17.6683 0.566406L9.82597 8.28403L2.33211 0.909344L0.71294 2.50277L8.2068 9.87746L0.666992 17.2974L2.28617 18.8908L9.82597 11.4709L17.7143 19.2337L19.3334 17.6403L11.4451 9.87746L19.2875 2.15983Z" fill="white"/>
+        </svg>
+      </button>
+      <div class="dr-header__search-form-container">
+        <form class="dr-header__search-form dr-container__content dr-width-100" method="get" action="https://dropbox.tech/search-results">
+            <div class="coveo-search-section dr-header__search-input dr-header-search-input-white dr-typography-t3" data-coveo-api-url="https://dropboxproductionpmlw0l3v.org.coveo.com/rest/search" data-coveo-org-id="dropboxproductionpmlw0l3v" data-coveo-api-key="xx54717485-2fdc-4d24-afa3-0d3c9f69e01b" data-searchPage="https://dropbox.tech/search-results.html">
+               <div class="CoveoSearchbox" data-enable-omnibox="true" data-enable-query-suggest-addon="true" data-placeholder="Search" data-number-of-suggestions="5"></div>
+                <div class="CoveoStyleReplacer"></div>
+            </div>
+            <p class="dr-header__search-hint dr-margin-top-30 dr-margin-bottom-0 dr-typography-t5 dr-display-none">
+                // Press enter to search
+            </p>
+        </form>
+      </div>
+    </div>
+  </section>
+</div>
+</header>
+
+        
+
+        
+
+
+<!-- CMS-5220 : Fixing utag.js loading twice in our website
+<sly data-sly-include="/apps/dropbox-common/components/templates/base-page/partials/Analytics.html"/>
+-->
+        <div class="dr-article-hero">
+<div class="dr-article-hero__background-container dr-container--infrastructure">
+	<picture class="dr-article-hero__background dr-article-hero__background--regular">
+		<source media="( max-width: 375px )" srcset="/cms/content/dam/dropbox/tech-blog/en-us/2026/march/monorepo/headers/Infrastructure-Reducing%20monorepo%20size-375x150-light.png/_jcr_content/renditions/Infrastructure-Reducing%20monorepo%20size-375x150-light.webp"/>
+		<source media="( min-width: 376px ) and ( max-width: 1199px )" srcset="/cms/content/dam/dropbox/tech-blog/en-us/2026/march/monorepo/headers/Infrastructure-Reducing%20monorepo%20size-1024x250-light.png/_jcr_content/renditions/Infrastructure-Reducing%20monorepo%20size-1024x250-light.webp"/>
+		<img class="dr-article-hero__background-image" src="/cms/content/dam/dropbox/tech-blog/en-us/2026/march/monorepo/headers/Infrastructure-Reducing%20monorepo%20size-1440x305-light.png/_jcr_content/renditions/Infrastructure-Reducing%20monorepo%20size-1440x305-light.webp" alt=""/>
+	</picture>
+
+	<picture class="dr-article-hero__background dr-article-hero__background--dark">
+		<source media="( max-width: 375px )" srcset="/cms/content/dam/dropbox/tech-blog/en-us/2026/march/monorepo/headers/Infrastructure-Reducing%20monorepo%20size-375x150-dark.png/_jcr_content/renditions/Infrastructure-Reducing%20monorepo%20size-375x150-dark.webp"/>
+		<source media="( min-width: 376px ) and ( max-width: 1199px )" srcset="/cms/content/dam/dropbox/tech-blog/en-us/2026/march/monorepo/headers/Infrastructure-Reducing%20monorepo%20size-1024x250-dark.png/_jcr_content/renditions/Infrastructure-Reducing%20monorepo%20size-1024x250-dark.webp"/>
+		<img class="dr-article-hero__background-image" src="/cms/content/dam/dropbox/tech-blog/en-us/2026/march/monorepo/headers/Infrastructure-Reducing%20monorepo%20size-1440x305-dark.png/_jcr_content/renditions/Infrastructure-Reducing%20monorepo%20size-1440x305-dark.webp" alt=""/>
+	</picture>
+</div>
+<section class="dr-container__content">
+	<span class="dr-article-hero__title-container dr-container--infrastructure">
+		<h1 class="dr-display-inline dr-typography-t15 dr-container--surface dr-article-hero__title">Reducing our monorepo size to improve developer velocity</h1>
+	</span>
+	<div class="dr-typography-no-space dr-margin-top-10 dr-margin-md-top-20">
+        <span class="dr-typography-t5">// By Ishan Mishra &bull; Mar 25, 2026</span>
+    </div>
+</section></div>
+<div class="dr-article-content">
+
+
+
+
+
+
+
+
+
+<div class="dr-article-content__scroll-tracker-container dr-container--infrastructure">
+    <div class="dr-article-content__scroll-tracker"></div>
+</div>
+<div class="dr-container__content">
+    <div class="dr-article-content__content-container dr-padding-md-left-80 dr-padding-md-right-80 dr-typography-t12">
+        <nav class="dr-article-content__side-nav dr-article-content__side-nav--initial dr-typography-t5">
+            <ol class="dr-article-content__side-nav-list dr-margin-0">
+                <li class="dr-article-content__side-nav-list-item dr-margin-bottom-5">
+                    <a href="#when-repository-size-becomes-a-real-problem" class="dr-link dr-link--no-underline dr-article-content__side-nav-link">When repository size becomes a real problem</a>
+                </li>
+            
+                <li class="dr-article-content__side-nav-list-item dr-margin-bottom-5">
+                    <a href="#when-compression-backfires" class="dr-link dr-link--no-underline dr-article-content__side-nav-link">When compression backfires</a>
+                </li>
+            
+                <li class="dr-article-content__side-nav-list-item dr-margin-bottom-5">
+                    <a href="#rolling-it-out-without-breaking-anything" class="dr-link dr-link--no-underline dr-article-content__side-nav-link">Rolling it out without breaking anything</a>
+                </li>
+            
+                <li class="dr-article-content__side-nav-list-item dr-margin-bottom-5">
+                    <a href="#what-we-learned" class="dr-link dr-link--no-underline dr-article-content__side-nav-link">What we learned</a>
+                </li>
+            
+                <li class="dr-article-content__side-nav-list-item dr-margin-bottom-5">
+                    <a href="#whats-next" class="dr-link dr-link--no-underline dr-article-content__side-nav-link">What’s next</a>
+                </li>
+            </ol>
+        </nav>
+        <div class="dr-article-content__content">
+            
+
+
+<div class="aem-Grid aem-Grid--12 aem-Grid--default--12 ">
+    
+    <div class="text parbase aem-GridColumn aem-GridColumn--default--12">
+<p>At Dropbox, almost every product change flows through a single place: our server monorepo. A monorepo is a single, shared Git repository that contains many services and libraries used across the company. Instead of splitting code across dozens of smaller repositories, we keep a large portion of our backend infrastructure in one place. That architecture makes cross-service development easier, but it also means the repository sits at the center of nearly everything we build. </p>
+<p>Building <a href="https://dropbox.tech/machine-learning/building-dash-rag-multi-step-ai-agents-business-users" target="_blank">AI-powered features</a> at Dropbox often requires small changes across ranking systems, retrieval pipelines, <a href="https://dropbox.tech/machine-learning/practical-blueprint-evaluating-conversational-ai-at-scale-dash" target="_blank">evaluation logic</a>, and UI surfaces. All of that work moves through the same engineering loop: pull the latest code, build and test it, get it reviewed, merge it, and ship it. Over time, we began to notice that this loop was getting slower. Our monorepo had grown to 87GB; downloading a full copy of the codebase (or “cloning” the repository) took more than an hour, and many continuous integration (CI) jobs were repeatedly paying that cost. We were also approaching GitHub’s 100GB repository size limit, which introduced real operational risk.</p>
+<p>In this post, we’ll share how we reduced the repository from 87GB to 20GB (a 77% reduction), cutting the time required to clone the repository to under 15 minutes. We’ll also explain what was driving the growth and what we learned about maintaining a large monorepo at scale.</p>
+
+</div>
+<div class="experiencefragment aem-GridColumn aem-GridColumn--default--12">
+<div id="experiencefragment-97d860d01d" class="cmp-experiencefragment cmp-experiencefragment--dash-cta-for-tech-blog">
+
+    
+
+
+
+<div class="xf-content-height">
+    
+
+
+<div class="aem-Grid aem-Grid--12 aem-Grid--default--12 ">
+    
+    <div class="responsivegrid aem-GridColumn aem-GridColumn--default--12">
+
+
+<div class="aem-Grid aem-Grid--12 aem-Grid--default--12 ">
+    
+    <div class="a08-html-embed c17-plain-html aem-GridColumn aem-GridColumn--default--12">
+
+<style type="text/css"> 
+
+@font-face {
+font-family: 'AtlasGrotesk';
+src: url('https://cdn.prod.website-files.com/65dcd70b48edc3a7b446950e/65dce019c63112e617513c94_AtlasGrotesk-Medium-Web-vfl38XiTL.woff2') format('woff2');
+font-weight: 500;
+font-style: normal;
+font-display: swap;
+}
+
+@font-face {
+font-family: 'AtlasGrotesk';
+src: url('https://cdn.prod.website-files.com/65dcd70b48edc3a7b446950e/65dce019711b648fd1ccd24a_AtlasGrotesk-Regular-Web-vflk7bxjs.woff2') format('woff2');
+font-weight: 400;
+font-style: normal;
+font-display: swap;
+}
+.xf-content-height {margin: 0;}
+#cta { font-family: AtlasGrotesk,sans-serif; font-size: .900rem; text-decoration: none; background: #f7f5f2; line-height: 1.69; box-sizing: border-box;}
+#cta-box { padding: 15px 20px 15px 20px; }
+#cta-hed {font-weight: 500;}
+#cta-indent {border-left: 5px solid #1e1919; padding-left:20px;}
+#cta a:link, #cta a:visited  {text-decoration: none;}
+#cta p { margin: 5px 0px 0px 0px; }
+
+.dr-theme-dark #cta {background: #000;}
+.dr-theme-dark #cta-box {border: 1px solid; border-bottom: 0;}
+.dr-theme-dark #cta-indent {border-left: 5px solid #f7f5f2;}
+.dr-theme-dark .button {background: #000;}
+
+.button {
+    background-color: #1e1919;
+    color:  #f7f5f2;
+    height: 2.5rem;
+    padding: 10px 5px 10px 20px;
+    font-size: 1rem;
+    font-weight: 500;
+    line-height: 1.2;
+    transition: all .3s;
+}
+
+.button:hover { background-color: #0061ff; }
+
+img {vertical-align: middle; padding: 0px 1px 2px 0px;}
+
+.c17-plain-html {margin-bottom: 50px}
+
+</style>
+
+<div id="cta">
+<div id="cta-box">
+<div id="cta-indent">
+
+<p id="cta-hed"><img src="https://cdn.prod.website-files.com/65dcd70b48edc3a7b446950e/670692ee7692f74d4834e4f4_Frame%201400006055.svg" loading="lazy"> Dropbox Dash: AI that understands your work
+</p>
+
+<p>Dash knows your context, your team, and your work, so your team can stay organized, easily find and share knowledge, and keep projects secure, all from one place. And soon, Dash is coming to Dropbox.</p>
+
+</div>
+</div>
+
+<a href="https://dash.dropbox.com/?utm=blogs" target="_blank"><div class="button">Learn more &#x2192;</div></a>
+
+</div>
+</div>
+
+    
+</div>
+</div>
+
+    
+</div>
+
+</div></div>
+
+    
+</div>
+<div class="section aem-GridColumn aem-GridColumn--default--12">
+<div class="dr-article-content__section" id="when-repository-size-becomes-a-real-problem">
+    <h2 class="dr-article-content__section-title">When repository size becomes a real problem</h2>
+</div>
+</div>
+<div class="text parbase aem-GridColumn aem-GridColumn--default--12">
+<p>To understand why repository size matters, it helps to look at how engineers actually work. The first time someone sets up their development environment, they clone the repository, meaning they download a full copy of the codebase and its history to their machine. After that initial setup, daily work is less intensive. Engineers fetch and pull incremental updates rather than redownloading everything. But that first clone is unavoidable, and when the repository reached 87GB, it regularly took more than an hour.</p>
+<p>That cost didn’t just affect onboarding. Many continuous integration jobs—automated build and test workflows that run on every code change—begin from a fresh clone. That meant our CI pipelines were repeatedly incurring the same overhead. Internal systems that synchronize the repository were also handling significantly more data than before, which increased the likelihood of timeouts and degraded performance.</p>
+<p>At the same time, the repository was growing steadily, typically by 20 to 60MB per day, with occasional spikes above 150MB. At that rate, we were on track to hit the GitHub Enterprise Cloud (GHEC)<b> </b>100GB repository size hard limit within months. The issue wasn’t simply that we had a large codebase. The growth rate itself didn’t match what we would expect from normal development activity, even at Dropbox’s scale. That suggested the problem wasn’t just what we were storing, but how it was being stored.</p>
+
+</div>
+<div class="section aem-GridColumn aem-GridColumn--default--12">
+<div class="dr-article-content__section" id="when-compression-backfires">
+    <h2 class="dr-article-content__section-title">When compression backfires</h2>
+</div>
+</div>
+<div class="text parbase aem-GridColumn aem-GridColumn--default--12">
+<p>At first, we looked for the usual causes of repository bloat: large binaries, accidentally committed dependencies, or generated files that didn’t belong in version control. None of those explained what we were seeing. The growth pattern pointed somewhere less obvious: Git’s delta compression.</p>
+<p>Git doesn’t store every version of every file as a complete copy. Instead, it tries to save space by storing the differences between similar files. When multiple versions of a file exist, Git keeps one full version and represents the others as deltas, or “diffs,” against it. In most repositories, this works extremely well and keeps storage efficient.</p>
+<p>The issue was how Git decides which files are similar enough to compare. By default, it uses a heuristic based on only the last 16 characters of the file path when pairing files for delta compression. In many codebases, that’s good enough. Files with similar names often contain related content. Our internationalization (i18n) files, however, followed this structure:</p>
+<p><span class="dr-code" title="undefined"> i18n/metaserver/[language]/LC_MESSAGES/[filename].po</span></p>
+<p>The language code appears earlier in the path, not in the final 16 characters. As a result, Git was often computing deltas between files in different languages instead of within the same language. A small update to one translation file might be compared against an unrelated file in another language. Instead of producing a compact delta, Git generated a much larger one.</p>
+<p>Routine translation updates were therefore creating disproportionately large pack files. Nothing about the content was unusual. The problem was the interaction between our directory structure and Git’s compression heuristic. Once we understood that mismatch, the rapid growth of the repository finally made sense.</p>
+<h3>Testing a fix locally</h3>
+<p>Once we suspected that delta pairing was the root cause, we looked for ways to influence how Git grouped files during compression. We found an experimental flag called <span class="dr-code" title="undefined">--path-walk</span> that changes how Git selects candidates for delta comparison. Instead of relying on the last 16 characters of a path, it walks the full directory structure, which keeps related files closer together.</p>
+<p>We ran a local repack—essentially asking Git to reorganize and recompress the objects in the repository—using this flag. The results were immediate. The repository shrank from the low-80GB range to the low-20GB range. That confirmed our hypothesis: the issue wasn’t the volume of data, but how it was being packed.</p>
+<p>However, that success exposed a new constraint. GitHub told us that <span class="dr-code" title="undefined">--path-walk</span> was not compatible with certain server-side optimizations they rely on, including features like bitmaps and delta islands that make cloning and fetching fast. Even though the fix worked locally, it wouldn’t work in production.</p>
+<p>We needed a solution that achieved the same size reduction while remaining compatible with GitHub’s infrastructure. That meant working within the parameters GitHub could safely support, rather than relying on an experimental client-side flag.</p>
+<h3>Why we couldn't do this alone</h3>
+<p>Our local experiments proved that better packing could dramatically reduce the repository size. But there was a critical limitation: you can’t repack a repository locally, push it to GitHub, and expect those improvements to persist.</p>
+<p>GitHub constructs transfer packs dynamically on the server based on what each client is missing. That means the server’s own packing strategy determines clone and fetch sizes. Even if a local mirror is perfectly optimized, GitHub will rebuild the pack during transfer using its own configuration. To permanently reduce repository size and improve performance, the repack had to be executed on GitHub’s servers.</p>
+
+</div>
+<div class="dr-code-container aem-GridColumn aem-GridColumn--default--12">
+
+
+
+
+<div class="dr-code-container--title"></div>
+<div class="dr-code-container-inner">
+
+    <button class="dr-code-container__copy-button dr-button dr-typography-t17">
+        Copy
+    </button>
+    <pre class="dr-code-container__pre"><code class="dr-code-container__code dr-typography-t5 html">$ git clone --mirror git@github.com:dropbox-internal/server.git server_mirror
+performance: 2795.152366000 s
+
+$ du -sh server_mirror
+84G     server_mirror
+
+$ git repack -adf --depth=250 --window=250
+performance: 31205.079533000 s (~9h)
+
+$ du -sh server_mirror
+20G     server_mirror</code></pre>
+
+
+</div>
+<div class="dr-code-container-rte"></div>
+</div>
+<div class="text parbase aem-GridColumn aem-GridColumn--default--12">
+<p>We shared our findings with GitHub Support and worked with them on a solution that would be compatible with their infrastructure. Instead of relying on experimental flags, they recommended a more aggressive repack using tuned window and depth parameters. These settings control how thoroughly Git searches for similar objects and how many layers of deltas it allows. Higher values increase compute time during repacking but can significantly improve compression.</p>
+<p>We tested the approach on a mirrored clone of the repository. The repack took roughly nine hours to complete, but the result was clear: the repository shrank from 84GB to 20GB. Because this method aligned with GitHub’s server-side optimizations, it could be executed safely in production.</p>
+
+</div>
+<div class="section aem-GridColumn aem-GridColumn--default--12">
+<div class="dr-article-content__section" id="rolling-it-out-without-breaking-anything">
+    <h2 class="dr-article-content__section-title">Rolling it out without breaking anything</h2>
+</div>
+</div>
+<div class="text parbase aem-GridColumn aem-GridColumn--default--12">
+<p>Repacking a repository changes how billions of objects are physically organized on disk. It doesn’t alter the contents of the code, but it does change the structure underlying every clone, fetch, and push. Given how central the monorepo is to our development workflow, we treated this like any other production infrastructure change.</p>
+<p>Before touching the live repository, we created a test mirror and had GitHub perform the repack there first. We monitored fetch duration distributions, push success rates, and API latency to ensure the new pack structure didn’t introduce regressions. The mirror dropped from 78GB to 18GB, and while there was minor movement at the tail of fetch latency, it was well within the tradeoff we were willing to make for a fourfold size reduction. We didn’t observe stability issues.</p>
+<p>With that validation in place, GitHub rolled out the production repack gradually over the course of a week. They updated one replica per day, beginning with read-write replicas and reserving buffer time at the end of the week in case a rollback was needed. This phased approach ensured that if anything unexpected surfaced, they could revert safely.</p>
+<p>The final result was substantial. The repository shrank from 87GB to 20GB, and clone times dropped from over an hour to under 15 minutes in many cases. New engineers no longer begin onboarding with a long wait. CI pipelines start faster and run more reliably. Internal services that synchronize the repository are less prone to timeouts. And by moving well below GitHub’s 100GB limit, we reduced the risk of platform-level performance degradation during high-traffic periods.</p>
+<p>Just as importantly, the system remained stable throughout the rollout. Fetch duration, push success rates, and API latency all stayed within expected ranges. The improvements held without introducing new operational risk.</p>
+
+</div>
+<div class="image c04-image aem-GridColumn aem-GridColumn--default--12">
+<div class="dr-image image cq-dd-image  ">
+    <figure class="dr-margin-0 dr-display-inline-block">
+        
+            
+    
+
+        
+
+        
+        
+        
+
+        
+        
+        
+
+        <!--optimized image webp-->
+        
+
+        
+        <!-- <img data-sly-test.highRes="false"
+             srcset="/cms/content/dam/dropbox/tech-blog/en-us/2026/march/monorepo/diagrams/Diagram%201%20(2).png 2x,  1x"
+             src="/cms/content/dam/dropbox/tech-blog/en-us/2026/march/monorepo/diagrams/Diagram%201%20(2).png"
+             aria-hidden=""
+             alt=""
+             class=""
+             data-sly-attribute.width="2880"
+             data-sly-attribute.height="1560"
+             data-aem-asset-id="481bc29b-fc95-4475-9bb1-4dd7665c66bc:Diagram 1 (2).png"
+             data-trackable="true" />
+        <img data-sly-test.highRes="false"
+             srcset="/cms/content/dam/dropbox/tech-blog/en-us/2026/march/monorepo/diagrams/Diagram%201%20(2).png 2x,  1x"
+             src="/cms/content/dam/dropbox/tech-blog/en-us/2026/march/monorepo/diagrams/Diagram%201%20(2).png"
+             aria-hidden=""
+             alt=""
+             class=""
+             data-sly-attribute.width="2880"
+             data-sly-attribute.height="1560"
+             data-aem-asset-id="481bc29b-fc95-4475-9bb1-4dd7665c66bc:Diagram 1 (2).png"
+             data-trackable="true" /> -->
+
+        
+         
+        <img src="/cms/content/dam/dropbox/tech-blog/en-us/2026/march/monorepo/diagrams/Diagram%201%20(2).png/_jcr_content/renditions/Diagram%201%20(2).webp" fallbackimage="/cms/content/dam/dropbox/tech-blog/en-us/2026/march/monorepo/diagrams/Diagram%201%20(2).png" onerror="window.failedAttempts=0;this.setAttribute('src',this.getAttribute('fallbackimage'));window.failedAttempts++;if(window.failedAttempts == 1)this.onerror=null" aria-hidden="false" alt="" data-aem-asset-id="481bc29b-fc95-4475-9bb1-4dd7665c66bc:Diagram 1 (2).png" data-trackable="true" height="1560" width="2880"/>
+    
+
+            <figcaption class="dr-typography-t5 dr-color-ink-60 dr-image-rte"><p style="text-align: center;">Project data size dropped significantly and has remained stable since.</p>
+</figcaption>
+        
+    </figure>
+</div></div>
+<div class="section aem-GridColumn aem-GridColumn--default--12">
+<div class="dr-article-content__section" id="what-we-learned">
+    <h2 class="dr-article-content__section-title">What we learned</h2>
+</div>
+</div>
+<div class="text parbase aem-GridColumn aem-GridColumn--default--12">
+<p>Beyond the size reduction itself, this project reinforced a few broader lessons about maintaining large-scale infrastructure. The following three mattered most:</p>
+<p><b>Growth isn’t just about commit volume<br />
+ </b>When we first noticed the repository ballooning, the instinct was to look at what was being added: large files, unused dependencies, generated artifacts. But the root cause had nothing to do with the content of our commits. It was about how our directory structure interacted with Git’s compression heuristics. Our i18n paths encouraged Git to compute deltas across different languages rather than within the same language. Routine translation updates were therefore creating oversized pack files. The growth was structural, not behavioral.</p>
+<p>Tools embed assumptions. When your usage patterns diverge from those assumptions, performance can degrade quietly over time. In our case, Git’s 16-character path heuristic worked as designed. It just didn’t work well with our repository structure. Understanding those internal mechanics was what allowed us to diagnose the issue correctly.</p>
+<p><b>Some fixes require working with your platform provider<br />
+ </b>We were able to identify the root cause and even validate a fix locally. But because GitHub determines how repositories are packed and transferred, a local repack wasn’t enough. The solution had to align with GitHub’s server-side infrastructure.</p>
+<p>That meant bringing clear data to GitHub, testing collaboratively, and working within supported parameters. When your system depends on a managed platform, some problems live at the boundary between your code and theirs. Having strong relationships and a shared debugging process makes a meaningful difference.</p>
+<p><b>Treat repo health like production infrastructure<br />
+ </b>A repository repack changes the physical structure of billions of objects. Even though the code itself doesn’t change, every engineer and every automated system interacts with that underlying structure. We approached this project the same way we would approach any production infrastructure change: test on a mirror, measure real-world impact, roll out gradually, and maintain a rollback path.</p>
+<p>Repositories can feel like passive storage, something that simply grows over time. At scale, they are not passive. They are critical infrastructure that directly affects developer velocity and CI reliability. As part of this work, we built a recurring stats job that tracks key health indicators for the monorepo and feeds them into an internal dashboard. It monitors things like overall repository size, how quickly that size is growing, how long a fresh clone takes, and how storage is distributed across different parts of the codebase. If growth starts accelerating again or clone times begin creeping up, we'll see it early rather than discovering it when engineers start feeling the pain. Monitoring growth trends and investigating anomalies early is part of running a healthy engineering organization.</p>
+
+</div>
+<div class="section aem-GridColumn aem-GridColumn--default--12">
+<div class="dr-article-content__section" id="whats-next">
+    <h2 class="dr-article-content__section-title">What’s next</h2>
+</div>
+</div>
+<div class="text parbase aem-GridColumn aem-GridColumn--default--12">
+<p>Reducing the repository from 87GB to 20GB had an immediate impact on how we build. New engineers can get started in minutes instead of waiting through a lengthy initial clone. CI pipelines spin up faster and run more reliably. Teams working on AI features—where progress often comes from many small, iterative changes across multiple services—feel that improvement in every development cycle.</p>
+<p>The investigation also led to structural changes designed to prevent the same issue from resurfacing. We updated our i18n workflow to align more closely with how Git’s packing algorithm groups files, reducing the likelihood of pathological delta pairing in the future. Just as importantly, we now have better visibility into repository growth trends and a clearer understanding of what “normal” looks like.</p>
+<p>More broadly, this project gave us a repeatable playbook. When growth accelerates unexpectedly, we know how to investigate at the compression layer, how to validate fixes safely, and how to work across platform boundaries when necessary. Monorepos will continue to grow as products evolve, but growth doesn’t have to mean friction. With the right tooling and discipline, it can remain invisible to the engineers who rely on it every day.</p>
+<p><i>Acknowledgments: Samm Desmond, Genghis Chau</i></p>
+<p style="text-align: center;">~ ~ ~</p>
+<p><i>If building innovative products, experiences, and infrastructure excites you, come build the future with us! Visit </i><a href="https://jobs.dropbox.com/" target="_blank"><i>jobs.dropbox.com</i></a><i> to see our open roles.</i></p>
+
+</div>
+
+    
+</div>
+
+        </div>
+        <hr class="dr-typography-t5 dr-margin-top-50 dr-article-content__divider"/>
+        <div class="dr-typography-t5">
+          
+        </div>
+        
+        <div class="dr-typography-t5 dr-margin-top-20">
+            // Tags <br/>
+            <ul class="dr-unstyled-list dr-margin-top-10 dr-typography-t4">
+                <li class="dr-container--infrastructure dr-display-inline-block dr-margin-right-10  dr-margin-bottom-10">
+                    <a class="dr-link dr-pill dr-pill--primary dr-link--no-underline" href="https://dropbox.tech/infrastructure">
+                        Infrastructure
+                    </a>
+                </li>
+                
+                    <li class="dr-display-inline-block dr-margin-right-10"><a class="dr-link dr-pill dr-link--no-underline" href="https://dropbox.tech/tag-results.developer-velocity">developer velocity</a></li>
+                
+                    <li class="dr-display-inline-block dr-margin-right-10"><a class="dr-link dr-pill dr-link--no-underline" href="https://dropbox.tech/tag-results.ai">AI</a></li>
+                
+                    <li class="dr-display-inline-block dr-margin-right-10"><a class="dr-link dr-pill dr-link--no-underline" href="https://dropbox.tech/tag-results.developers">Developers</a></li>
+                
+                    
+                
+                    <li class="dr-display-inline-block dr-margin-right-10"><a class="dr-link dr-pill dr-link--no-underline" href="https://dropbox.tech/tag-results.storage">storage</a></li>
+                
+            </ul>
+        </div>
+        
+        <div class="dr-article-content__knotch">
+            <div class="aem-Grid aem-Grid--12 aem-Grid--default--12 ">
+                <div class="plain-html c17-plain-html aem-GridColumn aem-GridColumn--default--12">
+                  <div class="knotch_placeholder"></div>
+                </div>
+            </div>
+        </div>
+        <div class="dr-typography-t5 dr-margin-top-20 dr-hide-from-md">
+            // Copy link <br/>
+            <div class="dr-article-content__social-links-tooltip dr-display-none">Link copied</div>
+            <button class="dr-button dr-button--link dr-link dr-link--no-underline dr-article-content__copy-link" data-dr-tooltip="Copy link">
+                <img alt="Copy link" class="dr-display-block dr-invert-on-theme-dark" src="/cms/etc.clientlibs/settings/wcm/designs/dropbox-tech-blog/clientlib-article-content/resources/copy.svg"/>
+            </button>
+        </div>
+        <div class="dr-article-content__social-links">
+            <ul class="dr-article-content__social-links-list dr-unstyled-list">
+                <li class="dr-margin-bottom-20">
+                    <div class="dr-article-content__social-links-tooltip dr-typography-t5 dr-display-none">Link copied</div>
+                    <button class="dr-button dr-display-block dr-link dr-link--no-underline dr-article-content__copy-link dr-button--link" data-dr-tooltip="Copy link" data-dr-tooltip-position="cl" data-dr-tooltip-theme="bw">
+                        <img alt="Copy link" class="dr-display-block dr-invert-on-theme-dark" src="/cms/etc.clientlibs/settings/wcm/designs/dropbox-tech-blog/clientlib-article-content/resources/copy.svg"/>
+                    </button>
+                </li>
+                <li class="dr-margin-bottom-20">
+                    <a class="dr-link dr-display-block dr-link--no-underline dr-article-content__share-link dr-article-content__twitter-link" data-dr-tooltip="Share on Twitter" data-dr-tooltip-position="cl" data-dr-tooltip-theme="bw" href="https://twitter.com/intent/tweet/?text=Reducing%20our%20monorepo%20size%20to%20improve%20developer%20velocity&amp;url=https://dropbox.tech/infrastructure/reducing-our-monorepo-size-to-improve-developer-velocity" target="_blank">
+                        <img alt="Share on Twitter" class="dr-display-block dr-invert-on-theme-dark" src="/cms/etc.clientlibs/settings/wcm/designs/dropbox-tech-blog/clientlib-article-content/resources/twitter.svg"/>
+                    </a>
+                </li>
+                <li class="dr-margin-bottom-20">
+                    <a class="dr-link dr-display-block dr-link--no-underline dr-article-content__share-link dr-article-content__facebook-link" data-dr-tooltip="Share on Facebook" data-dr-tooltip-position="cl" data-dr-tooltip-theme="bw" href="https://facebook.com/sharer/sharer.php?u=https://dropbox.tech/infrastructure/reducing-our-monorepo-size-to-improve-developer-velocity" target="_blank">
+                        <img alt="Share on Facebook" class="dr-display-block dr-invert-on-theme-dark" src="/cms/etc.clientlibs/settings/wcm/designs/dropbox-tech-blog/clientlib-article-content/resources/facebook.svg"/>
+                    </a>
+                </li>
+                <li>
+                    <a class="dr-link dr-display-block dr-link--no-underline dr-article-content__share-link dr-article-content__linkedin-link" data-dr-tooltip="Share on Linkedin" data-dr-tooltip-position="cl" data-dr-tooltip-theme="bw" href="https://www.linkedin.com/shareArticle?mini=true&amp;url=https://dropbox.tech/infrastructure/reducing-our-monorepo-size-to-improve-developer-velocity&amp;title=Reducing%20our%20monorepo%20size%20to%20improve%20developer%20velocity&amp;source=https://dropbox.tech/infrastructure/reducing-our-monorepo-size-to-improve-developer-velocity" target="_blank">
+                        <img alt="Share on Linkedin" class="dr-display-block dr-invert-on-theme-dark" src="/cms/etc.clientlibs/settings/wcm/designs/dropbox-tech-blog/clientlib-article-content/resources/linkedin.svg"/>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+</div>
+
+
+
+<div class="aem-Grid aem-Grid--12 aem-Grid--default--12 ">
+    
+    
+    
+</div>
+
+
+        <footer class="dr-footer">
+<div class="dr-container--surface">
+  <section class="dr-container__content dr-footer__container">
+   <!--CMS-9789 Remove Mailchimp email signup from dropbox.tech (commenting out for now)
+     <sly data-sly-resource="newsletterSubscribe" /> 
+     -->
+    <div class="dr-grid dr-grid--md-2">
+      <div>
+        <a href="https://dropbox.com" target="_blank" class="dr-margin-bottom-20 dr-display-block">
+          <img alt="Dropbox" height="40" src="/cms/etc.clientlibs/settings/wcm/designs/dropbox-tech-blog/clientlib-all/resources/logo_dropbox.svg" width="164"/>
+        </a>
+      </div>
+      
+      <ul class="dr-footer-links dr-unstyled-list dr-typography-t10 dr-grid dr-grid--2 dr-grid--column-gap-15">
+        <li>
+          <a class="dr-link dr-link--no-underline " href="https://www.dropbox.com/about" target="_self">
+            About us
+          </a>
+        </li>
+      
+        <li>
+          <a class="dr-link dr-link--no-underline " href="https://twitter.com/Dropbox" target="_blank">
+            X
+          </a>
+        </li>
+      
+        <li>
+          <a class="dr-link dr-link--no-underline " href="https://dash.dropbox.com/" target="_self">
+            Dropbox Dash
+          </a>
+        </li>
+      
+        <li>
+          <a class="dr-link dr-link--no-underline " href="https://www.linkedin.com/company/dropbox" target="_blank">
+            LinkedIn
+          </a>
+        </li>
+      
+        <li>
+          <a class="dr-link dr-link--no-underline " href="https://www.dropbox.com/jobs" target="_blank">
+            Jobs
+          </a>
+        </li>
+      
+        <li>
+          <a class="dr-link dr-link--no-underline " href="https://www.instagram.com/dropbox" target="_blank">
+            Instagram
+          </a>
+        </li>
+      
+        <li>
+          <a class="dr-link dr-link--no-underline " href="https://www.dropbox.com/terms" target="_blank">
+            Privacy and terms
+          </a>
+        </li>
+      
+        <li>
+          <a class="dr-link dr-link--no-underline " href="https://dropbox.tech/feed" target="_blank">
+            RSS feed
+          </a>
+        </li>
+      
+        <li>
+          <a class="dr-link dr-link--no-underline " href="https://www.dropbox.com/ai-principles" target="_self">
+            AI principles
+          </a>
+        </li>
+      
+        <li>
+          <a class="dr-link dr-link--no-underline " href="https://dropbox.tech/culture/our-updated-engineering-career-framework" target="_blank">
+            Engineering Career Framework
+          </a>
+        </li>
+      
+        <li>
+          <a class="dr-link dr-link--no-underline evidon-notice-link" href="https://dropbox.tech/#manage-cookies" target="_self">
+            Cookies and CCPA preferences
+          </a>
+        </li>
+      
+        <li>
+          <a class="dr-link dr-link--no-underline " href="https://blog.dropbox.com/" target="_blank">
+            Blog
+          </a>
+        </li>
+      </ul>
+    </div>
+  </section>
+</div>
+</footer>
+        
+
+        
+
+
+
+<!-- /*CMS-2358, include Coveo scripts*/ -->
+<script class="coveo-script" src="https://static.cloud.coveo.com/searchui/v2.10124/2/js/CoveoJsSearch.Lazy.min.js" integrity="sha512-TZ/h9PEDIZgO9TOpoJHlGGlz52ZqBl/B3wLmbpJ+q8Z6fIAUAkAOGPfx6Oy2camtVy6zLdVBA6H/2c8aUT40Qg==" crossorigin="anonymous"></script>
+<script src="https://static.cloud.coveo.com/searchui/v2.10124/2/js/templates/templates.js" integrity="sha512-CR0Yk/LIwgh1MsKqjecDp/r6F9ipKc6gA+4+E1pplT3N3r1pk+la/HaqyDiKtjOFwrwIIbIYBFrUJgPql93QHw==" crossorigin="anonymous"></script>
+
+    <script src="https://static.cloud.coveo.com/searchui/v2.10124/2/js/cultures/en.js" integrity="sha512-WwPseicWtWAxrdno8NVAcKvVezXUCAxIklKyGEptRepHDvt+hZ3UzJeUiUN0C1hc49SiHFoGj18pdyy4pR9NNA==" crossorigin="anonymous"></script>
+
+
+
+    
+<script src="/cms/etc.clientlibs/settings/wcm/designs/dropbox-common/clientlib-jquery.618538b4ab9639d444e962729a927f15.js"></script>
+<script src="/cms/etc.clientlibs/settings/wcm/designs/dropbox-common/clientlib-cms-common.ca90629450c7371d818c62a1896d83ed.js"></script>
+<script src="/cms/etc.clientlibs/settings/wcm/designs/dropbox-tech-blog/clientlib-all.8227f364d7c883652f21f593dbc437a3.js"></script>
+
+
+
+
+
+    
+<script src="/cms/etc.clientlibs/settings/wcm/designs/dropbox-tech-blog/clientlib-article-content.698e752d4084220b3a6facc1645490f8.js"></script>
+
+
+
+
+
+ 
+<script>
+    window.utag_cfg_ovrd = window.utag_cfg_ovrd || {};
+    window.utag_cfg_ovrd.noview = true;
+    window.utag_data = window.utag_data || {};
+    window.utag_data.evidon_enabled = true;
+    if(window.utag_data.consent_categories == undefined){
+        window.utag_data.consent_categories = "";
+    }
+</script>
+<!--<script src="https://www.dropbox.com/pithos/privacy_consent,top_frame_marketing_tracker,ux_analytics" async="true"></script>-->
+
+
+<script>
+  function afterGrowthbookLoaded() {
+      setTimeout(function () {
+        var s = document.createElement("script");
+        s.src = "https://www.dropbox.com/pithos/privacy_consent,top_frame_marketing_tracker,ux_analytics";
+        s.async = true;
+        document.head.appendChild(s);
+      }, 3000);
+  }
+</script>
+
+
+
+
+    <script async data-api-host="https://cdn.dropboxexperiment.com" data-client-key="sdk-irFUSl6oXRtlWaW" src="https://cdn.jsdelivr.net/npm/@growthbook/growthbook/dist/bundles/auto.min.js" onload="afterGrowthbookLoaded()"></script>
+
+
+
+<script src="https://www.dropbox.com/pithos/zoom_chat_client" async=""></script>
+
+
+
+        
+        <script type="application/javascript">document.body.classList.remove('stormcrow-animate');</script>
+        <noscript><style>body.stormcrow-animate{opacity:1;}</style></noscript>
+
+          <!--/* CMS-3302 Automated Schema Markup for Components, Structure data changes-->
+       
+
+                 
+       
+    </body>
+    </html>

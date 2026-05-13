@@ -1,0 +1,1393 @@
+arXiv:2602.08316v3 [cs.SE] 6 May 2026
+
+SWE Context Bench: A Benchmark for Context
+Learning in Coding
+
+Jiayuan Zhu1 , Junde Wu2 , Minhao Hu2 , Shengda Zhu3 , Jiazhen Pan4 , Weixiang Shen4
+Yijun Yang3 , Fenglin Liu2 , Jianye Hao5 , Yueming Jin6 , Qirong Ho7 , Min Xu7,8
+1
+Independent Researcher 2 University of Oxford 3 University of Edinburgh
+4
+Technical University of Munich 5 MemoraX AI 6 National University of Singapore
+7
+Mohamed bin Zayed University of Artificial Intelligence 8 Carnegie Mellon University
+
+Abstract
+Large language models are increasingly used as coding agents for software engineering tasks. Current benchmarks mainly evaluate whether the agent can correctly
+solve the request or fix the bugs. They largely treat tasks as independent and do
+not assess whether agents can reuse previous experience across related problems.
+As a result, the efficiency gains from reusing the previous experience remains
+difficult to measure. We introduce SWE-ContextBench, a benchmark designed
+to explicitly evaluate context understanding and retrieval in coding agents. SWEContextBench consists of 1,100 base tasks with another 376 related tasks derived
+from real dependency and reference relationships among GitHub issues and pull
+requests. SWE-ContextBench groups base tasks and related tasks with shared context across 51 unique repositories and 9 programming languages. The benchmark
+evaluates how accurately and efficiently agents solve related issues when prior
+cases are available in context. Using SWE-ContextBench, we study the behavior of
+multiple coding agents across varying context reuse settings and retrieval strategies.
+Our results show that accurately summarized and retrieved previous experience
+can significantly improve resolution accuracy and reduce runtime and token cost,
+particularly on harder tasks. In contrast, unfiltered or incorrectly selected context
+provides limited or negative benefits. These findings highlight the importance of
+context management and retrieval accuracy, and position SWE-ContextBench as a
+principled benchmark for studying context learning in coding agents.
+
+1
+
+Introduction
+
+Large language models (LLMs) are increasingly deployed as coding agents, supporting tasks such as
+code generation, bug fixing, and navigation of complex code repositories. Early code benchmarks
+primarily evaluated isolated synthesis tasks and focused on functional correctness. However, these
+benchmarks have become saturated, with near perfect performance on HumanEval Chen et al. [2021]
+and MBPP Austin et al. [2021]. To address this limitation, recent benchmarks extend evaluation
+to repository level software engineering settings, where models reason over larger codebases and
+generate code changes evaluated in realistic repository contexts Liu et al..
+Despite these advances, existing agent benchmarks remain focused on solving individual tasks from
+scratch (Figure 1 (a)). They primarily evaluate knowledge stored in model weights Yang et al. [2024],
+Zeng et al. [2025] and short term context within the input window Yu et al. [2025], Zhou et al. [2025],
+but do not assess how agents learn from and reuse past experience across tasks. As a result, each task
+is treated as an independent episode, preventing explicit evaluation of context learning and its impact
+on efficiency. Prior studies suggest that incorporating memory of past interactions enables agents to
+learn from previous mistakes and generalize knowledge across related tasks Chhikara et al. [2023].
+Preprint.
+
+Figure 1: Compare SWE-ContextBench with existing agent benchmark and long-context benchmark.
+This observation aligns with real world software development, where recurring problem patterns and
+incremental refinement are common, and engineers routinely learn from past successes and failures.
+In parallel, many recent agent models increasingly incorporate external context augmentation by
+retrieving relevant information beyond the current task trajectory Chhikara et al. [2025], Li et al.
+[2025], Xu et al. [2025]. However, existing long-context and memory-oriented benchmarks still fall
+short of addressing context learning in programming tasks. Benchmarks such as BrowseComp Wei
+et al. [2025], WideSearch Wong et al. [2025], GAIA Mialon et al. [2023], and LoCoMo Maharana
+et al. [2024] are designed to assess the ability to retrieve and reason over large amounts of information
+within a single task (Figure 1 (b)). As a result, they measure retrieval to relevant memory rather than
+the ability to summarize and reuse experience across tasks. Consequently, they fail to capture whether
+agents can leverage prior problem-solving history to improve performance on related future tasks.
+Taken together, these limitations make the context learning capabilities of coding agents difficult to
+quantify from existing agent centric and context based benchmarks. This gap highlights the need
+for a benchmark that explicitly evaluates context learning across tasks. An effective coding agent
+should not only produce correct solutions, but also exploit prior experience to solve related tasks
+more efficiently. To this end, we propose evaluating agents along multiple dimensions: task accuracy
+variation, context aware solving time, and token efficiency. The latter two measure the ability to locate
+and reuse relevant prior tasks and to reduce overall computational cost through previous reasoning.
+In this paper, we propose SWE-ContxetBench, a benchmark designed to study context learning
+in software engineering agents, as illustrated in Figure 1 (c). SWE-ContextBench is built upon
+SWE-Bench Lite, SWE-Bench Multilingual, and SWE-Bench Verified Jimenez et al. [2024], where
+related instances are carefully selected by humans. In total, SWE-ContextBench contains 1,476
+tasks from 51 unique GitHub repositories spanning 9 programming languages, including 1,100 base
+tasks and 376 related tasks. To support faster and more cost effective evaluation, we also introduce
+SWE-ContextBench Lite, which consists of 300 base tasks and 99 related tasks. The benchmark
+enables direct evaluation of how effectively agents can learn from previous context when solving new
+tasks. As such, SWE-ContextBench provides a principled and realistic testbed for studying context
+learning in coding agents, complementing existing programming and context benchmarks. Our study
+shows that accurate summarization and retrieval of past experience significantly improve resolution
+accuracy while reducing runtime and token costs. However, models do not always leverage this
+information effectively and can be misled by incorrect prior assumptions. Retrieval alone is therefore
+insufficient; agents must also learn when to trust and how to adapt retrieved context for new tasks.
+
+2
+
+SWE-ContxetBench
+
+2.1
+
+Desiderata: What metrics should an ideal benchmark include?
+
+An ideal benchmark for coding agents should evaluate not only correctness, but also how effectively
+prior context is reused to improve efficiency. We identify three key dimensions. 1) Accuracy
+Variation. Accuracy variation measures how an agent’s performance changes when prior context is
+available. Instead of evaluating correctness in isolation, it quantifies the improvement or degradation
+in solution accuracy relative to a no-context baseline. We ground this evaluation in well-maintained
+GitHub repositories, where issues have human-verified fixes and are validated by test suites. Newly
+added or modified tests help determine whether a solution successfully resolves the issue. This
+2
+
+setup enables to directly assess whether access to previous context leads to measurable gains in task
+performance. 2) Time efficiency. This measures whether an agent solves tasks faster by leveraging
+prior context. Given previously solved related issues, an effective agent should identify relevant cases
+and learn from them to reduce solving time, which can be measured through wall clock time or search
+behavior. 3) Cost efficiency. This captures the computational resources required to solve a task. By
+successfully learning from prior context, agents can skip redundant reasoning, reducing token usage
+and overall cost. Token consumption thus serves as a practical and quantitative proxy for efficiency
+gains. Together, these three dimensions provide a principled framework for evaluating coding agents.
+2.2
+2.2.1
+
+Data Construction
+Base Dataset Selection
+
+We build our benchmark on SWE-Bench Lite, SWE-Bench Multilingual, and SWE-Bench Verified
+Jimenez et al. [2023]. It originally contains 1,100 instances from 51 real-world GitHub repositories
+across 9 programming language, including Python, JavaScript, Ruby, Rust, Java, Go, PHP, C, and C++
+(Figure 2). Each instance includes a problem description from GitHub issue and the corresponding
+code changes from pull requests, validated by test suites. This setup preserves realistic repository
+complexity and task difficulty, making it well suited for controlled agent evaluation at scale.
+2.2.2
+
+Context Trajectory Collection
+
+For each instance in the base dataset, we run a base coding agent and record its full trajectory,
+including tool calls, file navigation, and intermediate reasoning steps. These trajectories are stored as
+past contexts and form a context pool that agents can later retrieve when solving related tasks. This
+enables explicit evaluation of whether agents learn from prior context instead of solving from scratch.
+
+Figure 2: Distribution of programming languages across tasks. The bar chart shows the number of
+repositories per language for experience and related tasks. The donut chart shows the percentage
+distribution by language, with the inner ring for experience tasks and the outer ring for related tasks.
+2.2.3
+
+Identification of Related Task Instances
+
+To construct task sequences with shared context, we manually analyze the pull requests and issues for
+each base dataset instance. For each instance, we check whether the corresponding pull request or
+issue references other issues or pull requests and verify their resolution relationships. For each related
+case, we extract the issue description and the associated pull request that introduces the code changes.
+Specifically, we consider the following as related task instances to the base dataset (Figure 3):
+• Multi-issue resolution: A single pull request resolves multiple issues, but only one appears
+in base dataset. Others are treated as additional task instances paired with same pull request.
+• Pull-request-to-issue references: The pull request of a base dataset instance references
+other issues. If resolved by the same pull request, they form related task instances. If
+resolved by different pull requests, each issue is paired with its corresponding resolver.
+3
+
+• Pull-request-only references: A base dataset instance’s pull request references another pull
+request. The issue resolved by the referenced pull request is used as a valid task instance.
+• Issue-to-issue references: An issue references other issues. Each referenced issue is paired
+with its resolving pull request to form a related task instance.
+• Issue-to-pull-request references: An issue references one or more pull requests. The
+resolved issues associated with those pull requests are used to construct related task instances.
+• Multi-references: An issue or pull request references other pull requests. Those with sufficient descriptions are treated as task instances, using their descriptions as issue descriptions.
+Across the 1,100 base instances, we identify 319 such interdependent task instances. These subtypes
+reflect common software development patterns. Each instance is manually verified to ensure that it is
+a meaningful software engineering task with clear relationships and identifiable resolution.
+
+Figure 3: Six workflows for expanding SWE-Bench base dataset by identifying related task instances
+through issue and pull request cross-references.
+2.2.4
+
+Recursive Context Expansion
+
+Starting from the 319 identified instances, we apply the same rules to each new issue or pull request.
+By examining their discussions, we identify additional references. This recursive process yields 57
+additional interdependent task instances, forming new task sequences for evaluating context learning.
+2.2.5
+
+Resulting Benchmark Tasks
+
+The final benchmark consists of related software engineering tasks derived from real-world repositories. It includes 1,100 experience tasks, whose solution trajectories form a reusable context
+pool, and 376 related tasks identified through explicit dependency and reference analysis. In total,
+SWE-ContextBench contains 1,476 tasks across 51 repositories, with details in Table 1.
+Table 1: Breakdown of SWE-ContextBench by source benchmark, showing counts of experience/related repositories and experience/related tasks, plus total tasks.
+
+SWE-Bench Lite
+SWE-Bench Multilingual
+SWE-Bench Verified
+SWE-ContextBench
+
+Experience
+Repos
+12
+39
+12
+51
+
+Related
+Repos
+12
+27
+12
+39
+
+Experience
+Tasks
+300
+300
+500
+1,100
+
+Related
+Tasks
+99
+111
+166
+376
+
+Overall
+Tasks
+399
+411
+666
+1,476
+
+Additionally, Figure 2 shows programming-language-level statistics across both task sets. SWEContextBench covers 9 languages in experience tasks and 8 in related tasks, with Python dominating
+in both (12 vs. 12 repositories; 73.2% vs. 70.7% of tasks). Other languages show similar distributions,
+including JavaScript, Rust, and Go, with only minor differences across categories. Overall, both the
+4
+
+repository counts and percentage distributions remain closely aligned, indicating that the related-task
+set preserves the language composition of the experience-task pool.
+The 376 related tasks are derived from common software development patterns described in Section 2.2.3. Specifically, we identify 46 tasks from multi-issue resolution. From pull-request-to-issue
+references, we find 72 tasks, including 42 issues resolved by the same pull request and 30 by different
+ones. We identify 34 tasks from pull-request-only references. From issue-to-issue references, we
+obtain 103 tasks (78 issues resolved by their own corresponding pull requests and 25 issues sharing
+the same pull request as the original issue). We also identify 41 tasks from issue-to-pull-request
+references, of which 16 correspond to a single new resolved issue and 25 referencing multiple pull
+requests. Finally, we identify 23 tasks from multi-references. Beyond these first-order relations,
+recursive context expansion yields 57 additional related tasks, capturing second-order dependencies.
+By preserving real codebases, issue descriptions, and validated code changes, the benchmark enables
+direct evaluation of whether agents can learn from previous context for new but related coding tasks.
+2.2.6
+
+Resulting Benchmark Structure
+
+Context pool contains solution trajectories from 1,100 experience tasks (Section 2.2.2). For 376
+related tasks, the dataset includes two components: task construction and test-based evaluation data.
+Task construction. Each task defines a software bug-fixing problem, specifying where to start, what
+issue to resolve, and how correctness is evaluated. Each related task is derived from a GitHub pull
+request and includes the repository state before the fix (base_commit), the problem statement, and
+the resolving code changes. The base_commit is the base branch SHA, representing pre-fix state.
+Tasks are constructed through an automated pipeline via the GitHub API. Problem statements
+are extracted from GitHub issue titles and descriptions, or Django Trac ticket system for Django
+repositories. The ground-truth solution is taken from the pull request’s unified diff and split into a
+test_patch and a solution_patch. The test_patch contains changes to test files, identified by
+keywords like “test”, “tests”, etc. The solution_patch contains changes to implementation files.
+Test-based evaluation. For evaluation, we construct a rigorous test-based validation framework. Starting from the base_commit, we set up an isolated environment with the detected dependencies and run
+the existing test suite to obtain baseline results (results_before). We then apply the test_patch,
+which introduces tests that specify the expected behavior, followed by the solution_patch. After
+applying both patches, we re-run the test suite to obtain results_after.
+Evaluation is based on two test sets. The FAIL_TO_PASS set includes tests that fail, error, or are absent
+in results_before but pass in results_after, indicating the issue is fixed. The PASS_TO_PASS
+set includes tests that pass both before and after, ensuring no regressions. Together, they ensure that a
+valid solution both fixes the intended problem and preserves existing correct behavior.
+Table 2: Language-level average numbers of FAIL_TO_PASS and PASS_TO_PASS tests across the
+376 related tasks, along with their overall averages.
+FAIL_TO_PASS
+PASS_TO_PASS
+Overall
+
+Python
+4.3
+145.0
+149.3
+
+JavaScript
+2.9
+303.7
+306.6
+
+Ruby
+19.2
+172.7
+191.9
+
+Rust
+5.6
+534.3
+539.9
+
+Java
+2.6
+1219.8
+1222.4
+
+Go
+9.7
+201.5
+211.2
+
+PHP
+6.3
+59.7
+66.0
+
+C
+2.6
+243.9
+.246.5
+
+Overall
+4.8
+211.5
+216.3
+
+On average, each of the 376 related tasks contains 4.8 FAIL_TO_PASS tests and 211.5 PASS_TO_PASS
+tests. This indicates that tasks are typically validated by a small set of tests for the fix and a larger set
+for regression. Table 2 reports language-level averages for both test types.
+
+2.3
+
+SWE-ContxetBench Lite
+
+To support faster and cost-effective evaluation of context learning, we release SWE-ContextBench
+Lite. Built from SWE-Bench Lite, it contains 300 base tasks for the context pool and 99 related tasks
+for evaluating (399 tasks in total). It focuses on Python tasks across 12 repositories.
+5
+
+3
+
+Experiment
+
+3.1
+
+Experimental Setup
+
+To build the context pool, we run Claude Code (Claude Sonnet 4.5) on the 1,100 experience tasks.
+For each task, the agent is given only the repository name, base commit, and problem statement.
+The full interaction trajectory, including file navigation and intermediate reasoning, is recorded as
+reusable context. All experience tasks are executed independently in isolated environments to prevent
+information leakage across tasks. In addition, the quality of the experience tasks is not explicitly
+controlled or filtered to reflect real-world software engineering environments (Section A.4).
+For the 376 related tasks, each is also run independently in a fresh environment. Context learning is
+enabled only through explicit retrieval from the context pool, with no implicit state carryover between
+runs. For each task, the agent receives the repository name, base commit, and problem statement
+(Section A.1). A clean testbed is created by cloning the repository, checking out the base commit,
+and installing dependencies. The agent generates code changes (excluding test files), which are saved
+as a unified diff. The testbed is then removed, ensuring isolated and reproducible evaluation.
+3.2
+
+Performance across Five Coding Agents
+
+3.2.1
+
+Accuracy Analysis
+
+Table 3 compares five coding agents on accuracy under two settings: a baseline without retrieved
+context and an oracle summary setting using gold relevant summaries from the context pool. Each
+summary averages 217.1 tokens and is taken from the final summary paragraph of the corresponding
+trajectory. This oracle setting isolates the impact of high-quality context reuse without retrieval errors.
+Overall, closed-source agents achieve the highest accuracy, and oracle summaries improve performance for most models. In the baseline, GPT-5.3 Codex performs best on function-level localization
+(19.25%), line-level localization (14.71%), and task resolution (22.60%), showing strong localization
+and code fix ability. Among open-weight models, MiniMax 2.7 achieves the highest resolution rate
+(19.68%), while Qwen3.5-plus and GLM-5 remain competitive on localization but lag in end-to-end
+success. With oracle summaries, most agents improve: GPT-5.3 Codex achieves the best file localization (57.22%) and the best overall resolution rate (23.94%), Claude Sonnet 4.5 increases to 23.40%
+resolved, and MiniMax 2.7 rises to 22.07%, narrowing the gap with the strongest proprietary systems.
+Table 3: Performance of five coding agents on SWE-ContextBench under baseline and oraclesummary settings. We report localization-based accuracy metrics together with task resolution rate,
+and efficiency metrics including tool calls, token usage, runtime, and API cost.
+Agent
+Layer
+
+File Correct
+Location (%)
+
+Closed-source Baseline
+Claude Sonnet 4.5 Claude Code
+GPT-5.3 Codex
+Codex
+Open-weight Baseline
+Qwen3.5-plus
+Qwen Code
+GLM-5
+Qwen Code
+MiniMax 2.7
+Claude Code
+Closed-source Oracle Summary
+Claude Sonnet 4.5 Claude Code
+GPT-5.3 Codex
+Codex
+Open-weight Oracle Summary
+Qwen3.5-plus
+Qwen Code
+GLM-5
+Qwen Code
+MiniMax 2.7
+Claude Code
+
+3.2.2
+
+Accuracy Analysis (↑)
+Function Correct Line Correct
+Location (%)
+Location (%)
+
+Resolved
+(%)
+
+Avg Tool
+Calls
+
+Efficiency Analysis (↓)
+Avg
+Avg
+Tokens
+Time (s)
+
+Cost
+($)
+
+52.14
+54.01
+
+14.97
+19.25
+
+11.76
+14.71
+
+19.68
+22.60
+
+44.67
+28.91
+
+1,701,548.05
+858,252.71
+
+344.47
+349.41
+
+0.67
+0.31
+
+52.96
+53.89
+52.41
+
+16.94
+16.89
+17.11
+
+12.10
+12.60
+12.83
+
+16.22
+18.35
+19.68
+
+52.10
+45.32
+53.24
+
+2,332,845.20
+1,933,888.48
+1,615,255.05
+
+523.47
+800.99
+691.28
+
+0.33
+0.58
+0.65
+
+53.21
+57.22
+
+15.78
+18.18
+
+11.76
+13.64
+
+23.40
+23.94
+
+36.19
+27.41
+
+1,352,829.76
+718,919.86
+
+280.62
+362.39
+
+0.55
+0.27
+
+54.16
+52.69
+49.87
+
+16.09
+15.32
+14.75
+
+10.72
+10.75
+10.46
+
+21.54
+19.41
+22.07
+
+44.03
+41.39
+45.69
+
+1,668,167.12
+1,671,707.68
+1,229,219.56
+
+455.18
+629.34
+420.92
+
+0.18
+0.48
+0.46
+
+Efficiency Analysis
+
+Efficiency trends show similar gains from summarized context, though the best model depends on
+the metric (Table 3). GPT-5.3 Codex uses the fewest tool calls and tokens in both settings, making it
+the most efficient high-accuracy agent. Claude Sonnet 4.5 achieves the fastest runtime under oracle
+summaries at 280.62 seconds, suggesting summaries can significantly reduce search and editing time
+despite higher token usage. Among open-weight models, Qwen3.5-plus has the lowest monetary
+cost ($0.18 with oracle summaries) but it still uses more tool calls and tokens than GPT-5.3 Codex.
+GLM-5 is consistently the slowest, exceeding 800s in the baseline, while Qwen3.5-plus has the
+6
+
+highest token usage without matching gains in resolution. Overall, concise oracle guidance improves
+both effectiveness and efficiency, but trade-offs across runtime, tokens, and cost depend on the agent.
+
+Figure 4: Stacked distributions of runtime and token usage for five coding agents under the baseline
+and oracle summary settings. Each bar is binned into five ranges, and segment sizes indicate the
+percentage of tasks in each range.
+Figure 4 further illustrates these efficiency differences through the full distributions of runtime and
+token usage. Compared to baseline, oracle summaries generally shift runs toward lower runtime and
+token buckets, indicating that compact relevant context reduces both search overhead and repeated
+reasoning. This effect is strongest for Claude Sonnet 4.5 and GPT-5.3 Codex, whose distributions
+become more concentrated in the more efficient ranges, whereas GLM-5 and Qwen3.5-plus show
+greater variability. These results complement Table 3, showing that summary reuse not only lowers
+average cost but also reduces especially expensive runs.
+3.3
+
+Performance across Different Context Learning Settings
+
+We evaluate performance under five settings that differ in how prior context is exposed to the agent on
+the SWE-Bench Lite dataset with Claude Sonnet 4.5. These settings allow a controlled comparison
+of prediction performance across different past context access and retrieval configurations.
+No-Context (Baseline): The agent is provided only with the repository name, base commit, and
+problem statement. It has no access to the context pool.
+Free Context Learning: The agent has full access to the original context pool and can decide whether
+to retrieve and use any past context when solving the task.
+Oracle Context Learning: The agent is explicitly provided with the most relevant past context
+trajectory, identified using the factual task relationships defined in Section 2.2.3.
+Free Summary Learning: We construct a summary context pool by extracting the final summary
+section from each context trajectories. The agent is given full access to this summary context pool
+and may decide whether and which summaries to use.
+Oracle Summary Learning: The agent is explicitly given the summary of the most relevant past
+context, identified based on the known task relationships.
+The summary files contain an average of 217.1 tokens, while the full context trajectories average
+25,633.7 tokens, resulting in a substantially more compact representation of prior context.
+3.3.1
+
+Accuracy Analysis
+
+Table 4 reports six metrics. Patch N/A counts instances whose generated patches cannot be applied
+and are excluded from the remaining evaluation. FAIL_TO_PASS and PASS_TO_PASS are reported at
+both test and task levels, while Resolved is the overall SWE-ContextBench Lite resolution rate.
+Oracle Summary Learning achieves the best accuracy, improving resolution from 26.26% for the
+No-Context baseline to 34.34%, while Oracle Context Learning provides a small gain to 27.27%. The
+oracle–free gap is much larger for summaries than for full trajectories: Oracle Summary Learning
+outperforms Free Summary Learning by 12.12 points, while Oracle Context Learning exceeds Free
+Context Learning by only 1.01 points. Patch application failures are similar across settings, and
+7
+
+Table 4: Comparison of different context learning settings and memory retrieval frameworks on
+99 related tasks from SWE-ContextBench Lite. We report patch applicability, test-level and tasklevel pass rates for bug-fixing (FAIL_TO_PASS) and regression (PASS_TO_PASS) tests, overall task
+resolution rate, and efficiency in runtime and cost.
+Model
+No-Context (Baseline)
+Free Context Learning
+Oracle Context Learning
+Free Summary Learning
+Oracle Summary Learning
+Mem0
+OpenViking
+Supermemory
+
+Patch N/A
+(%)
+3.03
+2.02
+4.04
+7.07
+6.06
+14.14
+10.10
+10.10
+
+FAIL_TO_PASS
+Tests (%)
+19.64
+22.22
+20.44
+19.64
+26.39
+20.24
+57.34
+55.95
+
+Accuracy Analysis
+PASS_TO_PASS FAIL_TO_PASS
+Tests (%)
+Tasks (%)
+94.91
+29.29
+95.46
+28.28
+94.41
+31.31
+93.41
+29.29
+92.53
+40.40
+82.44
+39.39
+91.83
+40.40
+90.23
+40.40
+
+PASS_TO_PASS
+Tasks (%)
+88.89
+85.86
+89.90
+86.87
+85.86
+86.87
+88.89
+88.89
+
+Resolved
+(%)
+26.26
+26.26
+27.27
+22.22
+34.34
+24.24
+29.20
+30.30
+
+Efficiency Analysis
+Time
+Cost
+(min)
+($)
+6.37
+0.79
+6.78
+0.98
+5.95
+0.77
+6.28
+0.91
+6.66
+0.85
+4.72
+0.62
+4.20
+0.53
+5.04
+0.58
+
+all maintain high PASS_TO_PASS rates (92%–95%), indicating few regressions. Overall speaking,
+concise summaries are highly effective when correctly selected, but misleading when irrelevant.
+3.3.2
+
+Efficiency Analysis
+
+For runtime, we evaluate all five settings on the 99 related tasks, yielding 495 runs in total. Oracle
+Context Learning is fastest on average at 5.95 minutes per task, followed by Free Summary Learning
+(6.28 min), the No-Context baseline (6.37 min), Oracle Summary Learning (6.66 min), and Free
+Context Learning (6.78 min). Median runtimes are tightly clustered between 331 and 356 seconds,
+implying that average differences are driven mainly by tail behavior. Free Context Learning shows
+the largest variance and worst-case runtime, exceeding 2,100 seconds, whereas Oracle Summary
+Learning yields the most stable runtime distribution. The benefit of oracle summaries is especially
+strong on harder tasks, where runtime falls by more than 60% for the slowest instances.
+For cost, token usage is dominated by cache-read tokens, which account for more than 97% of
+total consumption across all settings. Oracle Context Learning has the lowest average cost at $0.77
+per instance, while Free Context Learning is the most expensive at $0.98, a 27.3% increase. The
+No-Context baseline remains close to Oracle Context Learning at $0.79, whereas Free Summary
+Learning and Oracle Summary Learning cost $0.91 and $0.85, respectively. Thus, in this setup,
+summary-based reuse does not reduce cost relative to the baseline, and autonomous retrieval tends to
+increase repository access and overall token consumption.
+3.4
+
+Performance across Trending Memory Retrieval Frameworks
+
+Table 4 also compares four widely-used memory retrieval frameworks on 99 related tasks in SWEContextBench Lite: Mem0 Chhikara et al. [2025], OpenViking Volcengine Viking Team [2026],
+LangMem LangChain AI [2026], and Supermemory Supermemory AI [2026]. Implementation details
+are provided in A.2.
+Supermemory performs best overall, achieving FAIL_TO_PASS test rate of 55.95% and the highest
+resolution rate of 30.30%, indicating superior capability in fixing previously failing tests. It also
+maintains strong PASS_TO_PASS scores (90.23% at test level, 88.89% at task level), suggesting that
+these gains do not come at the cost of regressions. OpenViking shows similar task-level performance
+(29.20% resolved) and slightly higher FAIL_TO_PASS test accuracy (57.34%), but without better
+overall outcomes. Mem0 underperforms across most metrics, with lower FAIL_TO_PASS scores
+(20.24% at the test level, 39.39% at the task level) and resolution rate (24.24%), suggesting weaker
+context learning. In terms of efficiency, OpenViking demonstrates the fastest runtime (4.20 min) and
+lowest cost ($0.53), while Supermemory remains competitive (5.04 min, $0.58) given its stronger
+performance. Mem0 has higher cost ($0.62) without corresponding accuracy gains. Overall, the
+results suggest that stronger memory use improves bug fixing effectiveness on related tasks, with
+Supermemory offering the best balance between performance and efficiency.
+Table 5 compares two context learning settings and four memory approaches in how they transform
+trajectories into retrievable contexts and how often the retrieved contexts match the gold related
+experience task. Among context learning settings, Free Context Learning retrieves extremely long
+contexts (136k tokens for top-1) but achieves low matching (18.18%). Free Summary Learning
+uses much shorter contexts (~370 tokens) and improves matching to 36.36%, showing the benefit of
+compact summaries. Among memory retrieval frameworks, LangMem achieves the highest overall
+matching rate of 73.34%, with strong top-1 matching of 55.56%. Supermemory maintains a high
+8
+
+Table 5: Retrieval quality of two context learning settings and four memory retrieval approaches on
+SWE-ContextBench Lite related tasks. For the top-1, top-2, and top-3 retrieved contexts, we report
+retrieval score, average context length, and match rate, together with the overall matching percentage.
+
+Free Context Learning
+Free Summary Learning
+Mem0
+OpenViking
+LangMem
+Supermemory
+
+Number of
+Retrieved
+Contexts
+Self-Determine
+Self-Determine
+3
+3
+10
+15
+
+Top1 Retrieved Context
+Score
+Avg
+Matched
+(%)
+Tokens
+(%)
+136,907
+18.18
+372.79
+34.34
+55.91
+11.97
+25.25
+50.40 245.90
+38.38
+49.70
+48.18
+55.56
+74.51
+30.06
+23.23
+
+Top2 Retrieved Context
+Score
+Avg
+Matched
+(%)
+Tokens
+(%)
+78,044
+0
+363.78
+2.02
+50.54
+11.15
+15.15
+48.95 254.16
+35.35
+45.51
+47.84
+35.35
+72.76
+28.86
+20.20
+
+Top3 Retrieved Context
+Score
+Avg
+Matched
+(%)
+Tokens
+(%)
+77,129
+0
+368.33
+0
+47.55
+11.55
+9.09
+48.13 249.33
+40.40
+42.65
+48.42
+14.14
+71.84
+26.62
+11.11
+
+Overall
+Matched
+(%)
+18.18
+36.36
+39.39
+51.52
+73.34
+59.60
+
+overall match rate at 59.60% with compact contexts (~30 tokens). OpenViking retrieves much
+longer contexts, averaging 245.90–254.16 tokens, and achieves overall matching rate at 51.52%. In
+contrast, Mem0 is the most compact method but performs worst, with a 39.39% match rate. These
+results suggest that more compact and structured context representations improve both efficiency and
+retrieval quality, with methods like LangMem and Supermemory achieving the strongest matching
+performance.
+
+4
+
+Related Work
+
+Recent work on LLM memory focuses on long-context understanding and persistent memory in
+general domains. Benchmarks such as LongBench Bai et al. [2024], LongMemEval Wu et al.
+[2024], RULER Hsieh et al. [2024], LoCoMo Maharana et al. [2024], and PerLTQA Du et al. [2024]
+evaluate abilities such as information extraction, multi-session reasoning, and knowledge update
+over documents, conversations, or synthetic contexts. More agent-oriented benchmarks, such as
+MemoryRewardBench Tang et al. [2026] and MemBench Tan et al. [2025], move toward interactive
+memory use but remain focused on general domains rather than repository-level software engineering.
+In parallel, coding benchmarks like RepoBench Liu et al., SWE-Bench Jimenez et al. [2024],
+LongCodeBench Rando et al. [2025], and LoCoBench Qiu et al. [2025] evaluate retrieval, code
+understanding, and bug fixing in realistic repositories. While they provide repository-level context,
+they do not evaluate whether an agent can learn from prior problem-solving contexts across tasks.
+Our benchmark differs in that it treats past trajectories as retrievable context, including reasoning
+steps, tool use, and intermediate decisions, thereby enabling direct evaluation of cross-task context
+learning. Table 6 summarizes these differences.
+Table 6: Comparison of general memory and coding benchmarks across four abilities: information
+extraction (IE), multi-session reasoning (MR), knowledge update (KU), and cross-task context learning (CT). Existing coding benchmarks focus on repository-level context, while SWE-ContextBench
+introduces trajectory-level memory and directly evaluates cross-task context learning.
+Method
+
+5
+
+Domain
+
+Memory
+
+Access
+
+Agent
+
+Key Property
+
+Core Memory Abilities
+IE
+
+MR
+
+KU
+
+CT
+
+General memory benchmarks
+LongBench Bai et al. [2024]
+LongMemEval Wu et al. [2024]
+RULER Hsieh et al. [2024]
+LoCoMo Maharana et al. [2024]
+PerLTQA Du et al. [2024]
+MemoryRewardBench Tang et al. [2026]
+BEAM Tavakoli et al. [2025]
+MemBench Tan et al. [2025]
+
+General
+General
+General
+Dialogue
+QA
+General
+General
+General
+
+Document
+Document
+Synthetic context
+Conversation
+Document
+Mixed
+Document
+Interaction
+
+Full
+Full
+Full
+Full
+Full
+Policy
+Full
+Retrieval
+
+×
+×
+×
+×
+×
+×
+×
+✓
+
+Context processing
+Long-term reasoning
+Retrieval probing
+Episodic memory
+Long-term QA
+Policy learning
+Ultra-long context
+Memory interaction
+
+✓
+✓
+✓
+✓
+✓
+×
+✓
+✓
+
+✓
+✓
+×
+✓
+×
+×
+✓
+✓
+
+×
+✓
+×
+×
+×
+✓
+×
+✓
+
+×
+×
+×
+×
+×
+×
+×
+×
+
+Coding benchmarks
+RepoBench Liu et al.
+SWE-Bench Jimenez et al. [2024]
+LongCodeBench Rando et al. [2025]
+LoCoBench Qiu et al. [2025]
+SWE-ContextBench
+
+Coding
+Coding
+Coding
+Coding
+Coding
+
+Repository
+Repository
+Repository
+Repository
+Trajectory
+
+Full
+Full
+Full
+Full
+Retrieval
+
+×
+✓
+✓
+×
+✓
+
+Retrieval, Completion and Pipeline
+Repository-level bug fixing
+Code Comprehension and Repair
+Complex long-context software engineering
+Cross-task context learning
+
+✓
+✓
+✓
+✓
+✓
+
+✓
+✓
+✓
+✓
+✓
+
+×
+×
+×
+×
+✓
+
+×
+×
+×
+×
+✓
+
+Conclusion
+
+We introduces SWE-ContextBench, a benchmark for studying context learning in repository-level
+coding agents. Built from SWE-Bench Lite, SWE-Bench Multilingual, and SWE-Bench Verified,
+SWE-ContextBench contains 1,476 tasks from 51 repositories and 9 programming languages, including 1,100 base tasks and 376 related tasks capturing explicit cross-task dependencies. Our experiments
+show that context learning is beneficial only when the reused context is both compact and correctly
+selected. Oracle Summary Learning achieves the highest task resolution, while Oracle Context
+Learning yields the lowest average runtime and cost. In contrast, free retrieval often brings limited
+9
+
+gains and can even hurt performance, especially when context are irrelevant. Results across five
+coding agents further show that both model capability and reuse strategy jointly shape the trade-off
+between effectiveness and efficiency, while experiments with memory retrieval frameworks confirm
+that stronger retrieval quality improves downstream performance on related tasks. More insights
+to improve context learning in coding agents are discussed in A.3. Overall, SWE-ContextBench
+complements existing coding and memory benchmarks by providing a realistic and controlled testbed
+for studying how agents retrieve, represent, and reuse prior contexts in software engineering tasks.
+
+References
+Mark Chen, Jerry Tworek, Heewoo Jun, Qiming Yuan, Henrique Ponde De Oliveira Pinto, Jared
+Kaplan, Harri Edwards, Yuri Burda, Nicholas Joseph, Greg Brockman, et al. Evaluating large
+language models trained on code. arXiv preprint arXiv:2107.03374, 2021.
+Jacob Austin, Augustus Odena, Maxwell Nye, Maarten Bosma, Henryk Michalewski, David Dohan,
+Ellen Jiang, Carrie Cai, Michael Terry, Quoc Le, et al. Program synthesis with large language
+models. arXiv preprint arXiv:2108.07732, 2021.
+Tianyang Liu, Canwen Xu, and Julian McAuley. Repobench: Benchmarking repository-level code
+auto-completion systems, 2023. URL https://arxiv. org/abs/2306.03091.
+John Yang, Carlos E Jimenez, Alexander Wettig, Kilian Lieret, Shunyu Yao, Karthik Narasimhan,
+and Ofir Press. Swe-agent: Agent-computer interfaces enable automated software engineering.
+Advances in Neural Information Processing Systems, 37:50528–50652, 2024.
+Aohan Zeng, Xin Lv, Qinkai Zheng, Zhenyu Hou, Bin Chen, Chengxing Xie, Cunxiang Wang,
+Da Yin, Hao Zeng, Jiajie Zhang, et al. Glm-4.5: Agentic, reasoning, and coding (arc) foundation
+models. arXiv preprint arXiv:2508.06471, 2025.
+Hongli Yu, Tinghong Chen, Jiangtao Feng, Jiangjie Chen, Weinan Dai, Qiying Yu, Ya-Qin Zhang,
+Wei-Ying Ma, Jingjing Liu, Mingxuan Wang, et al. Memagent: Reshaping long-context llm with
+multi-conv rl-based memory agent. arXiv preprint arXiv:2507.02259, 2025.
+Zijian Zhou, Ao Qu, Zhaoxuan Wu, Sunghwan Kim, Alok Prakash, Daniela Rus, Jinhua Zhao, Bryan
+Kian Hsiang Low, and Paul Pu Liang. Mem1: Learning to synergize memory and reasoning for
+efficient long-horizon agents. arXiv preprint arXiv:2506.15841, 2025.
+Prateek Chhikara, Jiarui Zhang, Filip Ilievski, Jonathan Francis, and Kaixin Ma. Knowledge-enhanced
+agents for interactive text games. In Proceedings of the 12th Knowledge Capture Conference 2023,
+pages 157–165, 2023.
+Prateek Chhikara, Dev Khant, Saket Aryan, Taranjeet Singh, and Deshraj Yadav. Mem0: Building
+production-ready ai agents with scalable long-term memory. arXiv preprint arXiv:2504.19413,
+2025.
+Zhiyu Li, Shichao Song, Hanyu Wang, Simin Niu, Ding Chen, Jiawei Yang, Chenyang Xi, Huayi
+Lai, Jihao Zhao, Yezhaohui Wang, et al. Memos: An operating system for memory-augmented
+generation (mag) in large language models. arXiv preprint arXiv:2505.22101, 2025.
+Wujiang Xu, Zujie Liang, Kai Mei, Hang Gao, Juntao Tan, and Yongfeng Zhang. A-mem: Agentic
+memory for llm agents. arXiv preprint arXiv:2502.12110, 2025.
+Jason Wei, Zhiqing Sun, Spencer Papay, Scott McKinney, Jeffrey Han, Isa Fulford, Hyung Won
+Chung, Alex Tachard Passos, William Fedus, and Amelia Glaese. Browsecomp: A simple yet
+challenging benchmark for browsing agents. arXiv preprint arXiv:2504.12516, 2025.
+Ryan Wong, Jiawei Wang, Junjie Zhao, Li Chen, Yan Gao, Long Zhang, Xuan Zhou, Zuo Wang, Kai
+Xiang, Ge Zhang, et al. Widesearch: Benchmarking agentic broad info-seeking. arXiv preprint
+arXiv:2508.07999, 2025.
+Grégoire Mialon, Clémentine Fourrier, Thomas Wolf, Yann LeCun, and Thomas Scialom. Gaia:
+a benchmark for general ai assistants. In The Twelfth International Conference on Learning
+Representations, 2023.
+10
+
+Adyasha Maharana, Dong-Ho Lee, Sergey Tulyakov, Mohit Bansal, Francesco Barbieri, and Yuwei
+Fang. Evaluating very long-term conversational memory of llm agents. In Proceedings of the 62nd
+Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers), pages
+13851–13870, 2024.
+Carlos E Jimenez, John Yang, Alexander Wettig, Shunyu Yao, Kexin Pei, Ofir Press, and Karthik R
+Narasimhan. SWE-bench: Can language models resolve real-world github issues? In The Twelfth
+International Conference on Learning Representations, 2024. URL https://openreview.net/
+forum?id=VTF8yNQM66.
+Carlos E Jimenez, John Yang, Alexander Wettig, Shunyu Yao, Kexin Pei, Ofir Press, and Karthik R
+Narasimhan. Swe-bench: Can language models resolve real-world github issues? In The twelfth
+international conference on learning representations, 2023.
+Volcengine Viking Team. Openviking: An open-source context database for ai agents. https:
+//github.com/volcengine/OpenViking, 2026. Provides a filesystem-based paradigm for
+managing agent memory, resources, and skills.
+LangChain AI. Langmem: Long-term memory for llm agents.
+langchain-ai/langmem, 2026.
+
+https://github.com/
+
+Supermemory AI. Supermemory: Memory and context layer for ai. https://github.com/
+supermemoryai/supermemory, 2026.
+Yushi Bai, Xin Lv, Jiajie Zhang, Hongchang Lyu, Jiankai Tang, Zhidian Huang, Zhengxiao Du, Xiao
+Liu, Aohan Zeng, Lei Hou, et al. Longbench: A bilingual, multitask benchmark for long context
+understanding. In Proceedings of the 62nd annual meeting of the association for computational
+linguistics (volume 1: Long papers), pages 3119–3137, 2024.
+Di Wu, Hongwei Wang, Wenhao Yu, Yuwei Zhang, Kai-Wei Chang, and Dong Yu. Longmemeval:
+Benchmarking chat assistants on long-term interactive memory. arXiv preprint arXiv:2410.10813,
+2024.
+Cheng-Ping Hsieh, Simeng Sun, Samuel Kriman, Shantanu Acharya, Dima Rekesh, Fei Jia, Yang
+Zhang, and Boris Ginsburg. Ruler: What’s the real context size of your long-context language
+models? arXiv preprint arXiv:2404.06654, 2024.
+Yiming Du, Hongru Wang, Zhengyi Zhao, Bin Liang, Baojun Wang, Wanjun Zhong, Zezhong Wang,
+and Kam-Fai Wong. Perltqa: A personal long-term memory dataset for memory classification,
+retrieval, and fusion in question answering. In Proceedings of the 10th SIGHAN Workshop on
+Chinese Language Processing (SIGHAN-10), pages 152–164, 2024.
+Zecheng Tang, Baibei Ji, Ruoxi Sun, Haitian Wang, WangJie You, Zhang Yijun, Wenpeng Zhu, Ji Qi,
+Juntao Li, and Min Zhang. MemoryRewardBench: Benchmarking Reward Models for Long-Term
+Memory Management in Large Language Models. arXiv preprint arXiv:2601.11969, 2026.
+Haoran Tan, Zeyu Zhang, Chen Ma, Xu Chen, Quanyu Dai, and Zhenhua Dong. Membench: Towards
+more comprehensive evaluation on the memory of llm-based agents. In Findings of the Association
+for Computational Linguistics: ACL 2025, pages 19336–19352, 2025.
+Stefano Rando, Luca Romani, Alessio Sampieri, Luca Franco, John Yang, Yuta Kyuragi, Fabio
+Galasso, and Tatsunori Hashimoto. Longcodebench: Evaluating coding llms at 1m context
+windows. arXiv preprint arXiv:2505.07897, 2025.
+Jielin Qiu, Zuxin Liu, Zhiwei Liu, Rithesh Murthy, Jianguo Zhang, Haolin Chen, Shiyu Wang, Ming
+Zhu, Liangwei Yang, Juntao Tan, et al. Locobench: A benchmark for long-context large language
+models in complex software engineering. arXiv preprint arXiv:2509.09614, 2025.
+Mohammad Tavakoli, Alireza Salemi, Carrie Ye, Mohamed Abdalla, Hamed Zamani, and J Ross
+Mitchell. Beyond a million tokens: Benchmarking and enhancing long-term memory in llms.
+arXiv preprint arXiv:2510.27246, 2025.
+
+11
+
+A
+
+Technical appendices and supplementary material
+
+A.1
+
+Prompt Template Example
+
+We provide the coding agents following instructions to run each task:
+instance:
+instance_id: <instance_id>
+repo: <repo>
+base_commit: <base_commit>
+problem_statement: <problem_statement>
+setup:
+testbed_dir: testbed
+steps:
+- description: Remove existing testbed if present
+command: rm -rf testbed
+- description: Clone repository
+command: git clone https://github.com/<repo>.git testbed
+- description: Checkout base commit
+command: git -C testbed fetch origin <base_commit> && \
+git -C testbed checkout <base_commit>
+- description: Install dependencies
+command: pip install -e testbed
+- description: Remove git history to prevent solution leakage
+command: rm -rf testbed/.git
+- description: Re-initialize git without history
+command: git init testbed
+output:
+directory: output
+filename: <instance_id>_preds.json
+format:
+model_name_or_path: <auto_detect>
+instance_id: <instance_id>
+model_patch: <generated_patch>
+patch_generation:
+- command: git -C testbed add -A
+- command: git -C testbed diff --cached
+cleanup:
+- description: Remove testbed after saving preds
+command: rm -rf testbed
+instructions: |
+1. Run setup steps to prepare the testbed
+2. Navigate to testbed/ and fix the bug described in problem_statement
+3. You should not include tests in the generated patch.
+4. Generate patch: git -C testbed add -A && git -C testbed diff --cached
+5. Save to output/<instance_id>_preds.json with format:
+{
+"<instance_id>": {
+"model_name_or_path": "<auto_detect>",
+"instance_id": "<instance_id>",
+"model_patch": "<patch>"
+}
+
+12
+
+}
+6. Remove testbed folder: rm -rf testbed
+
+A.2
+
+Implementation Details for Memory Retrieval Frameworks
+
+In this section, we describe the implementation details of four memory retrieval frameworks: Mem0
+Chhikara et al. [2025], OpenViking Volcengine Viking Team [2026], LangMem LangChain AI [2026],
+and Supermemory Supermemory AI [2026]. To incorporate prior context, we use the collected context
+trajectory files as input, as described in Section 2.2.2.
+A.2.1
+
+Mem0
+
+Memory Ingestion. Previous context trajectories, stored as JSONL conversation files, are preprocessed and ingested into a persistent local memory store. Each file is parsed to extract a structured
+representation comprising a high-level summary, the complete user/assistant message history, and
+associated metadata (repository name, instance ID). Each context is then committed to a local Mem0
+Memory instance via two sequential add calls: the first stores a concise summary concatenated
+with the problem statement, and the second stores the full conversation transcript. Both calls are
+tagged with a unique run ID and structured metadata to enable downstream filtering. Following
+the standard Mem0 interface, infer=True is set on both calls, instructing an LLM (GPT-4o-mini) to
+extract and deduplicate salient facts prior to storage. The resulting embeddings are persisted in a
+local Qdrant vector store, with memory metadata recorded in a co-located SQLite database. Ingesting
+300 trajectories requires approximately 21 minutes at a total cost of $0.24.
+Memory Retrieval. At inference time, relevant past contexts are retrieved via semantic similarity
+search over the ingested vector store. Given a natural-language query describing the current problem,
+an embedding is computed using OpenAI’s text-embedding-3-small model and issued directly against
+the Qdrant collection. This enables cross-session retrieval across the full corpus of ingested contexts.
+Retrieved candidates are ranked by cosine similarity score and filtered by a type: past_context
+predicate, with an optional repository-level filter to narrow scope. The top-k results, comprising
+memory text and associated metadata, are serialized to a structured JSON output file for consumption
+by downstream components.
+A.2.2
+
+OpenViking
+
+Memory Ingestion. Past context trajectories are ingested into OpenViking by registering each JSONL
+file as a resource via client.add_resource(), which triggers OpenViking’s internal indexing
+pipeline to parse, chunk, and embed the file contents automatically. Files are processed in batches of
+25, with each batch followed by a synchronous client.wait_processed() call (up to 100 minutes
+per batch) that blocks until all embeddings and indexes for that batch are confirmed complete. This
+process requires no manual extraction of summaries or message structure — OpenViking handles
+document parsing and semantic indexing natively. Ingesting 300 trajectories required approximately
+570 minutes at a total cost of $18.96.
+Memory Retrieval. At inference time, relevant past contexts are retrieved by issuing a
+client.find() query against the full resource collection (viking://resources/), using OpenViking’s
+built-in semantic search with a relevance score threshold of 0.2. For each result above the threshold,
+the resource URI, relevance score, and auto-generated abstract are returned; the full trajectory content
+is then fetched via a separate client.read() call. The top-k results are serialized to a structured
+JSON output file for downstream consumption.
+A.2.3
+
+LangMem
+
+Memory Ingestion. Each JSONL trajectory is parsed to reconstruct the full conversation as an ordered
+list of role/content messages (user, assistant, system), with session metadata (working directory,
+session ID) prepended as a system message and tool calls normalized to inline text. The complete
+message list is then passed to LangMem’s create_memory_manager — backed by GPT-4o-mini
+with a structured Memory schema — which invokes the LLM to extract discrete, self-contained
+factual memory items from the conversation. Each extracted memory is stored individually in
+a persistent LangGraph SqliteStore with a vector index (text-embedding-3-small) under a
+13
+
+shared memories namespace. Ingesting 300 trajectories yielded 997 memories in approximately 58
+minutes at a cost of $0.98.
+Memory Retrieval.
+At inference time, relevant memories are retrieved by issuing a
+store.search() call against the SQLite vector index. The query string is embedded using
+text-embedding-3-small and matched against all stored memory embeddings in the memories
+namespace. The top-k results (default 10) are returned with relevance scores and serialized to a
+structured JSON output file for downstream consumption.
+A.2.4
+
+Supermemory
+
+Memory Ingestion. Each JSONL trajectory is parsed and formatted into human-readable conversation text by extracting user and assistant turns, then uploaded to Supermemory’s managed cloud
+platform via client.add(), tagged under the past_context container with per-file metadata (filename, session ID, message count). Content extraction, embedding, and RAG indexing are handled
+entirely by Supermemory’s closed-source backend. A 1.5-second rate-limit delay is applied between
+uploads. Ingesting 300 trajectories consumed 369.6k tokens and completed in under one hour.
+Memory Retrieval. Supermemory exposes four MCP tools: mcp__supermemory__memory (save
+or forget a piece of information to/from the memory store), mcp__supermemory__recall
+(search saved memories using a query to retrieve relevant past context),
+mcp__supermemory__listProjects (list all available projects/containers used to organize
+memories), and mcp__supermemory__whoAmI (return current logged-in user info). At inference
+time, relevant past contexts are retrieved via mcp__supermemory__recall, which performs
+semantic search over the past_context container.
+Specifically, we provided the following instruction to the agent:
+When asked to fix a bug, always call mcp__supermemory__recall first with
+the bug description and containerTag: "past_context" to search for
+past similar bugs and relevant context before attempting a fix. If
+relevant past context is found, learn from it to solve the new issue.
+Do not save the new issue to memory.
+
+A.3
+A.3.1
+
+Insights to Improve Context Learning in Coding Agents
+Summarization Quality
+
+Results in Table 3 show that effective context learning depends on concise and informative summaries
+of long trajectories. Raw context logs are often too verbose and noisy, making them hard to reuse
+directly. Instead, agents benefit from compact representations that capture key insights. This
+highlights the importance of strong summarization ability. For example, Mem0 retrieves a brief
+description (“Problem addressed involves limiting choices on a ForeignKey that can render duplicate
+options in formfield”), while LangMem produces a more precise and detailed summary (“The bug
+identified by django__django-13315 involves limit_choices_to where using a Q object could lead to
+duplicate entries in Django formfield dropdowns due to SQL joins producing multiple rows for the
+same object if there are multiple matching related objects.”), which better captures the root cause. As
+a result, richer summaries provide more useful guidance and lead to stronger performance.
+A.3.2
+
+Context Management
+
+Current approaches treat stored context as an unstructured pool, without organization or indexing.
+However, efficient systems (e.g., file systems) rely on structured storage for fast retrieval. Similarly,
+organizing contexts—for example, grouping by repository, task type, or dependency structure—could
+significantly improve retrieval efficiency and relevance. A hierarchical or repository-level organization
+may help agents locate useful context more effectively.
+A.3.3
+
+Adaptive Learning Decisions
+
+Table 4 shows that naive context learning can increase cost without improving accuracy: both Free
+Context Learning and Free Summary Learning are more expensive than the no-context baseline. This
+suggests that learning is not always beneficial. For simpler tasks, solving from scratch may be more
+14
+
+efficient, while for complex tasks, prior context can reduce computation. Therefore, agents should
+learn to decide when to reuse context and when to ignore it, balancing cost and benefit.
+A.3.4
+
+Retrieval Strategy
+
+Results in Table 4 and Table 5 show that memory retrieval frameworks improve performance by
+retrieving relevant past cases. However, most approaches use a fixed number of retrieved contexts,
+which may not be suitable for all tasks. Some problems benefit from multiple related examples
+to capture different solution patterns, while others require only a single highly relevant case. This
+suggests that retrieval should be adaptive, with the agent selecting both the number and relevance of
+contexts based on task complexity. In addition, stronger retrieval strategies that improve matching
+quality are important. Higher matching scores indicate better identification of truly related cases,
+which allows agents to learn more effectively from prior context. Improving both the precision and
+flexibility of retrieval is therefore key to maximizing the benefits of context learning.
+A.3.5
+
+Utilization of Retrieved Context
+
+Even when the correct prior context is identified, agents may still fail to solve the task. Past trajectories
+often include errors, trial-and-error steps, or incomplete reasoning that were only corrected later in
+the process. If an agent blindly follows these intermediate steps, it can be misled and reproduce
+incorrect decisions. This highlights that retrieval alone is not sufficient. Agents must actively interpret
+the retrieved context, distinguishing between useful insights and misleading details. In practice, this
+means identifying the core cause of the issue, extracting the relevant solution pattern, and adapting it
+to the current task rather than copying it directly. It also requires the ability to disregard irrelevant or
+incorrect parts of the trajectory. Therefore, effective context learning depends not only on retrieving
+the right context, but also on using it critically and selectively. Strengthening this ability to evaluate,
+adapt, and filter past context is essential for achieving robust and reliable performance.
+A.4
+
+Context Pool Quality and Noise
+
+The quality of the context pool is not explicitly controlled or filtered. We do not explicitly evaluate
+whether the experience tasks are correctly solved or fully resolved. This design choice aims to reflect
+real-world software engineering environments, where solutions often involve multiple iterations,
+partial fixes, and unresolved issues. In practice, development processes include trial-and-error, internal
+corrections, and incomplete outcomes, all of which are naturally captured in the recorded trajectories.
+As a result, the context pool may contain trajectories that are partially correct, incorrect, or include
+residual bugs. We intentionally do not filter out such cases, as they represent realistic development
+conditions. However, this also means that agents must learn to handle noisy and imperfect context,
+which can make effective reuse more challenging.
+A.5
+
+Limitations
+
+A key limitation of SWE-ContextBench is the lack of comprehensive human validation. While related
+task instances are manually identified and verified for structural correctness, there is no systematic
+involvement of human annotators to assess the clarity of problem descriptions, the correctness of
+test patches, or the overall solvability of each task. As a result, some instances may contain noise,
+especially for complex or indirectly linked cases derived from issue and pull request relationships.
+
+15
+
+

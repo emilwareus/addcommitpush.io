@@ -1,0 +1,2167 @@
+Teaching Code LLMs to Use Autocompletion Tools
+in Repository-Level Code Generation
+Chong Wang∗ , Jian Zhang∗ , Yebo Feng∗ , Tianlin Li∗ , Weisong Sun∗ , Yang Liu∗ , and Xin Peng†
+∗ School of Computer Science and Engineering, Nanyang Technological University, Singapore
+
+arXiv:2401.06391v3 [cs.SE] 18 Jul 2024
+
+{chong.wang, jian_zhang, yebo.feng}@ntu.edu.sg, tianlin001@e.ntu.edu.sg, {weisong.sun, yangliu}@ntu.edu.sg
+† School of Computer Science and Shanghai Key Laboratory of Data Science, Fudan University, China
+pengxin@fudan.edu.cn
+
+to automatically generate code based on provided natural
+language descriptions. These code LLMs have demonstrated
+notable effectiveness in the generation of code blocks or
+functions. For instance, CodeLlama [12], built upon the
+foundational Llama2 model [25], has achieved state-of-theart results among open code LLMs (e.g., CodeGen [8] and
+StarCoder [11]), on benchmarks like HumanEval [3] and
+MBPP [26] that focus on standalone functions.
+However, it is crucial to emphasize that in real-world code
+repositories, more than 70% of functions are not standalone [27].
+Code LLMs encounter significant challenges when generating
+such real-world functions, primarily because they cannot
+be aware of repository-level dependencies, such as userdefined functions and attributes, during the code generation
+process [27]. This limitation often leads to the generation of
+code with dependency errors, including undefined-variable
+and no-member errors. These errors impede the usability and
+effectiveness of the code LLMs [28]. For example, consider the
+scenario depicted in Figure 1. A code LLM (e.g., CodeLlama)
+might incorrectly predict “_updates” after generating “...
+self.”, resulting in a no-member error because the object
+“self” does not possess an attribute named “_updates”.
+Meanwhile, modern Integrated Development Environments
+(IDEs) take a different approach, which typically incorporates
+code autocompletion tools based on program analysis. These
+tools, like Jedi [29], leverage their ability to analyze the current
+incomplete function’s state and project context to provide valid
+completion recommendations. This includes suggestions for
+accessible variables, attributes, and functions. For instance,
+when encountering “self.” in Figure 1, Jedi can infer and
+recommend 68 accessible attributes defined within “self”,
+including the target suggestion “_registered_updates”.
+Therefore, if we can seamlessly switch between code LLMs
+and the use of autocompletion tools, we have the potential to
+significantly reduce the occurrence of dependency errors in
+I. I NTRODUCTION
+repository-level code generation.
+Code generation has been a longstanding focal point
+In fact, recent research has delved into the integration
+in the field of software engineering. Recent advancements of external tools into the generation process of LLMs to
+have introduced a variety of code large language models mitigate their limitations in constrained generation scenarios.
+(LLMs) [1]–[13] constructed upon the Transformer model One noteworthy example is ToolFormer [30], which creates
+architecture [14], achieving promising performance in code- an augmented dataset to instruct LLMs on invoking existing
+related applications [15]–[24]. These models are either pre- arithmetic calculators. This integration effectively reduces
+trained or fine-tuned on extensive code corpora, enabling them errors in generated text involving arithmetic calculations.
+Abstract—Recent code large language models (LLMs) have
+shown promising performance in generating standalone functions.
+However, they face limitations in repository-level code generation
+due to their lack of awareness of repository-level dependencies
+(e.g., user-defined attributes), resulting in dependency errors such
+as undefined-variable and no-member errors. In this work, we
+introduce T OOL G EN, an approach that integrates autocompletion
+tools into the code LLM generation process to address these
+dependencies. T OOL G EN comprises two main phases: Trigger
+Insertion and Model Fine-tuning (Offline), and Tool-integrated
+Code Generation (Online). During the offline phase, T OOL G EN
+augments functions within a given code corpus with a special mark
+token, indicating positions to trigger autocompletion tools. These
+augmented functions, along with their corresponding descriptions,
+are then used to fine-tune a selected code LLM. In the online
+phase, T OOL G EN iteratively generates functions by predicting
+tokens step-by-step using the fine-tuned LLM. Whenever a mark
+token is encountered, T OOL G EN invokes the autocompletion tool
+to suggest code completions and selects the most appropriate one
+through constrained greedy search.
+We conduct comprehensive experiments to evaluate T OOL G EN’s effectiveness in repository-level code generation across three
+distinct code LLMs: CodeGPT, CodeT5, and CodeLlama. To facilitate this evaluation, we create a benchmark comprising 671 realworld code repositories and introduce two new dependency-based
+metrics: Dependency Coverage and Static Validity Rate. The results
+demonstrate that T OOL G EN significantly improves Dependency
+Coverage by 31.4% to 39.1% and Static Validity Rate by 44.9%
+to 57.7% across the three LLMs, while maintaining competitive
+or improved performance in widely recognized similarity metrics
+such as BLEU-4, CodeBLEU, Edit Similarity, and Exact Match.
+On the CoderEval dataset, T OOL G EN achieves improvements
+of 40.0% and 25.0% in test pass rate (Pass@1) for CodeT5
+and CodeLlama, respectively, while maintaining the same pass
+rate for CodeGPT. T OOL G EN also demonstrates high efficiency
+in repository-level code generation, with latency ranging from
+0.63 to 2.34 seconds for generating each function. Furthermore,
+our generalizability evaluation confirms T OOL G EN’s consistent
+performance when applied to diverse code LLMs, encompassing
+various model architectures and scales.
+
+Repository: zomux/deepy
+
+File: layers/layer.py
+
+# Register updates that will be executed in each iteration.
+def register_updates(self, *updates):
+for update in updates:
+self.
+CodeLlama Prediction:
+Jedi Completions:
+(68 suggestions)
+
+_updates
+
+no-member error
+
+1. activation
+2. belongs_to
+
+...
+
+46. _registered_updates
+
+...
+
+target
+
+Fig. 1: Illustrative Example of LLM Prediction and Tool
+Completion
+
+Building upon ToolFormer’s inspiration, Zhang et al. [31]
+introduce ToolCoder, an approach designed to teach LLMs
+how to utilize information-retrieval-based (IR-based) API
+search tools during the code generation process. While ToolCoder targets the generation of functionally correct standalone
+functions and demonstrates promising results, the integrated
+IR-based API search tools do not consider repository-level
+dependencies, limiting their potential in resolving dependency
+errors. Additionally, ToolFormer and ToolCoder are unable to
+handle scenarios where the tools return multiple candidates.
+Another relevant example of harnessing external tools is
+Repilot [32], which leverages code completion tools to filter
+out impractical suggestions made by LLMs in the context of
+automatic program repairing (APR). Unlike repository-level
+code generation, Repilot’s primary focus is on generating
+valid single-hunk bug-fix patches rather than entire functions.
+When applying Repilot to function-level code generation, the
+autocompletion tools are frequently triggered unnecessarily,
+resulting in significant overhead and impracticality.
+In this work, we aim at integrating program-analysis-based
+code autocompletion tools into the generation process of
+code LLMs. Achieving the incorporation presents two key
+challenges. (i) Determining when to trigger the invocation
+of autocompletion tools during the generation process:
+The generation process of LLMs is a step-by-step decoding
+process where each subsequent token is predicted based on
+previous tokens. In general, a function consists of dozens
+or even hundreds of tokens, making it impractical to invoke
+code autocompletion tools at every decoding step. In the
+case of tools like ToolFormer and ToolCoder, ChatGPT is
+employed to augment the training corpus by introducing special
+tokens into the text or code to mark positions where tool
+invocation is needed. After training on this augmented corpus,
+LLMs can predict the special token at the appropriate step,
+thereby triggering tool invocation. However, this ChatGPTbased augmentation method is less effective for repositorylevel code generation due to the presence of repository-level
+dependencies. The special token must be precisely inserted at
+positions involving such dependencies, such as when accessing
+
+user-defined variables. (ii) Selecting the target suggestion
+from the recommended completions of autocompletion tools:
+Different from tools like arithmetic calculation or API search
+integrated into ToolFormer and ToolCoder, which return a
+single result for each invocation, autocompletion tools often
+provide multiple completion suggestions sorted alphabetically.
+For instance, as depicted in Figure 1, Jedi returns a list of 68
+completion suggestions (excluding builtin attributes), with the
+target suggestion being the 46th one in the list. Consequently,
+after invoking autocompletion tools, it is essential to assess the
+suggestions based on the generated code and select the most
+appropriate one. Furthermore, this selection process needs to
+be seamlessly integrated into the code generation process to
+ensure efficiency and coherence.
+To tackle the challenges, we propose T OOL G EN, an approach
+to integrate autocompletion tools into the generation process
+of code LLMs to support repository-level code generation.
+T OOL G EN has two main phases: Trigger Insertion and Model
+Fine-tuning (Offline), and Tool-integrated Code Generation
+(Online). In the offline phase, T OOL G EN analyzes source files
+within a corpus of code repositories, creating abstract syntax
+trees (ASTs) and extracting function definitions. It augments
+these functions by inserting a special token, <COMP>, signifying
+the positions to trigger autocompletion tools. The insertion
+positions are established by navigating through the functions
+and identifying the identifiers that can be recommended by
+autocomplete tools. These augmented functions, paired with
+their respective descriptions, are then employed to fine-tune a
+selected code LLM. In the online phase, T OOL G EN iteratively
+constructs a function based on a provided description by
+predicting tokens step-by-step through the fine-tuned LLM.
+Whenever a <COMP> token is encountered, T OOL G EN invokes
+the autocompletion tool to suggest code completions, drawing
+from the current repository context. Subsequently, it identifies
+the most appropriate suggestion through a constraint greedy
+search algorithm, appending this selected suggestion to the
+current tokens. This process continues as it predicts tokens
+until a specified termination condition is satisfied.
+We conduct extensive experiments to evaluate the effectiveness of T OOL G EN in repository-level code generation
+across three distinct code LLMs, namely, CodeGPT [33],
+CodeT5 [4], and CodeLlama [12]. To facilitate this evaluation,
+we first construct a benchmark, which includes 12,406 Python
+functions from 671 real-world code repositories and 176
+coding tasks from CoderEval dataset [27]. We define two
+new repository-level metrics, namely Dependency Coverage
+and Static Validity Rate. Dependency Coverage quantifies the
+proportion of repository-level dependencies present in groundtruth functions and successfully covered by the generated
+functions, while Static Validity Rate measures the percentage
+of generated functions that pass a dependency error check.
+The evaluation results on the 12,406 functions demonstrate
+that T OOL G EN exhibits comparable or improved performance
+in widely-recognized similarity metrics such as BLEU-4,
+CodeBLEU, Edit Similarity, and Exact Match. Importantly,
+T OOL G EN achieves significant improvements in Dependency
+
+Coverage, ranging from 31.4% to 39.1%, and Static Validity
+Rate, spanning from 44.9% to 57.7%, across the three code
+Encoder
+Decoder
+Decoder
+LLMs. On the 176 tasks derived from CoderEval, T OOL G EN
+achieves improvements of 40.0% and 25.0% in test pass rate
+(Pass@1) for CodeT5 and CodeLlama, respectively, while
+docstring
+function
+docstring
+function
+maintaining the same pass rate for CodeGPT. T OOL G EN also
+(a) Decoder-only Model
+(b) Encoder-Decoder Model
+demonstrates high efficiency in repository-level code generation,
+Fig. 2: Decoder-only Model and Encoder-Decoder Model
+with average latency ranging from 0.63 to 2.34 seconds,
+attributed to offline fine-tuning with trigger insertion. Moreover,
+the results from our generalizability evaluation confirm that
+sequence into the model’s decoder and proceeds to predict
+T OOL G EN consistently performs well across a variety of code
+a function token-by-token, based on the context provided
+LLMs, with different model architectures and scales.
+by the description and previously predicted tokens.
+In summary, this paper presents the following key contribu• Encoder-Decoder Models: As depicted in Figure 2b,
+tions:
+encoder-decoder code LLMs, such as CodeT5 [4] and
+• T OOL G EN , an novel approach that seamlessly integrates
+CodeT5+ [5], encompass both the encoder and decoder
+autocompletion tools into the generation process of code
+components of the Transformer architecture. In this case,
+LLMs, which consists of Trigger Insertion and Model Finethe employed model also tokenizes the description into
+tuning (Offline), and Tool-integrated Code Generation (Ona token sequence, but the sequence is first processed by
+line). T OOL G EN seamlessly integrates the autocompletion
+the model’s encoder. The model’s decoder is then tasked
+tool into the generation process of code LLMs, thereby
+with predicting a function token-by-token, relying on the
+enhancing repository-level code generation. The offline
+representation produced by the encoder and the context
+phase results in an Augmented Dataset, which comprises
+provided by the preceding tokens.
+249,298 Python functions sourced from a diverse selection
+On
+top of the standard generation process, to ensure that
+of 12,231 code repositories. Each function is augmented
+the
+employed
+code LLM can recognize and predict the special
+with a special token, <COMP>, which signifies positions
+token
+<COMP>, we initially incorporate this token into the
+suitable for invoking autocompletion tools.
+LLM’s vocabulary, denoted as Vllm . Formally, this addition
+• An Evaluation Benchmark, which encompasses 12,406
+Python functions drawn from 671 real-world code reposi- results in an expanded vocabulary represented as:
+tories and 176 coding tasks with test cases derived from
+V ← Vllm ∪ {<COMP>}
+(1)
+CoderEval, along with the introduction of two novel
+For the employed code LLM, within the generation process,
+repository-level metrics: Dependency Coverage and Static
+we
+define its tokenization process as a procedure:
+Validity Rate.
+• Extensive Experimental Results, which affirm the ef∗
+∗
+LLM - TOKENIZE : Σchar → V
+(2)
+ficacy of T OOL G EN in repository-level code generation.
+T OOL G EN demonstrates substantial improvements in Here, Σ∗
+char represents a character sequence of either a
+Dependency Coverage, ranging from 31.4% to 39.1%, description or a code snippet, and V∗ corresponds to the
+and Static Validity Rate, spanning from 44.9% to 57.7%, resulting sequence of tokens drawn from V.
+across three distinct code LLMs. Additionally, T OOL G EN
+The next token prediction involved in each step is defined
+achieves 40% and 25% improvements in test pass rate as a procedure:
+for CodeT5 and CodeLlama, respectively, with high
+∗
+∗
+|V|
+LLM - PREDICT : (V , V ) → [0, 1]
+(3)
+generation efficiency.
+In this context, the two input token sequences (V∗ ) represent
+a description and an incomplete function, respectively, while
+A. Code LLMs
+[0, 1]|V| signifies a probability distribution encompassing |V|
+Typically, there are two main categories of code LLMs that probabilities [0, 1]. Here, |V| is the size (token numbers) of
+can be employed for code generation. These categories include the vocabulary V.
+decoder-only models and encoder-decoder models, each of
+Example: In Figure 1, CodeLlama takes the description
+which conducts the code generation process base on a given “Register updates...” and the incomplete function “... self.”
+description as outlined below:
+as inputs. It then performs a prediction, generating a probability
+• Decoder-only Models: Illustrated in Figure 2a, decoder- distribution of size |V|, wherein the token “_updates”
+only code LLMs, such as CodeGPT [33] and CodeL- exhibits the highest probability among all tokens.
+lama [12], consist solely of a decoder component derived
+from the Transformer architecture [14]. An employed B. Autocompletion Tools
+decoder-only model first tokenizes the input description
+An autocompletion tool takes a code repository and a caret
+into a sequence of tokens. Subsequently, it feeds this token position (defined as a tuple containing source file, line number,
+II. P RELIMINARIES
+
+and column number) as input and provides a list of completion
+suggestions. We define this completion process as a procedure:
+∗
+TOOL - COMPLETE : (Σrepo , Σpos ) → Σiden
+
+(4)
+
+Here, Σrepo and Σpos respectively represent the domains of
+code repositories and caret positions, Σiden encompasses all
+possible identifiers such that Σ∗iden is a list of identifiers.
+It’s worth noting that autocompletion tools often provide a
+wide range of completion suggestions, including keywords and
+partial identifiers. In our context, we focus solely on identifierlevel completions, as keywords are relatively straightforward for
+code LLMs to predict, and partial identifiers are encompassed
+by identifier-level completions.
+Example: In Figure 1, when provided with the code
+repository and caret position, Jedi is capable of generating
+86 completion suggestions for the incomplete function "...
+self.".
+III. A PPROACH
+In this section, we elaborate on our approach named
+T OOL G EN to integrate autocompletion tools into the generation process of code LLMs to support repository-level code
+generation.
+A. Overview
+Figure 3 presents an overview of T OOL G EN, which consists
+of two main phases, namely (i) Trigger Insertion and
+Model Fine-tuning (Offline) and (ii) Tool-integrated Code
+Generation (Online).
+In trigger insertion and model fine-tuning, T OOL G EN parses
+each source file in the given code repositories into an abstract
+syntax tree (AST) and then extracts function definitions from
+the AST; For each extract function definition, T OOL G EN then
+utilizes an autocompletion tool to augment it with the special
+token <COMP> to mark the positions to invoke the tool, and then
+assembles a pair of description and augmented function; After
+process all code repositories, T OOL G EN employs the resulting
+pairs of descriptions and augmented functions to fine-tune a
+code LLM, resulting in a fine-tuned code LLM that can predict
+<COMP> at suitable positions to trigger the autocompletion tool.
+In tool-integrated code generation, T OOL G EN generates a
+token sequence to form a function by an iterative process, in
+which, at each step, one or multiple tokens are yielded by
+the fine-tuned code LLM and the employed autocompletion
+tool. At certain step, ❶ the fine-tuned code LLM takes the
+given description and the incomplete function as inputs and
+predicts the next token; The predicted token is appended to the
+incomplete function; ❷ If the predicted token equals <COMP>,
+the autocomplete tool is triggered and a list of completion
+suggestions is returned based on the current repository context;
+❸ T OOL G EN then selects the most suitable one from the
+suggestions with the fine-tuned code LLM and appends the
+selected suggestion to the incomplete function.
+
+B. Trigger Insertion and Model Fine-tuning
+1) Trigger Insertion: We employ a trigger insertion method
+to facilitate the learning process of code LLMs in determining
+when to utilize autocompletion tools during code generation.
+In this method, the special token <COMP> is inserted at
+specific locations within code functions, indicating when
+autocompletion tools should be triggered.
+Given a code repository R, we traverse each source file f ile
+within it based on the file’s suffix (e.g., .py for Python) and
+then proceed to analyze the functions defined in the source file.
+To achieve this, we parse the source file into an abstract syntax
+tree (AST), where the functions are represented as functiondefinition nodes. Each function-definition node contains multiple AST-tokens, which are smallest individual units, such as
+keywords, identifiers, literals, operators, and punctuators, within
+programming language syntax. Note that these AST-tokens
+differ from the tokens in the LLM’s vocabulary Vllm . Typically,
+an AST-token comprises one or more tokens from Vllm .
+For example, the AST-token “_registered_updates”
+consists of six tokens in vocabulary of CodeLlama, i.e., [“_”,
+“register”, “ed”, “_”, “up”, “dates”].
+For each function within the source file, we identify its
+corresponding function-definition node, denoted as node, and
+apply Algorithm 1 to it. The purpose of this algorithm is
+to traverse the function body and identify specific identifiers
+that are eligible for suggestions by autocomplete tools. Subsequently, the special token <COMP> is inserted in front of these
+chosen identifiers. More specifically, as the algorithm iterates
+through each AST-token t within the function body node.body
+(line 2), it performs two crucial checks. First, it employs the
+IS I DENTIFIER procedure to determine whether t is an identifier.
+Second, it verifies that t is not a built-in attribute, such as
+“__dict__” in Python, using the IS B UILTIN procedure. These
+conditions are essential because dependency errors often arise
+from user-defined attributes categorized as identifiers rather
+than other AST-tokens like language keywords. Additionally,
+these checks prevent the insertion of <COMP> at positions where
+the code LLM can confidently predict the following tokens, thus
+minimizing unnecessary tool invocations. When both conditions
+are met, the algorithm updates the caret position P to the start
+position of t (line 4) and invokes the autocompletion tool to
+obtain a list of completion suggestions, denoted as C (line 5).
+If C contains t, indicating that the tool can propose the desired
+identifier, the special token <COMP> is inserted before t to
+mark the position for triggering the autocompletion tool (lines
+6-7). Upon executing the algorithm, we obtain the augmented
+function code Faug .
+Next, we assemble a tuple (D, Faug ), in which D corresponds to the concatenation of the signature and docstring of
+the parsed function. Note that functions lacking corresponding
+docstrings are omitted from our process as our repository-level
+code generation relies on textual descriptions as input. Once we
+complete the processing of all code repositories, we accumulate
+an augmented dataset that contains a substantial number of
+these data tuples.
+
+Repo: zomux/deepy
+File: layers/layer.py
+
+Next Token
+
+Fine-tuned
+Code LLM
+
+Code LLM
+Code Repositories
+
+tok
+
+Docstring, Augmented function
+
+1 Next Token Pr ediction
+
+×N
+
+each source
+file
+
+_registered_updates
+
+<COMP>?
+
+Selected Suggestion
+F unction
+Definition
+
+Abstract Syntax Tree
+
+Fine-tuned
+Code LLM
+
+Autocompltion Tool
+Autocompletion
+Tool
+
+yes
+
+Fine-tuned
+Code LLM
+Completion Suggetions
+
+3 Suggestion Selection
+
+Tr igger Inser tion
+
+Offline: Tr igger Inser tion and Model Fine-tuning
+
+Autocompltion Tool
+Autocompletion
+Tool
+
+2 Code Autocompletion
+
+Online: Tool-integr ated Code Gener ation
+
+Fig. 3: Approach Overview of T OOL G EN
+
+Algorithm 1: Trigger Insertion
+Input: Repository R, Source File f ile,
+Function-definition node node
+Output: Augmented function Faug
+1 Faug ← GET S IGNATURE (node)
+// signature
+2 for t in node.body do
+3
+if IS I DENTIFIER(t) and not IS B UILTIN(t) then
+4
+P = (f ile, t.start_line, t.start_column)
+5
+C ← TOOL - COMPLETE(R, P)
+6
+if t ∈ C then
+7
+Faug .append(<COMP>)
+8
+
+Faug .append(t)
+
+def register_updates(self, *updates):
+for update in <COMP>updates:
+self.<COMP>_registered_updates.<COMP>add(<COMP>update)
+
+Fig. 4: Augmented Function
+
+2) Model Fine-tuning: During the fine-tuning process, we
+supply the collected descriptions and augmented functions
+to optimize the parameters of the employ code LLM (base
+model), adhering to established practices in code generation
+tasks. Specifically, for each pair consisting of a description
+D and an augmented function Faug , both are tokenized into
+sequences of tokens and subsequently fed into the base model
+to undergo the token-by-token generation process described in
+Section II-A. At each step, a cross-entropy loss is computed
+between the predicted probability distribution of the next token
+and the ground-truth next token present in Faug .
+In the case of code LLMs with an extensive number of parameters, such as CodeLlama-7B with 7 billion parameters, finetuning all parameters becomes computationally challenging due
+to resource limitations. To address this, we employ Low-Rank
+Adaptation (LoRA) [36] as a parameter-efficient fine-tuning
+technique. LoRA relies on low-dimensional representations and
+a freeze-and-inject strategy, where the majority of the model
+parameters remain fixed, and trainable low-rank matrices are
+introduced into specific transformer layers, particularly the
+projection matrices within the attention module, to approximate
+weight updates.
+
+Note that our trigger insertion method can be applied to C. Tool-integrated Code Generation
+arbitrary code and is not limited to function bodies alone.
+Based on the fine-tuned code LLM and the employed autoCurrently, we focus exclusively on function bodies, as our completion tool, we perform a tool-integrated code generation
+primary application scenario involves generating code based on process that is aware to the repository-level dependencies.
+the given natural language descriptions. Extracting descriptions
+1) Overall Process: Algorithm 2 outlines the overall toolfor code blocks outside functions for model training and integrated generation process, comprising three crucial parts
+evaluation is challenging, due to the difficulty in determining based on the fine-tuned code LLM and the employed autocomthe scope of line comments [34], [35]. Therefore, we solely pletion tool: ❶ Next Token Prediction, ❷ Code Autocompletion,
+consider function bodies, where corresponding descriptions can and ❸ Suggestion Selection. This algorithm takes a code
+be readily obtained from function docstrings.
+repository R, an insertion position P, and a description D
+Example: In Figure 4, we showcase an augmented function as inputs and follows an iterative process to generate a token
+that contains four instances of the special token <COMP>. These sequence, ultimately constructing a function denoted as F.
+tokens have been inserted at positions where the desired iden- Here, the tokens are drawn from the expanded vocabulary V
+tifiers, namely “updates”, “_registered_updates”, defined in Equation 1.
+“add”, and “update”, are found within the suggestion lists
+The iterative process commences with the <BOS> token
+of the autocompletion tool.
+(representing the beginning of the sequence), i.e., F ← [<BOS>]
+
+in line 2, and proceeds by iteratively updating F until it reaches
+the <EOS> token (representing the end of the sequence). During
+each iteration step, the algorithm utilizes the description D
+and the current incomplete function F as inputs for the finetuned code LLM to execute the LLM - PREDICT procedure. This
+procedure predicts a |V|-dimension probability distribution p|V|
+for the tokens in the vocabulary V (line 4). Subsequently, the
+token tok with the highest probability is selected using the
+commonly used ARGMAX function [37] (line 5). The selected
+token tok is then appended to F (line 6). If tok corresponds
+to the <EOS> token, the iterative process concludes, yielding
+the final generated function (lines 7-8).
+If tok corresponds to the special token <COMP>, the autocompletion tool is triggered to provide a list of completion
+suggestions denoted as C. These suggestions are produced
+based on the code repository R and the caret position P ′ after
+inserting F at P (lines 9-11). Notably, when F is inserted
+using the INSERT procedure, any <COMP> tokens within it
+are removed to prevent syntax errors. The fine-tuned code
+LLM is then employed to assess the completion suggestions
+and select the most suitable one for F by the LLM - SELECT
+procedure (line 12). The tokens from the selected suggestion
+are concatenated to F.
+Example: In the case of the incomplete code snippet shown
+in Figure 1, Algorithm 2 predicts the next token as <COMP>
+through the fine-tuned code LLM. This prediction triggers the
+autocompletion tool. Subsequently, the resulting completion
+suggestions are fed into the LLM - SELECT procedure, which
+determines the most appropriate suggestion.
+Algorithm 2: Tool-integrated Code Generation
+Input: Repository R, Description D, Insertion Position
+P
+Output: Function F
+1 D ← LLM - TOKENIZE (D)
+2 F ← [<BOS>]
+3 while true do
+4
+5
+6
+7
+8
+
+/* ❶ Next Token Prediction
+p|V| ← LLM - PREDICT(D, F)
+
+11
+
+if tok = <COMP> then
+P ′ ← INSERT(P, F)
+C ← TOOL - COMPLETE(R, P ′ )
+
+12
+
+/* ❸ Suggestion Selection
+LLM - SELECT (D, F, C)
+
+10
+
+ε
+
+belongs
+_
+
+···
+
+_
+
+to
+
+link
+
+ed
+
+_
+
+block
+
+register
+
+ed
+
+_
+
+up
+
+dates
+
+···
+
+Fig. 5: Example Prefix Tree
+inserts this token sequence into a prefix tree [38], denoted
+as trie (lines 1-5). Each node in the tree possesses four
+properties: node.token, node.tok_idx, node.children, and
+node.is_terminal, indicating the token stored in the node, the
+index of the stored token in V, the child nodes of the current
+node, and whether the node corresponding to the terminal of a
+token sequence. The root node, trie.root, is a unique node that
+stores ϵ, signifying an empty string. Every path from trie.root
+to a terminal node corresponds to a token sequence from C. As
+an illustration, Figure 5 presents the prefix tree corresponding
+to the 68 completion suggestions shown in Figure 1. In this
+example, nodes enclosed in blue boxes indicate the terminals
+of token sequences.
+Algorithm 3: Suggestion Selection based on Constraint
+Greedy Search
+Procedure LLM - SELECT(D, F, C):
+trie ← T rie()
+// prefix tree
+3
+for comp in C do
+4
+seq ← LLM - TOKENIZE(comp)
+5
+trie.insert(seq)
+
+1
+
+2
+
+6
+7
+8
+9
+10
+11
+12
+13
+
+tok ← ARGMAX(V, p|V| )
+F ← F ⊕ [tok]
+if tok = <EOS> then
+break
+/* ❷ Code Autocompletion
+
+9
+
+*/
+
+activation
+
+14
+15
+16
+17
+
+node ← trie.root
+while not node.is_terminal do
+m|V| ← 0
+for child in node.children do
+m|V| [child.tok_idx] ← 1
+p|V| ← LLM - PREDICT(D, F)
+p|V| ← p|V| ⊙ m|V|
+tok ← ARGMAX(V, p|V| )
+F ← F ⊕ tok
+for child in node.children do
+if child.token = tok then
+node ← child
+break
+
+*/
+
+18
+
+*/
+
+Subsequently, the algorithm proceeds to select a path in trie
+in a greedy fashion, based on predictions made by the finetuned code LLM, and appends the token sequence associated
+with the chosen path to the incomplete function F (lines 6-13).
+Specifically, the algorithm initiates a node pointer, denoted as
+node, with the root node trie.root (line 6). A loop continues
+until the pointer node reaches a terminal node (line 7). Within
+this loop, a |V|-dimensional mask vector, denoted as m|V| , is
+generated based on the children of the current node (lines 8-10).
+
+2) Completion Suggestion Selection: Algorithm 3 provides
+a description of the LLM - SELECT procedure, which is called
+within Algorithm 2. To begin, it tokenizes each completion
+in C into a sequence of tokens from V using the code
+LLM’s tokenizer (via the LLM - TOKENIZE procedure) and
+
+In m|V| , only positions corresponding to the tok_idx property
+dataset [40], comprising 1.1 million Python functions.
+of the children of node are assigned a value of 1, while all other
+For our purposes, we adopt the pre-trained CodeGPTpositions are set to 0. Subsequently, the fine-tuned code LLM
+small version1 , which encompasses 124 million model
+|V|
+is employed to predict a probability distribution, p (line 11).
+parameters.
+This predicted distribution is then element-wise multiplied by
+• CodeT5: CodeT5 [4] belongs to the encoder-decoder
+the mask vector m|V| , effectively setting the probability of
+model category and is similarly pre-trained on the Python
+tokens not in the children of node to 0. The next token, tok,
+corpus from the CodeSearchNet dataset. We select the
+is selected from V based on the highest probability in p|V|
+pre-trained CodeT5-base version2 , which comprises 220
+using the ARGMAX function and is appended to the current
+million model parameters.
+incomplete function F (lines 13-14). Finally, the node pointer
+• CodeLlama: CodeLlama [12] represents another decoderis updated to point to the child of node whose stored token
+only model, specialized for code-related tasks and based
+matches the selected token tok (line 15-18).
+on Llama2 [25]. It is pre-trained on an even larger
+Python corpus, encompassing a staggering 100 billion
+Example: For the prefix tree illustrated in Figure 5, the
+tokens sourced from a Python-centric dataset [12]. For our
+LLM - SELECT procedure iteratively selects the next tokens
+purposes, we adopt the pre-trained CodeLlama-7b version3 ,
+within the tree, guided by the LLM’s predictions. This iterative
+featuring a substantial 7 billion model parameters.
+process results in the inclusion of tokens corresponding to
+the suggestion “_registered_updates”, which are found We refer to the variants of T OOL G EN, namely T OOL G EN-gpt,
+along the green path, being appended to the incomplete T OOL G EN-t5, and T OOL G EN-llama, corresponding to the
+function.
+underlying base models CodeGPT, CodeT5, and CodeLlama,
+respectively.
+IV. E VALUATION S ETUP
+Autocompletion Tool. We employ Jedi [29] as our autocomTo evaluate the effectiveness and efficiency of T OOL G EN in
+pletion tool. Jedi is a static analysis tool designed for Python,
+repository-level code generation, we conduct a comprehensive
+commonly utilized within integrated development environments
+set of experiments.
+(IDEs) and editor plugins. Utilizing Jedi, T OOL G EN can
+trigger autocompletion, generating a list of suggestions that
+A. Research Questions
+encompasses repository-level dependencies, including userWe formulate the following research questions to guide our
+defined attributes and functions.
+evaluation:
+Trigger Insertion. To create the augmented dataset for
+• RQ1 - Similarity-based Effectiveness: How closely does
+fine-tuning the employed base model, we begin with the
+the code generated by T OOL G EN align with the ground
+Python corpus from the training set of CodeSearchNet dataset.
+truth when assessed using common similarity metrics?
+Since the CodeSearchNet dataset does not provide complete
+• RQ2 - Dependency-based Effectiveness: To what degree
+code repositories from which to extract Python functions, we
+can T OOL G EN cover repository-level dependencies and
+initiate the process by crawling the code repositories listed in
+reduce dependency errors, including those related to userthe dataset. Subsequently, we follow the procedure outlined
+defined functions and attributes?
+in Section III-B1 to extract and augment functions within
+• RQ3 - Execution-based Effectiveness: How effectively
+these code repositories, ultimately generating the augmented
+can T OOL G EN generate functionally correct functions that
+dataset. It’s important to note that the CodeSearchNet dataset
+pass test cases?
+includes a partitioning into training, validation, and test sets.
+• RQ4 - Efficiency: What is the average time T OOL G EN
+For our trigger insertion process, we exclusively utilize the
+takes to generate functions?
+code repositories associated with the training set. The resulting
+• RQ5 - Generalizability: Is T OOL G EN effective in code
+augmented dataset comprises a total of 249,298 pairs of
+generation when applied to different code LLMs?
+descriptions and augmented functions, which are sourced from
+12,231 distinct Python code repositories. Regarding dataset
+B. Implementation
+statistics, the average token count for descriptions is 10.98, and
+Although T OOL G EN is designed to be language-agnostic,
+for augmented functions, it is 55.31. Additionally, the special
+our current focus is on developing a Python-specific prototype
+token <COMP> appears an average of 5.54 times within these
+of T OOL G EN.
+functions.
+Base Model. In T OOL G EN, we explore the utilization of
+Model Fine-tuning. In the fine-tuning process, we adopt
+three distinct code LLMs to encompass diverse model archidifferent
+strategies for CodeGPT, CodeT5, and CodeLlama: For
+tectures and parameter scales. These code LLMs demonstrate
+CodeGPT
+and CodeT5, we perform full-parameter fine-tuning,
+impressive performance in code generation and have found
+optimizing
+all model parameters during this phase. In the case
+extensive utilization in prior studies [4], [5], [12], [33], [39]
+of
+CodeLlama,
+we employ LoRA with a reduction factor (r)
+for fine-tuning and evaluation.
+•
+
+CodeGPT: CodeGPT [33] falls into the category
+of decoder-only models. It undergoes pre-training on
+a Python corpus sourced from the CodeSearchNet
+
+1 https://huggingface.co/microsoft/CodeGPT-small-py
+2 https://huggingface.co/Salesforce/codet5-base
+3 https://huggingface.co/codellama/CodeLlama-7b-Python-hf
+
+of 8 and a scaling factor (alpha) of 16 to achieve parameterefficient fine-tuning. This approach allows us to optimize only
+3.86% of the trainable parameters in comparison to the original
+CodeLlama model. The fine-tuning settings for learning rate
+and batch size are consistent across all three models, with a
+learning rate of 5E-6 and a batch size of 32. However, the
+number of epochs differs: 10 epochs for CodeGPT and CodeT5,
+while CodeLlama undergoes fine-tuning for 3 epochs. To ensure
+reproducibility, we set the seed for random functions to 42
+consistently across all packages and libraries used.
+C. Evaluation Benchmark
+1) Datasets: To evaluate T OOL G EN, we curate two datasets:
+(i) a large dataset derived from the CodeSearchNet [40] to
+assess similarity-based and dependency-based effectiveness
+(RQ1 and RQ2); (ii) a dataset derived from CoderEval [27]
+containing test cases to evaluate execution-based effectiveness
+(RQ3).
+CodeSearchNet. To assess similarity-based and dependencybased effectiveness, we follow this process to construct the
+dataset: We start by crawling the code repositories listed in the
+test set of the CodeSearchNet dataset, ensuring no overlap with
+the training set used for model fine-tuning. We then extract
+pairs of descriptions and functions from these repositories by
+parsing and traversing Abstract Syntax Trees (ASTs), similar to
+the method described in Section III-B1. This process yields an
+evaluation dataset comprising 12,406 Python functions sourced
+from 671 code repositories. On average, the descriptions contain
+10.66 tokens, while the functions consist of an average of 54.54
+tokens.
+CoderEval. To evaluate execution-based effectiveness, we
+initially gather all 230 Python code generation tasks from
+the CoderEval benchmark, extracted from 43 real-world
+Python repositories. Each task consists of a natural language
+description, a ground-truth code snippet, and a set of test cases,
+along with the project environment context associated with
+the task (e.g., project source code, dependent libraries, and
+test scripts). The tasks are categorized into six runnable levels:
+self-contained, slib-runnable, plib-runnable, class-runnable, filerunnable, and project-runnable [27]. Each runnable level relies
+on the dependencies defined at that level and does not depend on
+those defined at subsequent levels. For example, plib-runnable
+indicate that the task requires public third-party libraries, while
+file-runnable require dependencies defined in the current file
+(e.g., user-defined classes and functions). We remove the tasks
+overlapping with the training dataset of T OOL G EN, resulting
+in a final dataset containing 176 tasks.
+2) Baselines: The different variants of T OOL G EN and the
+baselines are presented in Table I, along with the base models
+they employ.
+Vanilla Baselines. We develop three vanilla baseline approaches by fine-tuning these same base models but performing straightforward code generation without tool integration.
+Specifically, the fine-tuning process for the baselines involves
+using the 249,298 pairs of descriptions and functions from
+the augmented dataset. Notably, the fine-tuning is conducted
+
+on the original functions, prior to the introduction of <COMP>
+tokens. The training configurations, including learning rates and
+training epochs, mirror those employed in the implementation
+of T OOL G EN. After fine-tuning, these models are utilized
+to perform straightforward code generation, as outlined in
+Section II-A. We label the three baseline approaches as follows:
+• VANILLA -gpt: Represents straightforward code generation
+using the CodeGPT model fine-tuned on original functions.
+• VANILLA -t5: Signifies straightforward code generation
+using the CodeT5 model fine-tuned on original functions.
+• VANILLA -llama: Designates straightforward code generation with the CodeLlama model fine-tuned on original
+functions.
+Retrieval-Augmented-Generation (RAG) Baselines. We
+also include R EPO C ODER [41], a state-of-the-art approach
+that addresses repository-level code generation by integrating
+a similarity-based retriever and a pre-trained code language
+model in an iterative retrieval-augmented-generation pipeline.
+Similarly, we create three variants of R EPO C ODER based on
+the three fine-tuned models VANILLA-gpt, VANILLA-t5, and
+VANILLA-llama. We directly apply the prompt template defined
+in the original implementation of R EPO C ODER. The three
+variants of R EPO C ODER are listed as follows:
+• R EPO C ODER -gpt: Represents the variant of R EPO C ODER
+with the CodeGPT model fine-tuned on original functions.
+• R EPO C ODER -t5: Signifies the variant of R EPO C ODER
+with the CodeT5 model fine-tuned on original functions.
+• R EPO C ODER -llama: Designates the variant of R E PO C ODER with the CodeLlama model fine-tuned on
+original functions.
+The hyperparameters of R EPO C ODER used in our experiments
+follow its default implementation: the retrieval-generation
+iteration is set to 2, the window size is 20, and the slice
+size is 2.
+RAG-based Variants of T OOL G EN. In fact, RAG method
+is orthogonal to our tool-integrated approach. To ensure a fair
+comparison and further explore the potential of T OOL G EN,
+we also develop three RAG-based variants: ragT OOL G EN-gpt,
+ragT OOL G EN-t5, and ragT OOL G EN-llama. In these variants,
+the employed retrieval process is the same as the R EPO C ODER
+baselines.
+3) Metrics: In our evaluation, we employ commonly used
+similarity-based metrics, two novel dependency-based metrics,
+and an execution-based metric to evaluate the effectiveness of
+T OOL G EN in repository-level code generation.
+Similarity-based Metrics: We utilize the following wellestablished similarity metrics to measure the correspondence
+between generated functions and their ground-truth counterparts:
+• BLEU-4 [42]: This metric assesses the quality of generated code by comparing n-grams (sequences of n
+consecutive tokens) in the generated functions with those
+in the ground-truth functions.
+• CodeBLEU [33]: Specifically designed for code generation tasks, CodeBLEU evaluates the accuracy of code
+
+TABLE I: Variants of T OOL G EN and baselines.
+Approach
+
+Base Model
+
+Architecture
+
+# Parameters
+
+CodeGPT
+
+Decoder-Only
+
+124 Million
+
+CodeT5
+
+Encoder-Decoder 220 Million
+
+test dataset:
+PN
+DepCov =
+
+VANILLA-gpt
+R EPO C ODER-gpt
+T OOL G EN-gpt (ours)
+ragT OOL G EN-gpt (ours)
+VANILLA-t5
+R EPO C ODER-t5
+T OOL G EN-t5 (ours)
+ragT OOL G EN-t5 (ours)
+VANILLA-llama
+R EPO C ODER-llama
+
+CodeLlama
+
+Decoder-Only
+
+7 Billion
+
+T OOL G EN-llama (ours)
+ragT OOL G EN-llama (ours)
+
+generation models by considering code-specific vocabulary
+and structure.
+• Edit Similarity (EditSim) [43]: This metric measures the
+similarity between two pieces of functions by analyzing
+the character-level edit operations required to transform
+one into the other.
+• Exact Match: This metric measures the ratio of the
+generated code that are exactly matched with the ground
+truth.
+The calculation of the similarity-based metrics follows the
+implementation in CodeXGLUE4 .
+Dependency-based Metrics: To assess the effectiveness
+of both T OOL G EN and the baselines in repository-level code
+generation, we introduce the dependency-based metrics, namely
+Dependency Coverage (DepCov) and Static Validity Rate
+(ErrRate).
+•
+
+Dependency Coverage (DepCov): This metric calculates the ratio of repository-level dependencies, including user-defined functions and attributes, that appear
+in ground-truth functions and are covered by the generated functions. Given the i-th ground-truth function
+gti , we identify dependencies by performing the Trigger Insertion procedure (Algorithm 1) and extracting
+expressions (such as function calls and attribute accesses like “self._registered_updates”) that are
+marked with a trigger. These expressions are considered
+dependencies as their definitions can be traced in the
+current repository using static analysis tools like Jedi. Next,
+for the generated function predi corresponding to gti , we
+extract all expressions by traversing its corresponding
+AST. We denote the identified dependencies in gti and
+extracted expressions in predi as two sets, DEP (gti ) and
+EXP (predi ), respectively. The Dependency Coverage
+can be calculated as follows, where N is the size of the
+
+4 https://github.com/microsoft/CodeXGLUE
+
+i
+
+|EXP (predi ) ∩ DEP (gti )|
+PN
+i |DEP (gti )|
+
+Static Validity Rate (ValRate): As repository-level dependencies can potentially introduce dependency errors
+in generated functions, we introduce the Static Validity
+Rate metric (ValRate) to evaluate the effectiveness of
+T OOL G EN in reducing dependency errors. This metric
+evaluates the proportion of generated functions that successfully pass a static check for dependency errors, specifically no-member and undefined-variable. To perform this
+evaluation, we incorporate the generated functions into
+their respective code repositories and conduct static lint
+analysis using pylint [44]. Functions that do not exhibit
+syntax errors, no-member, or undefined-variable errors
+are deemed statically valid. The Static Validity Rate can
+be calculated as follows:
+|{predi≤N : predi passes lint check}|
+V alRate =
+N
+Execution-based Metric: To further assess the functional
+correctness of the generated functions, we also employ a widely
+used execution-based metric involving running test cases.
+• Test Pass Rate (Pass@1): This metric calculates the ratio
+of generated functionally-correct functions that pass all
+corresponding test cases. It is evaluated specifically on
+the CoderEval dataset, where test cases and test scripts
+are provided.
+•
+
+V. R ESULTS AND A NALYSES
+A. RQ1: Similarity-based Effectiveness
+The evaluation results of similarity-based metrics are presented in Table II. When comparing the performance of
+T OOL G EN’s variants and the three different base models,
+namely CodeGPT, CodeT5, and CodeLlama, we observe
+that T OOL G EN achieves similarity scores comparable to the
+baselines.
+To provide a detailed breakdown, when utilizing CodeGPT
+as the base model, T OOL G EN-gpt demonstrates a 2.7% improvement in BLEU-4 and a 11.9% improvement in Exact
+Match compared to VANILLA-gpt. However, it exhibits a 1.0%
+decrease in CodeBLEU and a 1.1% decrease in Edit Similarity.
+With the base model CodeT5, T OOL G EN-t5 exhibits 6.2%,
+1.4%, and 27.9% enhancements in BLEU-4, CodeBLEU, and
+Exact Match relative to VANILLA-t5 but experiences a 3.1%
+decrease in Edit Similarity. In the case of the larger base model
+CodeLlama, T OOL G EN-llama shows improvements of 4.2%
+and 21.1% in BLEU-4 and Exact Match compared to VANILLAt5 but encounters a 0.6% decrease in CodeBLEU and a 2.4%
+decrease in Edit Similarity.
+Although the absolute improvements in Exact Match rate
+are not large (from 0.5% to 1.2%), considering the size of the
+test set (e.g., 12,406 samples), the additional exactly matched
+functions range from 62 to 149. The variability in T OOL G EN’s
+performance across BLEU-4 and CodeBLEU can be attributed
+
+TABLE II: Evaluation results of similarity-based effectiveness. ∆ indicates the metric improvement or reduction of T OOL G EN’s
+variants compared to the baselines.
+Similarity-based Metrics
+
+Approach
+VANILLA-gpt
+T OOL G EN-gpt
+VANILLA-t5
+T OOL G EN-t5
+VANILLA-llama
+T OOL G EN-llama
+
+BLEU-4
+
+CodeBLEU
+
+EditSim
+
+ExactMatch
+
+0.331
+0.340
+
+0.313
+0.310
+
+65.4%
+64.7%
+
+4.2%
+4.7%
+
+(∆ = +2.7%)
+
+(∆ = −1.0%)
+
+(∆ = −1.1%)
+
+(∆ = +11.9%)
+
+0.341
+0.362
+
+0.289
+0.293
+
+63.9%
+61.9%
+
+4.3%
+5.5%
+
+(∆ = +6.2%)
+
+(∆ = +1.4%)
+
+(∆ = −3.1%)
+
+(∆ = +27.9%)
+
+0.408
+0.425
+
+0.360
+0.358
+
+67.9%
+66.3%
+
+5.7%
+6.9%
+
+(∆ = +4.2%)
+
+(∆ = −0.6%)
+
+(∆ = −2.4%)
+
+(∆ = +21.1%)
+
+to the tokenization methods used in the calculations. For TABLE III: Evaluation results of dependency-based effectiveBLEU-4, before using the widely used utility script 5 , we ness. DepCov and ValRate represent Dependency Coverage and
+first tokenize the generated function and its corresponding Static Validity Rate, respectively. ValRate-dep represents the
+ground-truth function using the tokenizer of the base code Static Validity Rate rate calculated only for functions containing
+LLMs. In contrast, CodeBLEU is calculated based on the dependencies. ∆ indicates the metric improvement or reduction
+original generated and ground-truth code using the utility of T OOL G EN’s variants compared to the baselines.
+script6 that employs a simpler method, splitting functions into
+Dependency-based Metrics
+Approach
+strings (e.g., “func(arg1,)”) based on spaces. This splitting
+DepCov
+ValRate
+ValRate-dep
+method may introduce inaccuracies in the statistics of matched
+VANILLA-gpt
+8.7%
+50.4%
+46.5%
+n-grams, consequently affecting the CodeBLEU calculation.
+12.1%
+79.5%
+78.0%
+T OOL G EN-gpt
+For Edit Similarity, it is calculated at the character level,
+(∆ = +39.1%)
+(∆ = +57.7%)
+(∆ = +67.7%)
+making it overly sensitive to semantics-insensitive elements
+VANILLA-t5
+11.0%
+47.3%
+42.5%
+like temporary variables. When two variables have different
+15.0%
+70.6%
+68.0%
+T OOL G EN-t5
+(∆ = +36.4%)
+(∆ = +49.3%)
+(∆ = +60.0%)
+names, their similarity is much lower at the character level
+VANILLA-llama
+14.0%
+49.7%
+44.4%
+than at the token level.
+SUMMARY: T OOL G EN demonstrates competitive performance in similarity metrics compared to the baselines
+across various base models. It achieves improvements in
+BLEU-4 and Exact Match while exhibiting comparable
+performance in CodeBLEU and Edit Similarity.
+B. RQ2: Dependency-based Effectiveness
+1) Dependency Coverage: Table III displays the evaluation
+results for repository-level Dependency Coverage (DepCov).
+Notably, our approach T OOL G EN demonstrates significant
+superiority over the baselines across all three base models.
+Specifically, when employing the base models CodeGPT,
+CodeT5, and CodeLlama, T OOL G EN surpasses the corresponding baselines in Dependency Coverage by 39.1%, 36.4%, and
+31.4%, respectively.
+These results underscore the effectiveness of the toolintegrated generation process in enhancing awareness of
+repository-level dependencies, a challenge often unaddressed
+by the conventional code LLMs. For instance, consider the incomplete function in Figure 1: in a straightforward CodeLlama
+generation, it fails to recognize the valid attributes of “self”.
+5 https://github.com/microsoft/CodeXGLUE/blob/main/Text-Code/text-tocode/evaluator/bleu.py
+6 https://github.com/microsoft/CodeXGLUE/tree/main/Code-Code/code-tocode-trans/evaluator/CodeBLEU
+
+T OOL G EN-llama
+
+18.4%
+
+72.0%
+
+69.6%
+
+(∆ = +31.4%)
+
+(∆ = +44.9%)
+
+(∆ = +56.8%)
+
+However, through tool-integrated generation, T OOL G EN leverages Jedi to deduce a list of completion suggestions, enabling it
+to select the most suitable one and cover target repository-level
+dependencies, including the usage of user-defined attributes.
+Despite the considerable improvement in repository-level
+Dependency Coverage facilitated by our approach, it is essential
+to acknowledge that the overall coverage remains limited. This
+limitation arises from the fact that code LLMs generate function
+tokens sequentially from left to right. Consequently, errors tend
+to accumulate as the token count increases due to the exposure
+bias problem [45]–[47]. This means that code LLMs often
+make incorrect token predictions at certain generation steps
+and may not produce <COMP> tokens to trigger autocompletion
+tools, especially for long functions.
+SUMMARY: Our approach, T OOL G EN, consistently
+outperforms the baselines in repository-level Dependency
+Coverage across all three base models by ranging from
+31.4% to 39.1%. These results highlight the effectiveness
+of our tool-integrated generation process in addressing the
+crucial issue of enhancing awareness of repository-level
+dependencies, which is often a challenge for conventional
+code LLMs in repository-level code generation.
+
+2) Static Validity Rate: Table III also presents the evaluation
+results for Static Validity Rate (ValRate and ValRate-dep)
+in repository-level lint analysis, with a particular focus on
+no-member and undefined-variable errors. Remarkably, our
+approach, T OOL G EN, consistently exhibits significantly higher
+Static Validity Rate compared to the baselines across all three
+base models. Specifically, when employing the base models
+CodeGPT, CodeT5, and CodeLlama, T OOL G EN increases the
+Static Validity Rate (ValRate) by 57.7%, 49.3%, and 44.9%,
+respectively. When considering only the functions containing
+dependencies, T OOL G EN improves the Static Validity Rate
+(ValRate-dep) by 67.7%, 60.0%, and 56.8%, respectively.
+These results underscore the effectiveness of our toolintegrated generation process in mitigating the production of
+invalid identifiers during code generation within a specific repository context. For instance, let’s revisit the incomplete function
+in Figure 1: in a straightforward CodeLlama generation, it
+may predict a non-existent attribute, such as “updates”, for
+“self”. In contrast, through our tool-integrated approach, only
+valid completion suggestions inferred by Jedi are considered
+as candidates, thereby preventing numerous no-member and
+undefined-variable errors.
+
+our T OOL G EN-gpt and T OOL G EN-t5 show improvements in
+pass rates with 1 and 2 more functions passing the test cases,
+respectively. However, T OOL G EN-llama exhibits a lower pass
+rate than R EPO C ODER-llama (15 vs. 19). These variations
+can be attributed to several factors: CodeGPT and CodeT5
+have fewer parameters (124 million and 220 million) and
+stricter token number limitations (1,024 and 512), limiting
+their ability to process and understand retrieval-augmented
+prompts. In contrast, CodeLlama, with more model parameters
+(7 billion) and support for longer token sequences (16,384
+tokens), allows R EPO C ODER-llama to achieve a higher pass
+rate than VANILLA-llama and T OOL G EN-llama due to the
+benefits of RAG.
+Integration with RAG. When integrating T OOL G EN with
+RAG, ragT OOL G EN-gpt and ragT OOL G EN-t5 do not show improvement, while ragT OOL G EN-llama exhibits breakthroughs
+for project-runnable tasks, with 4 more generated functions
+passing the test cases. However, the overall pass rate remains
+unchanged after integrating RAG, showing different advantages
+and disadvantages of RAG integration for various runnablelevel dependencies.
+
+SUMMARY: Our approach, T OOL G EN, consistently
+achieves significantly higher Static Validity Rate in
+repository-level lint analysis compared to the baselines,
+with improvements ranging from 44.9% to 57.7%. These
+results underscore the effectiveness of our tool-integrated
+generation process in mitigating the generation of invalid
+identifiers, a common challenge faced by conventional code
+LLMs in the context of repository-level code generation.
+
+SUMMARY: Our approach, T OOL G EN, outperforms
+or matches the three VANILLA baselines (VANILLA-gpt,
+VANILLA-t5, and VANILLA-llama) by generating 0, 2,
+and 3 more functionally correct functions, achieving 0%,
+40.0%, and 25.0% improvements in Pass@1, respectively.
+Compared to RAG-based R EPO C ODER baselines, both
+T OOL G EN and R EPO C ODER have their own advantages
+and disadvantages for different base models and runnablelevel dependencies. Additionally, our decoding-stage tool
+integration approach shows potential when combined with
+prompt-level RAG techniques for addressing certain types
+of dependencies.
+
+C. RQ3: Execution-based Effectiveness
+Table IV presents the detailed evaluation results for test case
+execution (Pass@1) on the 176 CoderEval coding tasks.
+Comparison to VANILLA baselines. Compared to the three
+VANILLA baselines, our approach T OOL G EN generates 0, 2,
+and 3 additional functionally-correct functions, resulting in
+0%, 40.0%, and 25.0% improvements in Pass@1, respectively.
+Specifically, T OOL G EN-gpt improves the pass rate for filerunnable tasks, while reducing pass rate for self-contained
+tasks; T OOL G EN-t5 improves pass rate for slib-runnable filerunnable tasks; T OOL G EN-llama improves pass rate for selfcontained, plib-runnable, and class-runnable tasks. These
+tasks require different runnable-level dependencies (such as
+local variables and user-defined functions) to achieve correct
+functionality in the code. The enhancements by T OOL G EN
+underscore the effectiveness of integrating autocompletion tools
+to handle these dependencies.
+Comparison to R EPO C ODER baselines. Overall, the
+R EPO C ODER baselines show unstable performance across
+different base models. Specifically, compared to their respective
+VANILLA baselines, R EPO C ODER-gpt and R EPO C ODER-t5
+exhibit reductions or no improvement in test pass rates,
+while R EPO C ODER-llama shows significant improvement.
+When compared to R EPO C ODER-gpt and R EPO C ODER-t5,
+
+D. RQ4: Efficiency
+Figure 6 illustrates the efficiency evaluation conducted
+on a single NVIDIA H100 Tensor Core GPU (80GB GPU
+Memory). Our approach exhibits approximately twice the
+average generation time for the 176 tasks in the CoderEval
+dataset, ranging from 0.63 to 2.34 seconds across different
+base models.
+The high efficiency of our tool integration is attributed to the
+offline trigger insertion and fine-tuning. The autocompletion
+tool is triggered only when the fine-tuned models predict the
+trigger token <COMP>, significantly reducing unnecessary tool
+invocations. Specifically, the fine-tuned CodeGPT, CodeT5, and
+CodeLlama predict an average of 5.02, 6.24, and 7.05 <COMP>
+tokens per task, respectively, which is much fewer than the
+average function length. Additionally, during the generation of
+a function, autocompletion is often triggered multiple times for
+the same objects (e.g., “self”); we maintain a cache to recall
+completion suggestions for previously visited objects, thereby
+avoiding repeated tool invocations for the same objects.
+
+TABLE IV: Evaluation results of execution-based effectiveness. self, slib, plib, class, file, and project represent self-contained,
+slib-runnable, plib-runnable, class-runnable, file-runnable, and project-runnable, respectively. The numbers in brackets after each
+runnable level indicate the corresponding number of tasks, while the numbers in brackets after the rates indicate the number of
+generated functions that pass the test cases. In each base model group, the best results are highlighted in gray , except when all
+results are the same.
+Execution-based Metric (Pass@1)
+
+Approach
+total (176)
+
+self (26)
+
+slib (23)
+
+plib (15)
+
+class (49)
+
+file (51)
+
+VANILLA-gpt
+
+3.4% (6)
+
+7.7% (2)
+
+4.3% (1)
+
+6.7% (1)
+
+2.0% (1)
+
+2.0% (1)
+
+project (12)
+0.0% (0)
+
+T OOL G EN-gpt (ours)
+
+3.4% (6)
+
+3.8% (1)
+
+4.3% (1)
+
+6.7% (1)
+
+2.0% (1)
+
+3.9% (2)
+
+0.0% (0)
+
+R EPO C ODER-gpt
+
+2.8% (5)
+
+0.0% (0)
+
+4.3% (1)
+
+6.7% (1)
+
+4.1% (2)
+
+2.0% (1)
+
+0.0% (0)
+
+ragT OOL G EN-gpt (ours)
+
+2.8% (5)
+
+0.0% (0)
+
+4.3% (1)
+
+6.7% (1)
+
+4.1% (2)
+
+2.0% (1)
+
+0.0% (0)
+
+VANILLA-t5
+
+4.0% (7)
+
+7.7% (2)
+
+4.3% (1)
+
+13.3% (2)
+
+4.1% (2)
+
+0.0% (0)
+
+0.0% (0)
+
+T OOL G EN-t5 (ours)
+
+5.1% (9)
+
+15.4% (4)
+
+8.7% (2)
+
+6.7% (1)
+
+4.1% (2)
+
+0.0% (0)
+
+0.0% (0)
+0.0% (0)
+
+R EPO C ODER-t5
+
+4.0% (7)
+
+7.7% (2)
+
+4.3% (1)
+
+13.3% (2)
+
+4.1% (2)
+
+0.0% (0)
+
+ragT OOL G EN-t5 (ours)
+
+5.1% (9)
+
+15.4% (4)
+
+8.7% (2)
+
+6.7% (1)
+
+4.1% (2)
+
+0.0% (0)
+
+0.0% (0)
+
+VANILLA-llama
+
+6.8% (12)
+
+19.2% (5)
+
+13.0% (3)
+
+13.3% (2)
+
+4.1% (2)
+
+0.0% (0)
+
+0.0% (0)
+
+T OOL G EN-llama (ours)
+
+8.5% (15)
+
+23.1% (6)
+
+13.0% (3)
+
+20.0% (3)
+
+4.1% (2)
+
+2.0% (1)
+
+0.0% (0)
+
+R EPO C ODER-llama
+
+10.8% (19)
+
+26.9% (7)
+
+17.4% (4)
+
+0.0% (0)
+
+10.2% (5)
+
+2.0% (1)
+
+16.7% (2)
+
+ragT OOL G EN-llama (ours)
+
+10.8% (19)
+
+34.6% (9)
+
+8.7% (2)
+
+6.7% (1)
+
+6.1% (3)
+
+0.0% (0)
+
+33.3% (4)
+
+execution-based metrics across the base models, with a consistent and acceptable additional latency overhead.
+SUMMARY: Our tool-integrated generation approach
+consistently improves or maintains dependency-based
+and execution-based metrics while achieving competitive
+similarity-based metrics across various model architectures
+and parameter scales. This suggests that our approach is
+versatile and has the potential for broader applicability
+with other base models in repository-level code generation.
+VI. D ISCUSSION
+A. Case Study
+Figure 7 depicts three specific examples using VANILLAllama and T OOL G EN-llama. Each row corresponds to an example, presenting the description, ground truth, code generated
+by VANILLA-llama, and code generated by T OOL G EN-llama.
+SUMMARY: Our tool-integrated generation approach,
+Example 1: The code generated by T OOL G EN-llama
+T OOL G EN, demonstrates high efficiency in repository-level
+successfully predicts the member “_value” in the class
+code generation, with latency ranging from 0.63 to 2.34
+“Counter”, while VANILLA-llama incorrectly predicts an
+seconds for generating each function. This efficiency is
+undefined member “value”, resulting in a no-member error.
+attributed to predicting the trigger token <COMP> and impleThis difference can be attributed to T OOL G EN’s integration of
+menting a caching mechanism for completion suggestions.
+the autocompletion tool, which helps the code LLMs recognize
+necessary dependencies like user-defined attributes/members.
+E. RQ5: Generalizability
+Example 2: Both VANILLA-llama and T OOL G EN-llama
+Based on the results presented in Table II and Table III, generate incorrect code that fails some test cases. After
+our tool-integrated generation approach consistently enhances reviewing the description and the ground-truth, we find
+performance in dependency-based metrics while maintaining that the description is incomplete in expressing the desired
+comparable similarity-based metrics across various model ar- functionality. As noted, the description only mentions changing
+chitectures (decoder-only and encoder-decoder) and parameter “w:st="” to “w-st="”, but the actual desired functionality
+scales (ranging from 124 million to 7 billion). According to in the ground-truth is to handle all strings matching the
+Table IV and Figure 6, our approach improves or maintains pattern “\bw:[a-z]{1,}=\"”. Both VANILLA-llama and
+Fig. 6: Results of efficiency evaluation.
+
+Description
+
+Ground-Truth
+
+dep: self._count:
+a user-defined attibute
+
+incomplete functionality description
+The description suggests changing
+w:st=" to w-st=", but the ground-truth
+code handles all strings matching the
+pattern \bw:[a-z]{1,}=\".
+
+dep: cls._get_service:
+a user-defined function
+dep: ServiceName.PLUGINS_MANAGER
+a user-defined attribute
+
+Vanilla-llama
+
+ToolGen-llama
+
+no-member error
+'Counter' instance has no 'value' member
+
+pass lint and test cases
+
+fail some test cases
+It only changes w:st=" to w-st=" and does
+not handle all strings matching the
+pattern \bw:[a-z]{1,}=\".
+
+fail some test cases
+It only changes w:st=" to w-st=" and
+does not handle all strings matching the
+pattern \bw:[a-z]{1,}=\".
+
+fail lint and test case
+dep: cls._get_service
+dep: ServiceName.PLUGINS_MANAGER
+
+fail lint and test case
+dep: cls._get_service
+dep: ServiceName.PLUGINS_MANAGER
+
+Fig. 7: Case study of three specific examples. Additional explanatory notes are marked with gray boxes . In the notes, "dep:
+xxx" denotes a dependency necessary in the generated code.
+
+T OOL G EN-llama follow the description and generate code that deduce attributes defined within the argument type. In the
+satisfies this incomplete functionality. This finding highlights future, we plan to explore the integration of comprehensive
+the challenges posed by low-quality descriptions in real-world type inference tools, such as learning-based tools, into the code
+generation scenarios and reveals quality issues in existing generation process alongside autocompletion tools to enhance
+benchmarks.
+Python code generation.
+Example 3: There are two crucial dependenGreedy Next Token Prediction in Generation Process: During
+cies,
+namely
+“cls._get_service()”
+and the generation process, we employ a greedy strategy for next
+“ServiceName.PLUGINS_MANAGER”,
+necessary
+to token prediction, where the token with the highest probability
+realize the required functionality. VANILLA-llama fails is selected using the ARGMAX function. This greedy prediction
+to predict both dependencies and instead outputs non- strategy can occasionally lead the model to choose sub-optimal
+existent dependencies like “cls._plugins_manager” tokens for subsequent steps, resulting in code that may not be of
+and “PluginManager()”, causing the generated the high quality. To address this issue, we intend to investigate
+code to fail lint checks and test cases. For T OOL G EN- the incorporation of techniques such as beam search and other
+llama, although it successfully predicts the dependency advanced decoding methods into our tool-integrated generation
+“cls._get_service()”,
+it
+fails
+to
+predict process to mitigate the challenges posed by greedy prediction.
+“ServiceName.PLUGINS_MANAGER” because the model
+Dependency-based Evaluation Metrics: In the computation of
+chooses “cls” instead of “ServiceName” when starting
+the two repository-level evaluation metrics, namely Dependency
+predicting the argument for “cls._get_service()”. This
+Coverage and Static Validity Rate, we employ static analysis
+misleads the generation in an incorrect direction, resulting in
+to identify target expressions and perform lint examinations.
+the failure of the final code. This example also highlights
+Similar to the autocompletion tools, these static tools may
+the challenges of applying code LLMs in practical code
+introduce a degree of inaccuracy into the calculated metrics.
+generation, even when integrating autocompletion tools to
+However, it is essential to note that this does not significantly
+avoid certain dependency issues. Introducing an incorrect
+impact the demonstrated effectiveness of T OOL G EN, as the
+token at any critical step in the generation process can result
+baseline metrics are also determined using the same static
+in the production of erroneous code.
+analysis.
+B. Limitations
+Integration and Comparison with SOTA Closed-source LLMs:
+Static Autocompletion Tools for Dynamically Typed Program- Our approach can be applied to any encoder-decoder or decoderming Languages: Currently, our implementation of T OOL G EN only models. However, for the most state-of-the-art (SOTA)
+is specific to Python, a dynamically typed programming LLMs like GPT-3.5 and GPT-4, integrating the trigger insertion
+language. However, the autocompletion tools used in T OOL G EN and tool-integrated decoding process faces challenges due to
+rely on static analysis, which can sometimes fail to trigger their closed-source nature and impracticality for fine-tuning.
+for certain repository-level dependencies. For instance, when In the future, we may explore the possibility of integrating
+the type of a function parameter cannot be explicitly inferred autocompletion tools into such closed-source LLMs in a
+through static analysis, autocompletion tools may struggle to non-tuning manner. In our evaluation, we do not compare
+
+T OOL G EN with these SOTA closed-source LLMs, as our goal
+is to assess the effectiveness of integrating autocompletion
+tools for repository-level code generation. Therefore, we focus
+on comparing the performance of T OOL G EN, VANILLA, and
+R EPO C ODER under the same base models.
+
+considering context from the entire codebase, previous changes,
+and specific instructions.
+In this study, we tackle the challenges associated with
+repository-level code generation by seamlessly integrating
+autocompletion tools into the generation process of code LLMs.
+
+C. Threats to Validity
+
+B. Incorporating External Tools into LLMs
+Internal Threats: The first internal threat pertains to potential
+Recent research [30], [31], [50]–[58] has explored the
+data quality issues common in learning-based approaches.
+integration of external tools (e.g., search engines, web browsers,
+To mitigate this threat, we construct our augmented dataset
+calculators, and python interpreters) into the LLM generation
+and evaluation benchmark dataset using the widely adopted
+process, aiming to address their limitations in certain generation
+CodeSearchNet dataset, which serves as a reliable source
+scenarios. For instance, Schick et al. propose ToolFormer [30],
+for pretraining and evaluating various code models. Another
+which augments datasets to instruct LLMs on invoking existing
+internal threat pertains to the potential data leakage for
+arithmetic calculators, effectively reducing errors in generated
+CodeLlama, as the code repositories in the benchmark dataset
+text related to arithmetic calculations. Building upon this idea,
+may have been encountered by CodeLlama during its preZhang et al. introduce ToolCoder [31], designed to teach
+training phase. However, our generalizability evaluation (RQ5)
+LLMs how to utilize information-retrieval-based (IR-based)
+provides evidence of consistent performance across the three
+API search tools during code generation. While ToolCoder is
+T OOL G EN variants, suggesting that the improvements achieved
+effective in generating functionally correct standalone functions,
+by T OOL G EN-llama in repository-level code generation are
+it falls short in addressing repository-level dependencies,
+not attributed to data leakage.
+limiting its ability to resolve dependency errors. More relevant
+External Threats: Our implementation and evaluation of
+examples are Repilot [41], STALL+ [59], and MGD [60],
+T OOL G EN are specific to the Python programming language.
+which utilize code completion tools to filter out impractical
+As a result, the findings may not be generalizable to other
+suggestions made by LLMs, focusing on generating API/lineprogramming languages. Exploring the tool-integrated generalevel code completions and valid bug-fix patches rather than
+tion process for different languages is a valuable direction for
+entire functions.
+future research.
+In this paper, we integrate program-analysis-based autocompletion
+tools into the code LLM generation process to facilitate
+VII. R ELATED W ORK
+repository-level code generation.
+A. Code Generation
+VIII. C ONCLUSION
+Code generation has long been a central focus in the field
+of software engineering. Recent developments have introduced
+We present T OOL G EN, a novel approach that seamlessly
+a range of large language models for code (code LLMs),
+integrates
+autocompletion tools into the code LLM generation
+including Codex [3], CodeT5 [4], CodeT5+ [5], InCoder [6],
+process
+to
+effectively address repository-level dependencies.
+AlphaCode [7], CodeGen [8], and CodeLlama [12], built upon
+T
+OOL
+G
+EN
+encompasses two crucial phases: Data Augmentathe Transformer model architecture [14]. These models, either
+tion
+and
+Model
+Fine-tuning, and Tool-integrated Code Generpretrained or fine-tuned on extensive code corpora, have the
+ation.
+Our
+comprehensive
+evaluation showcases T OOL G EN’s
+capability to automatically generate code based on provided
+improvements
+in
+the
+two
+introduced
+dependency-level metrics
+natural language descriptions.
+and
+a
+widely
+used
+execution-based
+metric
+across three distinct
+While these code LLMs have demonstrated significant
+code
+LLMs,
+while
+also
+demonstrating
+its
+competitiveness in
+effectiveness in generating standalone functions on existing
+widely-recognized
+similarity
+metrics.
+T
+OOL G EN also demonbenchmarks like HumanEval [3] and MBPP [26], they face
+substantial challenges when tasked with generating real-world strates high efficiency in repository-level code generation, due
+functions within code repositories. The primary challenge stems to the offline fine-tuning with trigger insertion. Moreover, our
+from their lack of awareness of repository-level dependencies, generalizability evaluation reaffirms T OOL G EN’s consistent
+such as user-defined functions and attributes, during the performance when applied to diverse code LLMs, including
+code generation process [27]. To address these challenges, various model architectures and scales.
+researchers have proposed prompt engineering approaches
+R EFERENCES
+to make code LLMs aware of repository-level dependencies.
+Shrivastava et al. [48] introduced the repository-level prompt
+[1] S. Black, L. Gao, P. Wang, C. Leahy, and S. Biderman, “GPT-Neo:
+generator, a framework for generating context-aware prompts
+Large Scale Autoregressive Language Modeling with Mesh-Tensorflow,”
+Mar. 2021, If you use this software, please cite it using these metadata.
+without requiring access to the weights of the LLM. Bairi et
+[Online]. Available: https://doi.org/10.5281/zenodo.5297715
+al. [49] presented CodePlan, a task-agnostic framework that
+[2] B. Wang and A. Komatsuzaki, “GPT-J-6B: A 6 Billion Parametreats repository-level coding as a planning problem, using
+ter Autoregressive Language Model,” https://github.com/kingoflolz/
+innovative techniques to generate multi-step code edits while
+mesh-transformer-jax, May 2021.
+
+[3] M. Chen, J. Tworek, H. Jun, Q. Yuan, H. P. de Oliveira Pinto, J. Kaplan,
+H. Edwards, Y. Burda, N. Joseph, G. Brockman, A. Ray, R. Puri,
+G. Krueger, M. Petrov, H. Khlaaf, G. Sastry, P. Mishkin, B. Chan,
+S. Gray, N. Ryder, M. Pavlov, A. Power, L. Kaiser, M. Bavarian,
+C. Winter, P. Tillet, F. P. Such, D. Cummings, M. Plappert, F. Chantzis,
+E. Barnes, A. Herbert-Voss, W. H. Guss, A. Nichol, A. Paino, N. Tezak,
+J. Tang, I. Babuschkin, S. Balaji, S. Jain, W. Saunders, C. Hesse,
+A. N. Carr, J. Leike, J. Achiam, V. Misra, E. Morikawa, A. Radford,
+M. Knight, M. Brundage, M. Murati, K. Mayer, P. Welinder, B. McGrew,
+D. Amodei, S. McCandlish, I. Sutskever, and W. Zaremba, “Evaluating
+large language models trained on code,” CoRR, vol. abs/2107.03374,
+2021. [Online]. Available: https://arxiv.org/abs/2107.03374
+[4] Y. Wang, W. Wang, S. R. Joty, and S. C. H. Hoi, “Codet5:
+Identifier-aware unified pre-trained encoder-decoder models for code
+understanding and generation,” in Proceedings of the 2021 Conference
+on Empirical Methods in Natural Language Processing, EMNLP 2021,
+Virtual Event / Punta Cana, Dominican Republic, 7-11 November, 2021,
+M. Moens, X. Huang, L. Specia, and S. W. Yih, Eds. Association for
+Computational Linguistics, 2021, pp. 8696–8708. [Online]. Available:
+https://doi.org/10.18653/v1/2021.emnlp-main.685
+[5] Y. Wang, H. Le, A. Gotmare, N. D. Q. Bui, J. Li, and S. C. H. Hoi,
+“Codet5+: Open code large language models for code understanding
+and generation,” in Proceedings of the 2023 Conference on Empirical
+Methods in Natural Language Processing, EMNLP 2023, Singapore,
+December 6-10, 2023, H. Bouamor, J. Pino, and K. Bali, Eds.
+Association for Computational Linguistics, 2023, pp. 1069–1088.
+[Online]. Available: https://aclanthology.org/2023.emnlp-main.68
+[6] D. Fried, A. Aghajanyan, J. Lin, S. Wang, E. Wallace, F. Shi,
+R. Zhong, S. Yih, L. Zettlemoyer, and M. Lewis, “Incoder: A
+generative model for code infilling and synthesis,” in The Eleventh
+International Conference on Learning Representations, ICLR 2023,
+Kigali, Rwanda, May 1-5, 2023. OpenReview.net, 2023. [Online].
+Available: https://openreview.net/pdf?id=hQwb-lbM6EL
+[7] Y. Li, D. H. Choi, J. Chung, N. Kushman, J. Schrittwieser, R. Leblond,
+T. Eccles, J. Keeling, F. Gimeno, A. D. Lago, T. Hubert, P. Choy,
+C. de Masson d’Autume, I. Babuschkin, X. Chen, P. Huang, J. Welbl,
+S. Gowal, A. Cherepanov, J. Molloy, D. J. Mankowitz, E. S. Robson,
+P. Kohli, N. de Freitas, K. Kavukcuoglu, and O. Vinyals, “Competitionlevel code generation with alphacode,” CoRR, vol. abs/2203.07814,
+2022. [Online]. Available: https://doi.org/10.48550/arXiv.2203.07814
+[8] E. Nijkamp, B. Pang, H. Hayashi, L. Tu, H. Wang, Y. Zhou,
+S. Savarese, and C. Xiong, “Codegen: An open large language
+model for code with multi-turn program synthesis,” in The Eleventh
+International Conference on Learning Representations, ICLR 2023,
+Kigali, Rwanda, May 1-5, 2023. OpenReview.net, 2023. [Online].
+Available: https://openreview.net/pdf?id=iaYcJKpY2B_
+[9] S. Black, S. Biderman, E. Hallahan, Q. Anthony, L. Gao,
+L. Golding, H. He, C. Leahy, K. McDonell, J. Phang, M. Pieler,
+U. S. Prashanth, S. Purohit, L. Reynolds, J. Tow, B. Wang,
+and S. Weinbach, “Gpt-neox-20b: An open-source autoregressive
+language model,” CoRR, vol. abs/2204.06745, 2022. [Online]. Available:
+https://doi.org/10.48550/arXiv.2204.06745
+[10] L. B. Allal, R. Li, D. Kocetkov, C. Mou, C. Akiki, C. M. Ferrandis,
+N. Muennighoff, M. Mishra, A. Gu, M. Dey, L. K. Umapathi,
+C. J. Anderson, Y. Zi, J. Lamy-Poirier, H. Schoelkopf, S. Troshin,
+D. Abulkhanov, M. Romero, M. Lappert, F. D. Toni, B. G. del Río,
+Q. Liu, S. Bose, U. Bhattacharyya, T. Y. Zhuo, I. Yu, P. Villegas,
+M. Zocca, S. Mangrulkar, D. Lansky, H. Nguyen, D. Contractor,
+L. Villa, J. Li, D. Bahdanau, Y. Jernite, S. Hughes, D. Fried,
+A. Guha, H. de Vries, and L. von Werra, “Santacoder: don’t reach
+for the stars!” CoRR, vol. abs/2301.03988, 2023. [Online]. Available:
+https://doi.org/10.48550/arXiv.2301.03988
+[11] R. Li, L. B. Allal, Y. Zi, N. Muennighoff, D. Kocetkov, C. Mou,
+M. Marone, C. Akiki, J. Li, J. Chim, Q. Liu, E. Zheltonozhskii,
+T. Y. Zhuo, T. Wang, O. Dehaene, M. Davaadorj, J. Lamy-Poirier,
+J. Monteiro, O. Shliazhko, N. Gontier, N. Meade, A. Zebaze, M. Yee,
+L. K. Umapathi, J. Zhu, B. Lipkin, M. Oblokulov, Z. Wang, R. M. V,
+J. Stillerman, S. S. Patel, D. Abulkhanov, M. Zocca, M. Dey, Z. Zhang,
+N. Moustafa-Fahmy, U. Bhattacharyya, W. Yu, S. Singh, S. Luccioni,
+P. Villegas, M. Kunakov, F. Zhdanov, M. Romero, T. Lee, N. Timor,
+J. Ding, C. Schlesinger, H. Schoelkopf, J. Ebert, T. Dao, M. Mishra,
+A. Gu, J. Robinson, C. J. Anderson, B. Dolan-Gavitt, D. Contractor,
+S. Reddy, D. Fried, D. Bahdanau, Y. Jernite, C. M. Ferrandis, S. Hughes,
+T. Wolf, A. Guha, L. von Werra, and H. de Vries, “Starcoder: may
+
+the source be with you!” CoRR, vol. abs/2305.06161, 2023. [Online].
+Available: https://doi.org/10.48550/arXiv.2305.06161
+[12] B. Rozière, J. Gehring, F. Gloeckle, S. Sootla, I. Gat, X. E. Tan,
+Y. Adi, J. Liu, T. Remez, J. Rapin, A. Kozhevnikov, I. Evtimov,
+J. Bitton, M. Bhatt, C. Canton-Ferrer, A. Grattafiori, W. Xiong,
+A. Défossez, J. Copet, F. Azhar, H. Touvron, L. Martin, N. Usunier,
+T. Scialom, and G. Synnaeve, “Code llama: Open foundation models
+for code,” CoRR, vol. abs/2308.12950, 2023. [Online]. Available:
+https://doi.org/10.48550/arXiv.2308.12950
+[13] F. Christopoulou, G. Lampouras, M. Gritta, G. Zhang, Y. Guo, Z. Li,
+Q. Zhang, M. Xiao, B. Shen, L. Li, H. Yu, L. Yan, P. Zhou, X. Wang,
+Y. Ma, I. Iacobacci, Y. Wang, G. Liang, J. Wei, X. Jiang, Q. Wang, and
+Q. Liu, “Pangu-coder: Program synthesis with function-level language
+modeling,” CoRR, vol. abs/2207.11280, 2022. [Online]. Available:
+https://doi.org/10.48550/arXiv.2207.11280
+[14] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez,
+L. Kaiser, and I. Polosukhin, “Attention is all you need,” in Advances
+in Neural Information Processing Systems 30: Annual Conference on
+Neural Information Processing Systems 2017, December 4-9, 2017,
+Long Beach, CA, USA, I. Guyon, U. von Luxburg, S. Bengio, H. M.
+Wallach, R. Fergus, S. V. N. Vishwanathan, and R. Garnett, Eds., 2017,
+pp. 5998–6008. [Online]. Available: https://proceedings.neurips.cc/paper/
+2017/hash/3f5ee243547dee91fbd053c1c4a845aa-Abstract.html
+[15] C. Wang, J. Zhang, Y. Lou, M. Liu, W. Sun, Y. Liu, and X. Peng, “Tiger:
+A generating-then-ranking framework for practical python type inference,”
+arXiv preprint arXiv:2407.02095, 2024.
+[16] C. Wang, J. Liu, X. Peng, Y. Liu, and Y. Lou, “Boosting static resource
+leak detection via llm-based resource-oriented intention inference,” arXiv
+preprint arXiv:2311.04448, 2023.
+[17] C. Wang, Y. Lou, J. Liu, and X. Peng, “Generating variable explanations
+via zero-shot prompt learning,” in 2023 38th IEEE/ACM International
+Conference on Automated Software Engineering (ASE). IEEE, 2023,
+pp. 748–760.
+[18] C. Wang, K. Huang, J. Zhang, Y. Feng, L. Zhang, Y. Liu, and X. Peng,
+“How and why llms use deprecated apis in code completion? an empirical
+study,” arXiv preprint arXiv:2406.09834, 2024.
+[19] X. Du, M. Liu, K. Wang, H. Wang, J. Liu, Y. Chen, J. Feng, C. Sha,
+X. Peng, and Y. Lou, “Evaluating large language models in class-level
+code generation,” in Proceedings of the 46th IEEE/ACM International
+Conference on Software Engineering, ICSE 2024, Lisbon , Portugal,
+April 14 - 20, 2024. ACM, 2024, pp. 1496–1508. [Online]. Available:
+https://doi.org/10.1145/3597503.3639219
+[20] J. Zhang, C. Wang, A. Li, W. Sun, C. Zhang, W. Ma, and Y. Liu,
+“An empirical study of automated vulnerability localization with large
+language models,” arXiv preprint arXiv:2404.00287, 2024.
+[21] J. Zhang, K. Huang, B. Chen, C. Wang, Z. Tian, and X. Peng, “Malicious
+package detection in npm and pypi using a single model of malicious
+behavior sequence,” arXiv preprint arXiv:2309.02637, 2023.
+[22] X. Du, G. Zheng, K. Wang, J. Feng, W. Deng, M. Liu, B. Chen, X. Peng,
+T. Ma, and Y. Lou, “Vul-rag: Enhancing llm-based vulnerability detection
+via knowledge-level rag,” arXiv preprint arXiv:2406.11147, 2024.
+[23] Z. Yuan, Y. Lou, M. Liu, S. Ding, K. Wang, Y. Chen, and X. Peng,
+“No more manual tests? evaluating and improving chatgpt for unit
+test generation,” CoRR, vol. abs/2305.04207, 2023. [Online]. Available:
+https://doi.org/10.48550/arXiv.2305.04207
+[24] Y. Wang, T. Jiang, M. Liu, J. Chen, and Z. Zheng, “Beyond functional
+correctness: Investigating coding style inconsistencies in large language
+models,” arXiv preprint arXiv:2407.00456, 2024.
+[25] H. Touvron, L. Martin, K. Stone, P. Albert, A. Almahairi, Y. Babaei,
+N. Bashlykov, S. Batra, P. Bhargava, S. Bhosale, D. Bikel, L. Blecher,
+C. Canton-Ferrer, M. Chen, G. Cucurull, D. Esiobu, J. Fernandes,
+J. Fu, W. Fu, B. Fuller, C. Gao, V. Goswami, N. Goyal, A. Hartshorn,
+S. Hosseini, R. Hou, H. Inan, M. Kardas, V. Kerkez, M. Khabsa,
+I. Kloumann, A. Korenev, P. S. Koura, M. Lachaux, T. Lavril, J. Lee,
+D. Liskovich, Y. Lu, Y. Mao, X. Martinet, T. Mihaylov, P. Mishra,
+I. Molybog, Y. Nie, A. Poulton, J. Reizenstein, R. Rungta, K. Saladi,
+A. Schelten, R. Silva, E. M. Smith, R. Subramanian, X. E. Tan,
+B. Tang, R. Taylor, A. Williams, J. X. Kuan, P. Xu, Z. Yan, I. Zarov,
+Y. Zhang, A. Fan, M. Kambadur, S. Narang, A. Rodriguez, R. Stojnic,
+S. Edunov, and T. Scialom, “Llama 2: Open foundation and fine-tuned
+chat models,” CoRR, vol. abs/2307.09288, 2023. [Online]. Available:
+https://doi.org/10.48550/arXiv.2307.09288
+[26] J. Austin, A. Odena, M. I. Nye, M. Bosma, H. Michalewski, D. Dohan,
+E. Jiang, C. J. Cai, M. Terry, Q. V. Le, and C. Sutton, “Program
+
+synthesis with large language models,” CoRR, vol. abs/2108.07732,
+2021. [Online]. Available: https://arxiv.org/abs/2108.07732
+[27] H. Yu, B. Shen, D. Ran, J. Zhang, Q. Zhang, Y. Ma, G. Liang,
+Y. Li, T. Xie, and Q. Wang, “Codereval: A benchmark of pragmatic
+code generation with generative pre-trained models,” arXiv preprint
+arXiv:2302.00288, 2023.
+[28] P. Vaithilingam, T. Zhang, and E. L. Glassman, “Expectation vs.
+experience: Evaluating the usability of code generation tools powered
+by large language models,” in CHI ’22: CHI Conference on Human
+Factors in Computing Systems, New Orleans, LA, USA, 29 April 2022 5 May 2022, Extended Abstracts, S. D. J. Barbosa, C. Lampe, C. Appert,
+and D. A. Shamma, Eds. ACM, 2022, pp. 332:1–332:7. [Online].
+Available: https://doi.org/10.1145/3491101.3519665
+[29] Jedi - an awesome autocompletion, static analysis and refactoring library
+for python. [Online]. Available: https://jedi.readthedocs.io/
+[30] T. Schick, J. Dwivedi-Yu, R. Dessì, R. Raileanu, M. Lomeli,
+L. Zettlemoyer, N. Cancedda, and T. Scialom, “Toolformer: Language
+models can teach themselves to use tools,” CoRR, vol. abs/2302.04761,
+2023. [Online]. Available: https://doi.org/10.48550/arXiv.2302.04761
+[31] K. Zhang, G. Li, J. Li, Z. Li, and Z. Jin, “Toolcoder: Teach code
+generation models to use apis with search tools,” arXiv preprint
+arXiv:2305.04032, 2023.
+[32] Y. Wei, C. S. Xia, and L. Zhang, “Copiloting the copilots: Fusing
+large language models with completion engines for automated program
+repair,” in Proceedings of the 31st ACM Joint European Software
+Engineering Conference and Symposium on the Foundations of Software
+Engineering, ESEC/FSE 2023, San Francisco, CA, USA, December 3-9,
+2023, S. Chandra, K. Blincoe, and P. Tonella, Eds. ACM, 2023, pp.
+172–184. [Online]. Available: https://doi.org/10.1145/3611643.3616271
+[33] S. Lu, D. Guo, S. Ren, J. Huang, A. Svyatkovskiy, A. Blanco, C. B.
+Clement, D. Drain, D. Jiang, D. Tang, G. Li, L. Zhou, L. Shou,
+L. Zhou, M. Tufano, M. Gong, M. Zhou, N. Duan, N. Sundaresan, S. K.
+Deng, S. Fu, and S. Liu, “Codexglue: A machine learning benchmark
+dataset for code understanding and generation,” in Proceedings of
+the Neural Information Processing Systems Track on Datasets and
+Benchmarks 1, NeurIPS Datasets and Benchmarks 2021, December
+2021, virtual, J. Vanschoren and S. Yeung, Eds., 2021. [Online].
+Available: https://datasets-benchmarks-proceedings.neurips.cc/paper/
+2021/hash/c16a5320fa475530d9583c34fd356ef5-Abstract-round1.html
+[34] H. Chen, Y. Huang, Z. Liu, X. Chen, F. Zhou, and X. Luo,
+“Automatically detecting the scopes of source code comments,”
+J. Syst. Softw., vol. 153, pp. 45–63, 2019. [Online]. Available:
+https://doi.org/10.1016/j.jss.2019.03.010
+[35] Y. Huang, H. Guo, X. Ding, J. Shu, X. Chen, X. Luo, Z. Zheng,
+and X. Zhou, “A comparative study on method comment and inline
+comment,” ACM Trans. Softw. Eng. Methodol., vol. 32, no. 5, pp.
+126:1–126:26, 2023. [Online]. Available: https://doi.org/10.1145/3582570
+[36] E. J. Hu, Y. Shen, P. Wallis, Z. Allen-Zhu, Y. Li, S. Wang, L. Wang,
+and W. Chen, “Lora: Low-rank adaptation of large language models,”
+in The Tenth International Conference on Learning Representations,
+ICLR 2022, Virtual Event, April 25-29, 2022. OpenReview.net, 2022.
+[Online]. Available: https://openreview.net/forum?id=nZeVKeeFYf9
+[37] Argmax function. [Online]. Available: https://en.wikipedia.org/wiki/Arg_
+max
+[38] Trie structure. [Online]. Available: https://en.wikipedia.org/wiki/Trie
+[39] X. Wang, Y. Wang, Y. Wan, F. Mi, Y. Li, P. Zhou, J. Liu,
+H. Wu, X. Jiang, and Q. Liu, “Compilable neural code generation
+with compiler feedback,” in Findings of the Association for
+Computational Linguistics: ACL 2022, Dublin, Ireland, May 22-27,
+2022, S. Muresan, P. Nakov, and A. Villavicencio, Eds. Association
+for Computational Linguistics, 2022, pp. 9–19. [Online]. Available:
+https://doi.org/10.18653/v1/2022.findings-acl.2
+[40] H. Husain, H. Wu, T. Gazit, M. Allamanis, and M. Brockschmidt,
+“Codesearchnet challenge: Evaluating the state of semantic code
+search,” CoRR, vol. abs/1909.09436, 2019. [Online]. Available:
+http://arxiv.org/abs/1909.09436
+[41] F. Zhang, B. Chen, Y. Zhang, J. Keung, J. Liu, D. Zan, Y. Mao, J. Lou,
+and W. Chen, “Repocoder: Repository-level code completion through
+iterative retrieval and generation,” in Proceedings of the 2023 Conference
+on Empirical Methods in Natural Language Processing, EMNLP 2023,
+Singapore, December 6-10, 2023, H. Bouamor, J. Pino, and K. Bali,
+Eds. Association for Computational Linguistics, 2023, pp. 2471–2484.
+[Online]. Available: https://doi.org/10.18653/v1/2023.emnlp-main.151
+[42] K. Papineni, S. Roukos, T. Ward, and W. Zhu, “Bleu: a method for
+automatic evaluation of machine translation,” in Proceedings of the 40th
+
+Annual Meeting of the Association for Computational Linguistics, July
+6-12, 2002, Philadelphia, PA, USA. ACL, 2002, pp. 311–318. [Online].
+Available: https://aclanthology.org/P02-1040/
+[43] A. Svyatkovskiy, S. K. Deng, S. Fu, and N. Sundaresan, “Intellicode
+compose: code generation using transformer,” in ESEC/FSE ’20:
+28th ACM Joint European Software Engineering Conference and
+Symposium on the Foundations of Software Engineering, Virtual
+Event, USA, November 8-13, 2020, P. Devanbu, M. B. Cohen, and
+T. Zimmermann, Eds. ACM, 2020, pp. 1433–1443. [Online]. Available:
+https://doi.org/10.1145/3368089.3417058
+[44] Pylint. [Online]. Available: https://github.com/pylint-dev/pylint
+[45] S. Bengio, O. Vinyals, N. Jaitly, and N. Shazeer, “Scheduled
+sampling for sequence prediction with recurrent neural networks,”
+in Advances in Neural Information Processing Systems 28: Annual
+Conference on Neural Information Processing Systems 2015, December
+7-12, 2015, Montreal, Quebec, Canada, C. Cortes, N. D. Lawrence,
+D. D. Lee, M. Sugiyama, and R. Garnett, Eds., 2015, pp. 1171–
+1179. [Online]. Available: https://proceedings.neurips.cc/paper/2015/
+hash/e995f98d56967d946471af29d7bf99f1-Abstract.html
+[46] R. Paulus, C. Xiong, and R. Socher, “A deep reinforced model for
+abstractive summarization,” in 6th International Conference on Learning
+Representations, ICLR 2018, Vancouver, BC, Canada, April 30 - May 3,
+2018, Conference Track Proceedings. OpenReview.net, 2018. [Online].
+Available: https://openreview.net/forum?id=HkAClQgA[47] K. Arora, L. E. Asri, H. Bahuleyan, and J. C. K. Cheung, “Why
+exposure bias matters: An imitation learning perspective of error
+accumulation in language generation,” in Findings of the Association
+for Computational Linguistics: ACL 2022, Dublin, Ireland, May 22-27,
+2022, S. Muresan, P. Nakov, and A. Villavicencio, Eds. Association
+for Computational Linguistics, 2022, pp. 700–710. [Online]. Available:
+https://doi.org/10.18653/v1/2022.findings-acl.58
+[48] D. Shrivastava, H. Larochelle, and D. Tarlow, “Repository-level prompt
+generation for large language models of code,” in International
+Conference on Machine Learning, ICML 2023, 23-29 July 2023,
+Honolulu, Hawaii, USA, ser. Proceedings of Machine Learning Research,
+A. Krause, E. Brunskill, K. Cho, B. Engelhardt, S. Sabato, and
+J. Scarlett, Eds., vol. 202. PMLR, 2023, pp. 31 693–31 715. [Online].
+Available: https://proceedings.mlr.press/v202/shrivastava23a.html
+[49] R. Bairi, A. Sonwane, A. Kanade, V. D. C, A. Iyer, S. Parthasarathy,
+S. K. Rajamani, B. Ashok, and S. Shet, “Codeplan: Repository-level
+coding using llms and planning,” CoRR, vol. abs/2309.12499, 2023.
+[Online]. Available: https://doi.org/10.48550/arXiv.2309.12499
+[50] B. Paranjape, S. M. Lundberg, S. Singh, H. Hajishirzi, L. Zettlemoyer,
+and M. T. Ribeiro, “ART: automatic multi-step reasoning and tool-use
+for large language models,” CoRR, vol. abs/2303.09014, 2023. [Online].
+Available: https://doi.org/10.48550/arXiv.2303.09014
+[51] M. Komeili, K. Shuster, and J. Weston, “Internet-augmented
+dialogue generation,” in Proceedings of the 60th Annual Meeting
+of the Association for Computational Linguistics (Volume 1:
+Long Papers), ACL 2022, Dublin, Ireland, May 22-27, 2022,
+S. Muresan, P. Nakov, and A. Villavicencio, Eds. Association for
+Computational Linguistics, 2022, pp. 8460–8478. [Online]. Available:
+https://doi.org/10.18653/v1/2022.acl-long.579
+[52] A. Lazaridou, E. Gribovskaya, W. Stokowiec, and N. Grigorev,
+“Internet-augmented language models through few-shot prompting for
+open-domain question answering,” CoRR, vol. abs/2203.05115, 2022.
+[Online]. Available: https://doi.org/10.48550/arXiv.2203.05115
+[53] R. Thoppilan, D. D. Freitas, J. Hall, N. Shazeer, A. Kulshreshtha,
+H. Cheng, A. Jin, T. Bos, L. Baker, Y. Du, Y. Li, H. Lee, H. S. Zheng,
+A. Ghafouri, M. Menegali, Y. Huang, M. Krikun, D. Lepikhin, J. Qin,
+D. Chen, Y. Xu, Z. Chen, A. Roberts, M. Bosma, Y. Zhou, C. Chang,
+I. Krivokon, W. Rusch, M. Pickett, K. S. Meier-Hellstern, M. R.
+Morris, T. Doshi, R. D. Santos, T. Duke, J. Soraker, B. Zevenbergen,
+V. Prabhakaran, M. Diaz, B. Hutchinson, K. Olson, A. Molina,
+E. Hoffman-John, J. Lee, L. Aroyo, R. Rajakumar, A. Butryna,
+M. Lamm, V. Kuzmina, J. Fenton, A. Cohen, R. Bernstein, R. Kurzweil,
+B. A. y Arcas, C. Cui, M. Croak, E. H. Chi, and Q. Le, “Lamda:
+Language models for dialog applications,” CoRR, vol. abs/2201.08239,
+2022. [Online]. Available: https://arxiv.org/abs/2201.08239
+[54] K. Shuster, M. Komeili, L. Adolphs, S. Roller, A. Szlam, and J. Weston,
+“Language models that seek for knowledge: Modular search & generation
+for dialogue and prompt completion,” in Findings of the Association
+for Computational Linguistics: EMNLP 2022, Abu Dhabi, United Arab
+Emirates, December 7-11, 2022, Y. Goldberg, Z. Kozareva, and Y. Zhang,
+
+Eds. Association for Computational Linguistics, 2022, pp. 373–393.
+[Online]. Available: https://doi.org/10.18653/v1/2022.findings-emnlp.27
+[55] R. Nakano, J. Hilton, S. Balaji, J. Wu, L. Ouyang, C. Kim,
+C. Hesse, S. Jain, V. Kosaraju, W. Saunders, X. Jiang, K. Cobbe,
+T. Eloundou, G. Krueger, K. Button, M. Knight, B. Chess, and
+J. Schulman, “Webgpt: Browser-assisted question-answering with human
+feedback,” CoRR, vol. abs/2112.09332, 2021. [Online]. Available:
+https://arxiv.org/abs/2112.09332
+[56] K. Cobbe, V. Kosaraju, M. Bavarian, M. Chen, H. Jun, L. Kaiser,
+M. Plappert, J. Tworek, J. Hilton, R. Nakano, C. Hesse, and
+J. Schulman, “Training verifiers to solve math word problems,” CoRR,
+vol. abs/2110.14168, 2021. [Online]. Available: https://arxiv.org/abs/
+2110.14168
+[57] L. Gao, A. Madaan, S. Zhou, U. Alon, P. Liu, Y. Yang, J. Callan, and
+G. Neubig, “PAL: program-aided language models,” in International
+
+Conference on Machine Learning, ICML 2023, 23-29 July 2023,
+Honolulu, Hawaii, USA, ser. Proceedings of Machine Learning Research,
+A. Krause, E. Brunskill, K. Cho, B. Engelhardt, S. Sabato, and
+J. Scarlett, Eds., vol. 202. PMLR, 2023, pp. 10 764–10 799. [Online].
+Available: https://proceedings.mlr.press/v202/gao23f.html
+[58] W. Chen, X. Ma, X. Wang, and W. W. Cohen, “Program of thoughts
+prompting: Disentangling computation from reasoning for numerical
+reasoning tasks,” CoRR, vol. abs/2211.12588, 2022. [Online]. Available:
+https://doi.org/10.48550/arXiv.2211.12588
+[59] J. Liu, Y. Chen, M. Liu, X. Peng, and Y. Lou, “Stall+: Boosting llm-based
+repository-level code completion with static analysis,” arXiv preprint
+arXiv:2406.10018, 2024.
+[60] L. A. Agrawal, A. Kanade, N. Goyal, S. K. Lahiri, and S. K. Rajamani,
+“Guiding language models of code with global context using monitors,”
+arXiv preprint arXiv:2306.10763, 2023.
+
+

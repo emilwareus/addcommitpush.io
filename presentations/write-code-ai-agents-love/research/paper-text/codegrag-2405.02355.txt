@@ -1,0 +1,1367 @@
+CodeGRAG: Bridging the Gap between Natural
+Language and Programming Language via Graphical
+Retrieval Augmented Generation
+
+arXiv:2405.02355v4 [cs.SE] 19 May 2025
+
+Kounianhua Du1 , Jizheng Chen1 , Renting Rui1 , Huacan Chai1 , Lingyue Fu1 ,
+Wei Xia2 , Yasheng Wang2 , Ruiming Tang2 , Yong Yu1 , Weinan Zhang1
+1
+Shanghai Jiao Tong University, 2 Huawei Noah’s Ark Lab
+Shanghai, China
+{kounianhuadu, wnzhang}@sjtu.edu.cn
+
+Abstract
+Utilizing large language models to generate codes has shown promising meaning
+in software development revolution. Despite the intelligence shown by the large
+language models, their specificity in code generation can still be improved due to
+the syntactic gap and mismatched vocabulary existing between natural language
+and programming languages. In this paper, we propose CodeGRAG, a Graphical
+Retrieval Augmented Code Generation framework that bridges the gap between
+NL and PL to enhance the performance of LLMs. CodeGRAG builds the graphical
+view of code blocks based on the control flow and data flow of them to better
+interpret the programming domain knowledge, which can facilitate natural language
+based LLMs for better understanding of code syntax and serve as a bridge among
+different programming languages. To take the extracted structural knowledge
+into the foundation models, we propose 1) a hard meta-graph prompt template to
+transform the challenging syntax graph into informative graphical view for tuningfree models and 2) a soft prompting technique that injects the domain knowledge
+of programming languages into model parameters via finetuning the models with
+the soft signals encoded by GNN expert model. Specifically, two constraints are
+designed to improve the alignment and structure expressiveness, contributing to
+the informativeness of the single-token-sized external <GraphEmb> for enhanced
+code generation. CodeGRAG significantly improves the code generation ability
+of LLMs and can even offer performance gain for cross-lingual code generation.
+Implementation is available at https://anonymous.4open.science/r/Code-5970/ .
+
+1
+
+Introduction
+
+In recent years, large language models (LLMs) (Achiam et al., 2023; Touvron et al., 2023) have
+shown great impact in various domains. Automated code generation emerges as a captivating frontier
+(Zheng et al., 2023; Roziere et al., 2023; Shen et al., 2023), promising to revolutionize software
+development by enabling machines to write and optimize code with minimal human intervention.
+Code generation involves translating natural language instructions into structured and executable
+code in a target programming language. However, syntactic gap and mismatched vocabulary between
+natural language (NL) and programming languages (PL) exist, hindering LLM’s performance on
+code generation. As illustrated in Figure 1, programming language (marked in blue) contains special
+tokens such as “int” or “++” that natural language (marked in yellow) doesn’t possess with the
+same physical significance, leading to vocabulary mismatch. Besides, the relations among tokens in
+programming languages are often structural, e.g., the complex branching and jumps, whereas natural
+Preprint. Under review.
+
+language is arranged simply in sequential manner, leading to syntactic gap. For example, in the
+control flow graph of the raw code (marked in pink), two “if” blocks (marked in purple) are adjacent
+and are executed sequentially under certain condition, while appearing distant in the raw textual code.
+As discussed above, the challenges of enhancing large language models for code-related tasks can be
+summarized into two folds.
+(C1) Effective representation of programming hints to interpret the inherent logic. Code, unlike
+natural language, possesses a well-defined structure that governs its syntax and semantics. This
+structure provides valuable information about the relationships between different parts of the code, the
+flow of execution, and the overall organization of the functions (Jiang et al., 2021; Guo et al., 2020).
+LLMs regard a code block as a sequence of tokens. By ignoring the inherent structure of codes, they
+miss out on essential cues that could help them better understand and generate code. Previous RAG
+methods (Lu et al., 2022; Su et al., 2024; Zhou et al., 2022) stimulate the code generation abilities
+of LLMs by using relevant code snippets or document as hints, failing to well represent the innate
+structures.
+(C2) Effective ways to digest the programming domain knowledge. In addition
+to the well representation of
+the programming knowledge,
+the ways to inject the knowledge into the NL-based LLMs
+is also challenging. The structural representation of codes
+and the unfamiliar vocabulary
+could be hard to understand,
+which poses a challenge to the
+capability of the foundation
+models.
+
+Programming
+Language
+
+Vocabulary Mismatch
+
+Syntactic Gap
+
+for, int, =, <, ++, ...
+
+Complex & Structural
+
+consisting, binary
+
+Easier & Sequential
+
+Natural
+Language
+Extracted
+Graph
+
+Input are two strings a and b consisting only of 1s and 0s. Perform binary XOR
+on these inputs and return results also as a string.
+string string_xor(string a, string b){
+string output="";
+for (int i=0;(i<a.length() and i<b.length());i++){
+if (i<a.length() and i<b.length()){
+if (a[i]== b[i]) output+='0';
+else output+='1';}
+else{
+if (i>=a.length()) output+=b[i];
+else output+=a[i];}}
+return output;}
+
+Start:
+string_xor
+range(minlen)
+For: i
+yes
+If: i<minlen
+no
+
+Init output,
+minlen
+If:
+a[i]=b[i]
+
+yes
+no
+
+If:
+i>=len(a)
+
+yes
+
+output
++= '0'
+output
++= '1'
+output
++= b[i]
+
+no
+
+To solve the above challenges, we propose Code- Figure 1: Illustration of the gap between the programming language
+GRAG, a graphical retrieval and the natural language.
+augmented generation framework for code generation. For (C1), we propose to interpret the code blocks using the graphical view
+composed from data-flow and control-flow of the code block to serve as the programming hints, which
+extracts both the semantic level and the logical level information of the code. The composed graphical
+view could 1) better capture the innate structural knowledge of codes for NL-based language models
+to understand and 2) model the innate function of code blocks that bridge different programming
+languages. For (C2), we propose a hard meta-graph prompting technique for tuning-free models and
+a soft-prompting technique for tunable models. The hard meta-graph prompt summarizes the overall
+information of the extracted graphical view and transforms the challenging and noisy graphical
+representation into informative knowledge. The soft-prompting technique injects the programming
+domain knowledge into LLMs by tuning them with soft signals from expert GNN-encoded graphical
+views, under the regularization of alignment and structure-preserving objectives. After the tuning,
+LLMs are capable to well digest the structural graphical views by taking in the soft <GraphEmb> at
+single-token cost, avoiding them from the vocabulary mismatch and syntactic gap problems.
+The main contributions of the paper can be summarized as follows:
+• Identification of the vocabulary mismatch and syntactic gap problems in NL2Code process.
+We explain the identified problems with explicit examples and propose CodeGRAG, a novel
+graphical retrieval augmented generation framework, to tackle them for enhanced code generation.
+• Effective graphical view to inform and stimulate the programming knowledge of LLMs.
+We propose an effective graphical view to serve as the programming hints, which offers more
+informative knowledge than the raw code block.
+• Effective soft prompting technique to inject the programming domain knowledge into LLMs
+and help them better digest the programming hints. We propose a soft prompting technique,
+which injects the domain knowledge of programming languages into the model parameters via
+2
+
+Node Feature
+Composed
+Syntax Gr aph
+Exter nal Code
+K nowledge Base
+
+Edge Feature
+
+Gr aphical View
+
+M eta-Gr aph Str ucture
+Har d
+Gr aphical View
+
+Composed Syntax Gr aph
+
+Data Flow
+K nowledge
+KDocument
+nowledge
+K nowledge
+Document
+Document
+
+Two-Hop Alignment Contr astive L ear ning
+NL
+
+Code
+
+Gr aphical
+View
+
+Control Flow
+
+Composed
+Syntax Gr aph
+Exper t GNN
+
+Str ucture Preser ving Contr astive L ear ning
+
+std::vector<int>
+
+Raw Code
+K nowledge Prepar ation
+Retr ieval Augmented Gener ation
+(Soft & Har d)
+Ret ur n a s t r i ng c ont ai ni ng s pac e- del i mi t ed
+number s s t ar t i ng f r om 0 upt o n i nc l us i v e.
+>>> s t r i ng_s equenc e( 0)
+" 0"
+>> s t r i ng_s equenc e( 5)
+0 1 2 3 4 5
+#i nc l ude<s t di o. h>
+#i nc l ude<s t r i ng>
+us i ng names pac e s t d;
+s t r i ng s t r i ng_s equenc e( i nt n) {
+
+Gr aphEmb
+Soft
+Gr aphEmb
+
+target) { .....
+
+Compact
+
+twoSum(std::vector<int>& nums, int
+
+Soft Prompting
+Exter nal Code
+K nowledge Base
+
+Retr iever
+
+Gr aphical View
+
+I ndex
+
+Har d M eta-Gr aph
+Prompt
+
+I NPUT: Task instr uction prompt
+Quer y Extr action
+
+Gr aphEmb
+
+Gener al Pur pose L L M
+
+#include<stdio.h>
+#include<math.h>
+#include<string>
+using namespace std;
+#include<algorithm>
+#include<stdlib.h>
+string string_sequence(int n){
+string out="0";
+for (int i=1;i<=n;i++)
+out=out+" "+to_string(i);
+return out;
+}
+
+OUTPUT: Gener ated Code
+Gener al Pur pose L L M
+
+Figure 2: Overview of CodeGRAG. (Top) Knowledge Preparation. We extract composed syntax
+graphs of external code blocks by composing the control flow and data flow of codes using the
+read-write signal, preserving the innate semantic and logical information. The composed graphs are
+then abstracted into graphical views as hard knowledge document and embedded into <GraphEmb>s
+as soft knowledge document. The <GraphEmb> is encoded by a pretrained GNN expert model
+constrained by the alignment and structure preserving objectives. (Bottom) Retrieval Augmented
+Generation. We extract query from the task input and retrieve from the external corpus. For tuning
+free models, we use the hard graphical view to stimulate the structural programming knowledge of
+LLMs for enhanced generation. For tunable models, we use the soft <GraphEmb> and inject the
+programming domain knowledge into LLMs parameters via finetuning them with the GNN expert
+signals. The expert signals informed LLMs can then produce enhanced generation.
+finetuning LLMs with the soft signals of GNN-encoded graphical representations. A two-hop
+contrastive objective for alignment along with a graph contrastive objective for structure preserving
+are designed to improve the expressiveness of the soft signal.
+
+2
+
+Methodology
+
+2.1
+
+Overview
+
+In this paper, we leverage both generative models and retrieval models to produce results that are
+coherent and informed by expert graphical knowledge of the programming language. The overall
+process of CodeGRAG is illustrated in Figure 2.
+2.2
+
+Graphical Knowledge Base Preparation
+
+To capture both the semantic and the logical information, we represent code blocks by combining
+the data flow graph (Aho et al., 2006) and the control flow graph (Allen, 1970) with the read-write
+signals (Long et al., 2022), both of them are constructed on the basis of the abstract syntax tree.
+Abstract Syntax Tree (AST). An abstract syntax tree (AST) is a tree data structure that represents
+the abstract syntactic structure of source code. An AST is constructed by a parser, which reads the
+source code and creates a tree of nodes. Each node in the tree represents a syntactic construct in the
+source code, such as a statement, an expression, or a declaration. ASTs have good compactness and
+can represent the structure of the source code in a clear and concise way.
+Data Flow Graph (DFG). The data flow graph (DFG) is a graphical representation of the flow of
+data dependencies within a program. It is a directed graph that models how data is transformed and
+3
+
+Function Desciption
+Checks if given string is a palindrome.
+
+Code Block
+#include<stdio.h>
+#include<math.h>
+#include<string>
+using namespace std;
+#include<algorithm>
+#include<stdlib.h>
+bool is_palindrome(string text){
+string pr(text.rbegin(),text.rend());
+return pr==text;
+}
+
+DeclStmtedge0
+
+CXXOperatorCallExpredge1
+
+child
+
+write
+
+UserDefineFun
+
+CXXOperatorCallExpredge2
+
+next
+
+read
+
+Figure 3: Illustration of the extracted composed syntax graph from the code block. The arrows in the
+bottom part indicate the names of different edges, which are extracted based on the ASTs.
+propagated through different parts of a program. In DFG, nodes are operands and edges indicate data
+flows. Two types of edges are considered: 1) operation edges that connect the nodes to be operated
+and the nodes that receive the operation results; 2) function edges that indicate data flows for function
+calls and returns. These edges connect nodes, including non-temporary operands and temporary
+operands, which refer to variables and constants that explicitly exist in the source code, and variables
+existing only in execution, respectively.
+Control Flow Graph (CFG). The control flow graph (CFG) is a graphical representation of the
+flow of control or the sequence of execution within a program. It is a directed graph that models
+the control relationships between different parts of a program. Based on compiler principles, we
+slightly adjust the design of CFG to better capture the key information of the program. Nodes in CFG
+are operations in the source code, including standard operations, function calls and returns. Edges
+indicate the execution order of operations.
+Composed Syntax Graph. A composed syntax graph composes the data flow graph and the control
+flow graph with the read-write flow existing in the code blocks. An illustration of the extracted
+composed syntax graph is displayed in Figure 3. Different edge types along with their concrete names
+are given in colors. As for the node names, the middle figure displays the concrete types of nodes
+(operands) and the right figure displays the properties of nodes.
+An illustration of the composed graphical view is in Figure 3. After obtaining the composed syntax
+graphs, we use them to inform the LLMs to bridge the gap between NL and PLs, where both the
+semantic level and the logic level information are preserved.
+2.3
+
+Graphical Retrieval Augmented Generation
+
+In this section, we discuss the ways to effectively utilize the constructed knowledge base.
+For the retrieval algorithm, we use CodeT5 to encode the query and corpus, measuring cosine
+distances among vectors to obtain the top-1 relevant document as the knowledge content. Since the
+focus of our paper is to discuss the representation of the used knowledge content but not the accuracy
+of ranking, we keep ranking algorithm the same for all used methods.
+For the representation of the retrieved knowledge content, since the composed syntax graph is hard
+to understand, we propose 1) a hard meta-graph template to transform the challenging knowledge
+into informative graphical view for tuning-free model and 2) a soft prompting technique to tune the
+foundation models for their better understanding of the graphical views with the assistance of an
+expert GNN model.
+2.3.1
+
+Hard Meta-Graph Prompt
+
+The original composed syntax graph of a code block could contain hundreds of nodes and edges. A
+full description of it could cost an overly long context, along with the understanding challenge posed
+by the long edge lists. Therefore, we propose to use a meta-graph1 to abstract the original graph into
+informative graphical view. The abstracted meta-graph consists of the canonical edge types and node
+1
+
+https://www.dgl.ai/dgl_docs/generated/dgl.DGLGraph.metagraph.html
+
+4
+
+types, which describes the basic topology of the composed syntax graph (Sun and Han, 2013), with
+the textual features obtained from the ASTs contained in the node and edge features.
+The template for the meta-graph is displayed as below.
+Graph(num_nodes={node_type : #nodes},
+num_edges={(src_node_type, edge_type, dst_node_type) : #edges},
+metagraph=[(src_node_type, edge_type, dst_node_type)])
+Then we use the meta-graph template to transform the retrieved graphical view into digestable
+knowledge and insert it into the final prompt for generation. As illustrated in Figure 4 (a), the final
+prompt consists of three components: the system prompt illustrated in the blue part, the retrieved
+knowledge and hints illustrated in the green part, and the problem (including task description, function
+declaration, etc.) illustrated in the yellow part. The three parts are concatenated to be fed into LLMs
+for knowledge augmented generation.
+System Prompt
+Please continue to complete the [lang] function
+according to the requirements and function
+declarations. You are not allowed to modify the
+given code and do the completion only.\n
+
+System Prompt
+Please continue to complete the [lang] function
+according to the requirements and function
+declarations. You are not allowed to modify the
+given code and do the completion only.\n
+
+Retr ieved K nowledge
+The syntax graph of a similar code might be:\n
+[meta graph]
+You can refer to the above knowledge to do the
+completion. \n
+
+Retr ieved K nowledge
+The syntax graph of a similar code is encoded in:\n
+<GraphEmb>
+You can refer to the above knowledge to do the
+completion. \n
+
+Problem
+The problem:\n
+[problem prompt]
+
+Problem
+The problem:\n
+[problem prompt]
+
+(a) Har d M eta Gr aph Template
+
+(b) Soft Prompting Template
+
+Figure 4: Prompt templates.
+2.3.2
+
+Soft Prompting with the Expert
+
+Directly hard prompt to the LLMs poses a challenge to the digesting capability of the backbone LLMs,
+suffering from the vocabulary mismatch and syntactic gap problems. To compress the graphical
+knowledge into model parameters and help the backbone LLMs to better understand the programming
+language, we propose a soft prompting technique. The overall procedure can be summarized into
+expert encoding of graphical views, finetuning with the expert signal, and inference.
+We design a graph neural network to preserve the semantic and logical information of code blocks.
+(0)
+(0)
+The representation of each node ni and edge ei are first initialized with vectors corresponding
+to the node text and edge text encoded by ϕ1 , which is a specialized coder model trained to align
+programming and natural languages. A message passing process is first conducted to fuse the
+semantic and structural information into each node representation.
+(l)
+
+(l−1)
+
+mij = W(l) (ni
+
+(l−1)
+
+∥eij
+
+),
+
+(1)
+
+(l)
+(l−1)
+Qj =WQ (l) nj
+,
+(l)
+
+(l)
+
+(l)
+
+(2)
+(l)
+
+Kij = WK (l) mij , Vij = WV (l) mij ,
+
+(3)
+
+(l)
+(l) (l)
+aij = softmaxi∈N (j) (Qj Kij ),
+
+(4)
+
+(l)
+nj =
+
+(l) (l)
+aij Vij .
+i∈N (j)
+
+X
+
+A global attention-based readout is then applied to obtain the graph representation:
+X
+L
+g=
+softmax(fgate (nL
+i ))ffeat (ni ).
+i
+
+5
+
+(5)
+
+(6)
+
+The expert encoding network is optimized via the contrastive learning based self-supervised training.
+A two-hop contrastive learning objective is designed to align the code-NL-PL spaces, while a structure
+preserving contrastive learning is conducted to improve the expressiveness of the expert GNN and
+avoid the aligning process from being dominated by the NL side.
+• Two-Hop Alignment Contrastive Learning. There are two types of alignment to be ensured: 1)
+NL-Code (NC) alignment and 2) Code-Graph (CG) alignment.
+We define the positive pairs and negative pairs for NC alignment purpose as:
+Q
++
+V
+IN
+C = {⟨hi , hi ⟩|i ∈ Dtrain },
+
+(7)
+
+Q
+−
+V
+IN
+C = {⟨hi , hj ⟩|i ̸= j, i ∈ Dtrain , j ∈ Dtrain }.
+
+(8)
+
+And we define the positive pairs and negative pairs for CG alignment purpose as:
++
+ICG
+= {⟨ϕ1 (ci ), ϕ2 (gi )⟩|i ∈ Dtrain },
+−
+ICG
+= {⟨ϕ1 (ci ), ϕ2 (gj )⟩|i ̸= j, i ∈ Dtrain , j ∈ Dtrain }.
+
+(9)
+(10)
+
+• Structure Preserving Contrastive Learning. To preserve the structural information of the
+graphical views, we perform intra-modality contrastive learning among the graphical views and
+their corrupted views. Concretely, we corrupt each of the graphical view gi with the edge dropping
+operation to obtain its corrupted view gi′ . The positive pairs and negative pairs for structurepreserving purpose are then designed as:
++
+Ipreserve
+= {⟨ϕ2 (gi ), ϕ2 (gi′ )⟩|i ∈ Dtrain },
+
+(11)
+
+−
+Ipreserve
+= {⟨ϕ2 (gi ), ϕ2 (gj′ )⟩|i ̸= j, i ∈ Dtrain , j ∈ Dtrain }.
+
+(12)
+
+To help the backbone LLMs to digest the graphical views, we tune the LLMs with the expert soft
+signal. The prompt for finetuning consists of the system prompt, retrieved knowledge where the
+expert encoded graphical view is contained using a token embedding, and task prompt, as illustrated
+in Figure 4 (b). After the finetuning stage, we used the tuned models to generate codes using the soft
+prompting template.
+
+3
+
+Experiments
+
+RQ1 Does the proposed CodeGRAG offer performance gain against the base model?
+RQ2 Does the proposed graph view abstract more informative knowledge compared with the raw
+code block?
+RQ3 Can soft prompting enhance the capability of the backbone LLMs? Does finetuning with the
+expert signals outperform the simple supervised finetuning ?
+RQ4 Are the proposed pretraining objectives for the GNN expert effective?
+RQ5 What is the impact of each of the components of the graphical view?
+RQ6 How is the compatibility of the graph extraction process?
+3.1
+
+Setup
+
+In this paper, we evaluate CodeGRAG with the widely used HumanEval-X2 Zheng et al. (2023)
+dataset, competition-style CodeForce3 and APPS4 Hendrycks et al. (2021) datasets. We use greedy
+decoding strategy to do the generation. The evaluation metric is Pass@1. More details of the retrieval
+pool and the finetuning settings can be found in Section A.1 in the Appendix.
+2
+
+https://github.com/THUDM/CodeGeeX
+https://paperswithcode.com/sota/code-generation-on-apps
+4
+https://arxiv.org/pdf/2105.09938v3
+3
+
+6
+
+Table 1: Results of Hard Meta-Graph Prompt on Humaneval-X. (Pass@1)
+Model
+GPT-3.5-Turbo
+
+GPT-4omini
+
+Retrieved Knowledge
+N/A
+Code Block (Nashid et al., 2023; Lu et al., 2022)
+Meta-Graph
+(Multi-Lingual) Code-Block (Nashid et al., 2023; Lu et al., 2022)
+(Multi-Lingual) Meta-Graph
+N/A
+Code Block (Nashid et al., 2023; Lu et al., 2022)
+Meta-Graph
+(Multi-Lingual) Code-Block (Nashid et al., 2023; Lu et al., 2022)
+(Multi-Lingual) Meta-Graph
+
+C++
+57.93
+60.37
+62.20
+62.20
+64.02
+63.41
+65.24
+65.85
+65.85
+67.07
+
+Python
+71.95
+72.56
+72.56
+70.12
+77.44
+78.66
+78.66
+79.88
+79.27
+80.49
+
+Table 2: Results of Soft Prompting. (Pass@1)
+Model
+Gemma 7b
+Llama2 13b
+CodeLlama 7b
+
+3.2
+
+Finetune
+N/A
+SFT
+Soft Prompting
+N/A
+SFT
+Soft Prompting
+N/A
+SFT
+Soft Prompting
+
+CodeForce (C++)
+12.83
+14.76
+19.13
+9.61
+11.88
+13.62
+5.20
+9.87
+11.09
+
+APPS (Python)
+5.09
+21.09
+26.15
+7.29
+12.06
+12.74
+24.41
+26.15
+30.26
+
+Main Results
+
+The main results are summarized in Table 1 and Table 2. From the results, we can draw the following
+conclusions.
+RQ1. The proposed CodeGRAG could offer performance gain against the base model, which validates
+the effectiveness of the proposed graphical retrieval augmented generation for code generation
+framework.
+RQ2. The model informed by the meta-graph (CodeGRAG) could beat model informed by the raw
+code block. From the results, we can see that the proposed graph view could summarize the useful
+structural syntax information and filter out the noises, which could offer more informative knowledge
+hints than the raw code block. In addition, inserting the intermediate representations of codes into the
+prompt can stimulate the corresponding programming knowledge of LLMs.
+RQ3. From Table 2, we can see that finetuning with the expert soft prompting could offer more
+performance gain than that brought by simple supervised finetuning. This validates the effectiveness
+of the designed pretraining expert network and the technique of finetuning with soft prompting, which
+injects the programming domain knowledge into the LLMs parameters and informs the models with
+the structural information for gap filling.
+3.3
+
+Impacts of the objectives for soft prompting (RQ4)
+
+To study the effectiveness of the proposed pretraining objectives for the expert GNN, we remove
+each objective to yield different expert GNNs and visualize the hidden representations of codes with
+T-SNE. The results are in Table 3 and Figure 5.
+From the results, we could see that both the Alignment and the Structure Preserving contribute to the
+expressiveness of the soft signal. The alignment pretraining objective helps to promote the alignment
+among natural language, programming language, and their graphical views. The structure preserving
+objective helps to preserve the innate data-flows and control-flows information of code blocks. The
+two objectives collaborate with each other to yield expressive programming domain knowledge GNN
+expert model, which encodes external programming knowledge and injects the knowledge into LLMs
+parameters.
+7
+
+Table 3: Ablation studies on the two objectives.
+Model
+Gemma 7b
+Llama2 13b
+CodeLlama 7b
+
+Finetune
+Soft Prompting
+w/o Alignment
+w/o Structure-Preserving
+Soft Prompting
+w/o Alignment
+w/o Structure-Preserving
+Soft Prompting
+w/o Alignment
+w/o Structure-Preserving
+
+w/o Alignment Objective
+
+APPS (Python)
+26.15
+28.58
+21.50
+12.74
+10.76
+11.09
+30.26
+29.45
+26.59
+
+w/o Structure Preserving Objective
+
+Python
+
+C++
+
+w/ Both
+
+CodeForce (C++)
+19.13
+7.88
+11.70
+13.62
+11.79
+5.50
+11.09
+10.92
+10.66
+
+Figure 5: T-sne visualization of soft signals trained with different objectives.
+3.4
+
+Impacts of the Components of the Graphical View (RQ5)
+
+In this section, we adjust the inputs of the graphical components to the LLMs. Concretely, we study
+the information contained in node names, edge names, and the topological structure. The results are
+presented in Table 4.
+Table 4: Impacts of the graph components. The edge type refers to the type of flows between
+operands (child, read, write, etc.), the node type refers
+Datasets
+Python
+C++
+to the type of operands (DeclStmt, temp, etc.), the
+node name refers to the name of the intermediate
+Edge Type Only
+73.78
+61.59
+variables, and the topological information refers to
+Edge Type + Node Name
+75.00
+59.76
+Edge Type + Node Type
+75.61
+59.15
+the statistics of the concrete numbers of different
+Edge Type + Topological
+77.44
+64.02
+types of edges. From the results, we can observe that
+1) the edge features matter the most in constructing
+the structural view of code blocks for enhancement, 2) the type of nodes expresses the most in
+representing operands information, and 3) the overall structure of the graphical view also gives
+additional information.
+3.5
+
+Compatibility Discussion (RQ6)
+
+Despite the effectiveness of the proposed graphical views to represent the code blocks, the flexibility
+and convenience of applying the graphical views extraction process is important for wider application
+of the proposed method. In this section, we discuss the compatibility of CodeGRAG.
+Table 5: Graph extraction rate (ER) of We give the ratio of generated results that can pass the
+the generated results.
+graphical views extraction process, which is denoted by
+Extraction Rate. The Pass@1 and the Extraction Rate
+Generated Codes
+Pass@1
+ER
+of the generated results passing the graphical extraction
+(C++) Code-RAG
+62.20
+92.07 process are given in Table 5.
+(C++) CodeGRAG
+(Python) Code-RAG
+(Python) CodeGRAG
+
+64.02
+71.95
+77.44
+
+92.68
+91.46
+96.95
+
+From the results, we could see that the extraction rates
+are high for codes to pass the graphical views extraction
+process, even under the situation where the Pass@1 ratios
+8
+
+of the generated results are low. This indicates that the
+application range of the proposed method is wide. In addition, the extraction process of all the
+graphical views are front-end. Therefore, this extraction process applies to a wide range of code, even
+error code. One could also use regularization tools to reformulate the code and improve the pass rate
+of the extraction process.
+
+4
+
+Related Work
+
+Code Search. The code search methods can be summarized into three folds. Early methods utilize
+sparse search to match the query and codes (Hill et al., 2011; Yang and Huang, 2017), which suffers
+from mismatched vocabulary due to the gap between NL and PL. Neural methods (Cambronero et al.,
+2019; Gu et al., 2021) then focus on mapping the query and codes into a joint representation space
+for more accurate retrieval. With the success of pretrained language models, many methods propose
+to use pretraining tasks to improve the code understanding abilities and align different language
+spaces. For example, CodeBERT (Feng et al., 2020) is pretrained on NL-PL pairs of 6 programming
+languages with the masked language modeling and replaced token detection task. CodeT5 (Wang
+et al., 2021) supports both code-related understanding and generation tasks through bimodal dual
+generation. UniXcoder (Guo et al., 2022) integrates the aforementioned pretraining tasks, which
+is a unified cross-modal pre-trained model. As retrieval augmented generation (RAG) shows its
+significance in promoting the quality of LLMs generation, works in code RAG start to accumulate.
+Nashid et al. (2023); Lu et al. (2022) utilize the code blocks as the retrieved knowledge to inform the
+LLMs with similar code blocks for enhancement. Zhou et al. (2022) uses the programming related
+document to serve as the retrieval content, injecting auxiliary external programming knowledge into
+the LLMs generation.
+Code Representation. Early methods regard code snippets as sequences of tokens, assuming the
+adjacent tokens will have strong correlations. This line of methods (Harer et al., 2018; Ben-Nun
+et al., 2018; Feng et al., 2020; Ciniselli et al., 2021) take programming languages as the same with
+the natural language, using language models to encode the code snippets too. However, this ignoring
+of the inherent structure of codes leads to a loss of expressiveness. Methods that take the structural
+information of codes into consideration then emerge. Mou et al. (2016) used convolution networks
+over the abstract syntax tree (AST) extracted from codes. Alon et al. (2019) encoded paths sampled
+from the AST to represent codes. Further exploration into the graphical representation of codes
+(Allamanis et al., 2017) is conducted to better encode the structures of codes, where more intermediate
+states of the codes are considered.
+
+5
+
+Limitations
+
+In this paper, we propose a graphical retrieval augmented generation method that can offer enhanced
+code generation. Despite the efficiency and effectiveness, there are also limitations within this work.
+For example, dependency on the quality of the external knowledge base could be a potential concern.
+The quality of the external knowledge base could be improved with regular expression extraction on
+the noisy texts and codes.
+
+6
+
+Conclusion
+
+In this paper, we locate the syntactic gap and vocabulary mismatch problems in NL2Code process
+and propose CodeGRAG to alleviate the above problems for enhanced code generation.CodeGRAG
+effectively represent the programming hints to inform LLMs for code generation and improve their
+understanding of programming domain knowledge. Concretely, we propose to extract the semantic
+and logic knowledge of codes to serve as the programming hints and design proper ways to take in
+the knowledge: 1) a meta-graph prompt for tuning-free models and 2) a soft-prompting technique
+to inject the structural programming domain knowledge into the parameters of LLMs for tunable
+models. Two objectives are designed to improve the alignment and structural expressiveness of the
+soft signals, contributing to the informativeness of the single-token-sized <GraphEmb> for enhanced
+code generation. By integrating properly-represented external knowledge, CodeGRAG enhances
+LLMs’ comprehension of codes and empowers them to generate code with improved accuracy.
+9
+
+Acknowledgments and Disclosure of Funding
+Use unnumbered first level headings for the acknowledgments. All acknowledgments go at the
+end of the paper before the list of references. Moreover, you are required to declare funding
+(financial activities supporting the submitted work) and competing interests (related financial activities
+outside the submitted work). More information about this disclosure can be found at: https:
+//neurips.cc/Conferences/2024/PaperInformation/FundingDisclosure.
+Do not include this section in the anonymized submission, only in the final paper. You can use
+the ack environment provided in the style file to automatically hide this section in the anonymized
+submission.
+
+10
+
+References
+Josh Achiam, Steven Adler, Sandhini Agarwal, Lama Ahmad, Ilge Akkaya, Florencia Leoni Aleman,
+Diogo Almeida, Janko Altenschmidt, Sam Altman, Shyamal Anadkat, et al. 2023. GPT-4 Technical
+Report. arXiv preprint arXiv:2303.08774 (2023).
+Alfred V Aho, Monica S Lam, Ravi Sethi, and Jeffrey D Ullman. 2006. Compilers: Principles
+techniques and tools. 2007. Google Scholar Google Scholar Digital Library Digital Library
+(2006).
+Miltiadis Allamanis, Marc Brockschmidt, and Mahmoud Khademi. 2017. Learning to represent
+programs with graphs. arXiv preprint arXiv:1711.00740 (2017).
+Frances E Allen. 1970. Control flow analysis. ACM Sigplan Notices 5, 7 (1970), 1–19.
+Uri Alon, Meital Zilberstein, Omer Levy, and Eran Yahav. 2019. code2vec: Learning distributed
+representations of code. Proceedings of the ACM on Programming Languages 3, POPL (2019),
+1–29.
+Tal Ben-Nun, Alice Shoshana Jakobovits, and Torsten Hoefler. 2018. Neural code comprehension: A
+learnable representation of code semantics. Advances in Neural Information Processing Systems
+31 (2018).
+Jose Cambronero, Hongyu Li, Seohyun Kim, Koushik Sen, and Satish Chandra. 2019. When deep
+learning met code search. In Proceedings of the 2019 27th ACM Joint Meeting on European
+Software Engineering Conference and Symposium on the Foundations of Software Engineering.
+964–974.
+Matteo Ciniselli, Nathan Cooper, Luca Pascarella, Denys Poshyvanyk, Massimiliano Di Penta, and
+Gabriele Bavota. 2021. An empirical study on the usage of bert models for code completion. In
+2021 IEEE/ACM 18th International Conference on Mining Software Repositories (MSR). IEEE,
+108–119.
+Zhangyin Feng, Daya Guo, Duyu Tang, Nan Duan, Xiaocheng Feng, Ming Gong, Linjun Shou, Bing
+Qin, Ting Liu, Daxin Jiang, et al. 2020. Codebert: A pre-trained model for programming and
+natural languages. arXiv preprint arXiv:2002.08155 (2020).
+Jian Gu, Zimin Chen, and Martin Monperrus. 2021. Multimodal representation for neural code search.
+In 2021 IEEE International Conference on Software Maintenance and Evolution (ICSME). IEEE,
+483–494.
+Daya Guo, Shuai Lu, Nan Duan, Yanlin Wang, Ming Zhou, and Jian Yin. 2022. Unixcoder: Unified
+cross-modal pre-training for code representation. arXiv preprint arXiv:2203.03850 (2022).
+Daya Guo, Shuo Ren, Shuai Lu, Zhangyin Feng, Duyu Tang, Shujie Liu, Long Zhou, Nan Duan,
+Alexey Svyatkovskiy, Shengyu Fu, et al. 2020. Graphcodebert: Pre-training code representations
+with data flow. arXiv preprint arXiv:2009.08366 (2020).
+Jacob A Harer, Louis Y Kim, Rebecca L Russell, Onur Ozdemir, Leonard R Kosta, Akshay Rangamani, Lei H Hamilton, Gabriel I Centeno, Jonathan R Key, Paul M Ellingwood, et al. 2018. Automated software vulnerability detection with machine learning. arXiv preprint arXiv:1803.04497
+(2018).
+Dan Hendrycks, Steven Basart, Saurav Kadavath, Mantas Mazeika, Akul Arora, Ethan Guo, Collin
+Burns, Samir Puranik, Horace He, Dawn Song, et al. 2021. Measuring coding challenge competence
+with apps. arXiv preprint arXiv:2105.09938 (2021).
+Emily Hill, Lori Pollock, and K Vijay-Shanker. 2011. Improving source code search with natural
+language phrasal representations of method signatures. In 2011 26th IEEE/ACM International
+Conference on Automated Software Engineering (ASE 2011). IEEE, 524–527.
+Xue Jiang, Zhuoran Zheng, Chen Lyu, Liang Li, and Lei Lyu. 2021. Treebert: A tree-based pre-trained
+model for programming language. In Uncertainty in Artificial Intelligence. PMLR, 54–63.
+11
+
+Ting Long, Yutong Xie, Xianyu Chen, Weinan Zhang, Qinxiang Cao, and Yong Yu. 2022. Multi-View
+Graph Representation for Programming Language Processing: An Investigation into Algorithm
+Detection. In Proceedings of the AAAI Conference on Artificial Intelligence, Vol. 36. 5792–5799.
+Shuai Lu, Nan Duan, Hojae Han, Daya Guo, Seung-won Hwang, and Alexey Svyatkovskiy. 2022.
+Reacc: A retrieval-augmented code completion framework. arXiv preprint arXiv:2203.07722
+(2022).
+Lili Mou, Ge Li, Lu Zhang, Tao Wang, and Zhi Jin. 2016. Convolutional neural networks over
+tree structures for programming language processing. In Proceedings of the AAAI conference on
+artificial intelligence, Vol. 30.
+Noor Nashid, Mifta Sintaha, and Ali Mesbah. 2023. Retrieval-based prompt selection for code-related
+few-shot learning. In 2023 IEEE/ACM 45th International Conference on Software Engineering
+(ICSE). IEEE, 2450–2462.
+Baptiste Roziere, Jonas Gehring, Fabian Gloeckle, Sten Sootla, Itai Gat, Xiaoqing Ellen Tan, Yossi
+Adi, Jingyu Liu, Tal Remez, Jérémy Rapin, et al. 2023. Code llama: Open foundation models for
+code. arXiv preprint arXiv:2308.12950 (2023).
+Bo Shen, Jiaxin Zhang, Taihong Chen, Daoguang Zan, Bing Geng, An Fu, Muhan Zeng, Ailun Yu,
+Jichuan Ji, Jingyang Zhao, et al. 2023. Pangu-coder2: Boosting large language models for code
+with ranking feedback. arXiv preprint arXiv:2307.14936 (2023).
+Hongjin Su, Shuyang Jiang, Yuhang Lai, Haoyuan Wu, Boao Shi, Che Liu, Qian Liu, and Tao
+Yu. 2024. EvoR: Evolving Retrieval for Code Generation. In Findings of the Association for
+Computational Linguistics: EMNLP 2024. 2538–2554.
+Yizhou Sun and Jiawei Han. 2013. Mining heterogeneous information networks: a structural analysis
+approach. ACM SIGKDD explorations newsletter 14, 2 (2013), 20–28.
+Hugo Touvron, Thibaut Lavril, Gautier Izacard, Xavier Martinet, Marie-Anne Lachaux, Timothée
+Lacroix, Baptiste Rozière, Naman Goyal, Eric Hambro, Faisal Azhar, et al. 2023. Llama: Open
+and efficient foundation language models. arXiv preprint arXiv:2302.13971 (2023).
+Yue Wang, Weishi Wang, Shafiq Joty, and Steven CH Hoi. 2021. Codet5: Identifier-aware unified pre-trained encoder-decoder models for code understanding and generation. arXiv preprint
+arXiv:2109.00859 (2021).
+Yangrui Yang and Qing Huang. 2017. IECS: Intent-enforced code search via extended Boolean
+model. Journal of Intelligent & Fuzzy Systems 33, 4 (2017), 2565–2576.
+Qinkai Zheng, Xiao Xia, Xu Zou, Yuxiao Dong, Shan Wang, Yufei Xue, Zihan Wang, Lei Shen, Andi
+Wang, Yang Li, et al. 2023. Codegeex: A pre-trained model for code generation with multilingual
+evaluations on humaneval-x. arXiv preprint arXiv:2303.17568 (2023).
+Shuyan Zhou, Uri Alon, Frank F Xu, Zhiruo Wang, Zhengbao Jiang, and Graham Neubig. 2022.
+Docprompting: Generating code by retrieving the docs. arXiv preprint arXiv: 2207.05987 (2022).
+
+A
+
+Appendix
+
+A.1
+
+Implementation Details
+
+For the size of the retrieval pool, we use 11, 913 C++ code snippets and 2, 359 Python code snippets.
+Due to the limited access, we do not use a large retrieval corpus for our experiment, which can be
+enlarged by other people for better performance. We also attach the graph extraction codes for both
+languages and all other experiment codes here: https://anonymous.4open.science/r/Code-5970/
+For the finetuning details, the learning rate and weight decay for the expert GNN training are 0.001
+and 1e-5, respectively. We apply 8-bit quantization and use LoRA for parameter-efficient fine-tuning.
+The rank of the low-rank matrices in LoRA is uniformly set to 8, alpha set to 16, and dropout is set to
+0.05. The LoRA modules are uniformly applied to the Q and V parameter matrices of the attention
+12
+
+modules in each layer of the LLM. All three models are optimized using the AdamW optimizer. For
+the CodeContest dataset, total 10, 609 data points are used, and for the APPS dataset, 8, 691 data
+samples are used to train the model.
+
+13
+
+NeurIPS Paper Checklist
+The checklist is designed to encourage best practices for responsible machine learning research,
+addressing issues of reproducibility, transparency, research ethics, and societal impact. Do not remove
+the checklist: The papers not including the checklist will be desk rejected. The checklist should
+follow the references and follow the (optional) supplemental material. The checklist does NOT count
+towards the page limit.
+Please read the checklist guidelines carefully for information on how to answer these questions. For
+each question in the checklist:
+• You should answer [Yes] , [No] , or [NA] .
+• [NA] means either that the question is Not Applicable for that particular paper or the
+relevant information is Not Available.
+• Please provide a short (1–2 sentence) justification right after your answer (even for NA).
+The checklist answers are an integral part of your paper submission. They are visible to the
+reviewers, area chairs, senior area chairs, and ethics reviewers. You will be asked to also include it
+(after eventual revisions) with the final version of your paper, and its final version will be published
+with the paper.
+The reviewers of your paper will be asked to use the checklist as one of the factors in their evaluation.
+While "[Yes] " is generally preferable to "[No] ", it is perfectly acceptable to answer "[No] " provided a
+proper justification is given (e.g., "error bars are not reported because it would be too computationally
+expensive" or "we were unable to find the license for the dataset we used"). In general, answering
+"[No] " or "[NA] " is not grounds for rejection. While the questions are phrased in a binary way, we
+acknowledge that the true answer is often more nuanced, so please just use your best judgment and
+write a justification to elaborate. All supporting evidence can appear either in the main paper or the
+supplemental material, provided in appendix. If you answer [Yes] to a question, in the justification
+please point to the section(s) where related material for the question can be found.
+IMPORTANT, please:
+• Delete this instruction block, but keep the section heading “NeurIPS paper checklist",
+• Keep the checklist subsection headings, questions/answers and guidelines below.
+• Do not modify the questions and only use the provided macros for your answers.
+1. Claims
+Question: Do the main claims made in the abstract and introduction accurately reflect the
+paper’s contributions and scope?
+Answer: [Yes]
+Justification: See Section 3.
+Guidelines:
+• The answer NA means that the abstract and introduction do not include the claims
+made in the paper.
+• The abstract and/or introduction should clearly state the claims made, including the
+contributions made in the paper and important assumptions and limitations. A No or
+NA answer to this question will not be perceived well by the reviewers.
+• The claims made should match theoretical and experimental results, and reflect how
+much the results can be expected to generalize to other settings.
+• It is fine to include aspirational goals as motivation as long as it is clear that these goals
+are not attained by the paper.
+2. Limitations
+14
+
+Question: Does the paper discuss the limitations of the work performed by the authors?
+Answer: [Yes]
+Justification: See Section 5.
+Guidelines:
+• The answer NA means that the paper has no limitation while the answer No means that
+the paper has limitations, but those are not discussed in the paper.
+• The authors are encouraged to create a separate "Limitations" section in their paper.
+• The paper should point out any strong assumptions and how robust the results are to
+violations of these assumptions (e.g., independence assumptions, noiseless settings,
+model well-specification, asymptotic approximations only holding locally). The authors
+should reflect on how these assumptions might be violated in practice and what the
+implications would be.
+• The authors should reflect on the scope of the claims made, e.g., if the approach was
+only tested on a few datasets or with a few runs. In general, empirical results often
+depend on implicit assumptions, which should be articulated.
+• The authors should reflect on the factors that influence the performance of the approach.
+For example, a facial recognition algorithm may perform poorly when image resolution
+is low or images are taken in low lighting. Or a speech-to-text system might not be
+used reliably to provide closed captions for online lectures because it fails to handle
+technical jargon.
+• The authors should discuss the computational efficiency of the proposed algorithms
+and how they scale with dataset size.
+• If applicable, the authors should discuss possible limitations of their approach to
+address problems of privacy and fairness.
+• While the authors might fear that complete honesty about limitations might be used by
+reviewers as grounds for rejection, a worse outcome might be that reviewers discover
+limitations that aren’t acknowledged in the paper. The authors should use their best
+judgment and recognize that individual actions in favor of transparency play an important role in developing norms that preserve the integrity of the community. Reviewers
+will be specifically instructed to not penalize honesty concerning limitations.
+3. Theory Assumptions and Proofs
+Question: For each theoretical result, does the paper provide the full set of assumptions and
+a complete (and correct) proof?
+Answer: [NA]
+Justification: N/A.
+Guidelines:
+• The answer NA means that the paper does not include theoretical results.
+• All the theorems, formulas, and proofs in the paper should be numbered and crossreferenced.
+• All assumptions should be clearly stated or referenced in the statement of any theorems.
+• The proofs can either appear in the main paper or the supplemental material, but if
+they appear in the supplemental material, the authors are encouraged to provide a short
+proof sketch to provide intuition.
+• Inversely, any informal proof provided in the core of the paper should be complemented
+by formal proofs provided in appendix or supplemental material.
+• Theorems and Lemmas that the proof relies upon should be properly referenced.
+
+15
+
+4. Experimental Result Reproducibility
+Question: Does the paper fully disclose all the information needed to reproduce the main experimental results of the paper to the extent that it affects the main claims and/or conclusions
+of the paper (regardless of whether the code and data are provided or not)?
+Answer: [Yes]
+Justification: The implementation is available at https://anonymous.4open.science/r/Code5970/. However, we do not provide the API needed to reproduce the results.
+Guidelines:
+• The answer NA means that the paper does not include experiments.
+• If the paper includes experiments, a No answer to this question will not be perceived
+well by the reviewers: Making the paper reproducible is important, regardless of
+whether the code and data are provided or not.
+• If the contribution is a dataset and/or model, the authors should describe the steps taken
+to make their results reproducible or verifiable.
+• Depending on the contribution, reproducibility can be accomplished in various ways.
+For example, if the contribution is a novel architecture, describing the architecture fully
+might suffice, or if the contribution is a specific model and empirical evaluation, it may
+be necessary to either make it possible for others to replicate the model with the same
+dataset, or provide access to the model. In general. releasing code and data is often
+one good way to accomplish this, but reproducibility can also be provided via detailed
+instructions for how to replicate the results, access to a hosted model (e.g., in the case
+of a large language model), releasing of a model checkpoint, or other means that are
+appropriate to the research performed.
+• While NeurIPS does not require releasing code, the conference does require all submissions to provide some reasonable avenue for reproducibility, which may depend on the
+nature of the contribution. For example
+(a) If the contribution is primarily a new algorithm, the paper should make it clear how
+to reproduce that algorithm.
+(b) If the contribution is primarily a new model architecture, the paper should describe
+the architecture clearly and fully.
+(c) If the contribution is a new model (e.g., a large language model), then there should
+either be a way to access this model for reproducing the results or a way to reproduce
+the model (e.g., with an open-source dataset or instructions for how to construct
+the dataset).
+(d) We recognize that reproducibility may be tricky in some cases, in which case
+authors are welcome to describe the particular way they provide for reproducibility.
+In the case of closed-source models, it may be that access to the model is limited in
+some way (e.g., to registered users), but it should be possible for other researchers
+to have some path to reproducing or verifying the results.
+5. Open access to data and code
+Question: Does the paper provide open access to the data and code, with sufficient instructions to faithfully reproduce the main experimental results, as described in supplemental
+material?
+Answer: [Yes]
+Justification: The implementation is available at https://anonymous.4open.science/r/Code5970/.
+Guidelines:
+• The answer NA means that paper does not include experiments requiring code.
+16
+
+• Please see the NeurIPS code and data submission guidelines (https://nips.cc/
+public/guides/CodeSubmissionPolicy) for more details.
+• While we encourage the release of code and data, we understand that this might not be
+possible, so “No” is an acceptable answer. Papers cannot be rejected simply for not
+including code, unless this is central to the contribution (e.g., for a new open-source
+benchmark).
+• The instructions should contain the exact command and environment needed to run to
+reproduce the results. See the NeurIPS code and data submission guidelines (https:
+//nips.cc/public/guides/CodeSubmissionPolicy) for more details.
+• The authors should provide instructions on data access and preparation, including how
+to access the raw data, preprocessed data, intermediate data, and generated data, etc.
+• The authors should provide scripts to reproduce all experimental results for the new
+proposed method and baselines. If only a subset of experiments are reproducible, they
+should state which ones are omitted from the script and why.
+• At submission time, to preserve anonymity, the authors should release anonymized
+versions (if applicable).
+• Providing as much information as possible in supplemental material (appended to the
+paper) is recommended, but including URLs to data and code is permitted.
+6. Experimental Setting/Details
+Question: Does the paper specify all the training and test details (e.g., data splits, hyperparameters, how they were chosen, type of optimizer, etc.) necessary to understand the
+results?
+Answer: [Yes]
+Justification: See Section 3.1 and Appendix A.1.
+Guidelines:
+• The answer NA means that the paper does not include experiments.
+• The experimental setting should be presented in the core of the paper to a level of detail
+that is necessary to appreciate the results and make sense of them.
+• The full details can be provided either with the code, in appendix, or as supplemental
+material.
+7. Experiment Statistical Significance
+Question: Does the paper report error bars suitably and correctly defined or other appropriate
+information about the statistical significance of the experiments?
+Answer: [No]
+Justification: N/A.
+Guidelines:
+• The answer NA means that the paper does not include experiments.
+• The authors should answer "Yes" if the results are accompanied by error bars, confidence intervals, or statistical significance tests, at least for the experiments that support
+the main claims of the paper.
+• The factors of variability that the error bars are capturing should be clearly stated (for
+example, train/test split, initialization, random drawing of some parameter, or overall
+run with given experimental conditions).
+• The method for calculating the error bars should be explained (closed form formula,
+call to a library function, bootstrap, etc.)
+
+17
+
+• The assumptions made should be given (e.g., Normally distributed errors).
+• It should be clear whether the error bar is the standard deviation or the standard error
+of the mean.
+• It is OK to report 1-sigma error bars, but one should state it. The authors should
+preferably report a 2-sigma error bar than state that they have a 96% CI, if the hypothesis
+of Normality of errors is not verified.
+• For asymmetric distributions, the authors should be careful not to show in tables or
+figures symmetric error bars that would yield results that are out of range (e.g. negative
+error rates).
+• If error bars are reported in tables or plots, The authors should explain in the text how
+they were calculated and reference the corresponding figures or tables in the text.
+8. Experiments Compute Resources
+Question: For each experiment, does the paper provide sufficient information on the computer resources (type of compute workers, memory, time of execution) needed to reproduce
+the experiments?
+Answer: [Yes]
+Justification: See Appendix A.1.
+Guidelines:
+• The answer NA means that the paper does not include experiments.
+• The paper should indicate the type of compute workers CPU or GPU, internal cluster,
+or cloud provider, including relevant memory and storage.
+• The paper should provide the amount of compute required for each of the individual
+experimental runs as well as estimate the total compute.
+• The paper should disclose whether the full research project required more compute
+than the experiments reported in the paper (e.g., preliminary or failed experiments that
+didn’t make it into the paper).
+9. Code Of Ethics
+Question: Does the research conducted in the paper conform, in every respect, with the
+NeurIPS Code of Ethics https://neurips.cc/public/EthicsGuidelines?
+Answer: [Yes]
+Justification: The research conforms with the Neurips Code of Ethics.
+Guidelines:
+• The answer NA means that the authors have not reviewed the NeurIPS Code of Ethics.
+• If the authors answer No, they should explain the special circumstances that require a
+deviation from the Code of Ethics.
+• The authors should make sure to preserve anonymity (e.g., if there is a special consideration due to laws or regulations in their jurisdiction).
+10. Broader Impacts
+Question: Does the paper discuss both potential positive societal impacts and negative
+societal impacts of the work performed?
+Answer: [Yes]
+Justification: See Section 6.
+Guidelines:
+
+18
+
+• The answer NA means that there is no societal impact of the work performed.
+• If the authors answer NA or No, they should explain why their work has no societal
+impact or why the paper does not address societal impact.
+• Examples of negative societal impacts include potential malicious or unintended uses
+(e.g., disinformation, generating fake profiles, surveillance), fairness considerations
+(e.g., deployment of technologies that could make decisions that unfairly impact specific
+groups), privacy considerations, and security considerations.
+• The conference expects that many papers will be foundational research and not tied
+to particular applications, let alone deployments. However, if there is a direct path to
+any negative applications, the authors should point it out. For example, it is legitimate
+to point out that an improvement in the quality of generative models could be used to
+generate deepfakes for disinformation. On the other hand, it is not needed to point out
+that a generic algorithm for optimizing neural networks could enable people to train
+models that generate Deepfakes faster.
+• The authors should consider possible harms that could arise when the technology is
+being used as intended and functioning correctly, harms that could arise when the
+technology is being used as intended but gives incorrect results, and harms following
+from (intentional or unintentional) misuse of the technology.
+• If there are negative societal impacts, the authors could also discuss possible mitigation
+strategies (e.g., gated release of models, providing defenses in addition to attacks,
+mechanisms for monitoring misuse, mechanisms to monitor how a system learns from
+feedback over time, improving the efficiency and accessibility of ML).
+11. Safeguards
+Question: Does the paper describe safeguards that have been put in place for responsible
+release of data or models that have a high risk for misuse (e.g., pretrained language models,
+image generators, or scraped datasets)?
+Answer: [NA]
+Justification: N/A.
+Guidelines:
+• The answer NA means that the paper poses no such risks.
+• Released models that have a high risk for misuse or dual-use should be released with
+necessary safeguards to allow for controlled use of the model, for example by requiring
+that users adhere to usage guidelines or restrictions to access the model or implementing
+safety filters.
+• Datasets that have been scraped from the Internet could pose safety risks. The authors
+should describe how they avoided releasing unsafe images.
+• We recognize that providing effective safeguards is challenging, and many papers do
+not require this, but we encourage authors to take this into account and make a best
+faith effort.
+12. Licenses for existing assets
+Question: Are the creators or original owners of assets (e.g., code, data, models), used in
+the paper, properly credited and are the license and terms of use explicitly mentioned and
+properly respected?
+Answer: [Yes]
+Justification: The existing assets used are properly cited.
+Guidelines:
+• The answer NA means that the paper does not use existing assets.
+
+19
+
+• The authors should cite the original paper that produced the code package or dataset.
+• The authors should state which version of the asset is used and, if possible, include a
+URL.
+• The name of the license (e.g., CC-BY 4.0) should be included for each asset.
+• For scraped data from a particular source (e.g., website), the copyright and terms of
+service of that source should be provided.
+• If assets are released, the license, copyright information, and terms of use in the
+package should be provided. For popular datasets, paperswithcode.com/datasets
+has curated licenses for some datasets. Their licensing guide can help determine the
+license of a dataset.
+• For existing datasets that are re-packaged, both the original license and the license of
+the derived asset (if it has changed) should be provided.
+• If this information is not available online, the authors are encouraged to reach out to
+the asset’s creators.
+13. New Assets
+Question: Are new assets introduced in the paper well documented and is the documentation
+provided alongside the assets?
+Answer: [Yes]
+Justification: Codes are public.
+Guidelines:
+• The answer NA means that the paper does not release new assets.
+• Researchers should communicate the details of the dataset/code/model as part of their
+submissions via structured templates. This includes details about training, license,
+limitations, etc.
+• The paper should discuss whether and how consent was obtained from people whose
+asset is used.
+• At submission time, remember to anonymize your assets (if applicable). You can either
+create an anonymized URL or include an anonymized zip file.
+14. Crowdsourcing and Research with Human Subjects
+Question: For crowdsourcing experiments and research with human subjects, does the paper
+include the full text of instructions given to participants and screenshots, if applicable, as
+well as details about compensation (if any)?
+Answer: [NA]
+Justification: N/A.
+Guidelines:
+• The answer NA means that the paper does not involve crowdsourcing nor research with
+human subjects.
+• Including this information in the supplemental material is fine, but if the main contribution of the paper involves human subjects, then as much detail as possible should be
+included in the main paper.
+• According to the NeurIPS Code of Ethics, workers involved in data collection, curation,
+or other labor should be paid at least the minimum wage in the country of the data
+collector.
+15. Institutional Review Board (IRB) Approvals or Equivalent for Research with Human
+Subjects
+20
+
+Question: Does the paper describe potential risks incurred by study participants, whether
+such risks were disclosed to the subjects, and whether Institutional Review Board (IRB)
+approvals (or an equivalent approval/review based on the requirements of your country or
+institution) were obtained?
+Answer: [NA]
+Justification: N/A.
+Guidelines:
+• The answer NA means that the paper does not involve crowdsourcing nor research with
+human subjects.
+• Depending on the country in which research is conducted, IRB approval (or equivalent)
+may be required for any human subjects research. If you obtained IRB approval, you
+should clearly state this in the paper.
+• We recognize that the procedures for this may vary significantly between institutions
+and locations, and we expect authors to adhere to the NeurIPS Code of Ethics and the
+guidelines for their institution.
+• For initial submissions, do not include any information that would break anonymity (if
+applicable), such as the institution conducting the review.
+
+21
+
+
