@@ -1,6 +1,6 @@
 # Write Code AI Agents Love
 
-Status: draft  
+Status: draft v2  
 Target: blog post first, presentation narrative second  
 Working slug: `write-code-ai-agents-love`
 
@@ -8,78 +8,88 @@ Working slug: `write-code-ai-agents-love`
 
 AI coding agents do not only fail because the model is weak. They fail because the repository hides the information a good maintainer would already know.
 
-If you want agents to perform better, do not start by writing a longer prompt. Start by making the codebase easier to index, navigate, edit, and verify.
+If you want agents to perform better, do not start with a longer prompt. Start by making the codebase easier to orient in, retrieve from, edit safely, and verify.
 
-The codebase agents love has:
+The agent-friendly codebase has:
 
-- clear names
-- explicit dependencies
+- stable names
+- visible dependency edges
 - typed boundaries
 - generated API clients
-- tests that prove behavior
+- examples close to the code
+- tests that describe behavior
 - lint rules that encode architecture
-- docs and infra in the repo when they change with the app
+- docs, infra, schemas, and runbooks in the repo when they change with the app
 - short instructions that point at executable truth
 
 The punchline:
 
-> The best AI-friendly codebase is not the one with the best prompts. It is the one where prompts are the least important part.
+> The best AI-friendly codebase is not the one with the best prompt. It is the one where the prompt matters least.
 
-## The problem
+## The Moment The Agent Starts Guessing
 
-Most AI coding advice still sounds like prompt advice.
+An agent opens your repo like a new maintainer with no memory.
 
-Write a better `AGENTS.md`. Add more examples. Tell the agent your coding conventions. Tell it how to run tests. Tell it not to make big changes. Tell it to think harder.
+It does not know which folder is legacy. It does not know which abstraction is sacred and which one survived only because nobody had time to delete it. It does not know that `apiClient.ts` is deprecated, that `fetchJson.ts` is the blessed wrapper, that generated files must not be edited, or that every mutating route needs the CSRF middleware.
 
-Some of that helps. I use it myself. But after spending a lot of time with coding agents, I think this framing is too small.
+If that knowledge lives only in your head, Slack, Notion, or old code review comments, the agent has two choices:
 
-The real interface is not the prompt. The real interface is the repository.
+1. stop and ask
+2. guess
 
-An agent lands in your codebase like a new maintainer with no memory, no social context, and no intuition for your weird historical decisions. It does not know which folder is old, which abstraction is sacred, which test is meaningful, which API wrapper is blessed, which generated file must not be touched, or which route needs the security middleware.
+Most of the time it guesses.
 
-If that knowledge exists only in your head, Slack, Notion, or code review comments, the agent will guess.
+And it guesses with confidence.
 
-And it will guess with confidence.
+That is why so much advice about coding agents is aimed at prompts. Write a better `AGENTS.md`. Add more examples. Tell it to run tests. Tell it to think harder. Tell it not to make big changes.
 
-## Agents are expensive new maintainers
+Some of that helps. I use it myself. But it is too small.
 
-Imagine hiring a strong engineer and removing everything that helps them ramp:
+The real interface is not the prompt.
 
-- no architecture map
-- no reliable setup
-- no clear test command
-- no examples of the pattern you want
-- no public API boundary
-- no ownership rules
-- no generated clients
-- no lint gate for the important conventions
-- no clue which docs are current
+The real interface is the repository.
 
-Then you ask them to implement a feature across six files.
+## The Agent Loop
 
-That is roughly what many repos ask agents to do.
+Every useful coding agent has to do roughly the same loop:
 
-The research backs this up. [SWE-bench](https://arxiv.org/abs/2310.06770) made the point painfully clear: real GitHub issues are not toy functions. The original benchmark contains 2,294 tasks from real GitHub issues and pull requests, and the best reported baseline in that paper, Claude 2 with BM25 retrieval, solved only 1.96% of them. The tasks require locating the right code, understanding cross-file behavior, editing carefully, and validating the change.
+1. **Orient:** Where am I? What kind of repo is this? What rules matter?
+2. **Retrieve:** Which files, symbols, tests, schemas, and examples are relevant?
+3. **Edit:** What is the smallest change that fits the existing system?
+4. **Verify:** Which checks prove the change is correct?
 
-Later repository-level work keeps finding the same bottleneck. [CrossCodeEval](https://arxiv.org/abs/2310.11248) was built specifically around code completion tasks that require cross-file context. [RepoGraph](https://arxiv.org/abs/2410.14684), [GraphCodeAgent](https://arxiv.org/abs/2504.10046), [CodePlan](https://arxiv.org/abs/2309.12499), and similar systems all move beyond "search for similar text" because the code needed to solve a task is often not lexically similar to the issue description.
+Your codebase either makes this loop cheap or expensive.
 
-That is the core lesson:
+| Agent step | Expensive repo | Agent-friendly repo |
+| --- | --- | --- |
+| Orient | tribal knowledge, stale wiki pages, giant instruction files | short root instructions, architecture map, obvious entry points |
+| Retrieve | `utils`, dynamic registries, hidden side effects, string routes | stable names, imports, public APIs, schemas, examples, tests |
+| Edit | raw API calls, broad payloads, no generated clients, unclear ownership | typed interfaces, generated SDKs, visible boundaries, local patterns |
+| Verify | unclear test command, slow suites, flaky setup, warnings ignored | fast targeted checks, lint/typecheck/test/build gates, precise failures |
+
+This is the frame I care about:
 
 > Agents do not need more text. They need recoverable structure.
 
-## What the research actually says
+## What The Research Actually Says
 
-I went into this expecting to find a simple answer like "make everything modular."
+The research does not support a lazy slogan like "make everything modular."
 
-That is not what the research says.
+The stronger claim is narrower: agents do better when the relevant context can be recovered as symbols, dependency edges, contracts, examples, and verification signals.
 
-The stronger claim is more specific: agents do better when the relevant context can be recovered as symbols, dependencies, contracts, examples, and verification signals.
+The evidence is consistent across several lines of work:
 
-Repository-level systems like [RepoGraph](https://arxiv.org/abs/2410.14684), [GraphCodeAgent](https://arxiv.org/abs/2504.10046), [CodePlan](https://arxiv.org/abs/2309.12499), and related retrieval work all move beyond "find similar text." They use graphs, imports, call relationships, data flow, dependency edges, or task-specific repository maps. That makes sense. The code needed to solve a task is often not lexically similar to the issue description.
+| Mechanism | Evidence | Design implication |
+| --- | --- | --- |
+| Real repo issues are hard | [SWE-bench](https://arxiv.org/abs/2310.06770): 2,294 real GitHub tasks; Claude 2 + BM25 solved 1.96% in the original paper | Repo work is search, integration, and validation, not isolated code synthesis |
+| Cross-file context matters | [CrossCodeEval](https://arxiv.org/abs/2310.11248): StarCoder-15.5B Python exact match improved 8.82 -> 15.72 with retrieval | The current file is often not enough |
+| Structure beats similar text | [GraphCodeAgent](https://arxiv.org/abs/2504.10046): DevEval GPT-4o Pass@1 improved 40.43 -> 58.14 vs the best baseline, reported as +43.81% relative | Imports, graphs, and task-specific traversal help agents find the right code |
+| Function chunks are not enough | [Chunking for RAG code completion](https://arxiv.org/abs/2605.04763): CCEval exact match was Function 24.21, Declaration 27.71, cAST 28.19, Sliding Window 28.40 | Agents need coherent neighborhoods, not just tiny functions |
+| Names carry semantics | [When Names Disappear](https://arxiv.org/abs/2510.03178): GPT-4o ClassEval class summarization dropped 87.3 -> 58.7 under obfuscation | Names are retrieval and reasoning infrastructure |
+| Types and interfaces help | [CatCoder](https://arxiv.org/abs/2406.03283): Java pass@k improved up to 17.35% vs RepoCoder; removing type context dropped Java pass@k up to 11.57% | Types compress valid API usage and reduce hallucinated members |
+| Instruction files are not free | [Evaluating AGENTS.md](https://arxiv.org/abs/2602.11988): LLM-generated context reduced average resolution rate and raised steps/cost | `AGENTS.md` should point at executable truth, not become a second codebase |
 
-The chunking research is also a useful slap in the face. Function-level chunks sound intuitive, but the controlled study [How Does Chunking Affect Retrieval-Augmented Code Completion?](https://arxiv.org/abs/2605.04763) found function chunking underperformed declaration, sliding-window, and AST/context-aware strategies. Small functions are nice, but isolated small functions are not enough. Agents need neighborhoods: imports, declarations, callers, callees, types, examples, and tests.
-
-There is also counter-evidence against modularity as a magic word. [Revisiting the Impact of Pursuing Modularity for Code Generation](https://arxiv.org/abs/2407.11406) found no clear positive correlation between a modularity score and LLM code generation performance, and sometimes weak negative relationships.
+There is also counter-evidence against modularity as a magic word. [Revisiting the Impact of Pursuing Modularity for Code Generation](https://arxiv.org/abs/2407.11406) found no clear positive correlation between modularity score and LLM code generation performance, and sometimes weak negative relationships.
 
 So the advice is not:
 
@@ -91,73 +101,20 @@ The advice is:
 
 That difference matters.
 
-## The numbers behind the claim
+## 1. Names Are Semantic Infrastructure
 
-Here are the data points I would actually put on slides. I am separating **relative improvement** from **percentage points** because mixing those units is how talks accidentally lie.
+Names are not style polish. For agents, names are part of the API.
 
-### Baseline difficulty
-
-| Source | Setup | Result |
-| --- | --- | ---: |
-| [SWE-bench](https://arxiv.org/abs/2310.06770) | 2,294 real GitHub issue/PR tasks | Claude 2 + BM25 solved **1.96%** |
-
-Takeaway: repo work is mostly search, integration, and validation, not isolated code synthesis.
-
-### Repository context helps
-
-| Source | Task | Without context | With context | Change |
-| --- | --- | ---: | ---: | ---: |
-| [CrossCodeEval](https://arxiv.org/abs/2310.11248), Table 2 | StarCoder-15.5B, Python exact match | 8.82 | 15.72 | **+6.90 pp** |
-| [CrossCodeEval](https://arxiv.org/abs/2310.11248), Table 2 | GPT-3.5-turbo, C# exact match | 3.56 | 11.82 | **+8.26 pp** |
-| [GraphCodeAgent](https://arxiv.org/abs/2504.10046), Table 4 | DevEval GPT-4o Pass@1, best baseline vs graph-guided agent | 40.43 | 58.14 | **+43.81% relative** |
-| [GraphCodeAgent](https://arxiv.org/abs/2504.10046), Table 5 | Keep vs remove graph traversal tool | 58.14 | 51.83 | **-6.31 pp** |
-
-Takeaway: agents benefit when the repo exposes cross-file relationships as navigable structure, not only as text.
-
-### Chunking and retrieval details matter
-
-| Source | Strategy | Exact match |
-| --- | --- | ---: |
-| [Chunking for RAG code completion](https://arxiv.org/abs/2605.04763), Table 4 | Function | 24.21 |
-| [Chunking for RAG code completion](https://arxiv.org/abs/2605.04763), Table 4 | Declaration | 27.71 |
-| [Chunking for RAG code completion](https://arxiv.org/abs/2605.04763), Table 4 | cAST | 28.19 |
-| [Chunking for RAG code completion](https://arxiv.org/abs/2605.04763), Table 4 | Sliding Window | 28.40 |
-
-Same paper, tuning effects:
-
-| Lever | Reported effect |
-| --- | ---: |
-| Cross-file context budget, 2,048 -> 8,192 tokens | up to **+4.2 pp** EM |
-| Retriever choice on RepoEval | at most **1.11 pp** EM variation |
-
-Takeaway: function-sized chunks are not automatically the best retrieval unit. Agents need coherent neighborhoods.
-
-### Instruction files are not free
-
-| Source | Context type | Success effect | Step/cost effect |
-| --- | --- | --- | --- |
-| [Evaluating AGENTS.md](https://arxiv.org/abs/2602.11988) | LLM-generated context | Resolution rate fell by 0.5% on SWE-bench Lite and 2% on AgentBench | Steps rose by 2.45 and 3.92; cost rose 20% and 23% |
-| [Evaluating AGENTS.md](https://arxiv.org/abs/2602.11988) | Developer-written context | Improved performance for all agents except Claude Code on AgentBench | Steps rose by 3.34 on average; cost rose by up to 19% |
-
-Takeaway: `AGENTS.md` should be short, maintained, and pointed at executable truth. It should not become a second codebase.
-
-## Names are part of the API
-
-Names are not style polish. For agents, names are semantic infrastructure.
-
-Identifier-aware models like [CodeT5](https://arxiv.org/abs/2109.00859) explicitly treat identifiers as meaningful signals. Naming-specific studies such as [How Does Naming Affect LLMs on Code Analysis Tasks?](https://arxiv.org/abs/2307.12488) and [When Names Disappear](https://arxiv.org/abs/2510.03178) show that misleading, nonsense, or obfuscated names degrade LLM performance on code analysis and summarization tasks. Tool-assisted generation papers such as [ToolGen](https://arxiv.org/abs/2401.06391) show that agents frequently fail with invalid members, undefined variables, and wrong repository-specific symbols.
-
-This means your naming discipline is not only for humans.
-
-Good:
+Good names give the agent handles to search for, rank, and reason about:
 
 ```ts
 getActiveSchoolAttendanceSummary()
 createUploadIntentForAttachment()
 requireActiveSchool()
+markLessonAttendance()
 ```
 
-Bad:
+Bad names collapse different concepts into the same fog:
 
 ```ts
 handleData()
@@ -166,7 +123,21 @@ doStuff()
 sharedUtils()
 ```
 
-Better module shape:
+The difference is not taste. It changes retrieval.
+
+If your domain uses five words for the same thing, the agent has to infer whether they are synonyms or separate concepts:
+
+```txt
+student
+pupil
+learner
+child
+member
+```
+
+Maybe a human on the team knows these are historical synonyms. The agent does not. It sees separate tokens, separate files, and separate possible meanings.
+
+Prefer module names that say what the code does:
 
 ```ts
 // attendance/mark-lesson-attendance.ts
@@ -181,7 +152,7 @@ export async function markLessonAttendance(request: MarkLessonAttendanceRequest)
 }
 ```
 
-Weak module shape:
+Avoid dumping grounds:
 
 ```ts
 // utils/index.ts
@@ -191,50 +162,33 @@ export async function handleData(input: unknown) {
 }
 ```
 
-The agent will search, rank, and reason over your names. If your domain has ten words for the same thing, the agent has to infer whether they are synonyms or different concepts. If a module is called `utils`, everything inside it becomes harder to retrieve with intent.
+Practical rule:
 
-Practical rules:
+> If an agent cannot search for the concept by name, it will search by vibes.
 
-- use stable domain nouns
-- make operations verbs
-- avoid clever abbreviations
-- avoid generic dumping grounds
-- name tests by behavior
-- keep the same vocabulary in code, docs, API schemas, and issues
+[Visual idea: a small retrieval map where `attendance`, `lesson`, `student`, `absence`, and `late` connect to route, SDK, test, and domain files.]
 
-This is boring advice. That is why it works.
+## 2. Boundaries Need To Be Visible
 
-## Dependency edges beat text blobs
-
-The next layer is dependency visibility.
-
-Agents are much better when they can see how things connect:
+Agents are better when they can see how things connect:
 
 - imports
 - exports
 - public interfaces
 - route registration
-- generated clients
 - schemas
-- ownership boundaries
+- generated clients
 - tests
 - build targets
+- ownership boundaries
 
-They are worse when behavior is hidden behind:
+They are worse when behavior hides behind dynamic imports, reflection, stringly typed registries, implicit globals, monkeypatching, or side effects during module import.
 
-- dynamic imports
-- reflection
-- stringly typed registries
-- monkeypatching
-- implicit globals
-- side effects during module import
-- framework magic with no local example
-
-I am not saying "never use dynamic patterns." Sometimes they are the right tool. But dynamic magic has a cost: it breaks the static surfaces agents and tools use to understand the repo.
+I am not saying "never use dynamic patterns." Sometimes they are the right tool. But they have a cost: they break the static surfaces agents and tools use to understand the repo.
 
 If a code graph cannot be generated, the agent probably cannot reason about the graph either.
 
-The same idea applies at the import boundary:
+Here is a boundary the agent cannot respect:
 
 ```ts
 // Bad: client code reaches across the boundary and learns backend internals.
@@ -245,6 +199,8 @@ export async function loadAttendanceForLesson(lessonId: string) {
 }
 ```
 
+Here is a boundary it can see:
+
 ```ts
 // Better: the frontend depends on a typed public contract.
 import { attendanceApi } from '@acme/sdk';
@@ -254,15 +210,23 @@ export async function loadAttendanceForLesson(lessonId: LessonId) {
 }
 ```
 
-The second version is not only cleaner. It gives the agent a symbol to search for, a generated type to satisfy, and a boundary violation that lint can catch.
+The second version gives the agent:
 
-## Types compress intent
+- a symbol to search for
+- a type to satisfy
+- a package boundary to preserve
+- a lint rule that can catch violations
+- a generated client that shows the intended API shape
 
-Types are not just compiler candy. They compress context.
+This is what I mean by recoverable structure.
 
-A good type tells the agent what is valid without making it read five files.
+[Visual idea: left side "mystery repo" with arrows through `utils`, dynamic registry, raw fetch; right side "recoverable repo" with domain package, schema, generated SDK, tests, and lint gate.]
 
-For example:
+## 3. Types Compress Intent
+
+Types are not compiler decoration. They are compressed instructions.
+
+This tells the agent what is valid without making it read five files:
 
 ```ts
 type AttendanceStatus = 'present' | 'late' | 'absent';
@@ -274,7 +238,7 @@ type MarkAttendanceRequest = {
 };
 ```
 
-Even better, make illegal states hard to spell:
+This is better:
 
 ```ts
 type AttendanceMark =
@@ -289,102 +253,128 @@ type MarkAttendanceRequest = {
 };
 ```
 
-This is much better than:
+This is a tax:
 
 ```ts
 type Payload = Record<string, unknown>;
 ```
 
-The second version forces the agent to infer the shape from call sites, tests, API docs, and runtime errors. Maybe it succeeds. Maybe it invents a field.
+Now the agent has to infer the shape from call sites, tests, docs, runtime errors, and maybe stale examples. Maybe it succeeds. Maybe it invents a field.
 
 Types, schemas, generated clients, and narrow interfaces all do the same thing: they reduce the number of valid guesses.
 
 That is the point.
 
-## More context can hurt
+## 4. Generate SDKs Instead Of Rawdogging API Calls
 
-One of the more annoying findings in this research is that context files are not automatically good.
+Raw API calls are stringly typed integration debt.
 
-Some context-file studies found benefits: less runtime, fewer output tokens, better guidance. But [Evaluating AGENTS.md](https://arxiv.org/abs/2602.11988) found that context files consistently increased the number of steps required to complete tasks. In that study, LLM-generated context had a marginal negative effect on success, while developer-written context had a marginal performance gain.
+They are especially bad for agents because the contract is hidden in strings:
 
-This matches my experience.
-
-A short instruction file with commands, boundaries, and gotchas is useful. A giant manifesto full of stale aspirations is not.
-
-Good agent instructions:
-
-```md
-Run `pnpm lint`, `pnpm typecheck`, and `pnpm test` before finalizing.
-Do not edit files under `src/generated/`; regenerate with `pnpm generate`.
-Frontend code must call APIs through `@acme/sdk`.
-Server-only modules live under `server/` and must not be imported by client components.
-Architecture rules live in `tools/lint-rules/`; fix violations instead of suppressing them.
+```ts
+await fetch(`/api/schools/${schoolId}/attendance`, {
+  method: 'POST',
+  body: JSON.stringify({ lesson, student, state }),
+});
 ```
 
-Weak agent instructions:
+What is the exact route? Is it `schoolId`, or does the active school come from the session? Is the method correct? What fields are required? What error shape comes back? Is CSRF required? Does this endpoint paginate?
 
-```md
-Write clean code.
-Use best practices.
-Follow our architecture.
-Make sure everything works.
+The agent can guess all of that.
+
+Or you can generate a client:
+
+```ts
+await attendanceApi.markLessonAttendance({
+  markLessonAttendanceRequest: {
+    lessonId,
+    studentId,
+    status: 'present',
+  },
+});
 ```
 
-The first version points at executable facts. The second version asks the model to hallucinate your standards.
+Now the API is a local symbol with types.
 
-## Make intent executable
+[OpenAPI Generator](https://openapi-generator.tech/), [Kiota](https://learn.microsoft.com/en-us/openapi/kiota/), [Orval](https://orval.dev/), [Speakeasy](https://www.speakeasy.com/docs/sdks/create-client-sdks), [Stainless](https://www.stainless.com/docs/sdks/typescript/), [FastAPI's OpenAPI generation](https://fastapi.tiangolo.com/advanced/generate-clients/), [TypeSpec](https://typespec.io/), protobuf - choose your tool. The tool is less important than the shape:
 
-This is the main idea of the article.
+> If your API has a contract, generate the contract into code before asking an agent to use it.
 
-Do not just document the rules. Make the rules run.
+The workflow should be visible:
 
-There are three places where this becomes especially powerful:
+```json
+{
+  "scripts": {
+    "generate:openapi": "go test ./backend/openapi -run TestGenerateOpenAPI",
+    "generate:sdk": "orval --config orval.config.ts",
+    "generate": "pnpm generate:openapi && pnpm generate:sdk",
+    "check": "pnpm generate && pnpm lint && pnpm typecheck && pnpm test"
+  }
+}
+```
 
-1. custom lint rules
-2. monorepos
-3. generated SDKs
+And the repo should tell the agent the rule:
 
-These are not random preferences. They are all the same pattern:
+```md
+Do not hand-edit generated SDK files.
+Regenerate them with `pnpm generate`.
+Frontend code must call backend APIs through `@acme/sdk`.
+```
 
-> Turn hidden intent into code the agent can inspect, execute, and repair against.
+Then enforce it:
 
-## 1. Custom lint rules are executable architecture
+```ts
+// no-raw-api-calls-in-frontend
+// Disallow fetch('/api/...') outside the generated SDK package.
+```
 
-Every engineering team has rules that are too specific for generic linting:
+In local [`plint`](../notes/polint-plint-case-study.md), this pattern is concrete: backend routes generate OpenAPI, OpenAPI generates TypeScript and Go SDKs, and repo instructions say not to hand-edit generated artifacts.
+
+That is not a product pitch. It is the pattern I care about:
+
+> Turn API contracts into code the agent can inspect, import, typecheck, and test.
+
+## 5. Make Architecture Executable
+
+Every team has rules that are too specific for generic advice:
 
 - UI must not import database code
-- server-only files must not enter the client bundle
-- routes under `/schools/active` must require active-school guards
+- server-only modules must not enter the client bundle
 - mutating routes must include CSRF middleware
+- active-school routes must require the active-school guard
 - frontend code must use design tokens instead of raw colors
 - API calls must go through the generated SDK
-- domain code must not import infrastructure
-- every route handler must have component test evidence
+- domain code must not import transport
+- generated files must not be edited by hand
 
 You can write these in `AGENTS.md`.
 
 But if they matter, encode them.
 
-Use the boring standard tool when it works. [ESLint custom rules](https://eslint.org/docs/latest/extend/custom-rules), [Semgrep](https://semgrep.dev/docs/writing-rules/overview/), [ast-grep](https://ast-grep.github.io/guide/rule-config.html), [Nx module boundaries](https://nx.dev/features/enforce-module-boundaries), [dependency-cruiser](https://github.com/sverweij/dependency-cruiser), custom Go analyzers, and similar tools all fit here.
+Use the boring standard tool when it works: [ESLint custom rules](https://eslint.org/docs/latest/extend/custom-rules), [typescript-eslint](https://typescript-eslint.io/developers/custom-rules/), [Semgrep](https://semgrep.dev/docs/writing-rules/overview/), [ast-grep](https://ast-grep.github.io/guide/rule-config.html), [Nx module boundaries](https://nx.dev/features/enforce-module-boundaries), dependency-cruiser, custom Go analyzers.
 
-For more repo-specific rules, I have been experimenting with [polint](https://github.com/emilwareus/polint).
+For more repo-specific rules, I have been experimenting with [polint](https://github.com/emilwareus/polint): bring your own rules, with scanning infrastructure, fact views, diagnostics, cache, JSON/SARIF output, baselines, ignores, and CI/agent affordances handled by the framework.
 
-The idea is "bring your own rules." The repo owns the rule code. The framework brings the scanning infrastructure: parsers, fact views, diagnostics, runner, cache, JSON/SARIF output, baselines, ignores, and CI/agent integration.
+The point is not `polint` specifically. The point is that a rule should fail precisely enough for an agent to repair it.
 
-In my local [`plint` repo](../notes/polint-plint-case-study.md), I use this for backend architecture guardrails. The rules are not generic style preferences. They check things like:
+Example diagnostic:
 
-- layer import direction
-- domain/app purity from transport and persistence
-- route security middleware
-- context propagation
-- typed error discipline
-- UUID boundary usage
-- repository interface placement
-- HTTP route/component test evidence
+```json
+{
+  "rule": "backend/no-transport-imports-in-domain",
+  "severity": "error",
+  "file": "backend/domain/schools/active_school.ts",
+  "message": "domain code must not import HTTP transport types"
+}
+```
 
-That is the kind of rule I do not want to explain to an agent every time. I want it to fail the build with a precise message.
+That is better than:
 
-A rule should read like architecture, not like a vague preference. This is the shape I want:
+```md
+Please follow clean architecture.
+```
+
+Here is the shape of a repo-specific rule:
 
 ```rust
 #[polint::rule(
@@ -402,7 +392,7 @@ pub fn no_transport_imports_in_domain(ctx: &mut RuleContext<'_>) {
 }
 ```
 
-And this is the kind of violation an agent can repair without a conversation:
+And here is the kind of violation an agent can fix:
 
 ```ts
 // Bad: domain logic now depends on an HTTP request shape.
@@ -420,19 +410,61 @@ export function resolveSchoolId(headers: SchoolHeaders) {
 }
 ```
 
-The important point is not `polint` specifically. It is the pattern.
+The bigger lesson:
 
 > Do not ask the agent to remember your architecture. Make the architecture fail the build when violated.
 
-## 2. The monorepo is the context database
+## 6. AGENTS.md Should Be An Index, Not A Novel
+
+Context files are useful. They are also dangerous.
+
+The popular conversation has caught up to this. Builder.io, Anthropic, GitHub, Cursor, Aider, and many HN threads all point at the same practical pattern: persistent instructions help when they are short, scoped, current, and connected to executable commands.
+
+The research is mixed in exactly the way you would expect. Some studies find instruction files reduce runtime or output tokens. [Evaluating AGENTS.md](https://arxiv.org/abs/2602.11988) found that context files consistently increased steps, that LLM-generated context had a marginal negative effect on success, and that developer-written context produced only a marginal performance gain while still increasing cost.
+
+This matches my experience.
+
+Good:
+
+```md
+Run `pnpm lint`, `pnpm typecheck`, and `pnpm test` before finalizing.
+Do not edit `src/generated`; regenerate with `pnpm generate`.
+Frontend API calls must go through `@acme/sdk`.
+Architecture rules live in `tools/lint-rules`; fix violations instead of suppressing them.
+Server-only modules live under `server/` and must not be imported by client components.
+```
+
+Weak:
+
+```md
+Write clean code.
+Use best practices.
+Follow our architecture.
+Make sure everything works.
+```
+
+The first version points at executable facts. The second version asks the model to hallucinate your standards.
+
+The even worse version is a 900-line instruction file full of stale paths, outdated package commands, old framework advice, and contradictory local conventions.
+
+If AGENTS.md matters, it needs maintenance:
+
+- keep it short
+- link to deeper docs instead of pasting essays
+- scope subdirectory instructions only when conventions differ
+- lint paths and commands where possible
+- delete rules that no longer prevent real failures
+- prefer commands, schemas, examples, and checks over aspirations
+
+Anthropic's [large-codebase Claude Code guidance](https://claude.com/blog/how-claude-code-works-in-large-codebases-best-practices-and-where-to-start) makes the same operational point: layered context files, hooks, skills, plugins, LSP, MCP, and subagents are part of the harness. The model is not working in a vacuum.
+
+## 7. The Monorepo Is The Context Database
 
 I am increasingly convinced that agents make the monorepo argument stronger.
 
 Not because "one repo" is magically better. A bad monorepo is just a larger mess.
 
-The value is that the agent can see the system at one commit. This is also the practical lesson behind the classic [Google monorepo paper](https://research.google/pubs/why-google-stores-billions-of-lines-of-code-in-a-single-repository/): one repository only works when tooling, ownership, and dependency management make the scale navigable.
-
-For an agent, this kind of layout is a context database:
+The value is that the agent can see the system at one commit:
 
 ```txt
 repo/
@@ -459,7 +491,7 @@ repo/
     generators/
 ```
 
-Now the agent can see the system at one commit:
+Now the agent can inspect:
 
 - app code
 - backend code
@@ -475,13 +507,9 @@ Now the agent can see the system at one commit:
 
 If those things change together, they should probably live together.
 
-This is basically docs-as-code, infra-as-code, contracts-as-code, and tests-as-code pushed to the same conclusion: the repo is the truth source.
+For an agent, this is huge. It does not need to guess which wiki page is current. It does not need to coordinate a backend change in one repo, a generated SDK update in another, an infra permission in a third, and docs in a fourth.
 
-For an agent, this is huge. It does not need to ask which wiki page is current. It does not need to guess which API version the frontend consumes. It does not need to coordinate a backend change in one repository with a generated SDK update in another and an infra permission change in a third.
-
-It can change the code, the contract, the generated client, the docs, and the infra in one diff.
-
-That is very powerful.
+It can change the code, contract, generated client, docs, and infra in one diff.
 
 But the caveat matters:
 
@@ -493,177 +521,64 @@ But the caveat matters:
 - you need access control
 - you need tooling so the repo does not become slow
 
+The [Google monorepo paper](https://research.google/pubs/why-google-stores-billions-of-lines-of-code-in-a-single-repository/) is useful here because it does not frame the monorepo as vibes. It frames it as a source-of-truth and tooling problem.
+
 The monorepo is not the goal. Atomic context is the goal.
 
 > For agents, a good monorepo is not one repo. It is one commit that contains the whole truth.
 
-## 3. Generated SDKs beat raw API calls
-
-Raw API calls are a great way to create integration bugs.
-
-This is especially true with agents.
-
-A raw call hides the contract in strings:
-
-```ts
-await fetch(`/api/schools/${schoolId}/attendance`, {
-  method: 'POST',
-  body: JSON.stringify({ lesson, student, state }),
-});
-```
-
-What is the exact route? Is it `schoolId` or active school from session? Is the method correct? What is the request body? What fields are required? What does the response look like? What error shape comes back? Is CSRF required? Does this endpoint paginate?
-
-The agent can guess all of that.
-
-Or you can generate a client:
-
-```ts
-await attendanceApi.markLessonAttendance({
-  markLessonAttendanceRequest: {
-    lessonId,
-    studentId,
-    status: 'present',
-  },
-});
-```
-
-Now the contract is a local symbol with types.
-
-[OpenAPI Generator](https://openapi-generator.tech/), [Kiota](https://learn.microsoft.com/en-us/openapi/kiota/), [Orval](https://orval.dev/), [Speakeasy](https://www.speakeasy.com/docs/sdks/create-client-sdks), [Stainless](https://www.stainless.com/docs/sdks/typescript/), [FastAPI's OpenAPI generation](https://fastapi.tiangolo.com/tutorial/metadata/), [TypeSpec](https://typespec.io/), protobuf - choose your tool. The principle is the same:
-
-> If your API has a contract, generate the contract into code before asking an agent to use it.
-
-In local [`plint`](../notes/polint-plint-case-study.md), backend routes generate OpenAPI, and OpenAPI generates both a TypeScript SDK for the frontend and a Go SDK for backend component tests. The repo instructions explicitly say not to hand-edit generated artifacts. The generation command builds the SDKs and runs checks.
-
-That gives the agent a path:
-
-1. change backend route or DTO
-2. regenerate OpenAPI and SDKs
-3. update frontend or tests through typed clients
-4. run validation
-
-No rawdogging string URLs unless there is a good reason.
-
-The workflow should be visible in code and scripts:
-
-```json
-{
-  "scripts": {
-    "generate:openapi": "go test ./backend/openapi -run TestGenerateOpenAPI",
-    "generate:sdk": "orval --config orval.config.ts",
-    "generate": "pnpm generate:openapi && pnpm generate:sdk",
-    "check": "pnpm generate && pnpm lint && pnpm typecheck && pnpm test"
-  }
-}
-```
-
-Then the generated client becomes the blessed path:
-
-```ts
-import { attendanceApi } from '@acme/sdk';
-
-export async function markPresent(input: {
-  lessonId: LessonId;
-  studentId: StudentId;
-}) {
-  return attendanceApi.markLessonAttendance({
-    markLessonAttendanceRequest: {
-      lessonId: input.lessonId,
-      studentId: input.studentId,
-      status: 'present',
-    },
-  });
-}
-```
-
-And the lint rule can ban the escape hatch:
-
-```ts
-// backend/no-raw-api-calls-in-frontend
-// Disallow fetch('/api/...') outside the generated SDK package.
-```
-
-## Tests are the feedback loop
+## 8. Tests Are Feedback, Not Decoration
 
 Agents need fast feedback.
 
-This does not mean "ask the agent to write more tests" and call it done. Research on agent-generated tests is mixed. Agents often write tests as probes, not as durable specifications.
+But the test story is more subtle than "make the agent write more tests."
 
-The better pattern is:
+[Rethinking the Value of Agent-Generated Tests](https://arxiv.org/abs/2602.07900) found that GPT-5.2 wrote tests in only 0.6% of tasks while resolving 71.8%, while Claude Opus 4.5 wrote tests in 83.0% of tasks while resolving 74.4%. Encouraging GPT-5.2 to write tests kept resolution at 71.8% but increased API calls and token usage.
+
+That does not mean tests are bad. It means agent-written tests are often probes, not durable specifications.
+
+The stronger evidence is about visible, real task contracts. [FeatureBench](https://arxiv.org/abs/2602.10975) found visible unit tests improved resolved rate by +50.0 percentage points for Gemini-3-Pro-Preview and +43.3 points for GPT-5.1-Codex on the Lite set.
+
+The practical pattern:
 
 - keep strong existing tests
 - make targeted tests cheap to run
 - name tests by behavior
 - put examples near the code they exercise
-- use generated SDKs in component tests when testing HTTP contracts
+- use generated SDKs in HTTP/component tests
 - run lint, typecheck, tests, and build in one documented command
-
-Tests are not just quality assurance. They are context.
 
 A good test tells the agent:
 
 - what behavior matters
 - which setup path is canonical
 - which edge cases are real
-- what shape the public API has
+- what public API shape is expected
 
-This is why examples and tests should live close to the code. They are retrieval assets.
+Example:
 
-## A practical checklist
+```ts
+describe('markLessonAttendance', () => {
+  it('records a late arrival with the arrival timestamp', async () => {
+    await attendanceApi.markLessonAttendance({
+      markLessonAttendanceRequest: {
+        lessonId,
+        studentId,
+        status: 'late',
+        arrivedAt: '2026-05-15T08:12:00Z',
+      },
+    });
 
-If I wanted to make a repo more agent-friendly, I would start here.
+    await expectAttendanceSummary(studentId).toMatchObject({
+      lateCount: 1,
+    });
+  });
+});
+```
 
-### Repo instructions
+This is not just verification. It is context.
 
-- root `AGENTS.md` under 100-200 high-signal lines
-- exact install, lint, typecheck, test, build commands
-- generated-file rules
-- "do not touch" areas
-- short architecture map
-- links to deeper docs instead of pasted essays
-
-### Names and layout
-
-- stable domain vocabulary
-- predictable file names
-- no generic dumping grounds
-- public APIs easy to find
-- examples near extension points
-
-### Boundaries
-
-- typed public interfaces
-- explicit imports and exports
-- dependency direction documented and enforced
-- custom lint rules for important architecture constraints
-- no hidden dynamic magic unless the payoff is real
-
-### Contracts
-
-- API schemas in the repo
-- generated SDKs for frontend/internal consumers
-- generated code policy documented
-- CI fails when generated output is stale
-
-### Verification
-
-- one command for the local gate
-- fast targeted tests
-- broader CI checks
-- lint/typecheck/format/dead-code gates
-- baselines for adoption instead of eternal warnings
-
-### Context
-
-- docs as code
-- infra as code
-- migrations and runbooks in the repo when they change with app behavior
-- monorepo or unified context layer when cross-system changes are common
-
-## What not to say
-
-There are a few traps.
+## What Not To Optimize For
 
 Do not say:
 
@@ -687,13 +602,68 @@ Do not say:
 
 > A big AGENTS.md solves the problem.
 
-It can help, but it can also add noise.
+It can become stale context debt.
+
+Do not say:
+
+> Subagents solve codebase understanding.
+
+They help when they isolate bounded work and return compact findings. They become theater when they replace clear structure and verification.
 
 Better:
 
 > AI agents love codebases where the relevant context can be found without reading the whole repository.
 
-## The actual thesis
+## The Codebase Agents Love
+
+If I wanted to make a repo more agent-friendly, I would start here.
+
+### Orientation
+
+- root `AGENTS.md` under 100-200 high-signal lines
+- exact install, lint, typecheck, test, and build commands
+- short architecture map
+- generated-file rules
+- "do not touch" areas
+- links to deeper docs instead of pasted essays
+
+### Retrieval
+
+- stable domain vocabulary
+- predictable file names
+- no generic dumping grounds
+- public APIs easy to find
+- imports and exports explicit
+- examples near extension points
+- generated or maintained repo map for large codebases
+
+### Editing
+
+- typed public interfaces
+- generated SDKs for service boundaries
+- API schemas in the repo
+- dependency direction documented and enforced
+- custom lint rules for important architecture constraints
+- no hidden dynamic magic unless the payoff is real
+
+### Verification
+
+- one command for the local gate
+- fast targeted tests
+- broader CI checks
+- lint/typecheck/format/dead-code gates
+- baselines for adoption instead of eternal warnings
+- CI fails when generated output is stale
+
+### Context
+
+- docs as code
+- infra as code
+- migrations and runbooks in the repo when they change with app behavior
+- monorepo or unified context layer when cross-system changes are common
+- stale context checks for paths, commands, generated files, and package scripts
+
+## The Actual Thesis
 
 The future of coding with agents is not just better models. It is better codebases.
 
@@ -712,18 +682,26 @@ That is software engineering.
 
 Write code agents love by writing code that exposes its intent, enforces its boundaries, and proves its behavior.
 
-## References to weave into final TSX
+Conveniently, that is also the kind of code senior engineers have wanted all along.
+
+## References To Weave Into Final TSX
 
 Use a small number inline:
 
 - [SWE-bench](https://arxiv.org/abs/2310.06770)
+- [CrossCodeEval](https://arxiv.org/abs/2310.11248)
 - [RepoGraph](https://arxiv.org/abs/2410.14684)
 - [GraphCodeAgent](https://arxiv.org/abs/2504.10046)
 - [How Does Chunking Affect Retrieval-Augmented Code Completion?](https://arxiv.org/abs/2605.04763)
 - [Revisiting the Impact of Pursuing Modularity for Code Generation](https://arxiv.org/abs/2407.11406)
 - [CodeT5](https://arxiv.org/abs/2109.00859)
+- [When Names Disappear](https://arxiv.org/abs/2510.03178)
 - [How Does Naming Affect LLMs on Code Analysis Tasks?](https://arxiv.org/abs/2307.12488)
 - [Evaluating AGENTS.md](https://arxiv.org/abs/2602.11988)
+- [CatCoder](https://arxiv.org/abs/2406.03283)
+- [FeatureBench](https://arxiv.org/abs/2602.10975)
+- [Rethinking the Value of Agent-Generated Tests](https://arxiv.org/abs/2602.07900)
+- [Anthropic: How Claude Code works in large codebases](https://claude.com/blog/how-claude-code-works-in-large-codebases-best-practices-and-where-to-start)
 - [polint](https://github.com/emilwareus/polint)
 - [OpenAPI Generator](https://openapi-generator.tech/)
 - [Google monorepo paper](https://research.google/pubs/why-google-stores-billions-of-lines-of-code-in-a-single-repository/)
