@@ -128,6 +128,14 @@ Raw API calls are stringly typed integration debt. OpenAPI Generator, Kiota, Orv
 
 References: D25, D26, D27, D28, D29, D30, R42, R43, R51, R52.
 
+### 21. Popular/practitioner writing converges on "context as operations"
+
+The latest practitioner material and HN discussions are converging on a practical version of the research thesis. Anthropic's May 2026 large-codebase guidance says the harness matters as much as the model: layered context files, hooks, skills, plugins, LSP, MCP, and subagents determine whether Claude Code can navigate large systems. Builder.io, Boris Tane, Jon Atkinson, LocalCan, and Coder all emphasize research-first workflows, written plans, scoped context, reproducible commands, critique loops, and keeping persistent instructions lean.
+
+HN history shows AGENTS.md became a major community topic in 2025-2026, with debate shifting from "should this file exist?" to "how do we keep it short, current, scoped, and evaluated?" The useful narrative is not "everyone agrees AGENTS.md solves it." It is: the zeitgeist has moved from prompt tricks to operational context management. Stale context, overgrown instruction files, overbuilt subagent orchestration, and unclear ownership are now recognized failure modes.
+
+References: D34-D53.
+
 ## Candidate Talk Frame
 
 1. Agents are new maintainers with no memory.

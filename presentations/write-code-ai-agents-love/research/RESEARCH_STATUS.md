@@ -1,15 +1,15 @@
 # Research Status
 
-Last updated: 2026-05-13.
+Last updated: 2026-05-15.
 
 ## What Exists
 
 - 67 indexed research sources in `references.md`.
 - 60+ downloaded PDFs in `papers/`.
 - Extracted searchable text in `paper-text/`.
-- 30 downloaded official/practitioner docs in `articles/`.
+- 50+ downloaded official/practitioner docs, popular articles, and HN snapshots in `articles/`.
 - 20 focused insight notes in `insights/`.
-- 8 subagent/research-track memos in `notes/`.
+- 9 subagent/research-track memos in `notes/`.
 
 ## Strong Coverage
 
@@ -21,6 +21,7 @@ Last updated: 2026-05-13.
 - Code patterns and techniques: dependency-aware retrieval, naming, type/static surfaces, chunking, modularity counter-evidence, code smells, and agent-generated test caveats.
 - Opinionated implementation flavors: custom lint rules as executable architecture, monorepos as agent context infrastructure, and generated SDKs as typed API contracts.
 - Local implementation case study: `polint` as repo-owned rule code plus scan infrastructure, and `/Users/emilwareus/Development/plint` as real usage with architecture guardrails, generated SDKs, infra, docs, and monorepo context.
+- Popular/practitioner and HN history: Anthropic's May 2026 large-codebase guidance, Builder.io AGENTS.md posts, Boris Tane/Jon Atkinson/LocalCan Claude Code workflows, Coder AI Coder guidance, and HN threads/search snapshots around AGENTS.md, stale context, subagents, and large-codebase navigation.
 
 ## Medium Coverage
 
