@@ -22,17 +22,16 @@ export function ThemeSelector() {
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentTheme, setCurrentTheme] = useState<Theme | null>(null);
+  const [currentTheme, setCurrentTheme] = useState<Theme | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return loadThemeFromStorage();
+  });
   const [open, setOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const stored = loadThemeFromStorage();
-    if (stored) {
-      setCurrentTheme(stored);
-      applyTheme(stored);
-    }
-  }, []);
+    if (currentTheme) applyTheme(currentTheme);
+  }, [currentTheme]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -112,7 +111,6 @@ export function ThemeSelector() {
         return;
       }
 
-      applyTheme(validatedTheme);
       setCurrentTheme(validatedTheme);
       saveThemeToStorage(validatedTheme);
       setPrompt('');
