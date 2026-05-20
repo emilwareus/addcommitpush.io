@@ -10,6 +10,67 @@ const OAIZ_GITHUB_USERNAME = process.env.OAIZ_GITHUB_USERNAME;
 const YC_GITHUB_TOKEN = process.env.YC_GITHUB_TOKEN;
 const YC_GITHUB_USERNAME = process.env.YC_GITHUB_USERNAME;
 
+const DEV5_GITHUB_USERNAME = 'oaizdev5';
+const DEV5_GITHUB_ORG = 'Devloupe';
+
+interface GitHubAccountConfig {
+  label: string;
+  token: string | undefined;
+  username: string | undefined;
+  includeCommits: boolean;
+  includeDev5PullRequestCommits?: boolean;
+  includePRs: boolean;
+  includeIssues: boolean;
+  includeReviews: boolean;
+  includeLanguages: boolean;
+  searchScope?: string;
+}
+
+const githubAccountConfigs: GitHubAccountConfig[] = [
+  {
+    label: 'private',
+    token: PRIVATE_GITHUB_TOKEN,
+    username: PRIVATE_GITHUB_USERNAME,
+    includeCommits: true,
+    includePRs: true,
+    includeIssues: true,
+    includeReviews: true,
+    includeLanguages: true,
+  },
+  {
+    label: 'OAIZ',
+    token: OAIZ_GITHUB_TOKEN,
+    username: OAIZ_GITHUB_USERNAME,
+    includeCommits: false,
+    includePRs: true,
+    includeIssues: true,
+    includeReviews: true,
+    includeLanguages: true,
+  },
+  {
+    label: 'dev5',
+    token: OAIZ_GITHUB_TOKEN,
+    username: DEV5_GITHUB_USERNAME,
+    includeCommits: false,
+    includeDev5PullRequestCommits: true,
+    includePRs: true,
+    includeIssues: false,
+    includeReviews: false,
+    includeLanguages: false,
+    searchScope: `org:${DEV5_GITHUB_ORG}`,
+  },
+  {
+    label: 'YC',
+    token: YC_GITHUB_TOKEN,
+    username: YC_GITHUB_USERNAME,
+    includeCommits: true,
+    includePRs: true,
+    includeIssues: true,
+    includeReviews: true,
+    includeLanguages: true,
+  },
+];
+
 // TypeScript types
 export interface DayActivity {
   date: string;
@@ -66,6 +127,27 @@ const prsSearchQuery = `
         ... on PullRequest {
           createdAt
           mergedAt
+        }
+      }
+    }
+  }
+`;
+
+const pullRequestsWithRepositoryQuery = `
+  query($searchQuery: String!, $cursor: String) {
+    search(query: $searchQuery, type: ISSUE, first: 100, after: $cursor) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      nodes {
+        ... on PullRequest {
+          number
+          createdAt
+          mergedAt
+          repository {
+            nameWithOwner
+          }
         }
       }
     }
@@ -131,6 +213,10 @@ interface GraphQLResponse {
   errors?: { message: string }[];
 }
 
+const dev5AuthorNames = new Set(['dev5', 'oaiz dev5']);
+const dev5AuthorEmails = new Set(['dev5@oaiz.io', 'dev5@devloupe.local']);
+const dev5CommitFetchConcurrency = 12;
+
 // Helper to delay execution
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -191,6 +277,56 @@ async function fetchGraphQL(
   throw new Error('GitHub API failed after all retries');
 }
 
+function buildPRSearchString(
+  username: string,
+  fromDate: Date,
+  toDate: Date,
+  searchScope?: string
+): string {
+  const fromStr = fromDate.toISOString().split('T')[0];
+  const toStr = toDate.toISOString().split('T')[0];
+  return [searchScope, `author:${username}`, 'is:pr', `created:${fromStr}..${toStr}`]
+    .filter(Boolean)
+    .join(' ');
+}
+
+async function fetchGitHubRest<T>(token: string, url: string): Promise<T> {
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/vnd.github+json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`GitHub REST API error: ${response.status}`);
+  }
+
+  return (await response.json()) as T;
+}
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let nextIndex = 0;
+
+  async function worker() {
+    while (nextIndex < items.length) {
+      const currentIndex = nextIndex;
+      nextIndex++;
+      results[currentIndex] = await mapper(items[currentIndex]);
+    }
+  }
+
+  const workerCount = Math.min(concurrency, items.length);
+  await Promise.all(Array.from({ length: workerCount }, worker));
+
+  return results;
+}
+
 interface PRNode {
   createdAt: string;
   mergedAt: string | null;
@@ -208,15 +344,54 @@ interface SearchResponse {
   };
 }
 
+interface PullRequestWithRepository {
+  number: number;
+  createdAt: string;
+  mergedAt: string | null;
+  repository: {
+    nameWithOwner: string;
+  };
+}
+
+interface PullRequestWithRepositorySearchResponse {
+  data: {
+    search: {
+      pageInfo: {
+        hasNextPage: boolean;
+        endCursor: string | null;
+      };
+      nodes: PullRequestWithRepository[];
+    };
+  };
+}
+
+interface RestPullRequestCommit {
+  sha: string;
+  author: {
+    login: string;
+  } | null;
+  commit: {
+    author: {
+      name: string;
+      email: string;
+      date: string;
+    } | null;
+  };
+}
+
+interface PullRequestCommitDay {
+  date: string;
+  sha: string;
+}
+
 async function fetchAllPRs(
   token: string,
   username: string,
   fromDate: Date,
-  toDate: Date
+  toDate: Date,
+  searchScope?: string
 ): Promise<{ createdAt: string; mergedAt: string | null }[]> {
-  const fromStr = fromDate.toISOString().split('T')[0];
-  const toStr = toDate.toISOString().split('T')[0];
-  const searchString = `author:${username} is:pr created:${fromStr}..${toStr}`;
+  const searchString = buildPRSearchString(username, fromDate, toDate, searchScope);
 
   let hasNextPage = true;
   let cursor: string | null = null;
@@ -238,6 +413,111 @@ async function fetchAllPRs(
   }
 
   return allPRs;
+}
+
+async function fetchAllPRsWithRepository(
+  token: string,
+  username: string,
+  fromDate: Date,
+  toDate: Date,
+  searchScope?: string
+): Promise<PullRequestWithRepository[]> {
+  const searchString = buildPRSearchString(username, fromDate, toDate, searchScope);
+
+  let hasNextPage = true;
+  let cursor: string | null = null;
+  const allPRs: PullRequestWithRepository[] = [];
+
+  while (hasNextPage && allPRs.length < 5000) {
+    const variables: Record<string, unknown> = { searchQuery: searchString };
+    if (cursor) variables.cursor = cursor;
+
+    const data = (await fetchGraphQL(
+      token,
+      pullRequestsWithRepositoryQuery,
+      variables
+    )) as PullRequestWithRepositorySearchResponse;
+    const searchResults = data.data.search;
+
+    allPRs.push(...searchResults.nodes);
+    hasNextPage = searchResults.pageInfo.hasNextPage;
+    cursor = searchResults.pageInfo.endCursor;
+
+    if (hasNextPage) await delay(100);
+  }
+
+  return allPRs;
+}
+
+function isDev5AuthoredCommit(commit: RestPullRequestCommit): boolean {
+  const authorLogin = commit.author?.login.toLowerCase();
+  const authorName = commit.commit.author?.name.toLowerCase();
+  const authorEmail = commit.commit.author?.email.toLowerCase();
+
+  return (
+    authorLogin === DEV5_GITHUB_USERNAME ||
+    (authorName !== undefined && dev5AuthorNames.has(authorName)) ||
+    (authorEmail !== undefined && dev5AuthorEmails.has(authorEmail))
+  );
+}
+
+async function fetchPullRequestCommits(
+  token: string,
+  pullRequest: PullRequestWithRepository
+): Promise<RestPullRequestCommit[]> {
+  const [owner, repo] = pullRequest.repository.nameWithOwner.split('/');
+  if (!owner || !repo) {
+    throw new Error(`Invalid repository name: ${pullRequest.repository.nameWithOwner}`);
+  }
+
+  const commits: RestPullRequestCommit[] = [];
+  let page = 1;
+  let hasNextPage = true;
+
+  while (hasNextPage) {
+    const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(
+      repo
+    )}/pulls/${pullRequest.number}/commits?per_page=100&page=${page}`;
+    const pageCommits = await fetchGitHubRest<RestPullRequestCommit[]>(token, url);
+
+    commits.push(...pageCommits);
+    hasNextPage = pageCommits.length === 100;
+    page++;
+  }
+
+  return commits;
+}
+
+async function fetchDev5PullRequestCommitDays(
+  token: string,
+  pullRequests: PullRequestWithRepository[]
+): Promise<PullRequestCommitDay[]> {
+  const seenShas = new Set<string>();
+  const commitDays: PullRequestCommitDay[] = [];
+  const pullRequestCommits = await mapWithConcurrency(
+    pullRequests,
+    dev5CommitFetchConcurrency,
+    (pullRequest) => fetchPullRequestCommits(token, pullRequest)
+  );
+
+  pullRequestCommits.forEach((commits) => {
+    commits.forEach((commit) => {
+      if (!isDev5AuthoredCommit(commit) || seenShas.has(commit.sha)) return;
+
+      const date = commit.commit.author?.date;
+      if (!date) {
+        throw new Error(`Missing author date for commit ${commit.sha}`);
+      }
+
+      seenShas.add(commit.sha);
+      commitDays.push({
+        date: date.split('T')[0],
+        sha: commit.sha,
+      });
+    });
+  });
+
+  return commitDays;
 }
 
 interface IssueNode {
@@ -386,8 +666,9 @@ interface AccountData {
   prs: { createdAt: string; mergedAt: string | null }[];
   issues: { createdAt: string }[];
   reviews: { createdAt: string }[];
-  languages: LanguageResponse;
+  languages: LanguageResponse | null;
   commits: CommitResponse | null;
+  commitDays: PullRequestCommitDay[];
 }
 
 async function fetchAccountData(
@@ -395,35 +676,77 @@ async function fetchAccountData(
   username: string,
   fromDate: Date,
   toDate: Date,
-  includeCommits: boolean = true
+  config: GitHubAccountConfig
 ): Promise<AccountData> {
-  const promises: Promise<unknown>[] = [];
+  if (config.includeDev5PullRequestCommits) {
+    const pullRequests = await fetchAllPRsWithRepository(
+      token,
+      username,
+      fromDate,
+      toDate,
+      config.searchScope
+    );
+    const [issues, reviews, languages, commitDays] = await Promise.all([
+      config.includeIssues
+        ? fetchAllIssues(token, username, fromDate, toDate)
+        : Promise.resolve([]),
+      config.includeReviews
+        ? fetchAllReviews(token, username, fromDate, toDate)
+        : Promise.resolve([]),
+      config.includeLanguages
+        ? (fetchGraphQL(token, languagesQuery, { username }) as Promise<LanguageResponse>)
+        : Promise.resolve(null),
+      fetchDev5PullRequestCommitDays(token, pullRequests),
+    ]);
 
-  promises.push(
-    fetchAllPRs(token, username, fromDate, toDate),
-    fetchAllIssues(token, username, fromDate, toDate),
-    fetchAllReviews(token, username, fromDate, toDate),
-    fetchGraphQL(token, languagesQuery, { username })
-  );
+    return {
+      prs: pullRequests.map((pullRequest) => ({
+        createdAt: pullRequest.createdAt,
+        mergedAt: pullRequest.mergedAt,
+      })),
+      issues,
+      reviews,
+      languages,
+      commits: null,
+      commitDays,
+    };
+  }
 
-  if (includeCommits) {
-    promises.push(
-      fetchGraphQL(token, commitsQuery, {
+  const prsPromise: Promise<{ createdAt: string; mergedAt: string | null }[]> = config.includePRs
+    ? fetchAllPRs(token, username, fromDate, toDate, config.searchScope)
+    : Promise.resolve([]);
+  const issuesPromise: Promise<{ createdAt: string }[]> = config.includeIssues
+    ? fetchAllIssues(token, username, fromDate, toDate)
+    : Promise.resolve([]);
+  const reviewsPromise: Promise<{ createdAt: string }[]> = config.includeReviews
+    ? fetchAllReviews(token, username, fromDate, toDate)
+    : Promise.resolve([]);
+  const languagesPromise: Promise<LanguageResponse | null> = config.includeLanguages
+    ? (fetchGraphQL(token, languagesQuery, { username }) as Promise<LanguageResponse>)
+    : Promise.resolve(null);
+  const commitsPromise: Promise<CommitResponse | null> = config.includeCommits
+    ? (fetchGraphQL(token, commitsQuery, {
         username,
         from: fromDate.toISOString(),
         to: toDate.toISOString(),
-      })
-    );
-  }
+      }) as Promise<CommitResponse>)
+    : Promise.resolve(null);
 
-  const results = await Promise.all(promises);
+  const [prs, issues, reviews, languages, commits] = await Promise.all([
+    prsPromise,
+    issuesPromise,
+    reviewsPromise,
+    languagesPromise,
+    commitsPromise,
+  ]);
 
   return {
-    prs: results[0] as { createdAt: string; mergedAt: string | null }[],
-    issues: results[1] as { createdAt: string }[],
-    reviews: results[2] as { createdAt: string }[],
-    languages: results[3] as LanguageResponse,
-    commits: includeCommits ? (results[4] as CommitResponse) : null,
+    prs,
+    issues,
+    reviews,
+    languages,
+    commits,
+    commitDays: [],
   };
 }
 
@@ -434,25 +757,19 @@ async function fetchGitHubDataInternal(): Promise<GitHubStatusData> {
   // Fetch accounts sequentially to avoid overwhelming GitHub API
   const accountsData: AccountData[] = [];
 
-  if (PRIVATE_GITHUB_TOKEN && PRIVATE_GITHUB_USERNAME) {
-    console.log('[GitHub] Fetching data for private account...');
-    accountsData.push(
-      await fetchAccountData(PRIVATE_GITHUB_TOKEN, PRIVATE_GITHUB_USERNAME, oneYearAgo, now, true)
-    );
-  }
-
-  if (OAIZ_GITHUB_TOKEN && OAIZ_GITHUB_USERNAME) {
-    console.log('[GitHub] Fetching data for OAIZ account...');
-    accountsData.push(
-      await fetchAccountData(OAIZ_GITHUB_TOKEN, OAIZ_GITHUB_USERNAME, oneYearAgo, now, false)
-    );
-  }
-
-  if (YC_GITHUB_TOKEN && YC_GITHUB_USERNAME) {
-    console.log('[GitHub] Fetching data for YC account...');
-    accountsData.push(
-      await fetchAccountData(YC_GITHUB_TOKEN, YC_GITHUB_USERNAME, oneYearAgo, now, true)
-    );
+  for (const accountConfig of githubAccountConfigs) {
+    if (accountConfig.token && accountConfig.username) {
+      console.log(`[GitHub] Fetching data for ${accountConfig.label} account...`);
+      accountsData.push(
+        await fetchAccountData(
+          accountConfig.token,
+          accountConfig.username,
+          oneYearAgo,
+          now,
+          accountConfig
+        )
+      );
+    }
   }
 
   if (accountsData.length === 0) {
@@ -474,6 +791,10 @@ async function fetchGitHubDataInternal(): Promise<GitHubStatusData> {
           );
         });
     }
+
+    account.commitDays.forEach((day) => {
+      commitsByDayMap.set(day.date, (commitsByDayMap.get(day.date) || 0) + 1);
+    });
   });
 
   // Aggregate opened PRs by day
@@ -516,7 +837,7 @@ async function fetchGitHubDataInternal(): Promise<GitHubStatusData> {
   // Aggregate languages
   const languageCount = new Map<string, { count: number; color: string }>();
   accountsData.forEach((account) => {
-    account.languages.data.user.repositories.nodes
+    account.languages?.data.user.repositories.nodes
       .filter((repo) => repo.primaryLanguage)
       .forEach((repo) => {
         const lang = repo.primaryLanguage!.name;
@@ -567,7 +888,7 @@ async function fetchGitHubDataInternal(): Promise<GitHubStatusData> {
 
   // Calculate top languages
   const totalRepos = accountsData.reduce(
-    (sum, account) => sum + account.languages.data.user.repositories.nodes.length,
+    (sum, account) => sum + (account.languages?.data.user.repositories.nodes.length || 0),
     0
   );
   const topLanguages = Array.from(languageCount.entries())

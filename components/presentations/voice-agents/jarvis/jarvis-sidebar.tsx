@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Settings } from 'lucide-react';
-import { useJarvis, type JarvisMessage, type Transport, type VadConfig } from './jarvis-context';
+import { useJarvis, type JarvisMessage, type Transport } from './jarvis-context';
 
 function statusColor(status: string): string {
   switch (status) {

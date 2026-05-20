@@ -1,7 +1,6 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useSlideStep } from '@/app/presentations/deep-research/layout';
 
 const people = [
   { name: 'Sigrid', section: 'Intro' },
@@ -11,8 +10,6 @@ const people = [
 ];
 
 export function GroupProjectSlide() {
-  const step = useSlideStep();
-
   return (
     <div className="flex flex-col items-center justify-center h-full w-full max-w-5xl mx-auto px-8">
       <h2 className="text-5xl font-bold mb-16 text-primary">Remember group projects?</h2>

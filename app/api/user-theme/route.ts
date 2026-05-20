@@ -64,16 +64,20 @@ const themeSchema = z.object({
   'font-mono': z.string().optional().describe('Monospace font stack'),
 });
 
+const requestSchema = z.object({
+  prompt: z.string().trim().min(1).max(500),
+});
+
 export async function POST(req: Request) {
   try {
-    const { prompt } = await req.json();
-
-    if (!prompt || typeof prompt !== 'string') {
+    const result = requestSchema.safeParse(await req.json());
+    if (!result.success) {
       return NextResponse.json(
-        { error: 'Prompt is required and must be a string' },
+        { error: 'Prompt is required and must be 500 characters or fewer' },
         { status: 400 }
       );
     }
+    const { prompt } = result.data;
 
     const apiKey = process.env.OPENROUTER_API_KEY;
     if (!apiKey) {
@@ -203,13 +207,8 @@ EXAMPLES:
 
     return NextResponse.json({ theme: normalizedTheme });
   } catch (error) {
-    console.error('Error generating theme:', error);
-    return NextResponse.json(
-      {
-        error: 'Failed to generate theme',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
-    );
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error('Error generating theme:', errorMessage);
+    return NextResponse.json({ error: 'Failed to generate theme' }, { status: 500 });
   }
 }
