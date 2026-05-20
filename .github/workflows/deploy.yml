@@ -40,8 +40,8 @@ jobs:
         if: github.event_name == 'pull_request'
         id: deploy_preview
         run: |
-          bash scripts/deploy-vercel.sh preview --output .vercel/last-deployment-url.txt | tee .vercel/preview-url.txt
-          echo "url=$(tail -n1 .vercel/preview-url.txt | tr -d '\n')" >> $GITHUB_OUTPUT
+          bash scripts/deploy-vercel.sh preview --output .vercel/preview-url.txt
+          echo "url=$(tail -n1 .vercel/preview-url.txt | tr -d '\n')" >> "$GITHUB_OUTPUT"
 
       - name: Comment Preview URL on PR
         if: github.event_name == 'pull_request'
