@@ -1,13 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, ExternalLink } from 'lucide-react';
-import {
-  getAllInsightSlugs,
-  getInsightBySlug,
-  getRelatedInsights,
-  type InsightSourceKind,
-} from '@/lib/insights';
+import { ArrowLeft } from 'lucide-react';
+import { getAllInsightSlugs, getInsightBySlug, getRelatedInsights } from '@/lib/insights';
 
 export const dynamic = 'error';
 export const revalidate = false;
@@ -17,14 +12,6 @@ interface BrainInsightPageProps {
     slug: string;
   }>;
 }
-
-const sourceKindLabels: Record<InsightSourceKind, string> = {
-  paper: 'paper',
-  'official-doc': 'official doc',
-  'popular-article': 'popular article',
-  hn: 'Hacker News',
-  'local-case-study': 'local case study',
-};
 
 export async function generateStaticParams() {
   return getAllInsightSlugs().map((slug) => ({ slug }));
@@ -57,7 +44,7 @@ export default async function BrainInsightPage({ params }: BrainInsightPageProps
   return (
     <main className="min-h-screen">
       <div className="container mx-auto px-4 sm:px-6 py-12 md:py-20">
-        <article className="max-w-5xl mx-auto">
+        <article className="max-w-4xl mx-auto">
           <Link
             href="/brain"
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors mb-10"
@@ -66,168 +53,157 @@ export default async function BrainInsightPage({ params }: BrainInsightPageProps
             Brain index
           </Link>
 
-          <header className="mb-10 md:mb-14">
-            <div className="mb-5 flex flex-wrap gap-2 text-xs">
-              <span className="rounded-md bg-primary/10 px-2.5 py-1 text-primary">
-                {insight.status}
-              </span>
-              <span className="rounded-md border px-2.5 py-1">
-                confidence: {insight.confidence}
-              </span>
-              <span className="rounded-md border px-2.5 py-1">source: {insight.sourceType}</span>
-              <span className="rounded-md border px-2.5 py-1">{insight.publishedAt}</span>
-            </div>
-
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-balance mb-6">
-              <span className="text-primary neon-glow">{insight.title}</span>
-            </h1>
-            <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-4xl">
-              {insight.summary}
+          <header className="mb-8 border-b pb-8">
+            <p className="mb-3 break-words font-mono text-xs text-muted-foreground">
+              insight/{insight.slug}
             </p>
+            <h1 className="mb-5 text-3xl font-semibold leading-tight text-balance md:text-5xl">
+              {insight.title}
+            </h1>
+            <div className="space-y-1 font-mono text-xs leading-relaxed text-muted-foreground">
+              <p>status: {insight.status}</p>
+              <p>confidence: {insight.confidence}</p>
+              <p>source_type: {insight.sourceType}</p>
+              <p>created: {insight.publishedAt}</p>
+              <p>topics: {insight.topics.join(', ')}</p>
+              <p>tags: {insight.tags.join(', ')}</p>
+              <p>used_in: {insight.usedInPosts.join(', ')}</p>
+            </div>
           </header>
 
-          <section className="rounded-lg border bg-card p-5 md:p-6 mb-8">
-            <h2 className="text-sm font-semibold uppercase tracking-wide mb-3">
-              Working conclusion
+          <section className="mb-10 space-y-5 border-b pb-8" aria-labelledby="raw-note">
+            <h2 id="raw-note" className="font-mono text-xs uppercase tracking-wide">
+              raw note
             </h2>
-            <p className="text-lg leading-relaxed">{insight.conclusion}</p>
+            <div className="space-y-4 text-sm leading-relaxed">
+              <p>
+                <span className="font-mono text-xs text-muted-foreground">summary: </span>
+                {insight.summary}
+              </p>
+              <p>
+                <span className="font-mono text-xs text-muted-foreground">
+                  current_conclusion:{' '}
+                </span>
+                {insight.conclusion}
+              </p>
+              <p>
+                <span className="font-mono text-xs text-muted-foreground">problem: </span>
+                {insight.problem}
+              </p>
+              <p>
+                <span className="font-mono text-xs text-muted-foreground">why_it_matters: </span>
+                {insight.whyItMatters}
+              </p>
+            </div>
           </section>
 
-          <div className="grid gap-6 md:grid-cols-2 mb-8">
-            <section className="rounded-lg border bg-card p-5 md:p-6">
-              <h2 className="text-sm font-semibold uppercase tracking-wide mb-3">Problem</h2>
-              <p className="leading-relaxed text-muted-foreground">{insight.problem}</p>
-            </section>
-            <section className="rounded-lg border bg-card p-5 md:p-6">
-              <h2 className="text-sm font-semibold uppercase tracking-wide mb-3">Why it matters</h2>
-              <p className="leading-relaxed text-muted-foreground">{insight.whyItMatters}</p>
-            </section>
-          </div>
-
           <section className="mb-8" aria-labelledby="evidence">
-            <h2 id="evidence" className="text-2xl font-semibold mb-4">
-              Evidence
+            <h2 id="evidence" className="mb-3 font-mono text-xs uppercase tracking-wide">
+              evidence
             </h2>
-            <div className="overflow-x-auto rounded-lg border">
-              <table className="w-full min-w-[760px] border-collapse text-sm">
-                <thead className="bg-muted/40 text-left">
-                  <tr>
-                    <th className="border-b px-4 py-3 font-semibold">Claim</th>
-                    <th className="border-b px-4 py-3 font-semibold">Sources</th>
-                    <th className="border-b px-4 py-3 font-semibold">Detail</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {insight.evidence.map((evidence) => (
-                    <tr key={evidence.claim} className="align-top">
-                      <td className="border-b px-4 py-3 font-medium">{evidence.claim}</td>
-                      <td className="border-b px-4 py-3 text-muted-foreground">
-                        {evidence.sourceTitles.join(', ')}
-                      </td>
-                      <td className="border-b px-4 py-3 text-muted-foreground">
-                        {evidence.detail}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <ol className="border-t">
+              {insight.evidence.map((evidence, index) => (
+                <li key={evidence.claim} className="border-b py-4">
+                  <p className="font-mono text-xs text-muted-foreground">[{index + 1}] claim</p>
+                  <p className="mt-1 text-sm leading-relaxed">{evidence.claim}</p>
+                  <p className="mt-2 break-words font-mono text-xs leading-relaxed text-muted-foreground">
+                    sources: {evidence.sourceTitles.join(', ')}
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    {evidence.detail}
+                  </p>
+                </li>
+              ))}
+            </ol>
           </section>
 
           <section className="mb-8" aria-labelledby="sources">
-            <h2 id="sources" className="text-2xl font-semibold mb-4">
-              Sources
+            <h2 id="sources" className="mb-3 font-mono text-xs uppercase tracking-wide">
+              sources
             </h2>
-            <div className="space-y-3">
-              {insight.sources.map((source) => (
-                <div
-                  key={`${source.title}-${source.url}`}
-                  className="rounded-lg border bg-card p-4"
-                >
-                  <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+            <ol className="border-t">
+              {insight.sources.map((source, index) => (
+                <li key={`${source.title}-${source.url}`} className="border-b py-4">
+                  <p className="font-mono text-xs text-muted-foreground">
+                    [{index + 1}] {source.kind}
+                  </p>
+                  <p className="mt-1 text-sm leading-relaxed">
                     <a
                       href={source.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-2 font-medium text-primary hover:underline"
+                      className="text-primary underline underline-offset-4"
                     >
                       {source.title}
-                      <ExternalLink className="w-3.5 h-3.5" />
                     </a>
-                    <span className="w-fit rounded-md border px-2.5 py-1 text-xs text-muted-foreground">
-                      {sourceKindLabels[source.kind]}
-                    </span>
-                  </div>
-                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                     {source.note}
                   </p>
+                  <p className="mt-2 break-words font-mono text-xs leading-relaxed text-muted-foreground">
+                    url: {source.url}
+                  </p>
                   {source.localRef && (
-                    <p className="mt-3 break-words text-xs text-muted-foreground">
-                      <span className="font-medium text-foreground">localRef:</span>{' '}
-                      <code className="rounded bg-muted px-1.5 py-0.5">{source.localRef}</code>
+                    <p className="mt-1 break-words font-mono text-xs leading-relaxed text-muted-foreground">
+                      local_ref: {source.localRef}
                     </p>
                   )}
-                </div>
+                </li>
               ))}
-            </div>
+            </ol>
           </section>
 
-          <div className="grid gap-6 md:grid-cols-2 mb-8">
-            <section className="rounded-lg border bg-card p-5 md:p-6" aria-labelledby="caveats">
-              <h2 id="caveats" className="text-2xl font-semibold mb-4">
-                Caveats
-              </h2>
-              <ul className="space-y-3 text-sm leading-relaxed text-muted-foreground">
-                {insight.caveats.map((caveat) => (
-                  <li key={caveat}>{caveat}</li>
-                ))}
-              </ul>
-            </section>
-
-            <section className="rounded-lg border bg-card p-5 md:p-6" aria-labelledby="questions">
-              <h2 id="questions" className="text-2xl font-semibold mb-4">
-                Open questions
-              </h2>
-              <div className="space-y-4">
-                {insight.openQuestions.map((openQuestion) => (
-                  <div key={openQuestion.question}>
-                    <h3 className="font-medium">{openQuestion.question}</h3>
-                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                      {openQuestion.whyItMatters}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          </div>
-
-          <section className="rounded-lg border bg-card p-5 md:p-6 mb-8" aria-labelledby="links">
-            <h2 id="links" className="text-2xl font-semibold mb-4">
-              Graph edges
+          <section className="mb-8" aria-labelledby="caveats">
+            <h2 id="caveats" className="mb-3 font-mono text-xs uppercase tracking-wide">
+              caveats
             </h2>
-            <dl className="grid gap-5 md:grid-cols-3">
+            <ul className="border-t text-sm leading-relaxed text-muted-foreground">
+              {insight.caveats.map((caveat) => (
+                <li key={caveat} className="border-b py-3">
+                  {caveat}
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="mb-8" aria-labelledby="questions">
+            <h2 id="questions" className="mb-3 font-mono text-xs uppercase tracking-wide">
+              open questions
+            </h2>
+            <ol className="border-t">
+              {insight.openQuestions.map((openQuestion, index) => (
+                <li key={openQuestion.question} className="border-b py-4">
+                  <p className="font-mono text-xs text-muted-foreground">[{index + 1}] question</p>
+                  <p className="mt-1 text-sm leading-relaxed">{openQuestion.question}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    {openQuestion.whyItMatters}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          </section>
+
+          <section className="mb-8 border-t pt-5" aria-labelledby="links">
+            <h2 id="links" className="mb-3 font-mono text-xs uppercase tracking-wide">
+              graph edges
+            </h2>
+            <dl className="grid gap-4 text-sm md:grid-cols-3">
               <div>
-                <dt className="text-sm font-medium mb-2">Topics</dt>
-                <dd className="flex flex-wrap gap-2">
-                  {insight.topics.map((topic) => (
-                    <span key={topic} className="rounded-md border px-2.5 py-1 text-xs">
-                      {topic}
-                    </span>
-                  ))}
-                </dd>
+                <dt className="mb-1 font-mono text-xs text-muted-foreground">topics</dt>
+                <dd>{insight.topics.join(', ')}</dd>
               </div>
               <div>
-                <dt className="text-sm font-medium mb-2">Used in posts</dt>
-                <dd className="text-sm text-muted-foreground">{insight.usedInPosts.join(', ')}</dd>
+                <dt className="mb-1 font-mono text-xs text-muted-foreground">used_in</dt>
+                <dd>{insight.usedInPosts.join(', ')}</dd>
               </div>
               <div>
-                <dt className="text-sm font-medium mb-2">Related insights</dt>
+                <dt className="mb-1 font-mono text-xs text-muted-foreground">related</dt>
                 <dd className="space-y-2">
                   {relatedInsights.map((relatedInsight) => (
                     <Link
                       key={relatedInsight.slug}
                       href={`/brain/${relatedInsight.slug}`}
-                      className="block text-sm text-primary hover:underline"
+                      className="block text-primary underline underline-offset-4"
                     >
                       {relatedInsight.title}
                     </Link>

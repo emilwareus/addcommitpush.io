@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, Search, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { PublishedInsight } from '@/lib/insights';
 import { cn } from '@/lib/utils';
@@ -9,18 +9,6 @@ import { cn } from '@/lib/utils';
 interface InsightBrowserProps {
   insights: PublishedInsight[];
   topics: string[];
-}
-
-const sourceTypeLabels = {
-  research: 'research',
-  experience: 'experience',
-  'case-study': 'case study',
-  opinion: 'opinion',
-  mixed: 'mixed',
-} as const;
-
-function countLabel(count: number, singular: string, plural: string) {
-  return count === 1 ? `1 ${singular}` : `${count} ${plural}`;
 }
 
 function toSearchText(insight: PublishedInsight) {
@@ -128,48 +116,30 @@ export function InsightBrowser({ insights, topics }: InsightBrowserProps) {
       </div>
 
       {filteredInsights.length > 0 ? (
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="divide-y rounded-lg border">
           {filteredInsights.map((insight) => (
             <Link
               key={insight.slug}
               href={`/brain/${insight.slug}`}
-              className="group flex min-h-48 flex-col rounded-lg border bg-card p-4 transition-colors hover:border-primary/50"
+              className="block p-3 transition-colors hover:bg-muted/30 sm:p-4"
             >
-              <div className="flex items-start justify-between gap-3">
-                <h3 className="text-base font-semibold leading-snug text-balance group-hover:text-primary transition-colors">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+                <h3 className="text-sm font-semibold leading-snug text-balance group-hover:text-primary transition-colors">
                   {insight.title}
                 </h3>
-                <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-primary" />
+                <p className="shrink-0 font-mono text-[11px] text-muted-foreground">
+                  {insight.status} / {insight.confidence} / {insight.sourceType}
+                </p>
               </div>
 
-              <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+              <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
                 {insight.summary}
               </p>
 
-              <div className="mt-3 flex flex-wrap gap-1.5 text-[11px]">
-                <span className="rounded-md bg-primary/10 px-2 py-0.5 text-primary">
-                  {insight.status}
-                </span>
-                <span className="rounded-md border px-2 py-0.5">
-                  confidence: {insight.confidence}
-                </span>
-                <span className="rounded-md border px-2 py-0.5">
-                  {sourceTypeLabels[insight.sourceType]}
-                </span>
-              </div>
-
-              <div className="mt-3 flex flex-wrap gap-1.5 text-[11px] text-muted-foreground">
-                {insight.topics.slice(0, 3).map((topic) => (
-                  <span key={topic} className="rounded-md border px-2 py-0.5">
-                    {topic}
-                  </span>
-                ))}
-              </div>
-
-              <div className="mt-auto flex flex-wrap gap-x-3 gap-y-1 pt-4 text-[11px] text-muted-foreground">
-                <span>{countLabel(insight.evidence.length, 'evidence row', 'evidence rows')}</span>
-                <span>{countLabel(insight.sources.length, 'source', 'sources')}</span>
-              </div>
+              <p className="mt-2 break-words font-mono text-[11px] leading-relaxed text-muted-foreground">
+                topics=[{insight.topics.join(', ')}] sources={insight.sources.length} evidence=
+                {insight.evidence.length}
+              </p>
             </Link>
           ))}
         </div>
