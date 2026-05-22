@@ -5,6 +5,7 @@ Brain insights are not finished blog posts. They are long-form research notes th
 ## What An Insight Is
 
 - Write an insight as a research document with a title, body sections, evidence fragments, caveats, open threads, and sources.
+- Declare graph edges from the insight to related insights and output documents. Each edge should include target type, target slug, relationship, strength, and a short note explaining the connection.
 - The body should be the primary artifact. Do not make the reader reconstruct the thinking from schema labels like `problem`, `summary`, `conclusion`, or `why it matters`.
 - Use headings that explain the intellectual move being made, not generic labels. Good: `The task is repository surgery`. Weak: `Problem`.
 - Discuss the claim, the evidence, the counter-evidence, and the practical consequence.
@@ -31,4 +32,5 @@ Brain insights are not finished blog posts. They are long-form research notes th
 - Blog posts are packaged arguments.
 - Brain insights are the source material behind those arguments.
 - A blog post may compress several insights into one narrative.
+- Use graph edges to show which notes feed which blog posts, presentations, or other outputs. The graph is part of the research object, not just a UI decoration.
 - Do not optimize Brain notes for punchiness at the expense of source traceability.

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { Brain } from 'lucide-react';
 import { InsightBrowser } from '@/components/brain/insight-browser';
-import { getAllInsights, getAllInsightTopics } from '@/lib/insights';
+import { getAllBrainGraphDocuments, getAllInsights, getAllInsightTopics } from '@/lib/insights';
 
 export const dynamic = 'error';
 export const revalidate = false;
@@ -15,6 +15,7 @@ export const metadata: Metadata = {
 export default function BrainPage() {
   const insights = getAllInsights();
   const topics = getAllInsightTopics();
+  const graphDocuments = getAllBrainGraphDocuments();
 
   return (
     <main className="min-h-screen">
@@ -33,7 +34,7 @@ export default function BrainPage() {
             </p>
           </div>
 
-          <InsightBrowser insights={insights} topics={topics} />
+          <InsightBrowser insights={insights} topics={topics} graphDocuments={graphDocuments} />
         </div>
       </div>
     </main>

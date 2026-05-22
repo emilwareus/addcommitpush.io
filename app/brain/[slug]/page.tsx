@@ -2,7 +2,12 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
-import { getAllInsightSlugs, getInsightBySlug, getRelatedInsights } from '@/lib/insights';
+import {
+  getAllBrainGraphDocuments,
+  getAllInsightSlugs,
+  getInsightBySlug,
+  getRelatedInsights,
+} from '@/lib/insights';
 
 export const dynamic = 'error';
 export const revalidate = false;
@@ -40,6 +45,36 @@ export default async function BrainInsightPage({ params }: BrainInsightPageProps
   }
 
   const relatedInsights = getRelatedInsights(insight);
+  const graphDocuments = getAllBrainGraphDocuments();
+  const graphTargets = insight.graph.edges.map((edge) => {
+    if (edge.targetType === 'insight') {
+      const targetInsight = getInsightBySlug(edge.targetSlug);
+
+      if (!targetInsight) {
+        throw new Error(`Unknown graph insight target: ${edge.targetSlug}`);
+      }
+
+      return {
+        edge,
+        title: targetInsight.title,
+        href: `/brain/${targetInsight.slug}`,
+      };
+    }
+
+    const targetDocument = graphDocuments.find((document) => {
+      return document.type === edge.targetType && document.slug === edge.targetSlug;
+    });
+
+    if (!targetDocument) {
+      throw new Error(`Unknown graph document target: ${edge.targetType}:${edge.targetSlug}`);
+    }
+
+    return {
+      edge,
+      title: targetDocument.title,
+      href: targetDocument.href,
+    };
+  });
 
   return (
     <main className="min-h-screen">
@@ -197,6 +232,35 @@ export default async function BrainInsightPage({ params }: BrainInsightPageProps
                 </dd>
               </div>
             </dl>
+          </section>
+
+          <section className="mb-8" aria-labelledby="graph">
+            <h2 id="graph" className="mb-5 text-2xl font-semibold">
+              Graph Edges
+            </h2>
+            <ol className="space-y-5">
+              {graphTargets.map(({ edge, href, title }) => (
+                <li key={`${edge.targetType}:${edge.targetSlug}:${edge.relation}`}>
+                  <p className="font-mono text-xs leading-relaxed text-muted-foreground">
+                    {edge.relation} · {edge.targetType}/{edge.targetSlug} · strength=
+                    {edge.strength}
+                  </p>
+                  {href ? (
+                    <Link
+                      href={href}
+                      className="mt-1 block text-sm font-semibold text-primary underline underline-offset-4"
+                    >
+                      {title}
+                    </Link>
+                  ) : (
+                    <p className="mt-1 text-sm font-semibold">{title}</p>
+                  )}
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    {edge.note}
+                  </p>
+                </li>
+              ))}
+            </ol>
           </section>
         </article>
       </div>

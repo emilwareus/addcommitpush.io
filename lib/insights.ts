@@ -40,6 +40,42 @@ export interface InsightSection {
   quote?: InsightQuote;
 }
 
+export type InsightGraphNodeType = 'insight' | 'blog-post' | 'presentation';
+
+export type InsightGraphRelation =
+  | 'builds-on'
+  | 'contrasts-with'
+  | 'depends-on'
+  | 'extends'
+  | 'operationalizes'
+  | 'packs-into'
+  | 'supports';
+
+export type InsightGraphStrength = 1 | 2 | 3;
+
+export interface InsightGraphEdge {
+  targetType: InsightGraphNodeType;
+  targetSlug: string;
+  relation: InsightGraphRelation;
+  strength: InsightGraphStrength;
+  note: string;
+}
+
+export interface InsightGraph {
+  edges: readonly InsightGraphEdge[];
+}
+
+export interface BrainGraphDocument {
+  type: Exclude<InsightGraphNodeType, 'insight'>;
+  slug: string;
+  title: string;
+  status: 'research' | 'draft' | 'published';
+  href?: string;
+  summary: string;
+  topics: readonly string[];
+  tags: readonly string[];
+}
+
 export interface Insight {
   title: string;
   slug: string;
@@ -54,6 +90,7 @@ export interface Insight {
   tags: readonly string[];
   usedInPosts: readonly string[];
   relatedSlugs: readonly string[];
+  graph: InsightGraph;
   problem: string;
   whyItMatters: string;
   evidence: readonly InsightEvidence[];
@@ -61,6 +98,40 @@ export interface Insight {
   openQuestions: readonly InsightQuestion[];
   sources: readonly InsightSource[];
 }
+
+const brainGraphDocuments = [
+  {
+    type: 'blog-post',
+    slug: 'write-code-ai-agents-love',
+    title: 'Write code AI agents love',
+    status: 'draft',
+    summary:
+      'The planned article that packages these research notes into a practical argument for senior engineers.',
+    topics: ['ai-agents', 'codebase-structure', 'context-engineering'],
+    tags: ['draft', 'agents', 'architecture'],
+  },
+  {
+    type: 'presentation',
+    slug: 'write-code-ai-agents-love-deck',
+    title: 'Write code AI agents love deck',
+    status: 'research',
+    summary:
+      'The talk version of the same argument, with the research compressed into a clearer stage narrative.',
+    topics: ['ai-agents', 'presentations', 'codebase-structure'],
+    tags: ['talk', 'deck', 'research'],
+  },
+  {
+    type: 'blog-post',
+    slug: 'context-engineering-claude-code',
+    title: 'Advanced Context Engineering with Claude Code',
+    status: 'published',
+    href: '/blog/context-engineering-claude-code',
+    summary:
+      'Earlier published writing about structuring information, commands, agents, and scripts for Claude Code.',
+    topics: ['context-engineering', 'ai-agents', 'workflows'],
+    tags: ['published', 'claude-code', 'context'],
+  },
+] as const satisfies readonly BrainGraphDocument[];
 
 const insights = [
   {
@@ -82,6 +153,52 @@ const insights = [
       'tests-are-context-not-just-verification',
       'agents-md-should-be-an-index',
     ],
+    graph: {
+      edges: [
+        {
+          targetType: 'insight',
+          targetSlug: 'recoverable-structure-beats-prompt-volume',
+          relation: 'depends-on',
+          strength: 3,
+          note: 'Each loop stage needs context the agent can recover without guessing.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'tests-are-context-not-just-verification',
+          relation: 'depends-on',
+          strength: 3,
+          note: 'The verify stage becomes useful only when tests are fast, local, and meaningful.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'agents-md-should-be-an-index',
+          relation: 'operationalizes',
+          strength: 2,
+          note: 'A compact AGENTS.md can make orientation rules and commands explicit.',
+        },
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This is the opening model for the article.',
+        },
+        {
+          targetType: 'presentation',
+          targetSlug: 'write-code-ai-agents-love-deck',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This becomes the talk frame: orient, retrieve, edit, verify.',
+        },
+        {
+          targetType: 'blog-post',
+          targetSlug: 'context-engineering-claude-code',
+          relation: 'extends',
+          strength: 2,
+          note: 'It extends the earlier context-engineering workflow into repo structure.',
+        },
+      ],
+    },
     problem:
       'Advice about coding agents often starts with prompts. That hides the real system boundary: the agent must first understand the repo, find the relevant code, edit within local conventions, then prove the result.',
     whyItMatters:
@@ -173,6 +290,59 @@ const insights = [
       'names-are-semantic-infrastructure',
       'types-and-sdks-compress-intent',
     ],
+    graph: {
+      edges: [
+        {
+          targetType: 'insight',
+          targetSlug: 'function-sized-chunks-are-not-necessarily-agent-friendly',
+          relation: 'supports',
+          strength: 3,
+          note: 'Chunking evidence shows why recoverable neighborhoods beat tiny isolated snippets.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'names-are-semantic-infrastructure',
+          relation: 'supports',
+          strength: 3,
+          note: 'Names are one of the cheapest recoverable handles in the repository.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'types-and-sdks-compress-intent',
+          relation: 'supports',
+          strength: 3,
+          note: 'Types and generated clients turn hidden API knowledge into searchable local code.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'monorepo-is-context-database-if-it-has-boundaries',
+          relation: 'extends',
+          strength: 2,
+          note: 'The monorepo note is the larger repository-scale version of recoverable context.',
+        },
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This is one of the article core claims.',
+        },
+        {
+          targetType: 'presentation',
+          targetSlug: 'write-code-ai-agents-love-deck',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This gives the talk a measurable research backbone.',
+        },
+        {
+          targetType: 'blog-post',
+          targetSlug: 'context-engineering-claude-code',
+          relation: 'extends',
+          strength: 3,
+          note: 'It connects directly to the earlier context-engineering article.',
+        },
+      ],
+    },
     problem:
       'Long context and long instruction files can still fail when the relevant code is not identifiable or is drowned in irrelevant material.',
     whyItMatters:
@@ -250,6 +420,45 @@ const insights = [
     tags: ['names', 'identifiers', 'semantics'],
     usedInPosts: ['write-code-ai-agents-love'],
     relatedSlugs: ['recoverable-structure-beats-prompt-volume', 'types-and-sdks-compress-intent'],
+    graph: {
+      edges: [
+        {
+          targetType: 'insight',
+          targetSlug: 'recoverable-structure-beats-prompt-volume',
+          relation: 'supports',
+          strength: 3,
+          note: 'Consistent names are a primary mechanism for recoverable context.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'types-and-sdks-compress-intent',
+          relation: 'supports',
+          strength: 3,
+          note: 'Generated SDKs amplify naming discipline by turning contracts into symbols.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'boundaries-beat-modularity-as-a-slogan',
+          relation: 'supports',
+          strength: 2,
+          note: 'Boundary names define the domain vocabulary agents use to route work.',
+        },
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This becomes the naming section of the article.',
+        },
+        {
+          targetType: 'presentation',
+          targetSlug: 'write-code-ai-agents-love-deck',
+          relation: 'packs-into',
+          strength: 2,
+          note: 'This can become a visual vocabulary-drift example in the talk.',
+        },
+      ],
+    },
     problem:
       'Humans can compensate for inconsistent naming using memory and team context. Agents often treat inconsistent names as distinct concepts or overweight misleading semantic cues.',
     whyItMatters:
@@ -331,6 +540,45 @@ const insights = [
       'recoverable-structure-beats-prompt-volume',
       'boundaries-beat-modularity-as-a-slogan',
     ],
+    graph: {
+      edges: [
+        {
+          targetType: 'insight',
+          targetSlug: 'recoverable-structure-beats-prompt-volume',
+          relation: 'supports',
+          strength: 3,
+          note: 'Chunking is the concrete retrieval mechanism behind recoverable structure.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'boundaries-beat-modularity-as-a-slogan',
+          relation: 'contrasts-with',
+          strength: 3,
+          note: 'This keeps the boundary argument from collapsing into tiny-function advice.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'agents-run-orient-retrieve-edit-verify',
+          relation: 'supports',
+          strength: 2,
+          note: 'Chunk shape mostly affects the retrieve stage of the agent loop.',
+        },
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This is the counterintuitive research section for the article.',
+        },
+        {
+          targetType: 'presentation',
+          targetSlug: 'write-code-ai-agents-love-deck',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This is a strong slide because it challenges simplistic clean-code advice.',
+        },
+      ],
+    },
     problem:
       'A common intuition is that agents like small functions. That may be true for editing locality, but retrieval needs enough surrounding context to understand valid usage.',
     whyItMatters:
@@ -404,6 +652,45 @@ const insights = [
       'function-sized-chunks-are-not-necessarily-agent-friendly',
       'executable-architecture-beats-prose',
     ],
+    graph: {
+      edges: [
+        {
+          targetType: 'insight',
+          targetSlug: 'function-sized-chunks-are-not-necessarily-agent-friendly',
+          relation: 'builds-on',
+          strength: 3,
+          note: 'The chunking evidence explains why boundary quality is not the same as smallness.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'executable-architecture-beats-prose',
+          relation: 'operationalizes',
+          strength: 3,
+          note: 'Boundary rules become agent-friendly when violations fail as diagnostics.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'monorepo-is-context-database-if-it-has-boundaries',
+          relation: 'supports',
+          strength: 2,
+          note: 'The monorepo only works if the boundary graph remains understandable.',
+        },
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This keeps the article from making vague modularity claims.',
+        },
+        {
+          targetType: 'presentation',
+          targetSlug: 'write-code-ai-agents-love-deck',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This becomes the architecture nuance section in the talk.',
+        },
+      ],
+    },
     problem:
       'It is tempting to say agents love modular code. Research on modularity and chunking makes that too broad and possibly wrong.',
     whyItMatters:
@@ -493,6 +780,52 @@ const insights = [
       'names-are-semantic-infrastructure',
       'recoverable-structure-beats-prompt-volume',
     ],
+    graph: {
+      edges: [
+        {
+          targetType: 'insight',
+          targetSlug: 'names-are-semantic-infrastructure',
+          relation: 'supports',
+          strength: 3,
+          note: 'Generated SDKs preserve API vocabulary as local symbols.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'recoverable-structure-beats-prompt-volume',
+          relation: 'supports',
+          strength: 3,
+          note: 'Types and SDKs are recoverable context at API boundaries.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'tests-are-context-not-just-verification',
+          relation: 'depends-on',
+          strength: 2,
+          note: 'Generated clients are strongest when contract tests or typechecks catch drift.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'monorepo-is-context-database-if-it-has-boundaries',
+          relation: 'supports',
+          strength: 2,
+          note: 'Monorepos make schema, generator config, client output, and app code visible together.',
+        },
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This is one of the author-specific flavor sections in the article.',
+        },
+        {
+          targetType: 'presentation',
+          targetSlug: 'write-code-ai-agents-love-deck',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This can be shown with raw fetch versus generated client examples.',
+        },
+      ],
+    },
     problem:
       'Raw API calls hide route, method, request shape, response shape, auth, pagination, and error contracts in strings and conventions.',
     whyItMatters:
@@ -602,6 +935,52 @@ const insights = [
     tags: ['lint', 'static-analysis', 'polint', 'architecture'],
     usedInPosts: ['write-code-ai-agents-love'],
     relatedSlugs: ['agents-md-should-be-an-index', 'boundaries-beat-modularity-as-a-slogan'],
+    graph: {
+      edges: [
+        {
+          targetType: 'insight',
+          targetSlug: 'agents-md-should-be-an-index',
+          relation: 'contrasts-with',
+          strength: 3,
+          note: 'Executable rules are the repairable counterpart to prose instructions.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'boundaries-beat-modularity-as-a-slogan',
+          relation: 'operationalizes',
+          strength: 3,
+          note: 'Boundary quality becomes enforceable when architecture constraints are linted.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'monorepo-is-context-database-if-it-has-boundaries',
+          relation: 'supports',
+          strength: 3,
+          note: 'Large unified repos need executable guardrails to stay navigable.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'tests-are-context-not-just-verification',
+          relation: 'supports',
+          strength: 2,
+          note: 'Lint diagnostics and tests both give agents precise repair feedback.',
+        },
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This is one of the opinionated local practices in the article.',
+        },
+        {
+          targetType: 'presentation',
+          targetSlug: 'write-code-ai-agents-love-deck',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This can anchor the polint/plint example in the talk.',
+        },
+      ],
+    },
     problem:
       'Agents can read instructions, but they still violate local architecture rules when those rules are implicit, stale, or too abstract.',
     whyItMatters:
@@ -728,6 +1107,52 @@ const insights = [
       'recoverable-structure-beats-prompt-volume',
       'executable-architecture-beats-prose',
     ],
+    graph: {
+      edges: [
+        {
+          targetType: 'insight',
+          targetSlug: 'recoverable-structure-beats-prompt-volume',
+          relation: 'contrasts-with',
+          strength: 3,
+          note: 'Instruction files help only when they point at recoverable structure.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'executable-architecture-beats-prose',
+          relation: 'contrasts-with',
+          strength: 3,
+          note: 'Executable rules should carry policy that prose instructions cannot reliably enforce.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'agents-run-orient-retrieve-edit-verify',
+          relation: 'operationalizes',
+          strength: 2,
+          note: 'A scoped AGENTS.md is most useful during agent orientation.',
+        },
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This becomes the instruction-file guidance in the article.',
+        },
+        {
+          targetType: 'presentation',
+          targetSlug: 'write-code-ai-agents-love-deck',
+          relation: 'packs-into',
+          strength: 2,
+          note: 'This supports a short slide about context files as indexes.',
+        },
+        {
+          targetType: 'blog-post',
+          targetSlug: 'context-engineering-claude-code',
+          relation: 'extends',
+          strength: 3,
+          note: 'This is the Brain continuation of the earlier AGENTS/context-engineering material.',
+        },
+      ],
+    },
     problem:
       'Teams respond to agent mistakes by adding more prose. That can reduce repeated mistakes, but it also increases context load and stale-instruction risk.',
     whyItMatters:
@@ -834,6 +1259,45 @@ const insights = [
     tags: ['tests', 'verification', 'feedback'],
     usedInPosts: ['write-code-ai-agents-love'],
     relatedSlugs: ['agents-run-orient-retrieve-edit-verify', 'types-and-sdks-compress-intent'],
+    graph: {
+      edges: [
+        {
+          targetType: 'insight',
+          targetSlug: 'agents-run-orient-retrieve-edit-verify',
+          relation: 'supports',
+          strength: 3,
+          note: 'Tests make the verify stage observable instead of aspirational.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'types-and-sdks-compress-intent',
+          relation: 'supports',
+          strength: 2,
+          note: 'Typed contracts and tests together reduce plausible wrong integration paths.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'executable-architecture-beats-prose',
+          relation: 'supports',
+          strength: 2,
+          note: 'Both checks turn repository expectations into concrete failure signals.',
+        },
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This becomes the verification section of the article.',
+        },
+        {
+          targetType: 'presentation',
+          targetSlug: 'write-code-ai-agents-love-deck',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This gives the talk a practical warning against test theater.',
+        },
+      ],
+    },
     problem:
       'Agent workflows often say "write tests" as a blanket rule. Research suggests the value depends on whether tests are durable behavior contracts or temporary observation probes.',
     whyItMatters:
@@ -907,6 +1371,52 @@ const insights = [
       'recoverable-structure-beats-prompt-volume',
       'executable-architecture-beats-prose',
     ],
+    graph: {
+      edges: [
+        {
+          targetType: 'insight',
+          targetSlug: 'recoverable-structure-beats-prompt-volume',
+          relation: 'extends',
+          strength: 3,
+          note: 'A monorepo is the repository-scale version of recoverable context.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'executable-architecture-beats-prose',
+          relation: 'depends-on',
+          strength: 3,
+          note: 'A large context database needs executable rules to prevent entropy.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'types-and-sdks-compress-intent',
+          relation: 'supports',
+          strength: 2,
+          note: 'Schema, generated SDKs, and app code become inspectable together.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'boundaries-beat-modularity-as-a-slogan',
+          relation: 'depends-on',
+          strength: 3,
+          note: 'The monorepo only helps when package and ownership boundaries are clear.',
+        },
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This is one of the author-specific infrastructure flavors in the article.',
+        },
+        {
+          targetType: 'presentation',
+          targetSlug: 'write-code-ai-agents-love-deck',
+          relation: 'packs-into',
+          strength: 2,
+          note: 'This belongs in the talk as context-database framing.',
+        },
+      ],
+    },
     problem:
       'Agents often need to change app code, API contracts, generated clients, infra, migrations, docs, and tests together. Multi-repo splits can hide part of the truth.',
     whyItMatters:
@@ -972,6 +1482,30 @@ const insights = [
 ] as const satisfies readonly Insight[];
 
 export type InsightSlug = (typeof insights)[number]['slug'];
+export type BrainGraphDocumentSlug = (typeof brainGraphDocuments)[number]['slug'];
+
+function getGraphTargetKey(targetType: InsightGraphNodeType, targetSlug: string) {
+  return `${targetType}:${targetSlug}`;
+}
+
+function validateInsightGraph(insight: Insight) {
+  const knownTargets = new Set([
+    ...insights.map((candidate) => getGraphTargetKey('insight', candidate.slug)),
+    ...brainGraphDocuments.map((document) => getGraphTargetKey(document.type, document.slug)),
+  ]);
+
+  insight.graph.edges.forEach((edge) => {
+    const targetKey = getGraphTargetKey(edge.targetType, edge.targetSlug);
+
+    if (!knownTargets.has(targetKey)) {
+      throw new Error(`Unknown graph target for ${insight.slug}: ${targetKey}`);
+    }
+
+    if (edge.targetType === 'insight' && edge.targetSlug === insight.slug) {
+      throw new Error(`Insight graph edge cannot point to itself: ${insight.slug}`);
+    }
+  });
+}
 
 const insightSections = {
   'agents-run-orient-retrieve-edit-verify': [
@@ -1207,6 +1741,8 @@ function withSections(insight: Insight): PublishedInsight {
     throw new Error(`Missing long-form sections for insight slug: ${insight.slug}`);
   }
 
+  validateInsightGraph(insight);
+
   return {
     ...insight,
     sections,
@@ -1236,7 +1772,15 @@ export function getAllInsightSlugs(): InsightSlug[] {
 }
 
 export function getRelatedInsights(insight: PublishedInsight): PublishedInsight[] {
-  return insight.relatedSlugs.map((slug) => {
+  const relatedSlugs = Array.from(
+    new Set(
+      insight.graph.edges
+        .filter((edge) => edge.targetType === 'insight')
+        .map((edge) => edge.targetSlug)
+    )
+  );
+
+  return relatedSlugs.map((slug) => {
     const relatedInsight = getInsightBySlug(slug);
 
     if (!relatedInsight) {
@@ -1249,4 +1793,8 @@ export function getRelatedInsights(insight: PublishedInsight): PublishedInsight[
 
 export function getAllInsightTopics(): string[] {
   return Array.from(new Set(insights.flatMap((insight) => insight.topics))).sort();
+}
+
+export function getAllBrainGraphDocuments(): BrainGraphDocument[] {
+  return [...brainGraphDocuments];
 }
