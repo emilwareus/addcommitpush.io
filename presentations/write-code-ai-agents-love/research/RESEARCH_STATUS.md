@@ -1,14 +1,15 @@
 # Research Status
 
-Last updated: 2026-05-15.
+Last updated: 2026-05-22.
 
 ## What Exists
 
-- 67 indexed research sources in `references.md`.
-- 60+ downloaded PDFs in `papers/`.
+- 76 indexed research sources in `references.md`.
+- 70+ downloaded PDFs in `papers/`.
 - Extracted searchable text in `paper-text/`.
 - 50+ downloaded official/practitioner docs, popular articles, and HN snapshots in `articles/`.
-- 20 focused insight notes in `insights/`.
+- 26 focused insight notes in `insights/`.
+- 6 plot-ready CSV datasets in `data/`.
 - 9 subagent/research-track memos in `notes/`.
 
 ## Strong Coverage
@@ -19,6 +20,7 @@ Last updated: 2026-05-15.
 - Verification and maintainability: SWE-CI, ABTest, Needle in the Repo, FixedBench/no-op tasks, SetupBench, installation-agent work.
 - Latest 2025-2026 direction: long-horizon features, modernization, no-op/abstention, memory/reuse, long-context process metrics.
 - Code patterns and techniques: dependency-aware retrieval, naming, type/static surfaces, chunking, modularity counter-evidence, code smells, and agent-generated test caveats.
+- Hard-data themes: repository graph ROI, feature-planning failure, structural constraint decay, setup/verification cost, context-file cost, static API affordances, and agentic PR shape.
 - Opinionated implementation flavors: custom lint rules as executable architecture, monorepos as agent context infrastructure, and generated SDKs as typed API contracts.
 - Local implementation case study: `polint` as repo-owned rule code plus scan infrastructure, and `/Users/emilwareus/Development/plint` as real usage with architecture guardrails, generated SDKs, infra, docs, and monorepo context.
 - Popular/practitioner and HN history: Anthropic's May 2026 large-codebase guidance, Builder.io AGENTS.md posts, Boris Tane/Jon Atkinson/LocalCan Claude Code workflows, Coder AI Coder guidance, and HN threads/search snapshots around AGENTS.md, stale context, subagents, and large-codebase navigation.
@@ -26,7 +28,7 @@ Last updated: 2026-05-15.
 ## Medium Coverage
 
 - Security/sandboxing: vendor guidance is noted but not synthesized into its own insight.
-- Human factors: issue quality and agent PR merge studies are noted but not fully downloaded.
+- Human factors: issue quality still needs more evidence, but AIDev and agent-vs-human PR shape are now downloaded and summarized.
 - More language-specific evidence would help for TypeScript/React beyond general repository-code-generation papers.
 
 ## Gaps for Next Pass
@@ -37,6 +39,7 @@ Last updated: 2026-05-15.
 - Add Devin, Augment, and Gemini CLI official docs as downloaded local articles.
 - Add one repo-specific "agent readiness checklist" for this Next.js blog after the talk thesis stabilizes.
 - Add STALL+, GraphCoder, RepoHyper, CodexGraph, CodeSearchNet, and UniXcoder if the retrieval section needs an even deeper literature base.
+- Convert the CSV data into article/deck figures after selecting the final narrative arc.
 
 ## Current Working Thesis
 
@@ -57,4 +60,5 @@ An AI-agent-friendly codebase is a low-entropy codebase: it exposes structure, c
 11. Generated SDKs beat raw API calls.
 12. Long context still needs maps.
 13. The best agent sometimes does nothing.
-14. Build the agent-ready repo checklist.
+14. Hard data: what gets faster, what fails, and where agents waste effort.
+15. Build the agent-ready repo checklist.

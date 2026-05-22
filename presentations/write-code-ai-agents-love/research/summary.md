@@ -136,6 +136,54 @@ HN history shows AGENTS.md became a major community topic in 2025-2026, with deb
 
 References: D34-D53.
 
+### 22. Repository graphs have measurable ROI, but only as selective slices
+
+The strongest evidence for codebase structure is now quantitative. Repository Intelligence Graph improved mean accuracy by 12.2%, reduced completion time by 53.9%, and reduced seconds per correct answer by 57.8%. The gains are larger on high-complexity repositories and multilingual repositories. GraphCodeAgent shows the same shape from another angle: dual graph retrieval improved DevEval GPT-4o Pass@1 by 43.81% relative, and cross-file dependency tasks improved 94.30% relative over the best baseline.
+
+The caveat matters: RepoGraph's 2-hop flat context used 10,505.3 tokens and resolved only 26.00%, while 1-hop flat used 2,310.7 tokens and resolved 29.67%. The article should say "selective graph slices," not "more graph."
+
+References: R10, R11, R12, R13, R53. Data: `data/repository_graph_context.csv`.
+
+### 23. Feature work fails at the step/constraint layer
+
+RACE-bench shows the core feature-work gap: patches can apply while plans remain wrong. On 528 feature-addition tasks, patch apply rates were high for AutoCodeRover and mini-SWE-Agent (96.21% and 95.83%), but resolved rates were 28.79% and 70.08%. mini-SWE-Agent's reasoning recall falls from files (0.890) to tasks (0.751) to steps (0.445).
+
+Constraint Decay strengthens the claim. When structural constraints accumulate from L0 to L3, capable configurations lose 30 percentage points of assertion pass rate, roughly 40% of baseline performance. PostgreSQL alone has a -19.3 pp marginal effect. CODETASTE adds the refactoring version: GPT-5.2 gets 69.6% alignment when the refactor is specified, but only 7.7% in open direct mode when it must infer the human architectural choice.
+
+References: R44, R68, R71, R72. Data: `data/feature_constraints_planning.csv`.
+
+### 24. Setup is not preamble; it is the first benchmark
+
+SetupBench, Installamatic, GitTaskBench, and Long Code Arena all say the same thing: repository setup is itself agent work. SetupBench's best OpenHands variant reaches 62.4% overall, with local DB setup as low as 20.0%. Installamatic installs 21/40 repos at least once, with a 28.8% average installation rate and 501 seconds per attempt. GitTaskBench's best evaluated setting reaches 48.15% task pass rate, while error analysis calls out setup and dependency resolution as major causes.
+
+For the blog, this makes setup commands part of the codebase interface: clean-shell setup verification, one smoke command, one local test slice, and exact dev/test dependencies.
+
+References: R27, R28, R75. Data: `data/setup_verification.csv`.
+
+### 25. Context files are useful config with measurable carrying cost
+
+The instruction-file evidence is mixed because the object is mixed. One AGENTS.md study reports median runtime dropping from 98.57s to 70.34s and mean output tokens dropping from 5,744.81 to 4,591.46. Evaluating AGENTS.md reports LLM-generated context reducing resolution by 0.5 pp to 2 pp while increasing cost by 20-23%. Developer-provided files improve performance about 4% on average but add 3.34 steps.
+
+Agent READMEs shows the ecosystem scale: 2,303 context files from 1,925 repos. Testing, implementation details, architecture, and build/run dominate; security and performance are only 14.5% each. SWE-Skills-Bench adds the sharper warning: 39/49 public SWE skills produced zero pass-rate improvement, aggregate pass rate rose only 1.2 pp, and token consumption rose 10.5%.
+
+References: R17, R18, R19, R21, R73, R74. Data: `data/context_instruction_cost.csv`.
+
+### 26. Agentic PRs have a distinct change shape
+
+AIDev makes agentic development measurable at ecosystem scale: 932,791 Agentic-PRs across 116,211 repositories and 72,189 developers. "How AI Coding Agents Modify Code" compares 24,014 merged Agentic PRs with 5,081 human PRs and reports practical differences in commits, files touched, deletions, and line changes. The article should not treat agent patches as normal human patches with different authorship; they have different review needs.
+
+The readability paper adds a quality caution. Readability-related commits are only about 0.3% of agent commits. Among analyzed readability commits, agents focus on logic complexity (42.4%) and documentation (24.2%), yet Maintainability Index deteriorates in 56.1%, LOC increases in 71.5%, and Cyclomatic Complexity increases in 42.7%.
+
+References: R69, R70, R76. Data: `data/agentic_pr_change_shape.csv`.
+
+### 27. Static surfaces are agent affordances
+
+Names, types, generated SDKs, and visible API surfaces now have enough hard data to support a strong claim. CrossCodeEval improves StarCoder Python exact match from 8.82 to 15.72 with retrieved context and 21.01 with reference-assisted retrieval. Naming perturbation drops Java GraphCodeBERT MRR from 70.36 to 17.03 and Python from 68.17 to 23.73. Type constraints reduce compile errors by 74.8% on HumanEval synthesis and 56.0% on MBPP synthesis. ToolGen improves dependency coverage by 31.4-39.1% and static validity by 44.9-57.7%.
+
+This supports the "generated SDKs beat raw API calls" flavor. The point is not that SDKs are magic. The point is that they turn hidden remote contracts into local typed names that agents can search, import, autocomplete, and repair against.
+
+References: R43, R49, R51, R62, R63, R64, R65, R66. Data: `data/names_types_apis.csv`.
+
 ## Candidate Talk Frame
 
 1. Agents are new maintainers with no memory.

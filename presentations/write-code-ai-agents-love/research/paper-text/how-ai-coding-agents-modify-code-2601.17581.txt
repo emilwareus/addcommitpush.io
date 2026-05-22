@@ -1,0 +1,361 @@
+                                              How AI Coding Agents Modify Code: A Large-Scale Study of
+                                                               GitHub Pull Requests
+                                                                      Daniel Ogenrwot                                                                 John Businge
+                                                               University of Nevada Las Vegas                                                University of Nevada Las Vegas
+                                                                  Las Vegas, Nevada, USA                                                        Las Vegas, Nevada, USA
+                                                                ogenrwot@unlv.nevada.edu                                                        john.businge@unlv.edu
+
+                                        Abstract                                                                                17]. Prior work has examined how developers interact with AI-
+                                        AI coding agents are increasingly acting as autonomous contribu-                        generated suggestions and how such tools affect productivity and
+                                        tors by generating and submitting pull requests (PRs). However, we                      code quality [21, 27, 38, 39], highlighting both opportunities and
+                                        lack empirical evidence on how these agent-generated PRs differ                         challenges for human–AI collaboration.
+
+
+
+
+arXiv:2601.17581v3 [cs.SE] 6 Apr 2026
+                                        from human contributions, particularly in how they modify code                             Despite this growing adoption, we still lack empirical evidence
+                                        and describe their changes. Understanding these differences is es-                      about how AI-generated PRs differ from human-authored ones in
+                                        sential for assessing their reliability and impact on development                       real-world repositories. In particular, little is known about how
+                                        workflows. Using the MSR 2026 Mining Challenge version of the                           coding agents modify source code or how accurately their PR de-
+                                        AIDev dataset, we analyze 24,014 merged Agentic PRs (440,295 com-                       scriptions reflect the associated edits. These gaps limit our ability
+                                        mits) and 5,081 merged Human PRs (23,242 commits). We examine                           to assess their reliability, maintainability impact, and communica-
+                                        additions, deletions, commits, and files touched, and evaluate the                      tive clarity during code review. While existing research focuses
+                                        consistency between PR descriptions and their diffs using lexical                       primarily on usage patterns and developer interactions [2, 19, 38],
+                                        and semantic similarity. Agentic PRs differ substantially from Hu-                      large-scale analyses of autonomous AI-authored PRs remain scarce.
+                                        man PRs in commit count (Cliff’s 𝛿 = 0.5429) and show moderate                             The MSR 2026 Mining Challenge dataset [21] enables this study
+                                        differences in files touched and deleted lines. They also exhibit                       by providing thousands of merged Agentic and Human PRs with
+                                        slightly higher description-to-diff similarity across all measures.                     commit histories and diff information. We therefore examine two
+                                        These findings provide a large-scale empirical characterization of                      research questions: ? RQ1: How do the structural characteristics
+                                        how AI coding agents contribute to open source development.                             of Agentic PRs, such as additions, deletions, files touched, and
+                                                                                                                                commit count, compare to Human-authored PRs? ? RQ2: How
+                                        CCS Concepts                                                                            does the alignment between PR descriptions and code edits differ
+                                                                                                                                between Agentic and Human PRs?
+                                        • Software and its engineering → Collaboration in software
+                                                                                                                                   These questions help reveal how AI agents behave as contribu-
+                                        development; • Computing methodologies → Artificial intel-
+                                                                                                                                tors and how effectively they communicate intent through natural
+                                        ligence.
+                                                                                                                                language, both of which are critical for trust and collaboration in
+                                                                                                                                software engineering workflows.
+                                        Keywords                                                                                Contributions.
+                                        AI coding agents, Agentic AI, LLMs, Pull Requests, Code patches
+                                        ACM Reference Format:
+                                                                                                                                • We conduct a large-scale empirical comparison of the structural
+                                        Daniel Ogenrwot and John Businge. 2026. How AI Coding Agents Modify                       code changes of Agentic and Human PRs using the MSR 2026
+                                        Code: A Large-Scale Study of GitHub Pull Requests. In 23rd International                  Mining Challenge dataset.
+                                        Conference on Mining Software Repositories (MSR ’26), April 13–14, 2026, Rio            • We assess description-to-diff alignment to evaluate how well PR
+                                        de Janeiro, Brazil. ACM, New York, NY, USA, 5 pages. https://doi.org/10.                  descriptions capture the underlying code modifications.
+                                        1145/3793302.3793603                                                                    • We release a replication package containing curated data and
+                                                                                                                                  analysis scripts to support reproducibility [29].
+                                        1    Introduction
+                                        Artificial intelligence (AI) coding agents are rapidly transforming                     2   Method
+                                        software development. Tools such as GitHub Copilot [13], OpenAI
+                                                                                                                                Figure 1 summarizes our four-step process: dataset collection, ex-
+                                        Codex [30], Claude Code [1], Cursor [9], and Devin [10] can now
+                                                                                                                                tension of Human PRs with commit-level data, filtering of merged
+                                        autonomously generate code, fix bugs, and submit pull requests
+                                                                                                                                PRs with valid patches, and computation of structural and similarity
+                                        (PRs). These systems are evolving from assistive tools into active
+                                                                                                                                metrics for analysis.
+                                        collaborators, a transition towards Software Engineering 3.0 [16,
+                                                                                                                                Step 1: Dataset Collection. We use the AIDev dataset [21] pro-
+                                                                                                                                vided for the MSR 2026 Mining Challenge (retrieved November 1,
+                                                                                                                                2025). The dataset contains 932,791 Agentic PRs and 6,618 Human
+                                        This work is licensed under a Creative Commons Attribution 4.0 International License.   PRs across 116,211 repositories, along with a curated subset en-
+                                        MSR ’26, Rio de Janeiro, Brazil                                                         riched with comments, reviews, and issue links. We use the Agentic
+                                        © 2026 Copyright held by the owner/author(s).
+                                        ACM ISBN 979-8-4007-2474-9/2026/04                                                      PR set for structural analysis and reconstruct commit-level details
+                                        https://doi.org/10.1145/3793302.3793603                                                 for the Human PRs to enable consistent comparison.
+MSR ’26, April 13–14, 2026, Rio de Janeiro, Brazil                                                                                 Daniel and John
+
+
+
+
+Figure 1: Four-step workflow: dataset collection, commit-data extension, PR filtering, and structural and similarity analysis.
+
+Step 2: Extracting Human-PRs Commit Details. Unlike Agen-                    Both PR description and code diff are then tokenized using a
+tic PRs, the Human PRs in the AIDev dataset lack commit-level            simple word-based tokenizer [3]. Let 𝑑 denote the normalized de-
+information. To enable consistent comparison, we retrieved com-          scription and 𝑐 the cleaned diff; TF–IDF cosine similarity is com-
+mit metadata and file-level patches for all Human PRs using the          puted between vectors v𝑑 and v𝑐 , treating 𝑐 as the query to capture
+GitHub REST API [12]. For each PR, we collected its commits and          whether tokens introduced or modified by the patch are reflected
+their associated details, including modified files, additions, dele-     in the description.
+tions, and the unified diff when available. This reconstruction yields       The second dimension is semantic similarity, which evaluates
+a commit-level structure matching that of the Agentic PRs. The           whether the meaning expressed in the PR description aligns with
+number of files touched is computed as the set of unique file paths      the underlying code edits. Embeddings are computed for both texts
+modified across all commits, ensuring repeated edits to the same         using CodeBERT [11] and GraphCodeBERT [15], and similarity is
+file are counted once. File renames reported by GitHub are treated       measured using cosine similarity, a standard choice for comparing
+as single-file modifications.                                            embedding vectors in semantic similarity settings [32]. We include
+Step 3: PR Filtering. We focus on merged PRs, which provide              both CodeBERT and GraphCodeBERT to capture semantic similar-
+complete commit histories. For Agentic PRs, we removed entries           ity under distinct model architectures: a masked language model
+lacking patch text, required for computing structural and similarity     and a data-flow–aware encoder. RQ2 is evaluated on the subset of
+metrics. A commit was considered to have a valid patch if the            PRs that contain complete description text and valid diff data after
+GitHub API returned a non-empty unified diff for all modified            filtering in Step 3.
+files. For Human PRs, we excluded cases with missing repositories,           TF–IDF and embedding cosine scores are bounded (typically
+unavailable commit data, or incomplete patches retrieved from the        in [0, 1]), with larger values indicating stronger alignment. Okapi
+GitHub API. After filtering, the analysis set contains 24,014 Agentic    BM25, in contrast, is an unbounded relevance score whose mag-
+PRs (440,295 commits with valid patches) and 5,081 Human PRs             nitude depends on token frequencies and document length; long
+(23,242 commits with valid patches). These datasets form the basis of    and token-heavy diffs can therefore produce very large positive
+all analyses in RQ1 and RQ2. Agentic PRs are also grouped by agent       or negative values. Negative Okapi BM25 values arise when very
+type for stratified analyses in the results, following established       common tokens receive low inverse document frequency weights,
+large-scale mining practices [4–7].                                      which can reduce the summed relevance score for long diffs. As a
+Step 4: Data Analysis. For RQ1, we computed code-change metrics          result, Okapi BM25 should be interpreted only as a relative lexical
+for each PR, including the number of commits, total lines added and      signal rather than a calibrated similarity measure [23, 33]. Because
+deleted, and files touched. Commit-level additions and deletions         absolute cutoffs are task-dependent, interpretation relies on the
+were summed across all commits in a PR, which avoids double-             score distributions (e.g., medians and quartiles).
+counting because GitHub reports per-file statistics. We summarized
+                                                                         3    Results
+the distributions of these metrics for Agentic and Human PRs. Nor-
+mality assumptions were violated for all metrics, motivating the use     ? RQ 1: How do the structural characteristics of Agentic
+of the Mann–Whitney 𝑈 test [24, 25] to assess differences between        PRs, such as additions, deletions, files touched, and commit
+the two groups. Effect sizes were quantified with Cliff’s delta (𝛿)      count, compare to Human-authored PRs?
+using standard interpretation thresholds [22, 34].                       Figure 2 shows that Human PRs exhibit the largest and most vari-
+    For RQ2, we evaluate description–diff alignment along two di-        able code changes, with substantially higher medians and long
+mensions. The first is lexical similarity, which measures surface-       upper tails for both additions and deletions. Agentic PRs tend to
+level overlap between the PR description and the code diff. We           introduce smaller and more localized edits. Within the Agentic
+compute Term Frequency–Inverse Document Frequency (TF–IDF)               group, Claude Code and OpenAI Codex display somewhat greater
+cosine similarity and Okapi BM25, two standard information re-           variability in their additions, whereas Devin, Cursor, and especially
+trieval baselines widely used in software engineering tasks, partic-     Copilot produce more consistently small and localized changes.
+ularly in bug report similarity and localization [33, 35, 36, 43]. PR
+titles and descriptions are concatenated and normalized. For all lexi-      Key takeaway: Agentic PRs tend to introduce smaller and more localized
+cal and semantic analyses, code diffs are lowercased and stripped of     changes than Human PRs, though some agents (e.g. Claude Code and OpenAI
+                                                                         Codex) show broader variability than others.
+diff metadata (file headers +++/—, hunk headers @@, and leading +/-),
+retaining only added and deleted lines with normalized whitespace.          Figure 3 shows that Human PRs touch more files and often
+                                                                         involve more commits than Agentic PRs, indicating broader and
+How AI Coding Agents Modify Code: A Large-Scale Study of GitHub Pull Requests                                                           MSR ’26, April 13–14, 2026, Rio de Janeiro, Brazil
+
+                                106                                            Additions
+
+
+
+
+    Lines changed (log scale)
+                                105                                            Deletions           Key takeaway: The most distinctive characteristics of Agentic PRs are not
+                                                                                                simply how many lines they change, but how they organize and distribute
+                                104                                                             changes across commits and files.
+
+                                103                                                              ? RQ 2: How does the alignment between PR descriptions
+                                102                                                              and code edits differ between Agentic and Human PRs?
+
+                                101                                                                              12    Semantic (Human)
+                                                                                                                       Lexical (Human)
+                                100                                                                              10    Semantic (Agentic)
+                                                                                                                       Lexical (Agentic)
+                                   man       vin      r
+                                                    rso       e
+                                                              od     dex         ot
+                                                                                 pil                             8
+                           Hu                De     Cu    e_C       Co      Co
+                                                                                                       Density
+                                                         ud        AI_                                           6
+                                                      Cla       en
+                                                              Op
+Figure 2: Distribution of LOC added and deleted in agentic                                                       4
+vs. human PRs.
+                                                                                                                 2
+                                   104        Commits                                                            0
+                                              Files touched                                                           0.0        0.2         0.4          0.6
+                                                                                                                                            Similarity Score
+                                                                                                                                                                 0.8        1.0
+                                   103
+
+
+               Count (log scale)
+                                                                                                Figure 4: Kernel density estimates comparing lexical and
+                                                                                                semantic similarity distributions.
+                                   102                                                             We first examine the distribution of lexical and semantic simi-
+                                                                                                larity scores for Human and Agentic PRs. Figure 4 shows a clear
+                                   101                                                          separation between lexical and semantic similarity. Lexical scores
+                                                                                                for both Agentic and Human PRs cluster near zero, indicating very
+                                   100                                                          limited surface-level vocabulary overlap between descriptions and
+                                    ma   n    vin     r
+                                                    rso       e
+                                                              od     dex         ot
+                                                                               pil              diffs. In contrast, semantic similarity scores form tight peaks be-
+                                 Hu          De     Cu    e_C      Co      Co                   tween 0.9 and 1.0, suggesting that both description types capture
+                                                         ud     AI_
+                                                      Cla      en                               the underlying meaning of their patches even when wording differs.
+                                                              Op
+Figure 3: Distribution of commits and files touched across                                         Figure 5 presents distributional comparisons across all four met-
+agents and human PRs.                                                                           rics. Agentic PRs show a slight right shift relative to Human PRs
+                                                                                                across both lexical and semantic measures, although differences
+more distributed modifications. Claude Code and OpenAI Codex
+                                                                                                are small and both groups exhibit high semantic alignment. Lexi-
+again show a wider spread than other agents, while Devin, Cursor,
+                                                                                                cal measures remain heavily skewed, while semantic models pro-
+and Copilot exhibit narrow distributions that reflect highly localized
+                                                                                                duce consistently high similarity scores, with Agentic PRs showing
+edits. Human contributions consistently span more files and commit
+                                                                                                tighter clustering. Okapi BM25 exhibits very high variance and
+steps, matching the large effect size observed for commit count.
+                                                                                                large positive or negative values, particularly for Agentic PRs, re-
+   Key takeaway: Agentic PRs are not uniform; some tools generate highly                        flecting its unbounded nature and sensitivity to tokenization. As a
+compact, single-focus contributions, while others produce broader edits that                    result, Okapi BM25 should be interpreted only as a coarse lexical
+overlap more closely with the lower range of Human PRs.                                         indicator rather than a calibrated similarity measure.
+    Table 1: Cliff’s 𝛿 Effect Sizes - agentic vs. human PRs                                        Table 2 shows that Agentic PRs have slightly higher central
+                                                                                                tendency across all four metrics. The differences are modest, but
+  Metric                                                             Cliff’s 𝛿    Effect Size
+                                                                                                they suggest that agent-generated descriptions align at least as well,
+  Commits                                                             0.5429          Large     and in some cases slightly better, with the content of their edits
+  Files Touched                                                       0.4487         Medium     compared to human descriptions.
+  Additions                                                           0.2836          Small
+  Deletions                                                           0.4462         Medium         Key takeaway: Agentic PR descriptions exhibit description-to-diff consis-
+  Line Changes (add + delete)                                         0.3158          Small     tency that is comparable to, and in some metrics slightly higher than, Human
+                                                                                                PRs, with the clearest differences appearing in the semantic similarity measures.
+    Table 1 shows that the largest practical difference between Agen-
+tic and Human PRs is the number of commits (𝛿 = 0.54, large effect),
+indicating distinct contribution patterns in how changes are struc-                             4    Implications
+tured. Medium effects for files touched and deletions suggest that                              RQ1 shows that differences between Agentic and Human PRs arise
+Human PRs modify codebases more broadly and remove more code.                                   not only in the amount of code changed, but in how changes are
+In contrast, additions and total line changes show only small effects,                          structured and distributed. Review processes and triage heuristics
+suggesting that the overall quantity of code introduced is closer                               may therefore benefit from using commit count and files touched as
+between the two groups than the structure of the edits. Overall, the                            early indicators of an Agentic PR’s scope, rather than relying solely
+result of the Mann–Whitney 𝑈 test shows that the differences are                                on LOC-based measures. Deletion-heavy or wide-scope Agentic PRs
+statistically significant (𝑝 ≤ 0.001).                                                          may warrant closer review, although further work is needed to link
+MSR ’26, April 13–14, 2026, Rio de Janeiro, Brazil                                                                                                                                Daniel and John
+
+
+                              Lexical Tfidf                               Lexical Bm25                     Semantic Sim Codebert                         Semantic Sim Graphcodebert
+                                                                                                                                                      3000
+               4000                     Human                                       Human             2500      Human                                            Human
+                                        Agentic             20000                   Agentic                     Agentic                               2500       Agentic
+                                                                                                      2000
+               3000                                         15000                                                                                     2000
+                                                                                                      1500
+       Count   2000                                 Count   10000                             Count                                           Count   1500
+                                                                                                      1000                                            1000
+               1000                                          5000                                      500                                             500
+                  0                                             0                                         0                                              0
+                      0.0          0.5            1.0                 0      25000 50000                                  0.8           1.0                   0.4   0.6     0.8     1.0
+                                 Score                                        Score                                       Score                                     Score
+         Figure 5: Distribution of similarity scores across lexical and semantic metrics for both Agentic and Human PRs.
+
+                            Table 2: Descriptive statistics for lexical and semantic similarity metrics, grouped by PR Type.
+                Statistic                                    Agentic PRs                                                            Human PRs
+                                          Lexical                              Semantic                                 Lexical                              Semantic
+                                TF–IDF       Okapi BM25             CodeBERT      GraphCodeBERT               TF–IDF      Okapi BM25          CodeBERT         GraphCodeBERT
+                Mean             0.1245         2.8455               0.9356            0.8254                  0.1007         0.1739            0.9285              0.7815
+                Std.             0.1104        466.2787              0.0331            0.0654                  0.1054        23.1437            0.0423              0.1016
+                Min              0.0000      -13776.6311             0.7243            0.4183                  0.0000      -1271.3196           0.6259              0.2875
+                25%              0.0479         -0.3836              0.9141            0.7889                 0.02413        -0.2380            0.9042              0.7254
+                50%              0.0937         1.0169               0.9375            0.8302                  0.0680         0.0000            0.9347              0.8067
+                75%              0.1655          1.4011              0.9605            0.8708                  0.1465         1.1236            0.9617              0.8563
+                Max              0.9535       68947.5283             0.9974            0.9807                  0.9266       585.4945            0.9939              0.9788
+
+these structural patterns to concrete risks. Variability across agent                                 6       Threats to Validity
+types further suggests that Agentic PR behavior is not uniform, and                                   Internal validity. Our results depend on the completeness of the
+that modeling agent identity and task context may be important                                        AIDev dataset and the reconstructed Human-PR commit data. Miss-
+when studying downstream outcomes such as review effort, latency,                                     ing or truncated patches may bias the distributions, although PRs
+or defect likelihood.                                                                                 lacking patch text were excluded. GitHub API retrieval for Human
+   For RQ2, the consistently high semantic alignment between de-                                      PRs may introduce gaps due to rate limits, deleted repositories,
+scriptions and diffs suggests that agent-authored PR description is                                   or rewritten histories. Additionally, it may truncate diffs for very
+generally coherent with the code edits it describes. This level of con-                               large changes, which can reduce patch completeness and may affect
+sistency may support downstream tasks that depend on accurate                                         similarity metrics computed from diff text.
+summaries, such as release-note generation, change-log construc-                                         Construct validity. Our structural metrics (additions, deletions,
+tion, or reviewer routing. Automated checks could further highlight                                   commits, files touched) approximate PR scope but do not capture
+cases where description–diff alignment is unusually low, enabling                                     intent or correctness. Lexical and semantic similarity measure de-
+developers to intervene when an Agentic PR is potentially ambigu-                                     scription–diff alignment, but not code quality or reviewer under-
+ous or misleading.                                                                                    standing. Okapi BM25 is unbounded and sensitive to tokenization,
+                                                                                                      so it should be interpreted only as a relative lexical indicator.
+                                                                                                         External validity. Findings generalize to open-source GitHub
+                                                                                                      projects represented in the AIDev dataset and to the agent versions
+5    Related Work                                                                                     included in it. Results may differ in private or industrial settings,
+Research on AI-assisted programming has examined models such as                                       with different review cultures, or as coding agents evolve.
+Codex and GitHub Copilot, focusing on code completion, developer
+productivity, and interaction patterns [2, 26, 27, 38, 39]. Most of this
+work investigates snippet-level behavior rather than project-scale
+contributions such as pull requests.                                                                  7       Conclusion
+   Software engineering studies on human-authored patches have                                        We conducted a large-scale empirical comparison of Agentic and
+analyzed patch size, structure, and review effort [14, 20, 28, 40, 41]                                Human PRs in the AIDev dataset. Agentic PRs differ most clearly in
+and their relationships to maintainability and defect risk [8, 31].                                   commit structure and the breadth of modified files, while differences
+Empirical analyses of AI-generated patches remain limited, though                                     in added or changed lines are relatively small. For RQ2, both PR
+early work reports refactoring [18], stylistic repetition, boilerplate                                types show high semantic alignment between descriptions and code,
+generation, and occasional inconsistencies between descriptions                                       with Agentic PRs exhibiting slightly stronger consistency. These
+and code changes [18, 37, 42]. The AIDev dataset [21] enables the                                     findings suggest that AI-generated PRs are structurally distinct
+first large-scale, PR-level analysis of how AI agents author and                                      yet generally coherent in how they describe their edits. Future
+describe code changes in real-world repositories, addressing a gap                                    work should examine how these patterns relate to review effort,
+in existing literature.                                                                               defect risk, and maintainability as coding agents and development
+                                                                                                      workflows continue to evolve.
+How AI Coding Agents Modify Code: A Large-Scale Study of GitHub Pull Requests                                                  MSR ’26, April 13–14, 2026, Rio de Janeiro, Brazil
+
+
+Acknowledgments                                                                                 Reshaping Software Engineering. arXiv preprint arXiv:2507.15003 (2025).
+                                                                                           [22] Jeffrey D Long, Du Feng, and Norman Cliff. 2003. Ordinal analysis of behavioral
+This research was supported by the National Science Foundation                                  data. Handbook of psychology (2003), 635–661.
+Grant Award No. 2519136. We also acknowledge National Science                              [23] Yuanhua Lv and ChengXiang Zhai. 2012. A Log-Logistic Model-Based Interpreta-
+                                                                                                tion of TF Normalization of BM25. In Advances in Information Retrieval, Ricardo
+Foundation MRI Grant (#2117941) for GPU Cluster support.                                        Baeza-Yates, Arjen P. de Vries, Hugo Zaragoza, B. Barla Cambazoglu, Vanessa
+                                                                                                Murdock, Ronny Lempel, and Fabrizio Silvestri (Eds.). Springer Berlin Heidelberg,
+                                                                                                Berlin, Heidelberg, 244–255.
+References                                                                                 [24] H. B. Mann and D. R. Whitney. 1947. On a Test of Whether one of Two Random
+ [1] Anthropic. 2025. Claude.ai. https://claude.ai/. Accessed: 2025-12-14.                      Variables is Stochastically Larger than the Other. The Annals of Mathematical
+ [2] Shraddha Barke, Siddharth Bansal, and Nadia Polikarpova. 2023. Grounded                    Statistics 18, 1 (1947), 50–60. http://www.jstor.org/stable/2236101
+     Copilot: How Programmers Interact with Code-Generating Models. In Proceedings         [25] Patrick E. McKnight and Julius Najab. 2010.                                Mann-
+     of the 2023 CHI Conference on Human Factors in Computing Systems. ACM, USA,                Whitney       U     Test.            John   Wiley      &    Sons,     Ltd,    1–1.
+     1–13.                                                                                      arXiv:https://onlinelibrary.wiley.com/doi/pdf/10.1002/9780470479216.corpsy0524
+ [3] Steven Bird, Ewan Klein, and Edward Loper. 2009. Natural Language Processing               doi:10.1002/9780470479216.corpsy0524
+     with Python (1st ed.). O’Reilly Media, Inc., USA.                                     [26] Daniel Ogenrwot and John Businge. 2024. PatchTrack: Analyzing ChatGPT’s
+ [4] John Businge, Alexandre Decan, Ahmed Zerouali, Tom Mens, and Serge Demeyer.                Impact on Software Patch Decision-Making in Pull Requests. In Proceedings of
+     2020. An Empirical Investigation of Forks as Variants in the npm Package                   the 39th IEEE/ACM International Conference on Automated Software Engineering
+     Distribution. In Proceedings of the 19th Belgium-Netherlands Software Evolution            (Sacramento, CA, USA) (ASE ’24). Association for Computing Machinery, New
+     Workshop, BENEVOL 2020, Luxembourg, December 3-4, 2020 (CEUR Workshop                      York, NY, USA, 2480–2481. doi:10.1145/3691620.3695338
+     Proceedings, Vol. 2912), Mike Papadakis and Maxime Cordy (Eds.). CEUR-WS.org.         [27] Daniel Ogenrwot and John Businge. 2025. PatchTrack: A Comprehensive Analysis
+     http://ceur-ws.org/Vol-2912/paper1.pdf                                                     of ChatGPT’s Influence on Pull Request Outcomes. arXiv:2505.07700 [cs.SE]
+ [5] John Businge, Alexandre Decan, Ahmed Zerouali, Tom Mens, Serge Demeyer,                    https://arxiv.org/abs/2505.07700
+     and Coen De Roover. 2022. Variant Forks – Motivations and Impediments. In             [28] Daniel Ogenrwot and John Businge. 2025. Refactoring-Aware Patch Integration
+     Proceedings of the 29th edition of the IEEE International Conference on Software           Across Structurally Divergent Java Forks. In 2025 IEEE International Conference
+     Analysis, Evolution and Reengineering. IEEE Computer Society, 867–877. doi:10.             on Source Code Analysis & Manipulation (SCAM). 25–36. doi:10.1109/SCAM67354.
+     1109/SANER53432.2022.00105                                                                 2025.00010
+ [6] John Businge, Moses Openja, Sarah Nadi, Engineer Bainomugisha, and Thorsten           [29] Daniel Ogenrwot and John Businge. 2026. Replication Package for How AI Coding
+     Berger. 2018. Clone-Based Variability Management in the Android Ecosystem. In              Agents Modify Code: A Large-Scale Study of GitHub Pull Requests. doi:10.5281/
+     International Conference on Software Maintenance and Evolution. IEEE, 625–634.             zenodo.18363153
+ [7] John Businge, Moses Openja, Sarah Nadi, and Thorsten Berger. 2022. Reuse and          [30] OpenAI. 2025. Codex — OpenAI. https://openai.com/codex/. Accessed: 2025-12-
+     Maintenance Practices among Divergent Forks in Three Software Ecosystems.                  14.
+     Journal of Empirical Software Engineering 27, 2 (2022), 54. doi:10.1007/s10664-       [31] Foyzur Rahman, Daryl Posnett, and Premkumar Devanbu. 2013. Predicting
+     021-10078-2                                                                                Defect-Prone Software Modules Using Code Change Metrics. Empirical Software
+ [8] Zhi Chen and Lingxiao Jiang. 2025. Evaluating Software Development Agents:                 Engineering 18, 5 (2013), 875–908.
+     Patch Patterns, Code Quality, and Issue Complexity in Real-World GitHub Sce-          [32] Nils Reimers and Iryna Gurevych. 2019. Sentence-BERT: Sentence Embeddings
+     narios. In 2025 IEEE International Conference on Software Analysis, Evolution and          using Siamese BERT-Networks. arXiv:1908.10084 [cs.CL] https://arxiv.org/abs/
+     Reengineering (SANER). 657–668. doi:10.1109/SANER64311.2025.00068                          1908.10084
+ [9] Cursor. 2025. Cursor: AI Code Editor. https://cursor.com/. Accessed: 2025-12-14.      [33] Stephen E. Robertson and Hugo Zaragoza. 2009. The Probabilistic Relevance
+[10] Devin AI. 2025. Devin AI — AI Coding Assistant. https://app.devin.ai/. Accessed:           Framework: BM25 and Beyond. Found. Trends Inf. Retr. 3, 4 (2009), 333–389.
+     2025-12-14.                                                                                doi:10.1561/1500000019
+[11] Zhangyin Feng, Daya Guo, Duyu Tang, Nan Duan, Xiaocheng Feng, Ming                    [34] Jeanine Romano, Jeffrey D Kromrey, Jesse Coraggio, Jeff Skowronek, and Linda
+     Gong, Linjun Shou, Bing Qin, Ting Liu, Daxin Jiang, and Ming Zhou. 2020.                   Devine. 2006. Exploring methods for evaluating group differences on the NSSE
+     CodeBERT: A Pre-Trained Model for Programming and Natural Languages.                       and other surveys: Are the t-test and Cohen’sd indices the most appropriate
+     arXiv:2002.08155 [cs.CL] https://arxiv.org/abs/2002.08155                                  choices. In annual meeting of the Southern Association for Institutional Research,
+[12] GitHub. 2025. GitHub REST API documentation. https://docs.github.com/en/                   Vol. 14. Citeseer.
+     rest?apiVersion=2022-11-28. Accessed: 2025-12-14.                                     [35] Gerard Salton and Christopher Buckley. 1988. Term-weighting approaches in
+[13] GitHub Copilot. 2025. GitHub Copilot. https://github.com/copilot. Accessed:                automatic text retrieval. Information Processing & Management 24, 5 (1988),
+     2025-12-14.                                                                                513–523. doi:10.1016/0306-4573(88)90021-0
+[14] Georgios Gousios, Martin Pinzger, and Arie van Deursen. 2014. An Exploratory          [36] Asif Mohammed Samir and Mohammad Masudur Rahman. 2025. Improved IR-
+     Study of the Pull-Based Software Development Model. In Proceedings of the 36th             Based Bug Localization with Intelligent Relevance Feedback. In 2025 IEEE/ACM
+     International Conference on Software Engineering (ICSE). ACM, USA, 345–355.                33rd International Conference on Program Comprehension (ICPC). USA, 560–571.
+[15] Daya Guo, Shuo Ren, Shuai Lu, Zhangyin Feng, Duyu Tang, Shujie Liu, Long                   doi:10.1109/ICPC66645.2025.00065
+     Zhou, Nan Duan, Alexey Svyatkovskiy, Shengyu Fu, Michele Tufano, Shao Kun             [37] Florian Tambon, Arghavan Moradi-Dakhel, Amin Nikanjam, Foutse Khomh,
+     Deng, Colin Clement, Dawn Drain, Neel Sundaresan, Jian Yin, Daxin Jiang, and               Michel C. Desmarais, and Giuliano Antoniol. 2025. Bugs in large language
+     Ming Zhou. 2021. GraphCodeBERT: Pre-training Code Representations with                     models generated code: an empirical study. Empirical Software Engineering 30, 3
+     Data Flow. arXiv:2009.08366 [cs.SE] https://arxiv.org/abs/2009.08366                       (2025), 65. doi:10.1007/s10664-025-10614-4
+[16] Ahmed E. Hassan, Hao Li, Dayi Lin, Bram Adams, Tse-Hsun Chen, Yutaro                  [38] Priyan Vaithilingam, Zheng Xu, and Elena L. Glassman. 2023. Copilot or Co-
+     Kashiwa, and Dong Qiu. 2025. Agentic Software Engineering: Foundational                    Author? Examining the Role of Code Generation Tools in Collaborative Pro-
+     Pillars and a Research Roadmap. arXiv:2509.06216 [cs.SE] https://arxiv.org/abs/            gramming. In Proceedings of the 2023 IEEE Symposium on Visual Languages and
+     2509.06216                                                                                 Human-Centric Computing (VL/HCC). IEEE, USA.
+[17] Ahmed E. Hassan, Gustavo A. Oliva, Dayi Lin, Boyuan Chen, Zhen Ming, and              [39] Priyan Vaithilingam, Tianyi Zhang, and Elena L. Glassman. 2022. Expectation
+     Jiang. 2024. Towards AI-Native Software Engineering (SE 3.0): A Vision and a               vs. Experience: Evaluating the Usability of Code Generation Tools Powered by
+     Challenge Roadmap. arXiv:2410.06107 [cs.SE] https://arxiv.org/abs/2410.06107               Large Language Models. In Proceedings of the 2022 CHI Conference on Human
+[18] Kosei Horikawa, Hao Li, Yutaro Kashiwa, Bram Adams, Hajimu Iida, and Ahmed E               Factors in Computing Systems. ACM, USA, 1–17.
+     Hassan. 2025. Agentic Refactoring: An Empirical Study of AI Coding Agents.            [40] Felix Wang, Brian Do, and Jacie Jermier. 2025. Automated vs. Human Security
+     arXiv preprint arXiv:2511.04824 (2025).                                                    Patching Patterns in Pull Requests: Evidence from the AIDev Dataset. (2025).
+[19] Hyoungwook Jin, Seonghee Lee, Hyungyu Shin, and Juho Kim. 2024. Teach AI              [41] Miku Watanabe, Hao Li, Yutaro Kashiwa, Brittany Reid, Hajimu Iida, and
+     How to Code: Using Large Language Models as Teachable Agents for Program-                  Ahmed E. Hassan. 2025. On the Use of Agentic Coding: An Empirical Study of Pull
+     ming Education. In Proceedings of the 2024 CHI Conference on Human Factors in              Requests on GitHub. arXiv:2509.14745 [cs.SE] https://arxiv.org/abs/2509.14745
+     Computing Systems (Honolulu, HI, USA) (CHI ’24). Association for Computing Ma-        [42] Yifan Wu, Yunpeng Wang, Ying Li, Wei Tao, Siyu Yu, Haowen Yang, Wei Jiang,
+     chinery, New York, NY, USA, Article 652, 28 pages. doi:10.1145/3613904.3642349             and Jianguo Li. 2025. An Empirical Study on Commit Message Generation Using
+[20] Oleksii Kononenko, Olga Baysal, and Michael W. Godfrey. 2016. Code review                  LLMs via In-Context Learning. In 2025 IEEE/ACM 47th International Conference
+     quality: how developers see it. In Proceedings of the 38th International Conference        on Software Engineering (ICSE). 553–565. doi:10.1109/ICSE55347.2025.00091
+     on Software Engineering (Austin, Texas) (ICSE ’16). Association for Computing         [43] Xinli Yang, David Lo, Xin Xia, Lingfeng Bao, and Jianling Sun. 2016. Combining
+     Machinery, New York, NY, USA, 1028–1038. doi:10.1145/2884781.2884840                       Word Embedding with Information Retrieval to Recommend Similar Bug Reports.
+[21] Hao Li, Haoxiang Zhang, and Ahmed E. Hassan. 2025. The Rise of AI Team-                    In 2016 IEEE 27th International Symposium on Software Reliability Engineering
+     mates in Software Engineering (SE) 3.0: How Autonomous Coding Agents Are                   (ISSRE). IEEE, USA, 127–137. doi:10.1109/ISSRE.2016.33
+

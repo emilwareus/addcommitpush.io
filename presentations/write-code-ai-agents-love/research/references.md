@@ -8,6 +8,7 @@ Research folder for the talk and blog article about structuring codebases so AI 
 - `paper-text/` - extracted text from PDFs for search and synthesis.
 - `articles/` - downloaded HTML/Markdown from official docs and practitioner sources.
 - `insights/` - focused notes for claims that need deeper treatment.
+- `data/` - plot-ready CSV extracts for hard-data figures.
 - `notes/` - working memos from research tracks.
 
 ## Core Research Papers
@@ -113,6 +114,15 @@ Research folder for the talk and blog article about structuring codebases so AI 
 | R65 | [How Does Naming Affect LLMs on Code Analysis Tasks?](https://arxiv.org/abs/2307.12488) | 2023-07 | `papers/naming-affects-llms-code-analysis-2307.12488.pdf` | Nonsense and misleading names significantly degrade LLM code-analysis performance. |
 | R66 | [When Names Disappear](https://arxiv.org/abs/2510.03178) | 2025-10 | `papers/when-names-disappear-2510.03178.pdf` | Semantics-preserving obfuscation shows LLMs rely heavily on naming cues for intent and even execution tasks. |
 | R67 | [Rethinking the Value of Agent-Generated Tests](https://arxiv.org/abs/2602.07900) | 2026-02 | `papers/rethinking-agent-generated-tests-2602.07900.pdf` | Counter-evidence that simply making agents write more tests reliably improves patch success. |
+| R68 | [RACE-bench: Benchmarking Repository-level Agents on Feature Addition](https://arxiv.org/abs/2603.26337) | 2026-03 | `papers/race-bench-feature-addition-2603.26337.pdf` | Feature-addition benchmark with file/task/step reasoning recall and over-prediction metrics. |
+| R69 | [AIDev: The First Comprehensive Dataset of Agentic-PRs](https://arxiv.org/abs/2602.09185) | 2026-02 | `papers/aidev-agentic-prs-2602.09185.pdf` | Large-scale dataset of 932,791 agent-authored PRs across 116,211 repositories. |
+| R70 | [How AI Coding Agents Modify Code](https://arxiv.org/abs/2601.17581) | 2026-01 | `papers/how-ai-coding-agents-modify-code-2601.17581.pdf` | Compares 24,014 merged Agentic PRs with 5,081 human PRs and quantifies change-shape differences. |
+| R71 | [Constraint Decay: The Fragility of LLM Agents in Backend Code Generation](https://arxiv.org/abs/2605.06445) | 2026-05 | `papers/constraint-decay-2605.06445.pdf` | Controlled backend study showing structural requirements cause about a 30-point assertion-pass drop. |
+| R72 | [CODETASTE: Can LLMs Generate Human-Level Code Refactorings?](https://arxiv.org/abs/2603.04177) | 2026-03 | `papers/codetaste-2603.04177.pdf` | 100 real multi-file refactorings from 87 repos; combines tests with OpenGrep static rules. |
+| R73 | [OctoBench: Benchmarking Scaffold-Aware Instruction Following in Repository-Grounded Agentic Coding](https://arxiv.org/abs/2601.10343) | 2026-01 | `papers/octobench-2601.10343.pdf` | Measures whether agents satisfy heterogeneous, persistent scaffold/repo/tool instructions. |
+| R74 | [Agent READMEs: An Empirical Study of Context Files for Agentic Coding](https://leo-lihao.github.io/files/P15.pdf) | 2025-11 | `papers/agent-readmes-context-files-2025.pdf` | Empirical study of 2,303 agent context files across Claude Code, Codex, and GitHub Copilot repos. |
+| R75 | [GitTaskBench: A Benchmark for Code Agents Solving Real-World Tasks Through Code Repository Leveraging](https://ojs.aaai.org/index.php/AAAI/article/download/40533/44494) | AAAI 2026 | `papers/gittaskbench-aaai-2026.pdf` | End-to-end repo reuse benchmark with 54 tasks from 18 GitHub projects and autonomous environment setup. |
+| R76 | [Do AI Agents Really Improve Code Readability?](https://arxiv.org/abs/2603.13723) | MSR 2026 | `papers/readability-agents-2603.13723.pdf` | Mining study of readability-related agent commits; readability intent often still increases size/complexity. |
 
 ## Official Docs and Practitioner Sources
 
