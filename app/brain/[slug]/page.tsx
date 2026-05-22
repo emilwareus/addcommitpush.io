@@ -53,64 +53,37 @@ export default async function BrainInsightPage({ params }: BrainInsightPageProps
             Brain index
           </Link>
 
-          <header className="mb-8 border-b pb-8">
-            <p className="mb-3 break-words font-mono text-xs text-muted-foreground">
-              insight/{insight.slug}
-            </p>
+          <header className="mb-8">
             <h1 className="mb-5 text-3xl font-semibold leading-tight text-balance md:text-5xl">
               {insight.title}
             </h1>
-            <div className="space-y-1 font-mono text-xs leading-relaxed text-muted-foreground">
-              <p>status: {insight.status}</p>
-              <p>confidence: {insight.confidence}</p>
-              <p>source_type: {insight.sourceType}</p>
-              <p>created: {insight.publishedAt}</p>
-              <p>topics: {insight.topics.join(', ')}</p>
-              <p>tags: {insight.tags.join(', ')}</p>
-              <p>used_in: {insight.usedInPosts.join(', ')}</p>
-            </div>
+            <p className="break-words font-mono text-xs leading-relaxed text-muted-foreground">
+              insight/{insight.slug} · topics: {insight.topics.join(', ')}
+            </p>
           </header>
 
-          <section className="mb-10 space-y-5 border-b pb-8" aria-labelledby="raw-note">
-            <h2 id="raw-note" className="font-mono text-xs uppercase tracking-wide">
-              raw note
-            </h2>
-            <div className="space-y-4 text-sm leading-relaxed">
-              <p>
-                <span className="font-mono text-xs text-muted-foreground">summary: </span>
-                {insight.summary}
-              </p>
-              <p>
-                <span className="font-mono text-xs text-muted-foreground">
-                  current_conclusion:{' '}
-                </span>
-                {insight.conclusion}
-              </p>
-              <p>
-                <span className="font-mono text-xs text-muted-foreground">problem: </span>
-                {insight.problem}
-              </p>
-              <p>
-                <span className="font-mono text-xs text-muted-foreground">why_it_matters: </span>
-                {insight.whyItMatters}
-              </p>
-            </div>
-          </section>
+          <div className="mb-12 space-y-5 border-b pb-10 text-base leading-8 md:text-lg">
+            <p>{insight.summary}</p>
+            <p>{insight.problem}</p>
+            <p>{insight.whyItMatters}</p>
+            <p>{insight.conclusion}</p>
+          </div>
 
           <section className="mb-8" aria-labelledby="evidence">
-            <h2 id="evidence" className="mb-3 font-mono text-xs uppercase tracking-wide">
-              evidence
+            <h2 id="evidence" className="mb-5 text-2xl font-semibold">
+              Evidence Fragments
             </h2>
-            <ol className="border-t">
+            <ol className="space-y-7">
               {insight.evidence.map((evidence, index) => (
-                <li key={evidence.claim} className="border-b py-4">
-                  <p className="font-mono text-xs text-muted-foreground">[{index + 1}] claim</p>
-                  <p className="mt-1 text-sm leading-relaxed">{evidence.claim}</p>
-                  <p className="mt-2 break-words font-mono text-xs leading-relaxed text-muted-foreground">
-                    sources: {evidence.sourceTitles.join(', ')}
-                  </p>
+                <li key={evidence.claim}>
+                  <h3 className="text-base font-semibold leading-relaxed">
+                    {index + 1}. {evidence.claim}
+                  </h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                     {evidence.detail}
+                  </p>
+                  <p className="mt-2 break-words font-mono text-xs leading-relaxed text-muted-foreground">
+                    source trace: {evidence.sourceTitles.join(', ')}
                   </p>
                 </li>
               ))}
@@ -118,16 +91,14 @@ export default async function BrainInsightPage({ params }: BrainInsightPageProps
           </section>
 
           <section className="mb-8" aria-labelledby="sources">
-            <h2 id="sources" className="mb-3 font-mono text-xs uppercase tracking-wide">
-              sources
+            <h2 id="sources" className="mb-5 text-2xl font-semibold">
+              Sources
             </h2>
-            <ol className="border-t">
+            <ol className="space-y-5">
               {insight.sources.map((source, index) => (
-                <li key={`${source.title}-${source.url}`} className="border-b py-4">
-                  <p className="font-mono text-xs text-muted-foreground">
-                    [{index + 1}] {source.kind}
-                  </p>
-                  <p className="mt-1 text-sm leading-relaxed">
+                <li key={`${source.title}-${source.url}`}>
+                  <p className="text-sm leading-relaxed">
+                    {index + 1}.{' '}
                     <a
                       href={source.url}
                       target="_blank"
@@ -154,27 +125,26 @@ export default async function BrainInsightPage({ params }: BrainInsightPageProps
           </section>
 
           <section className="mb-8" aria-labelledby="caveats">
-            <h2 id="caveats" className="mb-3 font-mono text-xs uppercase tracking-wide">
-              caveats
+            <h2 id="caveats" className="mb-5 text-2xl font-semibold">
+              Caveats
             </h2>
-            <ul className="border-t text-sm leading-relaxed text-muted-foreground">
+            <ul className="list-disc space-y-3 pl-5 text-sm leading-relaxed text-muted-foreground">
               {insight.caveats.map((caveat) => (
-                <li key={caveat} className="border-b py-3">
-                  {caveat}
-                </li>
+                <li key={caveat}>{caveat}</li>
               ))}
             </ul>
           </section>
 
           <section className="mb-8" aria-labelledby="questions">
-            <h2 id="questions" className="mb-3 font-mono text-xs uppercase tracking-wide">
-              open questions
+            <h2 id="questions" className="mb-5 text-2xl font-semibold">
+              Open Threads
             </h2>
-            <ol className="border-t">
+            <ol className="space-y-5">
               {insight.openQuestions.map((openQuestion, index) => (
-                <li key={openQuestion.question} className="border-b py-4">
-                  <p className="font-mono text-xs text-muted-foreground">[{index + 1}] question</p>
-                  <p className="mt-1 text-sm leading-relaxed">{openQuestion.question}</p>
+                <li key={openQuestion.question}>
+                  <h3 className="text-sm font-semibold leading-relaxed">
+                    {index + 1}. {openQuestion.question}
+                  </h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                     {openQuestion.whyItMatters}
                   </p>
@@ -184,20 +154,20 @@ export default async function BrainInsightPage({ params }: BrainInsightPageProps
           </section>
 
           <section className="mb-8 border-t pt-5" aria-labelledby="links">
-            <h2 id="links" className="mb-3 font-mono text-xs uppercase tracking-wide">
-              graph edges
+            <h2 id="links" className="mb-5 text-2xl font-semibold">
+              Links
             </h2>
             <dl className="grid gap-4 text-sm md:grid-cols-3">
               <div>
-                <dt className="mb-1 font-mono text-xs text-muted-foreground">topics</dt>
+                <dt className="mb-1 font-semibold">Topics</dt>
                 <dd>{insight.topics.join(', ')}</dd>
               </div>
               <div>
-                <dt className="mb-1 font-mono text-xs text-muted-foreground">used_in</dt>
+                <dt className="mb-1 font-semibold">Used In</dt>
                 <dd>{insight.usedInPosts.join(', ')}</dd>
               </div>
               <div>
-                <dt className="mb-1 font-mono text-xs text-muted-foreground">related</dt>
+                <dt className="mb-1 font-semibold">Related</dt>
                 <dd className="space-y-2">
                   {relatedInsights.map((relatedInsight) => (
                     <Link

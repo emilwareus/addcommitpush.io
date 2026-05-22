@@ -124,11 +124,9 @@ export function InsightBrowser({ insights, topics }: InsightBrowserProps) {
               className="block p-3 transition-colors hover:bg-muted/30 sm:p-4"
             >
               <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-                <h3 className="text-sm font-semibold leading-snug text-balance group-hover:text-primary transition-colors">
-                  {insight.title}
-                </h3>
+                <h3 className="text-sm font-semibold leading-snug text-balance">{insight.title}</h3>
                 <p className="shrink-0 font-mono text-[11px] text-muted-foreground">
-                  {insight.status} / {insight.confidence} / {insight.sourceType}
+                  sources={insight.sources.length} evidence={insight.evidence.length}
                 </p>
               </div>
 
@@ -137,8 +135,7 @@ export function InsightBrowser({ insights, topics }: InsightBrowserProps) {
               </p>
 
               <p className="mt-2 break-words font-mono text-[11px] leading-relaxed text-muted-foreground">
-                topics=[{insight.topics.join(', ')}] sources={insight.sources.length} evidence=
-                {insight.evidence.length}
+                topics=[{insight.topics.join(', ')}]
               </p>
             </Link>
           ))}
