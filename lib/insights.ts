@@ -28,6 +28,18 @@ export interface InsightQuestion {
   whyItMatters: string;
 }
 
+export interface InsightQuote {
+  text: string;
+  sourceTitle: string;
+  note: string;
+}
+
+export interface InsightSection {
+  heading: string;
+  body: readonly string[];
+  quote?: InsightQuote;
+}
+
 export interface Insight {
   title: string;
   slug: string;
@@ -961,16 +973,262 @@ const insights = [
 
 export type InsightSlug = (typeof insights)[number]['slug'];
 
-export type PublishedInsight = Insight;
+const insightSections = {
+  'agents-run-orient-retrieve-edit-verify': [
+    {
+      heading: 'The task is not "write code"; the task is repository surgery',
+      body: [
+        `The first thing this research changed for me is that coding agents should not be evaluated as autocomplete with a bigger prompt. SWE-bench is useful here because the task shape is closer to real work: the model receives an issue, sees a repository snapshot, writes a patch, and then the patch is judged by the repository test suite. That is a different animal from producing a standalone function from a docstring.`,
+        `When I compress that into a repo-design rule, I get a loop: orient, retrieve, edit, verify. The agent has to orient itself in the repository, retrieve the relevant neighborhood, make an edit that follows local conventions, then verify that the edit actually works. A codebase that is hard to navigate, hard to search, hard to edit locally, or hard to test will punish the agent at a different point in that loop.`,
+      ],
+      quote: {
+        text: 'real-world software engineering is not as simple',
+        sourceTitle: 'SWE-bench',
+        note: 'This is the core reason isolated code-generation benchmarks are not enough for the talk.',
+      },
+    },
+    {
+      heading: 'Practitioner workflows independently recreate the same loop',
+      body: [
+        `The practitioner sources are not controlled experiments, but they are valuable because experienced users converge on a similar workflow. Jon Atkinson starts with context gathering, then writes a phased plan, then uses a second agent to critique the plan. Boris Tane separates research, plan annotation, and implementation, and explicitly says the plan artifact survives context compaction. Anthropic's large-codebase guidance also pushes layered context, subagents, hooks, and retrieval rather than a single magic prompt.`,
+        `The research implication is that "agent-friendly code" is not just prettier code. It is code surrounded by recoverable orientation artifacts: commands, file layout, tests, generated contracts, source maps, and written decisions. The repo is the agent computer interface. The more the repo can answer "where am I, what matters, what changed, and how do I know," the less the agent has to guess.`,
+      ],
+    },
+  ],
+  'recoverable-structure-beats-prompt-volume': [
+    {
+      heading: 'More context is not the same as better context',
+      body: [
+        `The strongest version of this insight is not "give the agent less context." The evidence points to something narrower: context has to be recoverable, ranked, and structurally meaningful. CrossCodeEval shows that cross-file context can materially improve repository completion. GraphCodeAgent shows that graph-guided retrieval can beat plain retrieval. The AGENTS.md evaluations show that adding a context file can sometimes reduce cost, but can also add steps, tokens, and noise depending on how it is written.`,
+        `So the codebase trick is not to stuff everything into one long instruction file. The trick is to turn important knowledge into surfaces the agent can locate: names, imports, public APIs, generated types, tests, examples, package boundaries, and executable commands. These are better than prose because they are searchable and they participate in the actual build/test loop.`,
+      ],
+    },
+    {
+      heading: 'Graph structure keeps showing up',
+      body: [
+        `The graph-based papers are useful because they give a concrete shape to "structure." RepoGraph models dependencies across line, file, and repository levels. GraphCodeAgent builds requirement and code graphs and gives the agent tools to traverse them. This is not the same as "a giant repository map in the prompt." The important part is that the agent can ask for the next relevant neighborhood instead of passively consuming an enormous blob.`,
+        `For a normal product repo, the practical version is mundane: clear import directions, colocated tests, generated clients, project references, package ownership, ADRs near the decisions they explain, and commands that produce deterministic output. The blogpost should argue for this as recoverable structure: context that survives forgetting because the repo can regenerate it.`,
+      ],
+      quote: {
+        text: 'dynamic, on-demand exploration',
+        sourceTitle: 'GraphCodeAgent',
+        note: 'Good phrase for distinguishing tool-assisted retrieval from pasted context.',
+      },
+    },
+  ],
+  'names-are-semantic-infrastructure': [
+    {
+      heading: 'Names are not cosmetic for code models',
+      body: [
+        `The naming papers make this one unusually strong. CodeT5 explicitly builds identifier-aware objectives because identifiers carry useful code semantics. "When Names Disappear" separates structural semantics from human-interpretable naming and shows that removing the naming channel hurts intent-level tasks. The naming-affects-LLMs paper pushes the same direction from perturbation studies: LLM behavior changes when names become nonsense, anonymized, or misleading.`,
+        `For humans, a bad name is annoying. For an agent, a bad name can become a false retrieval key. If the concept is called "workspace" in the database, "tenant" in the API, "organization" in the UI, and "account" in the tests, the agent has to infer whether these are synonyms or distinct domain objects. Sometimes it will be right. Sometimes it will wire the wrong layer together with great confidence.`,
+      ],
+      quote: {
+        text: 'developer-assigned identifiers',
+        sourceTitle: 'CodeT5',
+        note: 'The paper treats names as a model-relevant signal, not just a human style preference.',
+      },
+    },
+    {
+      heading: 'The real rule is consistency across surfaces',
+      body: [
+        `I do not think the takeaway is "make every name long." The better rule is vocabulary discipline. Use the same domain nouns across code, tests, docs, route names, API schemas, and examples. Use verbs that tell the truth about side effects. Avoid generic utility folders when the real boundary is a domain capability. Keep exported symbol names stable unless the concept itself changed.`,
+        `There is also a negative version of this insight: misleading names are worse than terse names. A short name forces reading. A wrong name supplies a confident lie. Since agents often rely on names to decide what to inspect next, naming debt is retrieval debt.`,
+      ],
+    },
+  ],
+  'function-sized-chunks-are-not-necessarily-agent-friendly': [
+    {
+      heading: 'Small functions and good retrieval units are different ideas',
+      body: [
+        `This is the insight that prevents the talk from becoming shallow clean-code advice. The chunking paper directly tests retrieval units for code completion and finds that function chunking underperforms declaration, sliding-window, and cAST strategies. That does not mean large functions are good. It means a function body alone is often not the right unit of context for an agent.`,
+        `Agents need neighborhoods: imports, types, callers, callees, declarations, examples, tests, and sometimes the surrounding module. A tiny function can be easy to edit but useless to retrieve in isolation. Conversely, a broader chunk can be ugly as software architecture but better as retrieval material. Those are different optimization targets.`,
+      ],
+      quote: {
+        text: 'Function chunking is never Pareto-optimal',
+        sourceTitle: 'Chunking for RAG code completion',
+        note: 'Useful counterweight to the naive "agents like tiny functions" claim.',
+      },
+    },
+    {
+      heading: 'Design for coherent neighborhoods',
+      body: [
+        `The practical design move is to make meaningful neighborhoods explicit. In a React app, that might be route, component, hook, schema, generated client, and test fixture. In a backend service, it might be handler, service, repository, domain model, migration, and contract tests. The agent should be able to pull the neighborhood without wandering through unrelated folders.`,
+        `This also changes how I think about examples. A single perfect function example may be less useful than a small vertical slice showing how the repo expects data to move through layers. The retrieval unit should preserve usage, not just implementation.`,
+      ],
+    },
+  ],
+  'boundaries-beat-modularity-as-a-slogan': [
+    {
+      heading: 'Modularity is too vague to be a useful agent rule',
+      body: [
+        `The modularity paper is a useful warning. It does not say modular code is bad; it says a measured modularity score did not clearly predict better LLM code-generation performance. That matters because "make it modular" is one of those phrases that sounds technical while hiding the actual mechanism.`,
+        `The mechanism I care about is boundary recoverability. Can the agent see the public API of a package? Can it tell which layer is allowed to import which other layer? Can it find the tests for the boundary? Can it know where generated code ends and handwritten code begins? Those questions are more concrete than asking whether code is modular.`,
+      ],
+      quote: {
+        text: 'no clear correlation between code modularity and performance',
+        sourceTitle: 'Revisiting Modularity',
+        note: 'This keeps the claim honest: boundaries are useful, modularity-as-aesthetic is not enough.',
+      },
+    },
+    {
+      heading: 'A boundary should reduce the search space',
+      body: [
+        `A good boundary tells the agent where to look and where not to look. Package exports, feature folders, dependency rules, schemas, and test commands all help because they constrain the possible edit set. A bad boundary just adds ceremony: many folders, many abstractions, no ownership, no obvious direction of dependency.`,
+        `This is why I would rather say "clear boundaries" than "simple architecture." Simple is too subjective. Boundary quality can be inspected: imports point one way, public APIs are small, generated artifacts are isolated, and violations fail loudly.`,
+      ],
+    },
+  ],
+  'types-and-sdks-compress-intent': [
+    {
+      heading: 'Types turn remote behavior into local affordances',
+      body: [
+        `The evidence for types is stronger than the evidence for SDKs specifically, but the mechanism is the same. CatCoder improves repository-level generation by adding type context. FeatureBench finds that explicit interfaces matter enough to include an ablation without them. Generated SDKs are the practical way to apply this at API boundaries: paths, request shapes, response models, auth assumptions, and pagination stop living only in stringly typed calls.`,
+        `A raw fetch call forces the agent to infer the contract from scattered examples. A generated client gives it importable names, request objects, response types, and compiler feedback. The API is no longer an external mystery; it becomes code in the same local reasoning space as the feature being changed.`,
+      ],
+      quote: {
+        text: 'Interface-driven task specification with minimal ambiguity',
+        sourceTitle: 'FeatureBench',
+        note: 'FeatureBench makes the role of explicit interfaces very visible.',
+      },
+    },
+    {
+      heading: 'Generated code is context, but it needs policy',
+      body: [
+        `The generated-SDK argument gets worse if the generated code is dumped into random folders or edited by hand. The repo needs a policy: where the schema lives, where generation config lives, whether generated output is committed, what command refreshes it, and which files agents are allowed to edit. Without that, generated clients become another source of stale truth.`,
+        `The sweet spot for agents is a contract pipeline: schema committed, generator configured, output predictable, examples nearby, and CI failing when the generated code is stale. That gives the agent both the API surface and the repair loop.`,
+      ],
+      quote: {
+        text: 'Generate type-safe TypeScript clients from OpenAPI specifications',
+        sourceTitle: 'Orval',
+        note: 'Representative of the practical tooling pattern, not unique to Orval.',
+      },
+    },
+  ],
+  'executable-architecture-beats-prose': [
+    {
+      heading: 'Architecture prose is weak feedback',
+      body: [
+        `The custom-lint insight is partly research, partly practice. The research says agents can be helped by better repository interfaces and can be hurt by noisy instruction files. The tooling ecosystem shows a mature way to turn local policy into executable feedback: ESLint custom rules, typescript-eslint typed rules, Semgrep, ast-grep, Nx module boundaries, dependency-cruiser, and local systems like polint.`,
+        `The core idea is simple: if a rule matters and can be checked mechanically, it should fail in a way the agent can inspect. "Do not import persistence from UI" is a request. A lint diagnostic on the exact import is a repairable fact.`,
+      ],
+      quote: {
+        text: 'You can create custom rules to use with ESLint.',
+        sourceTitle: 'ESLint custom rules',
+        note: 'The mainstream tooling path exists before we reach for custom frameworks.',
+      },
+    },
+    {
+      heading: 'polint is the local case study, not the sales pitch',
+      body: [
+        `polint fits this note because it makes the repo own the rules as code. That matters when a policy is too specific for YAML patterns: cross-file evidence, generated-contract awareness, baseline adoption, domain-specific paths, or test-evidence heuristics. The plint case study is useful because it shows the pattern being used for backend architecture guardrails rather than abstract style preferences.`,
+        `The risk is obvious: bad rules create local bureaucracy and agents can learn to satisfy the diagnostic rather than preserve the design. So the bar for custom rules should be high. Use stock lint first. Add custom rules when the policy is important, mechanically detectable, and likely to prevent repeated agent mistakes.`,
+      ],
+      quote: {
+        text: 'rules you own',
+        sourceTitle: 'polint README',
+        note: 'This phrase captures the repo-local policy idea without overselling the tool.',
+      },
+    },
+  ],
+  'agents-md-should-be-an-index': [
+    {
+      heading: 'The instruction file is configuration, not documentation',
+      body: [
+        `The AGENTS.md evidence is mixed in a useful way. One paper finds lower median runtime and output token usage when a root AGENTS.md is present. Another evaluation finds that context files can increase steps and cost, and that LLM-generated files can slightly reduce success. The right conclusion is not "always add AGENTS.md" or "never add it." The conclusion is that persistent instructions are part of the agent interface and can be good or bad configuration.`,
+        `That pushes me toward a narrow role: AGENTS.md should be an index and operating contract. Commands. Non-negotiable constraints. Generated-code policy. Where to find deeper docs. What not to touch. It should not be an architecture novel, because novels go stale and consume the same context budget the agent needs for the actual code.`,
+      ],
+      quote: {
+        text: 'READMEs for agents',
+        sourceTitle: 'AGENTS.md impact',
+        note: 'Good shorthand, but the note should stress "README" does not mean dumping everything.',
+      },
+    },
+    {
+      heading: 'The file should point to executable truth',
+      body: [
+        `The best AGENTS.md entries are command-shaped and boundary-shaped. "Run pnpm build" is better than "make sure it works." "Do not edit generated clients; regenerate them with pnpm generate-api" is better than a paragraph about API hygiene. "Use app/brain/AGENTS.md for Brain notes" is better than repeating the same style guide everywhere.`,
+        `This also makes AGENTS.md a maintenance liability. If a command changes, the file must change. If the file says one thing and package.json says another, the agent will pick one. The repo should treat agent instructions like any other high-leverage config: short, reviewed, and tested where possible.`,
+      ],
+    },
+  ],
+  'tests-are-context-not-just-verification': [
+    {
+      heading: 'Tests tell the agent what behavior exists',
+      body: [
+        `The testing evidence is subtle. Rethinking agent-generated tests suggests that simply asking agents to write more tests is not a magic lever; some high-performing agents wrote few tests, and prompting more tests increased cost without improving resolution in that setup. FeatureBench points in the other direction for visible real unit tests: when tests expose expected behavior, agent success improves substantially.`,
+        `The distinction is important. Durable repository tests are context. They show setup, interfaces, edge cases, fixtures, naming, and expected behavior. Agent-written tests during a task can be useful probes, but they are not the same as a maintained behavioral contract.`,
+      ],
+      quote: {
+        text: 'high-quality unit test',
+        sourceTitle: 'FeatureBench',
+        note: 'The paper uses visible tests as a strong signal for agent performance.',
+      },
+    },
+    {
+      heading: 'The agent needs fast truth, not theatrical coverage',
+      body: [
+        `For repo design, the target is a small set of trustworthy checks per area. A command that runs the relevant test slice is often more useful than a huge full-suite command the agent cannot afford to run repeatedly. Test names should describe behavior. Fixtures should be readable. Failure output should point at the contract that broke.`,
+        `This is also where pass-to-pass tests matter conceptually. The agent should know not only how to make the new behavior pass, but what must keep working. Tests become a map of negative space: here are the things this edit must not break.`,
+      ],
+    },
+  ],
+  'monorepo-is-context-database-if-it-has-boundaries': [
+    {
+      heading: 'The monorepo argument is atomic context',
+      body: [
+        `I do not think the research proves "monorepos make agents better." That direct causal paper is missing. The better, defensible claim is that monorepos can give agents atomic context when the app, docs, API schemas, generated clients, infra, migrations, tests, runbooks, and policies change together. The agent is not forced to guess across repository boundaries or stale wikis.`,
+        `Google's monorepo paper and the Code Simplicity article are useful because they separate the monorepo from the slogan. The value is not the folder count. It is common source of truth, atomic commits, one version, one hierarchy, and tooling that keeps the large repo workable.`,
+      ],
+      quote: {
+        text: 'common source of truth',
+        sourceTitle: 'Google monorepo paper',
+        note: 'This is the phrase that maps most directly onto agent context.',
+      },
+    },
+    {
+      heading: 'A bad monorepo is just a bigger confusion surface',
+      body: [
+        `The monorepo only helps agents if boundaries are explicit. Otherwise the search space gets larger, the build gets slower, and ownership gets fuzzier. An agent-friendly monorepo needs affected-test tooling, package boundaries, generated-code rules, sparse enough local commands, and docs that live close to the code they describe.`,
+        `The version I would present is: put things together when they change together, and enforce the boundaries that make "together" understandable. For agents, one commit that contains the whole truth is powerful. One repo that contains every unrelated thing without ownership is not.`,
+      ],
+    },
+  ],
+} as const satisfies Record<InsightSlug, readonly InsightSection[]>;
+
+export type PublishedInsight = Insight & {
+  sections: readonly InsightSection[];
+};
+
+function withSections(insight: Insight): PublishedInsight {
+  const sections = insightSections[insight.slug as InsightSlug];
+
+  if (!sections) {
+    throw new Error(`Missing long-form sections for insight slug: ${insight.slug}`);
+  }
+
+  return {
+    ...insight,
+    sections,
+  };
+}
 
 export function getAllInsights(): PublishedInsight[] {
-  return [...insights].sort((a, b) => {
-    return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
-  });
+  return [...insights]
+    .sort((a, b) => {
+      return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+    })
+    .map(withSections);
 }
 
 export function getInsightBySlug(slug: string): PublishedInsight | null {
-  return insights.find((insight) => insight.slug === slug) ?? null;
+  const insight = insights.find((candidate) => candidate.slug === slug);
+
+  if (!insight) {
+    return null;
+  }
+
+  return withSections(insight);
 }
 
 export function getAllInsightSlugs(): InsightSlug[] {

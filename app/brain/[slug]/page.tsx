@@ -62,11 +62,27 @@ export default async function BrainInsightPage({ params }: BrainInsightPageProps
             </p>
           </header>
 
-          <div className="mb-12 space-y-5 border-b pb-10 text-base leading-8 md:text-lg">
-            <p>{insight.summary}</p>
-            <p>{insight.problem}</p>
-            <p>{insight.whyItMatters}</p>
-            <p>{insight.conclusion}</p>
+          <div className="mb-12 space-y-10 border-b pb-10">
+            {insight.sections.map((section) => (
+              <section key={section.heading} className="space-y-4">
+                <h2 className="text-2xl font-semibold leading-tight text-balance">
+                  {section.heading}
+                </h2>
+                <div className="space-y-5 text-base leading-8 md:text-lg">
+                  {section.body.map((paragraph) => (
+                    <p key={paragraph}>{paragraph}</p>
+                  ))}
+                </div>
+                {section.quote && (
+                  <blockquote className="border-l-2 border-primary/70 pl-4 text-sm leading-relaxed text-muted-foreground">
+                    <p>&ldquo;{section.quote.text}&rdquo;</p>
+                    <footer className="mt-2 font-mono text-xs">
+                      {section.quote.sourceTitle}: {section.quote.note}
+                    </footer>
+                  </blockquote>
+                )}
+              </section>
+            ))}
           </div>
 
           <section className="mb-8" aria-labelledby="evidence">

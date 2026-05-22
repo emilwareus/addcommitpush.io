@@ -18,6 +18,12 @@ function toSearchText(insight: PublishedInsight) {
     insight.conclusion,
     insight.problem,
     insight.whyItMatters,
+    ...insight.sections.flatMap((section) => [
+      section.heading,
+      ...section.body,
+      section.quote?.text ?? '',
+      section.quote?.sourceTitle ?? '',
+    ]),
     ...insight.topics,
     ...insight.tags,
     ...insight.sources.map((source) => source.title),
