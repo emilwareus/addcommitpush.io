@@ -11,6 +11,8 @@ Last updated: 2026-05-22.
 - 26 focused insight notes in `insights/`.
 - 6 plot-ready CSV datasets in `data/`.
 - 9 subagent/research-track memos in `notes/`.
+- `insights/AGENTS.md` now defines the required long-form research-note standard: source maps,
+  copied tables, chart sketches, inference boundaries, and local source traces.
 
 ## Strong Coverage
 
@@ -21,6 +23,8 @@ Last updated: 2026-05-22.
 - Latest 2025-2026 direction: long-horizon features, modernization, no-op/abstention, memory/reuse, long-context process metrics.
 - Code patterns and techniques: dependency-aware retrieval, naming, type/static surfaces, chunking, modularity counter-evidence, code smells, and agent-generated test caveats.
 - Hard-data themes: repository graph ROI, feature-planning failure, structural constraint decay, setup/verification cost, context-file cost, static API affordances, and agentic PR shape.
+- Insights 21-26 are now expanded as long-form research artifacts with paper-by-paper context,
+  data tables, Mermaid graph sketches, explicit inferences, non-claims, and blog visual candidates.
 - Opinionated implementation flavors: custom lint rules as executable architecture, monorepos as agent context infrastructure, and generated SDKs as typed API contracts.
 - Local implementation case study: `polint` as repo-owned rule code plus scan infrastructure, and `/Users/emilwareus/Development/plint` as real usage with architecture guardrails, generated SDKs, infra, docs, and monorepo context.
 - Popular/practitioner and HN history: Anthropic's May 2026 large-codebase guidance, Builder.io AGENTS.md posts, Boris Tane/Jon Atkinson/LocalCan Claude Code workflows, Coder AI Coder guidance, and HN threads/search snapshots around AGENTS.md, stale context, subagents, and large-codebase navigation.
