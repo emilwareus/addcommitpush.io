@@ -19,7 +19,7 @@ export interface InsightSource {
 
 export interface InsightEvidence {
   claim: string;
-  sourceTitles: string[];
+  sourceTitles: readonly string[];
   detail: string;
 }
 
@@ -38,16 +38,16 @@ export interface Insight {
   sourceType: 'research' | 'experience' | 'case-study' | 'opinion' | 'mixed';
   publishedAt: string;
   updatedAt?: string;
-  topics: string[];
-  tags: string[];
-  usedInPosts: string[];
-  relatedSlugs: string[];
+  topics: readonly string[];
+  tags: readonly string[];
+  usedInPosts: readonly string[];
+  relatedSlugs: readonly string[];
   problem: string;
   whyItMatters: string;
-  evidence: InsightEvidence[];
-  caveats: string[];
-  openQuestions: InsightQuestion[];
-  sources: InsightSource[];
+  evidence: readonly InsightEvidence[];
+  caveats: readonly string[];
+  openQuestions: readonly InsightQuestion[];
+  sources: readonly InsightSource[];
 }
 
 const insights = [
@@ -961,7 +961,7 @@ const insights = [
 
 export type InsightSlug = (typeof insights)[number]['slug'];
 
-export type PublishedInsight = (typeof insights)[number];
+export type PublishedInsight = Insight;
 
 export function getAllInsights(): PublishedInsight[] {
   return [...insights].sort((a, b) => {
