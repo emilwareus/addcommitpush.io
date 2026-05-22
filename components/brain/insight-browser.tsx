@@ -189,8 +189,8 @@ function buildGraph(insights: PublishedInsight[], graphDocuments: BrainGraphDocu
       topics: document.topics,
       x: position.x,
       y: position.y,
-      width: document.slug === 'write-code-ai-agents-love' ? 190 : 165,
-      height: document.slug === 'write-code-ai-agents-love' ? 84 : 72,
+      width: document.slug === 'write-code-ai-agents-love' ? 170 : 148,
+      height: document.slug === 'write-code-ai-agents-love' ? 74 : 64,
     };
   });
 
@@ -208,8 +208,8 @@ function buildGraph(insights: PublishedInsight[], graphDocuments: BrainGraphDocu
       topics: insight.topics,
       x: position.x,
       y: position.y,
-      width: 150,
-      height: 70,
+      width: 134,
+      height: 62,
     };
   });
 
@@ -285,7 +285,7 @@ function getNodeKindLabel(kind: InsightGraphNodeType) {
 
 function getNodeClassName(node: GraphNode, active: boolean, selected: boolean) {
   return cn(
-    'absolute flex -translate-x-1/2 -translate-y-1/2 flex-col justify-center rounded-lg border px-3 text-left shadow-sm outline-none transition-all',
+    'absolute flex -translate-x-1/2 -translate-y-1/2 flex-col justify-center rounded-lg border px-2.5 text-left shadow-sm outline-none transition-all',
     'focus-visible:ring-2 focus-visible:ring-primary',
     node.kind === 'insight' && 'bg-card/95 text-foreground',
     node.kind === 'blog-post' && 'border-primary/70 bg-primary/15 text-primary',
