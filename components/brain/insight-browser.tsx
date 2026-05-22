@@ -275,14 +275,6 @@ function getRequiredNode(nodeById: ReadonlyMap<string, GraphNode>, nodeId: strin
   return node;
 }
 
-function getNodeKindLabel(kind: InsightGraphNodeType) {
-  if (kind === 'blog-post') {
-    return 'blog';
-  }
-
-  return kind;
-}
-
 function getNodeClassName(node: GraphNode, active: boolean, selected: boolean) {
   return cn(
     'absolute flex -translate-x-1/2 -translate-y-1/2 flex-col justify-center rounded-lg border px-2.5 text-left shadow-sm outline-none transition-all',
@@ -385,9 +377,6 @@ function GraphView({
                 className={getNodeClassName(node, active, selected)}
                 style={style}
               >
-                <span className="mb-1 font-mono text-[10px] uppercase tracking-wide opacity-75">
-                  {getNodeKindLabel(node.kind)}
-                </span>
                 <span className="line-clamp-2 text-xs font-semibold leading-snug">
                   {node.title}
                 </span>
@@ -401,7 +390,7 @@ function GraphView({
         {activeNode ? (
           <>
             <p className="mb-2 font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
-              {getNodeKindLabel(activeNode.kind)} / {activeNode.slug}
+              {activeNode.slug}
             </p>
             <h3 className="text-base font-semibold leading-snug">{activeNode.title}</h3>
             <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
