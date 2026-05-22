@@ -20,7 +20,7 @@ export function TheDreamSlide() {
 
       <div className="bg-zinc-900/80 border border-primary/20 rounded-lg p-6 max-w-2xl">
         <p className="text-lg text-muted-foreground mb-4">
-          Today we&apos;ll "build" one from scratch:
+          Today we&apos;ll &ldquo;build&rdquo; one from scratch:
         </p>
         <div className="flex flex-wrap justify-center gap-3">
           {['Whisper STT', 'Kokoro TTS', 'Silero VAD', 'Groq LLM', 'WebSocket'].map((tech) => (
