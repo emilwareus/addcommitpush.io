@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
+import { MarkdownInsight } from '@/components/brain/markdown-insight';
+import { readInsightArticle } from '@/lib/insight-articles';
 import {
   getAllBrainGraphDocuments,
   getAllInsightSlugs,
@@ -42,6 +44,28 @@ export default async function BrainInsightPage({ params }: BrainInsightPageProps
 
   if (!insight) {
     notFound();
+  }
+
+  if (insight.articlePath) {
+    const markdown = readInsightArticle(insight.articlePath);
+
+    return (
+      <main className="min-h-screen">
+        <div className="container mx-auto px-4 py-12 sm:px-6 md:py-20">
+          <article className="mx-auto max-w-4xl">
+            <Link
+              href="/brain"
+              className="mb-10 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Brain index
+            </Link>
+
+            <MarkdownInsight markdown={markdown} />
+          </article>
+        </div>
+      </main>
+    );
   }
 
   const relatedInsights = getRelatedInsights(insight);

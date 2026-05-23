@@ -81,6 +81,7 @@ export interface Insight {
   slug: string;
   summary: string;
   conclusion: string;
+  articlePath?: string;
   status: InsightStatus;
   confidence: InsightConfidence;
   sourceType: 'research' | 'experience' | 'case-study' | 'opinion' | 'mixed';
@@ -1928,6 +1929,8 @@ const insights = [
       'A real-time voice agent is judged by the whole path from user intent to audible behavior, not by one model benchmark.',
     conclusion:
       'Instrument capture, endpointing, STT, LLM, TTS, transport, and playback separately; optimize the full conversational budget.',
+    articlePath:
+      'presentations/voice-agents/research/drafts/voice-agent-latency-budget-is-product.md',
     status: 'working',
     confidence: 'high',
     sourceType: 'mixed',
@@ -2055,6 +2058,7 @@ const insights = [
       'VAD answers whether speech is present; endpointing and semantic EOU decide whether the agent is allowed to talk.',
     conclusion:
       'Treat VAD, endpointing, semantic EOU, and barge-in as separate layers with separate metrics.',
+    articlePath: 'presentations/voice-agents/research/drafts/endpointing-is-turn-taking.md',
     status: 'working',
     confidence: 'high',
     sourceType: 'mixed',
@@ -2181,6 +2185,7 @@ const insights = [
       'WER is necessary but insufficient for voice agents; live systems need finalization latency, partial stability, EOT quality, and tails.',
     conclusion:
       'Pick STT by conversation behavior and domain accuracy, not only by clean benchmark rank.',
+    articlePath: 'presentations/voice-agents/research/drafts/streaming-stt-is-not-batch-stt.md',
     status: 'working',
     confidence: 'high',
     sourceType: 'mixed',
@@ -2280,6 +2285,7 @@ const insights = [
       'Voice-agent TTS should be chosen by TTFA, streaming shape, RTF headroom, interruption behavior, and quality together.',
     conclusion:
       'A beautiful voice is not enough; the TTS serving path must start, stream, and stop like an interactive component.',
+    articlePath: 'presentations/voice-agents/research/drafts/tts-latency-is-architecture.md',
     status: 'working',
     confidence: 'high',
     sourceType: 'mixed',

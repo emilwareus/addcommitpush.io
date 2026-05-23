@@ -3,7 +3,7 @@ Moonshine v2 Tiny,Moonshine,34,12.01,4.49,50,,Apple M3 response latency,R-VA-003
 Moonshine v2 Small,Moonshine,123,7.84,2.49,148,,Apple M3 response latency,R-VA-003,"English only; Moonshine-authored benchmark; response latency after VAD end."
 Moonshine v2 Medium,Moonshine,245,6.65,2.08,258,448.15,Apple M3 latency / Open ASR RTFx,R-VA-003,"Latency and Open ASR RTFx are different measurements."
 Whisper Tiny,Whisper,39,,7.54,289,,Apple M3 response latency,R-VA-003,"Whisper via faster-whisper; offline model used in streaming-like benchmark."
-Whisper Base,Whisper,74,,5.66,553,,Apple M3 response latency,R-VA-003,"Whisper via faster-whisper."
+Whisper Base,Whisper,74,,5.01,553,,Apple M3 response latency / Whisper paper appendix,R-VA-003/R-VA-030,"Latency from Moonshine v2 faster-whisper comparison; LibriSpeech clean WER from Whisper/STT notes."
 Whisper Small,Whisper,244,,3.43,1940,,Apple M3 response latency,R-VA-003,"Whisper via faster-whisper."
 Whisper Large v3,Whisper,1550,7.44,,11286,146,Apple M3 latency / A100 Open ASR RTFx,R-VA-003,"Not native streaming; Open ASR RTFx is throughput."
 Whisper Large v3 Turbo,Whisper,809,7.83,,,200,A100 Open ASR RTFx,R-VA-004,"Open ASR throughput, not conversational end latency."
