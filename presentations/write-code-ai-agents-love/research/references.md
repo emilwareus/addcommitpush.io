@@ -124,6 +124,14 @@ Research folder for the talk and blog article about structuring codebases so AI 
 | R75 | [GitTaskBench: A Benchmark for Code Agents Solving Real-World Tasks Through Code Repository Leveraging](https://ojs.aaai.org/index.php/AAAI/article/download/40533/44494) | AAAI 2026 | `papers/gittaskbench-aaai-2026.pdf` | End-to-end repo reuse benchmark with 54 tasks from 18 GitHub projects and autonomous environment setup. |
 | R76 | [Do AI Agents Really Improve Code Readability?](https://arxiv.org/abs/2603.13723) | MSR 2026 | `papers/readability-agents-2603.13723.pdf` | Mining study of readability-related agent commits; readability intent often still increases size/complexity. |
 
+### Code quality, AI-friendliness, and perplexity
+
+| ID | Source | Date | Local file | Why it matters |
+|---|---:|---:|---|---|
+| R77 | [Code for Machines, Not Just Humans: Quantifying AI-Friendliness with Code Health Metrics](https://arxiv.org/abs/2601.02200) | 2026-01 | `papers/code-for-machines-2601.02200.pdf` | Empirical study: CodeHealth predicts LLM refactoring break rates; perplexity does not predict file-level code quality. |
+| R78 | [Echoes of AI: Investigating the Downstream Effects of AI Assistants on Software Maintainability](https://arxiv.org/abs/2507.00788) | 2025-07 | `papers/echoes-of-ai-2507.00788.pdf` | 151-participant RCT: AI-assisted code shows no systematic maintainability difference; 30.7% median time savings. |
+| R79 | [How do Humans and LLMs Process Confusing Code?](https://arxiv.org/abs/2508.18547) | 2025-08 | `papers/humans-llms-confusing-code-2508.18547.pdf` | LLM perplexity spikes correlate with human EEG confusion at token/snippet level; contrasts with file-level PPL. |
+
 ## Official Docs and Practitioner Sources
 
 | ID | Source | Local file | Useful claim |

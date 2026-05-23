@@ -162,6 +162,7 @@ const insights = [
       'Most coding-agent failures can be grouped by where the agent loop breaks: orientation, retrieval, editing, or verification.',
     conclusion:
       'A repo is agent-friendly when it makes orientation, retrieval, editing, and verification cheap and explicit.',
+    articlePath: 'presentations/write-code-ai-agents-love/research/insights/INSIGHT_01_context_maps.md',
     status: 'working',
     confidence: 'medium',
     sourceType: 'mixed',
@@ -299,6 +300,8 @@ const insights = [
       'Agents need task-relevant structure they can find and trust more than they need larger instruction blobs.',
     conclusion:
       'The practical target is not more context. The target is recoverable context: names, symbols, imports, schemas, tests, examples, and checks.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_05_maintainability_beats_one_shot_correctness.md',
     status: 'solid',
     confidence: 'high',
     sourceType: 'research',
@@ -433,6 +436,8 @@ const insights = [
       'Identifier names are not just human style. They are retrieval handles and semantic cues for code models.',
     conclusion:
       'Stable, descriptive, domain-consistent names improve the surfaces agents use to search, rank, and reason. Misleading names are worse than sparse names.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_13_names_are_semantic_infrastructure.md',
     status: 'solid',
     confidence: 'high',
     sourceType: 'research',
@@ -550,6 +555,8 @@ const insights = [
       'Small functions can be good code, but function-level retrieval chunks underperformed broader or structure-aware chunks in controlled code completion experiments.',
     conclusion:
       'Agents need coherent neighborhoods, not just tiny functions: imports, declarations, callers, callees, types, examples, and tests.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_15_modularity_is_not_magic_boundaries_are.md',
     status: 'solid',
     confidence: 'high',
     sourceType: 'research',
@@ -662,6 +669,8 @@ const insights = [
       'The evidence does not justify "more modular code" as a blanket claim. Useful boundaries expose intent, dependencies, and verification points.',
     conclusion:
       'Do not optimize for modularity as an aesthetic. Optimize for boundaries that reduce search and make correctness checkable.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_15_modularity_is_not_magic_boundaries_are.md',
     status: 'working',
     confidence: 'medium',
     sourceType: 'research',
@@ -790,6 +799,8 @@ const insights = [
       'Types, schemas, and generated SDKs reduce the number of valid guesses an agent can make at an API boundary.',
     conclusion:
       'If an API has a contract, generate the contract into code before asking agents to use it.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_06_types_and_interfaces_compress_context.md',
     status: 'working',
     confidence: 'high',
     sourceType: 'mixed',
@@ -948,6 +959,8 @@ const insights = [
       'Architecture rules that only exist in prose are easy for agents to miss. Rules that fail precisely are repairable.',
     conclusion:
       'Important repo-specific architecture constraints should be encoded as lint/static-analysis checks where possible.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_18_custom_lint_rules_are_executable_architecture.md',
     status: 'working',
     confidence: 'medium',
     sourceType: 'mixed',
@@ -1144,6 +1157,8 @@ const insights = [
       'For agents, a diagnostic is a structured repair protocol: rule ID, file, span, evidence, expected surface, and machine-readable output.',
     conclusion:
       'Design lint/type/static output as an agent interface, not only as human terminal prose.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_27_static_diagnostics_are_agent_interfaces.md',
     status: 'working',
     confidence: 'high',
     sourceType: 'mixed',
@@ -1273,6 +1288,8 @@ const insights = [
       'Behavior tests can pass while the code misses structural intent. Static oracles check dependency shape, migration completion, and refactor alignment.',
     conclusion:
       'Use behavior tests and static oracles together: tests check outcomes; static rules check the structural shape the outcome does not encode.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_28_static_oracles_catch_what_tests_miss.md',
     status: 'working',
     confidence: 'high',
     sourceType: 'research',
@@ -1402,6 +1419,8 @@ const insights = [
       'Agent-useful static analysis needs stable fact families: imports, symbols, types, call graph, CFG, dataflow, tests, coverage, and generated-code metadata.',
     conclusion:
       'Do not expose raw AST dumps as the main abstraction. Expose typed, scoped fact views with visible precision and setup state.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_29_fact_models_make_static_rules_agent_usable.md',
     status: 'working',
     confidence: 'high',
     sourceType: 'mixed',
@@ -1539,6 +1558,8 @@ const insights = [
       'Persistent agent instructions help when they point at executable facts. They hurt when they become stale, long, conflicting, or aspirational.',
     conclusion:
       'Use AGENTS.md as a compact operating index: commands, boundaries, generated-code policy, and links to deeper executable docs.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_24_context_files_are_config_with_debt.md',
     status: 'working',
     confidence: 'high',
     sourceType: 'mixed',
@@ -1694,6 +1715,8 @@ const insights = [
       'Durable repo tests teach agents expected behavior and setup. Agent-written tests are often temporary probes and should not be equated with quality.',
     conclusion:
       'Invest in clear existing tests, targeted commands, and visible task contracts. Do not blindly optimize for agents writing more tests.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_04_tests_are_the_agent_feedback_loop.md',
     status: 'solid',
     confidence: 'high',
     sourceType: 'research',
@@ -1803,6 +1826,8 @@ const insights = [
       'Putting app code, docs, infra, schemas, SDKs, tests, and runbooks together gives agents atomic context. Without boundaries and tooling, it just makes a larger mess.',
     conclusion:
       'For agents, the monorepo value is one commit containing the whole truth. The requirement is boundary tooling, not just one repository.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_19_monorepos_are_agent_context_infrastructure.md',
     status: 'working',
     confidence: 'medium',
     sourceType: 'mixed',
@@ -1919,6 +1944,1325 @@ const insights = [
         localRef:
           'presentations/write-code-ai-agents-love/research/notes/polint-plint-case-study.md',
         note: 'Local monorepo + generated SDK + lint-policy case study.',
+      },
+    ],
+  },
+  {
+    title: 'Agent instructions are configuration, not documentation',
+    slug: 'agent-instructions-are-config',
+    summary:
+      'AGENTS.md, CLAUDE.md, and Cursor rules should be treated as operational configuration: short, specific, versioned, and tested by observing agent behavior.',
+    conclusion:
+      'Root instructions should include exact commands, architecture summary, hard constraints, and verification expectations. Exclude stale changelogs, generic advice, and aspirational rules.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_02_agent_instructions_are_config.md',
+    status: 'working',
+    confidence: 'high',
+    sourceType: 'research',
+    publishedAt: '2026-05-23',
+    topics: ['ai-agents', 'context-engineering', 'agent-instructions'],
+    tags: ['agents-md', 'configuration', 'instructions'],
+    usedInPosts: ['write-code-ai-agents-love'],
+    relatedSlugs: ['agents-md-should-be-an-index', 'recoverable-structure-beats-prompt-volume'],
+    graph: {
+      edges: [
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 2,
+          note: 'Supports the instruction-file section of the article.',
+        },
+      ],
+    },
+    problem:
+      'Teams treat agent instruction files like READMEs. They become stale, long, and aspirational instead of operational.',
+    whyItMatters:
+      'Instruction files that drift from reality add cost and noise. Treating them as config forces maintenance discipline.',
+    evidence: [
+      {
+        claim: 'AGENTS.md reduces median runtime and output tokens when well-written.',
+        sourceTitles: ['AGENTS.md impact'],
+        detail:
+          'Lulla et al. compare runs with and without AGENTS.md across 10 repos and 124 PRs, reporting lower median runtime and reduced token consumption.',
+      },
+      {
+        claim: 'Context files can reduce success and increase cost when poorly written.',
+        sourceTitles: ['Evaluating AGENTS.md'],
+        detail:
+          'Gloaguen et al. show context files can trigger more exploration and cost without improving patches.',
+      },
+      {
+        claim: 'Architecture, commands, and project rules are the central concerns of real config files.',
+        sourceTitles: ['Claude Code configs study'],
+        detail:
+          'Santos et al. analyze 328 Claude Code configs and find architecture, testing, and commands dominate.',
+      },
+    ],
+    caveats: [
+      'Different tools consume instruction files differently.',
+      'The optimal length and content depend on repo size and task type.',
+    ],
+    openQuestions: [],
+    sources: [
+      {
+        title: 'AGENTS.md impact',
+        url: 'https://arxiv.org/abs/2601.20404',
+        kind: 'paper',
+        note: 'Positive instruction-file efficiency result.',
+      },
+      {
+        title: 'Evaluating AGENTS.md',
+        url: 'https://arxiv.org/abs/2602.11988',
+        kind: 'paper',
+        note: 'Counter-evidence and cost analysis.',
+      },
+      {
+        title: 'Claude Code configs study',
+        url: 'https://arxiv.org/abs/2511.09268',
+        kind: 'paper',
+        note: 'Analysis of real Claude Code configuration files.',
+      },
+    ],
+  },
+  {
+    title: 'Reproducible setup is agent infrastructure',
+    slug: 'reproducible-setup-is-agent-infrastructure',
+    summary:
+      'Agent performance depends on whether the repository can be installed, built, and tested from scratch without tacit human knowledge.',
+    conclusion:
+      'Agent-friendly repos need pinned lockfiles, one-command install, one-command test, explicit env vars, and no hidden manual setup.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_03_reproducible_setup_is_agent_infrastructure.md',
+    status: 'working',
+    confidence: 'high',
+    sourceType: 'research',
+    publishedAt: '2026-05-23',
+    topics: ['ai-agents', 'setup', 'infrastructure'],
+    tags: ['setup', 'reproducibility', 'lockfiles'],
+    usedInPosts: ['write-code-ai-agents-love'],
+    relatedSlugs: ['setup-is-part-of-the-task', 'agents-md-should-be-an-index'],
+    graph: {
+      edges: [
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 2,
+          note: 'Supports the setup infrastructure section.',
+        },
+      ],
+    },
+    problem:
+      'Many repos require tribal knowledge to build and test. Agents cannot ask a colleague for help.',
+    whyItMatters:
+      'If a new laptop cannot run the repo, neither can a fresh agent. Setup ambiguity is the first bottleneck.',
+    evidence: [
+      {
+        claim: 'LLM agents struggle to install Python projects even with documentation.',
+        sourceTitles: ['Installamatic'],
+        detail:
+          'Beyond pip install evaluates agents installing Python projects; average installation rate was 28.8%.',
+      },
+      {
+        claim: 'Setup is a nontrivial benchmark problem on its own.',
+        sourceTitles: ['SetupBench'],
+        detail:
+          'SetupBench isolates environment bootstrap and local service configuration as a direct benchmark.',
+      },
+    ],
+    caveats: [
+      'Some systems are inherently multi-service and cannot have trivial setup.',
+      'Containerized setups help but add their own complexity.',
+    ],
+    openQuestions: [],
+    sources: [
+      {
+        title: 'Installamatic',
+        url: 'https://arxiv.org/abs/2412.06294',
+        kind: 'paper',
+        note: 'LLM agents installing Python repositories from docs.',
+      },
+      {
+        title: 'SetupBench',
+        url: 'https://arxiv.org/abs/2507.09063',
+        kind: 'paper',
+        note: 'Agent repository/environment setup benchmark.',
+      },
+    ],
+  },
+  {
+    title: 'Simplicity beats agent theater',
+    slug: 'simplicity-beats-agent-theater',
+    summary:
+      'Complex agent orchestration is not a replacement for clear repository structure and deterministic validation.',
+    conclusion:
+      'Before adding agent complexity, fix the repository: clear task contracts, reliable tests, searchable structure, precise instructions, and reproducible setup.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_07_simplicity_beats_agent_theater.md',
+    status: 'working',
+    confidence: 'medium',
+    sourceType: 'research',
+    publishedAt: '2026-05-23',
+    topics: ['ai-agents', 'architecture', 'simplicity'],
+    tags: ['agents', 'orchestration', 'simplicity'],
+    usedInPosts: ['write-code-ai-agents-love'],
+    relatedSlugs: [
+      'agents-run-orient-retrieve-edit-verify',
+      'recoverable-structure-beats-prompt-volume',
+    ],
+    graph: {
+      edges: [
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 2,
+          note: 'Anchors the argument that repo quality matters more than agent sophistication.',
+        },
+      ],
+    },
+    problem:
+      'Teams invest in complex multi-agent orchestration before fixing basic repo navigation and validation.',
+    whyItMatters:
+      'If the repo is opaque, more agents just parallelize confusion.',
+    evidence: [
+      {
+        claim: 'A simple localize-repair-validate workflow can match elaborate agents.',
+        sourceTitles: ['Agentless'],
+        detail:
+          'Agentless demonstrates competitive performance with a straightforward localize, repair, validate workflow.',
+      },
+      {
+        claim: 'Sophisticated scaffolding yields only marginal gains in context retrieval.',
+        sourceTitles: ['ContextBench'],
+        detail:
+          'ContextBench finds elaborate retrieval scaffolding produces marginal improvements over simpler approaches.',
+      },
+    ],
+    caveats: [
+      'Orchestration is valuable for tasks that genuinely need parallel exploration.',
+      'Simplicity does not mean minimal tooling; it means correct tooling.',
+    ],
+    openQuestions: [],
+    sources: [
+      {
+        title: 'Agentless',
+        url: 'https://arxiv.org/abs/2407.01489',
+        kind: 'paper',
+        note: 'Simple localize-repair-validate agent workflow.',
+      },
+    ],
+  },
+  {
+    title: 'Context should be layered, not dumped',
+    slug: 'context-should-be-layered',
+    summary:
+      'The best agent context is layered: a small hot path loaded by default, and deeper cold context fetched only when relevant.',
+    conclusion:
+      'Default context should orient. On-demand context should explain. Use root files for invariants and subdirectory files for local conventions.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_08_context_should_be_layered.md',
+    status: 'working',
+    confidence: 'medium',
+    sourceType: 'research',
+    publishedAt: '2026-05-23',
+    topics: ['context-engineering', 'ai-agents', 'retrieval'],
+    tags: ['context', 'layering', 'progressive-disclosure'],
+    usedInPosts: ['write-code-ai-agents-love'],
+    relatedSlugs: [
+      'agents-md-should-be-an-index',
+      'more-context-can-hurt',
+      'recoverable-structure-beats-prompt-volume',
+    ],
+    graph: {
+      edges: [
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 2,
+          note: 'Supports the context layering argument in the article.',
+        },
+      ],
+    },
+    problem:
+      'Teams dump everything into one context file. Context windows fill quickly and performance degrades as sessions grow.',
+    whyItMatters:
+      'Layered context prevents noise and keeps the hot path compact while preserving deeper knowledge for retrieval.',
+    evidence: [
+      {
+        claim: 'Hot-memory instructions plus cold-memory specs work well for large systems.',
+        sourceTitles: ['Codified Context'],
+        detail:
+          'Codified Context describes hot-memory instructions plus cold-memory specification documents for a large C# system.',
+      },
+      {
+        claim: 'Context files can create too much exploration and cost when not layered.',
+        sourceTitles: ['Evaluating AGENTS.md'],
+        detail:
+          'Evaluating AGENTS.md shows context files can increase exploration and cost without improving patches.',
+      },
+    ],
+    caveats: [
+      'The optimal layering depends on repo size and agent tool capabilities.',
+      'Subdirectory context files must be maintained when conventions change.',
+    ],
+    openQuestions: [],
+    sources: [
+      {
+        title: 'Evaluating AGENTS.md',
+        url: 'https://arxiv.org/abs/2602.11988',
+        kind: 'paper',
+        note: 'Context file cost and noise evidence.',
+      },
+    ],
+  },
+  {
+    title: 'Long context still needs structure',
+    slug: 'long-context-still-needs-structure',
+    summary:
+      'Large context windows do not eliminate the need for repository retrieval, maps, and scoped documentation.',
+    conclusion:
+      'A million-token window is not a map. Repos should support progressive disclosure: root maps, scoped docs, symbol maps, and focused task specs.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_09_long_context_needs_structure.md',
+    status: 'working',
+    confidence: 'high',
+    sourceType: 'research',
+    publishedAt: '2026-05-23',
+    topics: ['context-engineering', 'retrieval', 'ai-agents'],
+    tags: ['long-context', 'retrieval', 'structure'],
+    usedInPosts: ['write-code-ai-agents-love'],
+    relatedSlugs: [
+      'recoverable-structure-beats-prompt-volume',
+      'context-should-be-layered',
+      'more-context-can-hurt',
+    ],
+    graph: {
+      edges: [
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 2,
+          note: 'Backs the argument that window size is not a substitute for structure.',
+        },
+      ],
+    },
+    problem:
+      'Teams assume larger context windows solve retrieval problems. Models still underuse information depending on placement.',
+    whyItMatters:
+      'A bigger room to get lost in is not a map. Structure helps agents find and use relevant context.',
+    evidence: [
+      {
+        claim: 'Models underuse relevant information depending on position in long context.',
+        sourceTitles: ['Lost in the Middle'],
+        detail:
+          'Lost in the Middle shows models can miss relevant information based on where it appears in long context.',
+      },
+      {
+        claim: 'Agents often retrieve too much context and still fail to use relevant material.',
+        sourceTitles: ['ContextBench'],
+        detail:
+          'ContextBench shows agents can retrieve many relevant files but fail to use them in the final patch.',
+      },
+    ],
+    caveats: [
+      'Newer models may handle long context better, but structural cues remain valuable.',
+      'The threshold where structure helps depends on task complexity.',
+    ],
+    openQuestions: [],
+    sources: [
+      {
+        title: 'Lost in the Middle',
+        url: 'https://arxiv.org/abs/2307.03172',
+        kind: 'paper',
+        note: 'Position-dependent information usage in long context.',
+      },
+    ],
+  },
+  {
+    title: 'Agent-friendly repos help agents not edit',
+    slug: 'agent-friendly-repos-support-noop',
+    summary:
+      'Good coding agents must sometimes conclude that no code change is required. Repositories should make this defensible.',
+    conclusion:
+      'Agent-ready repos should expose current behavior docs, existing contract tests, and review guidance that flags unnecessary churn.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_10_abstention_and_noop.md',
+    status: 'working',
+    confidence: 'medium',
+    sourceType: 'research',
+    publishedAt: '2026-05-23',
+    topics: ['ai-agents', 'verification', 'no-op'],
+    tags: ['noop', 'abstention', 'verification'],
+    usedInPosts: ['write-code-ai-agents-love'],
+    relatedSlugs: ['tests-are-context-not-just-verification', 'setup-is-part-of-the-task'],
+    graph: {
+      edges: [
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 2,
+          note: 'Supports the verification section: knowing when not to edit.',
+        },
+      ],
+    },
+    problem:
+      'Strong agents often propose unnecessary code changes on already-fixed tasks. Confidence does not equal correctness.',
+    whyItMatters:
+      'The most expensive agent bug is the confident edit you did not need.',
+    evidence: [
+      {
+        claim: 'Agents often make unnecessary changes on already-fixed tasks.',
+        sourceTitles: ['FixedBench'],
+        detail:
+          'FixedBench reports 35-65% undesirable code changes on already-fixed tasks across tested models.',
+      },
+      {
+        claim: 'Functional tests can miss structural maintainability failures.',
+        sourceTitles: ['Needle in the Repo'],
+        detail:
+          'Needle in the Repo separates functional tests from structural maintainability oracles.',
+      },
+    ],
+    caveats: [
+      'No-op detection is hard to benchmark because it requires knowing the ground truth.',
+      'Explicit abstention prompting helps but is not a complete solution.',
+    ],
+    openQuestions: [
+      {
+        question: 'Can repos expose a standard "is this already fixed?" verification path?',
+        whyItMatters: 'A reproduction command that passes should signal no change needed.',
+      },
+    ],
+    sources: [
+      {
+        title: 'FixedBench',
+        url: 'https://arxiv.org/abs/2605.07769',
+        kind: 'paper',
+        note: 'No-op task evaluation for coding agents.',
+      },
+    ],
+  },
+  {
+    title: 'Task specs are part of the codebase',
+    slug: 'task-specs-are-part-of-the-codebase',
+    summary:
+      'For nontrivial work, the task description is a code artifact. It should be scoped, versioned, and verifiable.',
+    conclusion:
+      'Every task spanning more than one edit cycle should include goal, scope, relevant files, constraints, validation commands, and expected output.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_11_task_specs_are_part_of_the_codebase.md',
+    status: 'working',
+    confidence: 'medium',
+    sourceType: 'mixed',
+    publishedAt: '2026-05-23',
+    topics: ['ai-agents', 'task-specification', 'planning'],
+    tags: ['task-specs', 'planning', 'scoping'],
+    usedInPosts: ['write-code-ai-agents-love'],
+    relatedSlugs: [
+      'feature-work-fails-at-planning-and-constraints',
+      'agents-md-should-be-an-index',
+    ],
+    graph: {
+      edges: [
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 2,
+          note: 'Supports the task-specification guidance section.',
+        },
+      ],
+    },
+    problem:
+      'Agents do not read your mind. Vague issues produce vague patches.',
+    whyItMatters:
+      'Well-scoped issues with named artifacts and validation commands correlate with better agent PRs.',
+    evidence: [
+      {
+        claim: 'Vendor guidance converges on bounded tasks with explicit validation.',
+        sourceTitles: ['Anthropic large-codebase Claude Code guidance'],
+        detail:
+          'OpenAI, Anthropic, GitHub, Cursor, and Augment all recommend bounded tasks with file paths, examples, and validation.',
+      },
+      {
+        claim: 'Planning and iterative refinement matter for repository-level tasks.',
+        sourceTitles: ['CodePlan'],
+        detail:
+          'CodePlan and SWE-Search show planning and iterative refinement improve multi-file task success.',
+      },
+    ],
+    caveats: [
+      'Over-specifying trivial tasks wastes time.',
+      'Task specs themselves need maintenance and review.',
+    ],
+    openQuestions: [],
+    sources: [
+      {
+        title: 'Anthropic large-codebase Claude Code guidance',
+        url: 'https://claude.com/blog/how-claude-code-works-in-large-codebases-best-practices-and-where-to-start',
+        kind: 'popular-article',
+        note: 'Vendor task-scoping guidance.',
+      },
+    ],
+  },
+  {
+    title: 'Dependency structure beats text blobs',
+    slug: 'dependency-structure-beats-text-blobs',
+    summary:
+      'AI coding agents perform better when repositories expose dependency structure: imports, calls, type relationships, and build edges.',
+    conclusion:
+      'Keep import direction explicit, avoid hidden dynamic registration, maintain generated dependency maps, and align folders with architecture.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_12_dependency_structure_beats_text_blobs.md',
+    status: 'working',
+    confidence: 'high',
+    sourceType: 'research',
+    publishedAt: '2026-05-23',
+    topics: ['retrieval', 'code-graphs', 'ai-agents'],
+    tags: ['dependencies', 'graphs', 'imports'],
+    usedInPosts: ['write-code-ai-agents-love'],
+    relatedSlugs: [
+      'recoverable-structure-beats-prompt-volume',
+      'repo-graphs-need-selective-slices',
+      'static-fact-models-make-rules-agent-usable',
+    ],
+    graph: {
+      edges: [
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 2,
+          note: 'Supports the dependency-structure section of the article.',
+        },
+      ],
+    },
+    problem:
+      'Plain text similarity is not enough for repository-scale coding. Hidden dynamic registration, reflection, and stringly typed coupling block agent navigation.',
+    whyItMatters:
+      'Agents need relationships, not just files. Explicit dependency structure makes cross-file tasks tractable.',
+    evidence: [
+      {
+        claim: 'Graph-guided retrieval outperforms plain text retrieval in repo-level generation.',
+        sourceTitles: ['GraphCodeAgent'],
+        detail:
+          'GraphCodeAgent reports +43.81% relative Pass@1 improvement and +94.30% on cross-file dependency tasks.',
+      },
+      {
+        claim: 'Program slicing with semantic descriptions improves retrieval by 48-67%.',
+        sourceTitles: ['SLICE'],
+        detail:
+          'SLICE combines semantic descriptions with backward program slicing, reporting 48-67% improvements over no-retrieval.',
+      },
+    ],
+    caveats: [
+      'Agents do not need every graph dumped into context; they need compact, task-relevant slices.',
+      'Graph construction has setup costs that must be amortized.',
+    ],
+    openQuestions: [],
+    sources: [
+      {
+        title: 'GraphCodeAgent',
+        url: 'https://arxiv.org/abs/2504.10046',
+        kind: 'paper',
+        note: 'Graph-guided repo-level code generation.',
+      },
+    ],
+  },
+  {
+    title: 'Types and static surfaces reduce hallucinated APIs',
+    slug: 'types-reduce-hallucinated-apis',
+    summary:
+      'Agents need to know which members, functions, and external APIs are actually available. Typed and static-analysis-visible surfaces reduce invalid-code errors.',
+    conclusion:
+      'Use explicit exports, typed public APIs, generated clients, reliable typecheck commands, and approved library lists.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_14_types_and_static_surfaces_reduce_hallucinated_apis.md',
+    status: 'working',
+    confidence: 'high',
+    sourceType: 'research',
+    publishedAt: '2026-05-23',
+    topics: ['types', 'static-analysis', 'ai-agents'],
+    tags: ['types', 'hallucination', 'apis'],
+    usedInPosts: ['write-code-ai-agents-love'],
+    relatedSlugs: [
+      'types-and-sdks-compress-intent',
+      'static-diagnostics-are-agent-interfaces',
+      'static-surfaces-are-agent-affordances',
+    ],
+    graph: {
+      edges: [
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 2,
+          note: 'Supports the types-as-guardrails section.',
+        },
+      ],
+    },
+    problem:
+      'Agents confidently generate calls to APIs that do not exist. Without type visibility, there is no compile-time feedback.',
+    whyItMatters:
+      'Static surfaces do not solve logical correctness, but they reduce symbol/API hallucination and make verification cheaper.',
+    evidence: [
+      {
+        claim: 'Autocompletion-visible identifiers help agents generate valid code.',
+        sourceTitles: ['ToolGen'],
+        detail:
+          'ToolGen reports dependency coverage improvements of +31.4% to +39.1% and static validity improvements of +44.9% to +57.7%.',
+      },
+      {
+        claim: 'Removing type context reduces repository-level generation performance.',
+        sourceTitles: ['CatCoder'],
+        detail:
+          'CatCoder reports Java pass@k drop of up to 11.57% when type context is removed.',
+      },
+    ],
+    caveats: [
+      'Static surfaces do not guarantee logical correctness.',
+      'Overly strict types can create friction without proportional safety.',
+    ],
+    openQuestions: [],
+    sources: [
+      {
+        title: 'ToolGen',
+        url: 'https://arxiv.org/abs/2401.06391',
+        kind: 'paper',
+        note: 'Static/autocomplete tools for dependency validity.',
+      },
+      {
+        title: 'CatCoder',
+        url: 'https://arxiv.org/abs/2406.03283',
+        kind: 'paper',
+        note: 'Repo-level generation with code and type context.',
+      },
+    ],
+  },
+  {
+    title: 'More context can hurt',
+    slug: 'more-context-can-hurt',
+    summary:
+      'Large context windows and long instruction files do not automatically improve agent performance. Irrelevant context raises cost and can reduce success.',
+    conclusion:
+      'Put only durable, mandatory facts in root AGENTS.md. Use scoped docs and selective retrieval for specialized workflows.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_16_more_context_can_hurt.md',
+    status: 'working',
+    confidence: 'high',
+    sourceType: 'research',
+    publishedAt: '2026-05-23',
+    topics: ['context-engineering', 'ai-agents', 'retrieval'],
+    tags: ['context', 'noise', 'cost'],
+    usedInPosts: ['write-code-ai-agents-love'],
+    relatedSlugs: [
+      'context-should-be-layered',
+      'long-context-still-needs-structure',
+      'agents-md-should-be-an-index',
+    ],
+    graph: {
+      edges: [
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 2,
+          note: 'Backs the argument for scoped, not maximized, context.',
+        },
+      ],
+    },
+    problem:
+      'Adding more context seems safe but can reduce success and increase cost when irrelevant material crowds out signal.',
+    whyItMatters:
+      'This is not an argument for less documentation. It is an argument for layered, scoped, retrievable documentation.',
+    evidence: [
+      {
+        claim: 'Context files tended to reduce success and increased cost by over 20%.',
+        sourceTitles: ['Evaluating AGENTS.md'],
+        detail:
+          'Evaluating AGENTS.md found context files reduced average resolution rate and increased inference cost.',
+      },
+      {
+        claim: 'Adding too much global context can underperform selective context.',
+        sourceTitles: ['A3-CodGen'],
+        detail:
+          'A3-CodGen reports that global retrieval F1 drops from 0.601 at k=5 to 0.479 at k=15.',
+      },
+    ],
+    caveats: [
+      'The effect depends on context quality, not just quantity.',
+      'Some tasks genuinely need broad context.',
+    ],
+    openQuestions: [],
+    sources: [
+      {
+        title: 'Evaluating AGENTS.md',
+        url: 'https://arxiv.org/abs/2602.11988',
+        kind: 'paper',
+        note: 'Context file cost analysis.',
+      },
+    ],
+  },
+  {
+    title: 'Quality gates must cover smells, not just behavior',
+    slug: 'quality-gates-must-cover-smells',
+    summary:
+      'Passing behavior tests is not enough. Agent-generated code can be correct-looking while introducing structural quality problems.',
+    conclusion:
+      'Run lint, typecheck, format, dead-code checks, and complexity rules. Use "no new warnings" CI policy and review checklists for agent-specific smells.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_17_quality_gates_must_cover_smells.md',
+    status: 'working',
+    confidence: 'high',
+    sourceType: 'research',
+    publishedAt: '2026-05-23',
+    topics: ['quality-gates', 'static-analysis', 'ai-agents'],
+    tags: ['smells', 'lint', 'quality'],
+    usedInPosts: ['write-code-ai-agents-love'],
+    relatedSlugs: [
+      'static-oracles-catch-what-tests-miss',
+      'executable-architecture-beats-prose',
+      'codehealth-predicts-refactoring-success',
+    ],
+    graph: {
+      edges: [
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 2,
+          note: 'Supports the quality-gate and smell-detection section.',
+        },
+      ],
+    },
+    problem:
+      'Agent-generated code has substantially higher smell incidence than professional references, including implementation and design smells.',
+    whyItMatters:
+      'A curated test suite and static gates remain the more reliable oracle. Agent-generated tests alone are insufficient.',
+    evidence: [
+      {
+        claim: 'LLM-generated Java code has substantially higher smell incidence than professional references.',
+        sourceTitles: ['Smells of LLM Generated Code'],
+        detail:
+          'The paper reports higher incidence of implementation and design smells in LLM-generated code.',
+      },
+      {
+        claim: 'Asking agents to write more tests does not reliably improve patch success.',
+        sourceTitles: ['Rethinking agent-generated tests'],
+        detail:
+          'Agent test-writing activity is not equivalent to useful validation signal.',
+      },
+    ],
+    caveats: [
+      'Static metrics are imperfect proxies for quality.',
+      'Overly strict gates can slow development without proportional benefit.',
+    ],
+    openQuestions: [],
+    sources: [
+      {
+        title: 'Smells of LLM Generated Code',
+        url: 'https://arxiv.org/abs/2510.03029',
+        kind: 'paper',
+        note: 'Smell incidence in LLM-generated code.',
+      },
+    ],
+  },
+  {
+    title: 'Generated SDKs turn API contracts into code',
+    slug: 'generated-sdks-turn-api-contracts-into-code',
+    summary:
+      'Agents should not hand-roll raw API calls when a typed, generated client can be produced from the API contract.',
+    conclusion:
+      'Treat OpenAPI/protobuf as first-class source artifacts. Generate clients in CI, ban raw calls to internal APIs, and keep generated code in predictable folders.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_20_generated_sdks_turn_api_contracts_into_code.md',
+    status: 'working',
+    confidence: 'medium',
+    sourceType: 'mixed',
+    publishedAt: '2026-05-23',
+    topics: ['apis', 'generated-sdks', 'ai-agents'],
+    tags: ['sdk', 'openapi', 'code-generation'],
+    usedInPosts: ['write-code-ai-agents-love'],
+    relatedSlugs: ['types-and-sdks-compress-intent', 'types-reduce-hallucinated-apis'],
+    graph: {
+      edges: [
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 2,
+          note: 'Detailed guidance for the generated-SDK section.',
+        },
+      ],
+    },
+    problem:
+      'Raw fetch calls hide API contracts in strings. Agents miss URL paths, query names, request bodies, response shapes, and error handling.',
+    whyItMatters:
+      'Generated SDKs convert remote API behavior into searchable, typed, versioned code that agents can import and typecheck.',
+    evidence: [
+      {
+        claim: 'API documentation helps code generation models.',
+        sourceTitles: ['DocPrompting'],
+        detail:
+          'DocPrompting shows API documentation improves code generation by providing context about available endpoints.',
+      },
+      {
+        claim: 'Type constraints and available symbols reduce invalid code.',
+        sourceTitles: ['Type-Constrained Code Generation', 'ToolGen'],
+        detail:
+          'Type constraints reduce compile errors by 74.8% on HumanEval; ToolGen improves static validity by +44.9% to +57.7%.',
+      },
+    ],
+    caveats: [
+      'Generated clients are only as good as the spec. A stale OpenAPI file creates typed lies.',
+      'Generated SDKs can be noisy; keep them isolated and marked as generated.',
+    ],
+    openQuestions: [],
+    sources: [
+      {
+        title: 'Type-Constrained Code Generation',
+        url: 'https://arxiv.org/abs/2504.09246',
+        kind: 'paper',
+        note: 'Type constraints reduce compilation errors.',
+      },
+      {
+        title: 'OpenAPI Generator',
+        url: 'https://openapi-generator.tech/',
+        kind: 'official-doc',
+        note: 'OpenAPI-based client generation tool.',
+      },
+    ],
+  },
+  {
+    title: 'Repository graphs need selective slices',
+    slug: 'repo-graphs-need-selective-slices',
+    summary:
+      'Agents benefit from explicit repository structure, but the graph must be queried as a selective slice. Dumping the whole graph into context hurts.',
+    conclusion:
+      'Make repository relationships recoverable, auditable, and selectively retrievable. Use compact slices, not full graph dumps.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_21_repository_graphs_need_selective_slices.md',
+    status: 'solid',
+    confidence: 'high',
+    sourceType: 'research',
+    publishedAt: '2026-05-23',
+    topics: ['retrieval', 'code-graphs', 'ai-agents'],
+    tags: ['graphs', 'retrieval', 'selective-context'],
+    usedInPosts: ['write-code-ai-agents-love'],
+    relatedSlugs: [
+      'recoverable-structure-beats-prompt-volume',
+      'dependency-structure-beats-text-blobs',
+      'more-context-can-hurt',
+    ],
+    graph: {
+      edges: [
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'Core evidence for the graph-context section with specific data.',
+        },
+      ],
+    },
+    problem:
+      'Repository work requires relationships across files, but larger graph neighborhoods add both useful signal and irrelevant paths.',
+    whyItMatters:
+      'The RIG paper shows +12.2% accuracy and -53.9% completion time with explicit repo maps. But RepoGraph shows 2-hop context is worse than 1-hop.',
+    evidence: [
+      {
+        claim: 'Repository Intelligence Graph improves agent accuracy by +12.2% and reduces time by -53.9%.',
+        sourceTitles: ['Repository Intelligence Graph'],
+        detail:
+          'RIG measures deterministic repo maps for commercial agents; gains grow with repo complexity.',
+      },
+      {
+        claim: 'Larger graph context can perform worse than smaller slices.',
+        sourceTitles: ['RepoGraph'],
+        detail:
+          'RepoGraph 2-hop flat context uses 10,505 tokens but resolves 26.00% vs 1-hop at 2,310 tokens resolving 29.67%.',
+      },
+      {
+        claim: 'Graph-guided traversal outperforms static blob context.',
+        sourceTitles: ['GraphCodeAgent'],
+        detail:
+          'Removing SSCGTraverse dropped Pass@1 from 58.14 to 51.83. The agent needs to walk the graph, not receive a static blob.',
+      },
+    ],
+    caveats: [
+      'Not every repo needs an explicit graph file.',
+      'RepoGraph absolute gains on SWE-bench Lite are modest.',
+    ],
+    openQuestions: [
+      {
+        question: 'What is the right graph granularity for product repos?',
+        whyItMatters: 'Academic benchmarks may not capture product-specific domain conventions.',
+      },
+    ],
+    sources: [
+      {
+        title: 'Repository Intelligence Graph',
+        url: 'https://arxiv.org/abs/2601.10112',
+        kind: 'paper',
+        note: 'Deterministic repo maps for agent orientation.',
+      },
+      {
+        title: 'RepoGraph',
+        url: 'https://arxiv.org/abs/2410.14684',
+        kind: 'paper',
+        note: 'Graph context helps but bigger is not always better.',
+      },
+    ],
+  },
+  {
+    title: 'Feature work fails at planning and constraints',
+    slug: 'feature-work-fails-at-planning-and-constraints',
+    summary:
+      'Feature-addition tasks fail more often at planning, constraint satisfaction, and step fidelity than at localization. Patch application is not resolution.',
+    conclusion:
+      'Feature-friendly codebases must expose extension points, constraints, examples, and acceptance tests so agents do not invent plans against hidden rules.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_22_feature_work_fails_at_planning_and_constraints.md',
+    status: 'solid',
+    confidence: 'high',
+    sourceType: 'research',
+    publishedAt: '2026-05-23',
+    topics: ['ai-agents', 'feature-work', 'planning'],
+    tags: ['features', 'planning', 'constraints'],
+    usedInPosts: ['write-code-ai-agents-love'],
+    relatedSlugs: [
+      'task-specs-are-part-of-the-codebase',
+      'static-oracles-catch-what-tests-miss',
+      'executable-architecture-beats-prose',
+    ],
+    graph: {
+      edges: [
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'Core evidence for the feature-work section.',
+        },
+      ],
+    },
+    problem:
+      'Agents can apply patches cleanly while misunderstanding the change. RACE-bench shows 67 pp gap between patch apply and resolution for some agents.',
+    whyItMatters:
+      'Structural constraints create ~30 pp performance decay. Hidden architecture rules force agents to infer while implementing.',
+    evidence: [
+      {
+        claim: 'Patch application rate far exceeds resolution rate in feature tasks.',
+        sourceTitles: ['RACE-bench'],
+        detail:
+          'AutoCodeRover: 96.21% apply, 28.79% resolved (67.42 pp gap). mini-SWE-Agent step recall drops to 0.445.',
+      },
+      {
+        claim: 'Production-like structural constraints cause ~30 pp assertion-pass decay.',
+        sourceTitles: ['Constraint Decay'],
+        detail:
+          'Capable configurations lose about 30 pp from L0 to L3 as framework, architecture, and ORM constraints accumulate.',
+      },
+      {
+        claim: 'Agents execute specified refactors far better than they discover them.',
+        sourceTitles: ['CODETASTE'],
+        detail:
+          'GPT-5.2 instructed: 69.6% alignment. Open direct: 7.7% alignment. Detailed specs matter.',
+      },
+    ],
+    caveats: [
+      'These benchmarks measure different task definitions and should not be merged into one leaderboard.',
+      'Planning alone does not solve open-ended work; the plan must be grounded in visible structure.',
+    ],
+    openQuestions: [],
+    sources: [
+      {
+        title: 'RACE-bench',
+        url: 'https://arxiv.org/abs/2603.26337',
+        kind: 'paper',
+        note: 'Feature-addition reasoning and planning evaluation.',
+      },
+      {
+        title: 'Constraint Decay',
+        url: 'https://arxiv.org/abs/2605.06445',
+        kind: 'paper',
+        note: 'Structural constraints reduce agent success by ~30 pp.',
+      },
+    ],
+  },
+  {
+    title: 'Setup is part of the task',
+    slug: 'setup-is-part-of-the-task',
+    summary:
+      'Agents treat setup as the first task. If the environment cannot be bootstrapped deterministically, agents burn reasoning and tokens before touching the actual work.',
+    conclusion:
+      'Expose setup state as a machine-checkable contract: one-command install, fresh-shell verification, targeted test slices, and explicit reproduction paths.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_23_setup_is_part_of_the_task.md',
+    status: 'solid',
+    confidence: 'high',
+    sourceType: 'research',
+    publishedAt: '2026-05-23',
+    topics: ['ai-agents', 'setup', 'verification'],
+    tags: ['setup', 'bootstrap', 'verification'],
+    usedInPosts: ['write-code-ai-agents-love'],
+    relatedSlugs: [
+      'reproducible-setup-is-agent-infrastructure',
+      'agent-friendly-repos-support-noop',
+      'tests-are-context-not-just-verification',
+    ],
+    graph: {
+      edges: [
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'Core evidence for the setup-as-infrastructure section.',
+        },
+      ],
+    },
+    problem:
+      'Setup failures are hidden inside later failures. A test fails but was the product broken, the dependency missing, or the runtime wrong?',
+    whyItMatters:
+      'SetupBench shows best-case 62.4% success. Installamatic shows 28.8% average install rate. Setup ambiguity is expensive.',
+    evidence: [
+      {
+        claim: 'Even strong scaffolds do not reliably finish setup.',
+        sourceTitles: ['SetupBench'],
+        detail:
+          'Best OpenHands overall success: 62.4%. Repo setup: 38.9-57.4%. Local DB: 20.0-53.3%. Wasted steps: 38-69%.',
+      },
+      {
+        claim: 'Finding docs is not enough for successful installation.',
+        sourceTitles: ['Installamatic'],
+        detail:
+          'Average installation rate 28.8%. Perfect recall rate 34.7%. Average attempt time 501 seconds.',
+      },
+      {
+        claim: 'A runnable environment helps agents decide no change is needed.',
+        sourceTitles: ['FixedBench'],
+        detail:
+          'Removing git history and setup signals lowers abstention rate. Existing tests improve it.',
+      },
+    ],
+    caveats: [
+      'Not every project can have trivial one-command setup.',
+      'Agent-written tests are not a substitute for environment health.',
+    ],
+    openQuestions: [],
+    sources: [
+      {
+        title: 'SetupBench',
+        url: 'https://arxiv.org/abs/2507.09063',
+        kind: 'paper',
+        note: 'Setup-as-benchmark evidence.',
+      },
+      {
+        title: 'Installamatic',
+        url: 'https://arxiv.org/abs/2412.06294',
+        kind: 'paper',
+        note: 'Agent installation study.',
+      },
+    ],
+  },
+  {
+    title: 'Agentic PRs have a different shape',
+    slug: 'agentic-prs-have-different-shape',
+    summary:
+      'Agent-written merged PRs have measurably different commit counts, file touches, additions, deletions, and similarity profiles compared to human PRs.',
+    conclusion:
+      'Code review should not treat agent PRs as normal human PRs. Watch for broad file touches, low deletion, compatibility shims, and generated files edited by hand.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_25_agentic_prs_have_a_different_shape.md',
+    status: 'working',
+    confidence: 'high',
+    sourceType: 'research',
+    publishedAt: '2026-05-23',
+    topics: ['ai-agents', 'code-review', 'pr-shape'],
+    tags: ['prs', 'review', 'change-shape'],
+    usedInPosts: ['write-code-ai-agents-love'],
+    relatedSlugs: [
+      'quality-gates-must-cover-smells',
+      'static-oracles-catch-what-tests-miss',
+    ],
+    graph: {
+      edges: [
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 2,
+          note: 'Supports the agent-PR review guidance section.',
+        },
+      ],
+    },
+    problem:
+      'Agentic PRs are now at ecosystem scale (932K PRs in AIDev). Their patch shape, similarity, and failure modes differ from human PRs.',
+    whyItMatters:
+      'Agent-friendly codebases need affordances for generation and guardrails for review. The same artifacts help both.',
+    evidence: [
+      {
+        claim: 'Agentic PRs differ from human PRs with medium to large practical effect sizes.',
+        sourceTitles: ['How AI Coding Agents Modify Code'],
+        detail:
+          'Cliff delta: commits 0.54 (large), files 0.45 (medium), deletions 0.45 (medium), additions 0.28 (small).',
+      },
+      {
+        claim: 'Readability-intended agent commits often increase size and complexity.',
+        sourceTitles: ['Do AI Agents Really Improve Code Readability?'],
+        detail:
+          '56.1% of readability commits deteriorated Maintainability Index. 71.5% increased Lines of Code.',
+      },
+    ],
+    caveats: [
+      'AIDev is a dataset; it does not score PR quality directly.',
+      'Static readability metrics are signals, not truth.',
+    ],
+    openQuestions: [],
+    sources: [
+      {
+        title: 'AIDev',
+        url: 'https://arxiv.org/abs/2602.09185',
+        kind: 'paper',
+        note: 'Large-scale agentic PR dataset.',
+      },
+      {
+        title: 'How AI Coding Agents Modify Code',
+        url: 'https://arxiv.org/abs/2601.17581',
+        kind: 'paper',
+        note: 'Agentic vs human PR change-shape comparison.',
+      },
+    ],
+  },
+  {
+    title: 'Static surfaces are agent affordances',
+    slug: 'static-surfaces-are-agent-affordances',
+    summary:
+      'Agents read repos through surfaces: names, imports, types, declarations, generated clients, schemas, tests, and diagnostics. Hidden behavior forces inference.',
+    conclusion:
+      'Turn hidden contracts into local static affordances. Generated SDKs, package exports, TypeScript interfaces, and custom lint rules all reduce the inference gap.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_26_static_surfaces_are_agent_affordances.md',
+    status: 'solid',
+    confidence: 'high',
+    sourceType: 'research',
+    publishedAt: '2026-05-23',
+    topics: ['static-analysis', 'apis', 'ai-agents'],
+    tags: ['affordances', 'types', 'sdks', 'names'],
+    usedInPosts: ['write-code-ai-agents-love'],
+    relatedSlugs: [
+      'types-and-sdks-compress-intent',
+      'names-are-semantic-infrastructure',
+      'types-reduce-hallucinated-apis',
+      'dependency-structure-beats-text-blobs',
+    ],
+    graph: {
+      edges: [
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'Synthesizes the names/types/SDK/lint evidence into one practical pattern.',
+        },
+      ],
+    },
+    problem:
+      'Hidden behavior behind raw strings, reflection, dynamic registration, or tribal docs forces the agent to infer rather than search.',
+    whyItMatters:
+      'CrossCodeEval shows almost 100% of references need cross-file information. Only ~2% are predictable from the current file.',
+    evidence: [
+      {
+        claim: 'Cross-file API context materially improves repository completion.',
+        sourceTitles: ['CrossCodeEval'],
+        detail:
+          'StarCoder-15.5B Python EM improved from 8.82 to 15.72 with retrieved context.',
+      },
+      {
+        claim: 'Type constraints reduce the dominant compile-error class in generated TypeScript.',
+        sourceTitles: ['Type-Constrained Code Generation'],
+        detail:
+          '94% of generated TS compile errors are type-check errors. Type constraints reduce them by 74.8%.',
+      },
+      {
+        claim: 'Name obfuscation sharply hurts intent summarization.',
+        sourceTitles: ['When Names Disappear'],
+        detail:
+          'GPT-4o class summarization dropped from 87.3 to 58.7 after name obfuscation.',
+      },
+    ],
+    caveats: [
+      'Types prove shape, not business correctness.',
+      'Generated SDKs are only as correct as the underlying schema.',
+    ],
+    openQuestions: [],
+    sources: [
+      {
+        title: 'CrossCodeEval',
+        url: 'https://arxiv.org/abs/2310.11248',
+        kind: 'paper',
+        note: 'Cross-file code completion benchmark.',
+      },
+      {
+        title: 'Type-Constrained Code Generation',
+        url: 'https://arxiv.org/abs/2504.09246',
+        kind: 'paper',
+        note: 'Type constraints reduce compile errors.',
+      },
+    ],
+  },
+  {
+    title: 'CodeHealth predicts AI refactoring success',
+    slug: 'codehealth-predicts-refactoring-success',
+    summary:
+      'File-level code quality (CodeHealth >= 9) is a statistically significant predictor of LLM refactoring success. Medium-sized models see 15-30% break-rate reduction on healthy code.',
+    conclusion:
+      'Enforce code health through CI: lint, complexity gates, smell detection. The same gates that help human developers also help AI agents.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_30_codehealth_predicts_ai_refactoring_success.md',
+    status: 'solid',
+    confidence: 'high',
+    sourceType: 'research',
+    publishedAt: '2026-05-23',
+    topics: ['code-quality', 'refactoring', 'ai-agents'],
+    tags: ['codehealth', 'smells', 'refactoring'],
+    usedInPosts: ['write-code-ai-agents-love'],
+    relatedSlugs: [
+      'quality-gates-must-cover-smells',
+      'static-oracles-catch-what-tests-miss',
+      'perplexity-is-not-file-level-ai-friendliness',
+    ],
+    graph: {
+      edges: [
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'Strongest quantitative link between code quality and AI performance.',
+        },
+      ],
+    },
+    problem:
+      'The claim that code quality helps AI agents lacked direct quantitative evidence until this paper.',
+    whyItMatters:
+      'CodeHealth is the root node in ALL five decision trees predicting refactoring failure, with importance 0.572-0.880. The human-calibrated CH=9 threshold also delineates AI risk.',
+    evidence: [
+      {
+        claim: 'Healthy code reduces refactoring break rates by 8-15 pp for medium-sized models.',
+        sourceTitles: ['Code for Machines, Not Just Humans'],
+        detail:
+          'All five medium models show p<0.001. Risk difference ranges from -8.58 pp (Qwen) to -15.12 pp (Gemma).',
+      },
+      {
+        claim: 'Frontier models can compensate but are expensive.',
+        sourceTitles: ['Code for Machines, Not Just Humans'],
+        detail:
+          'Claude achieves 94-96% pass regardless of code health, but Sonnet and Claude samples were smaller.',
+      },
+      {
+        claim: 'AI-assisted code is not inherently worse for maintainability.',
+        sourceTitles: ['Echoes of AI'],
+        detail:
+          'A 151-participant RCT found no systematic maintainability differences in AI-assisted code, with 30.7% median time reduction.',
+      },
+    ],
+    caveats: [
+      'Dataset is competitive-programming code (60-120 SLOC), not production repos.',
+      'CodeHealth is a proprietary metric; other tools may yield different thresholds.',
+      'The study is observational, not interventional.',
+    ],
+    openQuestions: [
+      {
+        question: 'Does the CH=9 threshold hold for production multi-file contexts?',
+        whyItMatters: 'Real codebases have different complexity distributions than competitive programming.',
+      },
+    ],
+    sources: [
+      {
+        title: 'Code for Machines, Not Just Humans',
+        url: 'https://arxiv.org/abs/2601.02200',
+        kind: 'paper',
+        note: 'Primary evidence: CodeHealth predicts AI refactoring success.',
+      },
+      {
+        title: 'Echoes of AI',
+        url: 'https://arxiv.org/abs/2507.00788',
+        kind: 'paper',
+        note: 'RCT: AI-assisted code shows no maintainability difference.',
+      },
+    ],
+  },
+  {
+    title: 'Perplexity is not file-level AI-friendliness',
+    slug: 'perplexity-is-not-file-level-ai-friendliness',
+    summary:
+      'File-level perplexity has no practically meaningful association with code quality. Token-level PPL correlates with human confusion, but file-level PPL does not predict structural quality.',
+    conclusion:
+      'Do not use perplexity alone to measure AI-friendliness. Use structural code quality metrics: complexity, nesting, smell detectors.',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_31_perplexity_is_not_file_level_ai_friendliness.md',
+    status: 'working',
+    confidence: 'high',
+    sourceType: 'research',
+    publishedAt: '2026-05-23',
+    topics: ['code-quality', 'perplexity', 'ai-agents'],
+    tags: ['perplexity', 'metrics', 'code-quality'],
+    usedInPosts: ['write-code-ai-agents-love'],
+    relatedSlugs: ['codehealth-predicts-refactoring-success', 'quality-gates-must-cover-smells'],
+    graph: {
+      edges: [
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 2,
+          note: 'Prevents the article from recommending PPL as a quality proxy.',
+        },
+      ],
+    },
+    problem:
+      'Perplexity is sometimes proposed as a measure of code AI-friendliness. At the file level, it does not work.',
+    whyItMatters:
+      'Cliff delta ranges from -0.054 to +0.136 across models (negligible). Direction is inconsistent: some models show higher PPL for healthy code.',
+    evidence: [
+      {
+        claim: 'File-level PPL shows negligible and inconsistent association with CodeHealth.',
+        sourceTitles: ['Code for Machines, Not Just Humans'],
+        detail:
+          'All five models show negligible Cliff delta. Direction varies: Gemma/GPT show higher PPL for healthy code, GLM/Qwen show lower.',
+      },
+      {
+        claim: 'Token-level PPL correlates with human confusion (EEG).',
+        sourceTitles: ['How do Humans and LLMs Process Confusing Code?'],
+        detail:
+          'PPL spikes correlate with late frontal positivity EEG component at atoms of confusion. Same metric, different scale, different answer.',
+      },
+    ],
+    caveats: [
+      'Token-level PPL is still useful for identifying confusing code constructs.',
+      'Different aggregation methods (variance, max) were not tested.',
+      'Results are from Python competitive-programming files.',
+    ],
+    openQuestions: [],
+    sources: [
+      {
+        title: 'Code for Machines, Not Just Humans',
+        url: 'https://arxiv.org/abs/2601.02200',
+        kind: 'paper',
+        note: 'Negative result: PPL vs CodeHealth at file level.',
+      },
+      {
+        title: 'How do Humans and LLMs Process Confusing Code?',
+        url: 'https://arxiv.org/abs/2508.18547',
+        kind: 'paper',
+        note: 'Positive result: PPL correlates with EEG confusion at token level.',
       },
     ],
   },
@@ -3093,6 +4437,177 @@ const insightSections = {
       body: [
         `The monorepo only helps agents if boundaries are explicit. Otherwise the search space gets larger, the build gets slower, and ownership gets fuzzier. An agent-friendly monorepo needs affected-test tooling, package boundaries, generated-code rules, sparse enough local commands, and docs that live close to the code they describe.`,
         `The version I would present is: put things together when they change together, and enforce the boundaries that make "together" understandable. For agents, one commit that contains the whole truth is powerful. One repo that contains every unrelated thing without ownership is not.`,
+      ],
+    },
+  ],
+  'agent-instructions-are-config': [
+    {
+      heading: 'Your agent file is not a README',
+      body: [
+        `The research shows AGENTS.md has measurable but mixed effects. When files contain exact commands, architecture summaries, and hard constraints, they reduce runtime and token consumption. When they become stale, long, or aspirational, they increase cost without improving patches. The file is operational configuration, not documentation.`,
+        `The practical rule: include commands, constraints, gotchas, and verification expectations. Exclude changelogs, generic advice, file trees, and aspirational rules the repo does not follow.`,
+      ],
+    },
+  ],
+  'reproducible-setup-is-agent-infrastructure': [
+    {
+      heading: 'If a new laptop cannot run it, neither can a fresh agent',
+      body: [
+        `Installamatic finds a 28.8% average installation rate for Python projects, even when agents find relevant docs. SetupBench isolates setup as a direct benchmark problem and shows even strong scaffolds top out around 62% success. The bottleneck is not the agent. It is the implicit setup knowledge.`,
+        `Agent-friendly repos need pinned lockfiles, one-command install, one-command test, explicit env vars, and no hidden manual steps. Container or devcontainer support helps when setup is inherently complex.`,
+      ],
+    },
+  ],
+  'simplicity-beats-agent-theater': [
+    {
+      heading: 'Fix the repo before adding more agents',
+      body: [
+        `Agentless demonstrates that a simple localize-repair-validate workflow can be competitive with more elaborate agent systems. ContextBench finds sophisticated scaffolding yields marginal gains. The lesson is not anti-tooling. The lesson is that repo quality is the foundation.`,
+        `Before adding orchestration, ensure clear task contracts, reliable tests, searchable structure, precise instructions, and reproducible setup. Then use orchestration for tasks that genuinely need parallel exploration.`,
+      ],
+    },
+  ],
+  'context-should-be-layered': [
+    {
+      heading: 'Default context should orient; on-demand context should explain',
+      body: [
+        `The best agent context follows a layered model: a small hot path loaded by default plus deeper cold context fetched when relevant. Codified Context describes this pattern for a large C# system. Cursor, GitHub Copilot, and Anthropic all support scoped, path-level instructions.`,
+        `The practical layering: root file for durable invariants and commands, subdirectory files for local conventions, docs/architecture for system design, generated repo maps for dependency graphs, and task specs for temporary goal-specific context.`,
+      ],
+    },
+  ],
+  'long-context-still-needs-structure': [
+    {
+      heading: 'A million-token window is not a map',
+      body: [
+        `Lost in the Middle shows models can underuse relevant information depending on where it appears in long context. ContextBench shows agents often retrieve too much context and still fail to use relevant material. Larger windows do not eliminate the need for retrieval, maps, and scoped documentation.`,
+        `The repo should support progressive disclosure: root maps, scoped docs, generated symbol maps, canonical examples, searchable docs, exact commands, and focused task specs.`,
+      ],
+    },
+  ],
+  'agent-friendly-repos-support-noop': [
+    {
+      heading: 'The most expensive agent bug is the confident edit you did not need',
+      body: [
+        `FixedBench reports that strong agents propose unnecessary code changes on 35-65% of already-fixed tasks. Agent-ready repos should make "do nothing" defensible through clear behavior docs, tests that demonstrate the existing contract, and review guidance that flags unnecessary churn.`,
+        `A reproduction command that passes should signal no change is needed. This connects to setup: a runnable environment is not just for making changes. It also helps the agent decide that no change is needed.`,
+      ],
+    },
+  ],
+  'task-specs-are-part-of-the-codebase': [
+    {
+      heading: 'Agents do not read your mind; they read your issue',
+      body: [
+        `Vendor guidance from OpenAI, Anthropic, GitHub, Cursor, and Augment converges on bounded tasks with explicit validation, file paths, and examples. Merged agent PRs correlate with shorter, well-scoped issues that name relevant artifacts.`,
+        `Every task spanning more than one local edit cycle should include: goal, scope, relevant files, canonical example, constraints, non-goals, validation commands, expected output, and rollback notes.`,
+      ],
+    },
+  ],
+  'dependency-structure-beats-text-blobs': [
+    {
+      heading: 'Agents need relationships, not just files',
+      body: [
+        `GraphCodeAgent reports +43.81% relative Pass@1 improvement using graph-guided retrieval, with +94.30% on cross-file dependency tasks. SLICE reports 48-67% improvement over no-retrieval using semantic descriptions with backward program slicing. Plain text similarity is not enough for repository-scale work.`,
+        `Keep import direction explicit. Avoid hidden dynamic registration, reflection, monkeypatching, and stringly typed coupling. Maintain generated dependency maps for large systems and align folders with architecture, not accidental chronology.`,
+      ],
+    },
+  ],
+  'types-reduce-hallucinated-apis': [
+    {
+      heading: 'Types constrain shape; agents need that constraint',
+      body: [
+        `ToolGen shows dependency coverage improvements of +31.4% to +39.1% and static validity improvements of +44.9% to +57.7% when models can access available symbols. CatCoder shows removing type context drops Java pass@k by up to 11.57%. Types do not solve logic, but they eliminate a large class of invalid-code errors.`,
+        `Use explicit exports and imports, typed public APIs, generated clients over loose shape copying, reliable typecheck commands, and approved library lists in agent instructions.`,
+      ],
+    },
+  ],
+  'more-context-can-hurt': [
+    {
+      heading: 'This is not an argument for less documentation',
+      body: [
+        `Evaluating AGENTS.md found context files tended to reduce success and increased inference cost by over 20%. A3-CodGen reports that global retrieval F1 drops from 0.601 at k=5 to 0.479 at k=15. More context is not automatically better.`,
+        `The argument is for layered, scoped, retrievable documentation. Put durable facts in the root file. Use scoped docs and package-level instructions for specialized workflows. Retrieve callers, callees, tests, and contracts before broad unrelated files.`,
+      ],
+    },
+  ],
+  'quality-gates-must-cover-smells': [
+    {
+      heading: 'Agent-generated code carries more smells than professional code',
+      body: [
+        `The Smells of LLM Generated Code paper reports substantially higher smell incidence in LLM-generated Java code than professional references. A Causal Perspective on Smells shows static-analysis-based measures can detect and mitigate smell propensity. Behavior tests alone miss these structural problems.`,
+        `Run lint, typecheck, format, dead-code checks, and complexity rules. Use "no new warnings" CI policy. Add review checklist items for redundancy, incomplete implementation, naming inconsistency, unused variables, and broad exceptions.`,
+      ],
+    },
+  ],
+  'generated-sdks-turn-api-contracts-into-code': [
+    {
+      heading: 'Do not make the agent reverse-engineer your API from fetch calls',
+      body: [
+        `Raw fetch/axios calls hide the contract in strings: URL paths, query names, request bodies, response shapes, pagination, auth, retries, and error handling. A generated SDK moves those details into types, functions, schemas, and tests the agent can inspect. OpenAPI Generator, Kiota, Orval, Speakeasy, and Stainless all support this pattern.`,
+        `Treat the API contract as a first-class source artifact. Generate clients in CI and fail if committed clients are stale. Ban raw calls to internal APIs when a generated SDK exists. Keep generated code in predictable folders and add examples showing authentication, retries, and error handling.`,
+      ],
+    },
+  ],
+  'repo-graphs-need-selective-slices': [
+    {
+      heading: 'Graph context helps, but bigger is not always better',
+      body: [
+        `Repository Intelligence Graph shows +12.2% accuracy improvement and -53.9% completion time reduction with explicit repo maps. The gains grow with repository complexity: +17.4% accuracy for high-complexity repos vs +1.1% for low-complexity. But RepoGraph shows that 2-hop flat context uses 10,505 tokens and resolves 26.00%, worse than 1-hop at 2,310 tokens resolving 29.67%.`,
+        `The engineering rule is not "add a graph database to every repo." The rule is: make repository relationships recoverable, auditable, and selectively retrievable. Stable imports, package exports, generated clients, test names, architecture lint rules, and build targets expose the same edges that research graphs formalize.`,
+      ],
+    },
+  ],
+  'feature-work-fails-at-planning-and-constraints': [
+    {
+      heading: 'Patch application is not resolution',
+      body: [
+        `RACE-bench shows AutoCodeRover applies patches at 96.21% but resolves at 28.79%, a 67 pp gap. mini-SWE-Agent step recall drops to 0.445, meaning the agent misses over half the implementation steps. Constraint Decay shows that production-like structural constraints cause ~30 pp assertion-pass decay from L0 to L3.`,
+        `Feature-friendly codebases must expose extension points, constraints, examples, and acceptance tests. CODETASTE shows GPT-5.2 instructed alignment at 69.6% versus open-direct at 7.7%. Agents execute specified transformations far better than they infer intended architectural moves from vague requests.`,
+      ],
+    },
+  ],
+  'setup-is-part-of-the-task': [
+    {
+      heading: 'Setup ambiguity is the first token sink',
+      body: [
+        `SetupBench shows best OpenHands overall success at 62.4%, with repo setup at 38.9-57.4% and local DB setup at 20.0-53.3%. Agents waste 38-69% of steps on ambiguous setup. Installamatic shows a 28.8% average installation rate and average attempt time of 501 seconds, with the longest run at nearly 80 minutes.`,
+        `The minimal agent-ready setup contract: one canonical setup command, fresh-shell verification, scripted local services, targeted test slices per subsystem, and a smoke command under 60 seconds. Setup should be verified in a fresh shell, not only in the shell where the agent installed and exported things.`,
+      ],
+    },
+  ],
+  'agentic-prs-have-different-shape': [
+    {
+      heading: 'Agent PRs are productive but biased',
+      body: [
+        `AIDev documents 932,791 agentic PRs across 116,211 repositories. The How AI Coding Agents Modify Code paper reports Cliff delta for commits at 0.54 (large), files touched at 0.45 (medium), deletions at 0.45 (medium). The readability paper finds 56.1% of readability-intended agent commits deteriorated Maintainability Index and 71.5% increased Lines of Code.`,
+        `Agent-friendly codebases should assume agent PRs are productive but biased. Review gates should watch for broad file touches, low deletion, compatibility shims, generated files edited by hand, tests changed without implementation, and architecture boundaries crossed.`,
+      ],
+    },
+  ],
+  'static-surfaces-are-agent-affordances': [
+    {
+      heading: 'Every hidden contract is an inference tax on the agent',
+      body: [
+        `CrossCodeEval shows almost 100% of references need cross-file information; only ~2% are predictable from the current file. Type-Constrained Code Generation shows 94% of generated TypeScript compile errors are type-check errors, reduced by 74.8% with type constraints. When Names Disappear shows GPT-4o class summarization dropping from 87.3 to 58.7 after name obfuscation.`,
+        `Static surfaces -- typed SDKs, package exports, interfaces, LSP symbols, generated route maps, custom lint rules, and colocated examples -- turn hidden behavior into searchable, importable, autocomplete-able, and repairable facts. The agent reads the repo through these surfaces, not through tribal knowledge.`,
+      ],
+    },
+  ],
+  'codehealth-predicts-refactoring-success': [
+    {
+      heading: 'Code quality is a tax on cheaper models',
+      body: [
+        `Code for Machines shows all five medium-sized LLMs have statistically significant lower break rates on healthy code (p<0.001). Risk difference ranges from -8.58 pp (Qwen) to -15.12 pp (Gemma). CodeHealth is the root node in all five decision trees with feature importance 0.572-0.880. Frontier models (Claude at 94-96%) can compensate, but cost-sensitive workflows will use smaller models.`,
+        `The code smells that matter are standard: nested complexity, complex methods, excessive arguments, complex conditionals, bumpy control flow. The CH=9 threshold was calibrated for human maintainability but also delineates AI refactoring risk. AI-friendly code is also human-friendly code.`,
+      ],
+    },
+  ],
+  'perplexity-is-not-file-level-ai-friendliness': [
+    {
+      heading: 'Same metric, different scale, different answer',
+      body: [
+        `Code for Machines finds negligible Cliff delta (-0.054 to +0.136) between file-level PPL and CodeHealth. Direction is inconsistent across models: some show higher PPL for healthy code. Granite shows zero effect (delta 0.000, p=0.992). Statistical significance without practical significance is a common trap with large sample sizes.`,
+        `But How do Humans and LLMs Process Confusing Code shows PPL spikes correlate with human EEG confusion at the token level. The resolution: file-level PPL averages out local signals and cannot detect structural code smells. Token-level PPL detects surprising constructs. Use structural metrics for editability and PPL only for local confusion detection.`,
       ],
     },
   ],
