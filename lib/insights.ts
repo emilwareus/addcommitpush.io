@@ -131,6 +131,26 @@ const brainGraphDocuments = [
     topics: ['context-engineering', 'ai-agents', 'workflows'],
     tags: ['published', 'claude-code', 'context'],
   },
+  {
+    type: 'presentation',
+    slug: 'voice-agents-deck',
+    title: 'Building Real-Time Voice Agents deck',
+    status: 'research',
+    summary:
+      'The voice-agent presentation and Jarvis demo research track covering VAD, STT, TTS, transport, barge-in, and native speech models.',
+    topics: ['voice-agents', 'real-time', 'presentations'],
+    tags: ['voice-agents', 'deck', 'research'],
+  },
+  {
+    type: 'blog-post',
+    slug: 'voice-agents-article-draft',
+    title: 'Future voice agents article',
+    status: 'research',
+    summary:
+      'A future article compressing the voice-agent second brain into a practical technical narrative.',
+    topics: ['voice-agents', 'stt', 'tts', 'turn-taking', 'webrtc'],
+    tags: ['voice-agents', 'draft', 'research'],
+  },
 ] as const satisfies readonly BrainGraphDocument[];
 
 const insights = [
@@ -934,7 +954,13 @@ const insights = [
     topics: ['architecture', 'linting', 'quality-gates', 'ai-agents'],
     tags: ['lint', 'static-analysis', 'polint', 'architecture'],
     usedInPosts: ['write-code-ai-agents-love'],
-    relatedSlugs: ['agents-md-should-be-an-index', 'boundaries-beat-modularity-as-a-slogan'],
+    relatedSlugs: [
+      'agents-md-should-be-an-index',
+      'boundaries-beat-modularity-as-a-slogan',
+      'static-diagnostics-are-agent-interfaces',
+      'static-oracles-catch-what-tests-miss',
+      'static-fact-models-make-rules-agent-usable',
+    ],
     graph: {
       edges: [
         {
@@ -964,6 +990,27 @@ const insights = [
           relation: 'supports',
           strength: 2,
           note: 'Lint diagnostics and tests both give agents precise repair feedback.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'static-diagnostics-are-agent-interfaces',
+          relation: 'extends',
+          strength: 3,
+          note: 'This decomposes executable architecture into the diagnostic contract agents repair against.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'static-oracles-catch-what-tests-miss',
+          relation: 'supports',
+          strength: 3,
+          note: 'Static oracles provide the evidence for why architecture lint matters beyond behavior tests.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'static-fact-models-make-rules-agent-usable',
+          relation: 'depends-on',
+          strength: 3,
+          note: 'Custom architecture rules become more valuable as the analyzer exposes richer fact families.',
         },
         {
           targetType: 'blog-post',
@@ -1086,6 +1133,401 @@ const insights = [
         localRef:
           'presentations/write-code-ai-agents-love/research/paper-text/evaluating-agents-md-2602.11988.txt',
         note: 'Instruction-file cost caveat.',
+      },
+    ],
+  },
+  {
+    title: 'Static diagnostics are agent interfaces',
+    slug: 'static-diagnostics-are-agent-interfaces',
+    summary:
+      'For agents, a diagnostic is a structured repair protocol: rule ID, file, span, evidence, expected surface, and machine-readable output.',
+    conclusion:
+      'Design lint/type/static output as an agent interface, not only as human terminal prose.',
+    status: 'working',
+    confidence: 'high',
+    sourceType: 'mixed',
+    publishedAt: '2026-05-22',
+    topics: ['static-analysis', 'diagnostics', 'ai-agents', 'quality-gates'],
+    tags: ['diagnostics', 'lint', 'sarif', 'json'],
+    usedInPosts: ['write-code-ai-agents-love'],
+    relatedSlugs: [
+      'executable-architecture-beats-prose',
+      'types-and-sdks-compress-intent',
+      'tests-are-context-not-just-verification',
+    ],
+    graph: {
+      edges: [
+        {
+          targetType: 'insight',
+          targetSlug: 'executable-architecture-beats-prose',
+          relation: 'extends',
+          strength: 3,
+          note: 'This is the lower-level interface shape behind executable architecture.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'types-and-sdks-compress-intent',
+          relation: 'supports',
+          strength: 3,
+          note: 'Type errors and generated SDK facts become useful when diagnostics point to repairable surfaces.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'tests-are-context-not-just-verification',
+          relation: 'supports',
+          strength: 2,
+          note: 'Both tests and diagnostics are feedback channels in the agent repair loop.',
+        },
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This should become the precise version of the lint/static-analysis section.',
+        },
+        {
+          targetType: 'presentation',
+          targetSlug: 'write-code-ai-agents-love-deck',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This can become a visual showing a diagnostic object as protocol.',
+        },
+      ],
+    },
+    problem:
+      'Most lint output is written for humans, but agents need structured evidence they can parse and repair against.',
+    whyItMatters:
+      'A vague warning creates churn. A precise diagnostic lets the agent make a targeted edit and rerun the same check.',
+    evidence: [
+      {
+        claim: 'Static/autocomplete-like tools reduce invalid dependency usage.',
+        sourceTitles: ['ToolGen'],
+        detail:
+          'ToolGen reports dependency coverage improvements of +31.4% to +39.1% and static validity improvements of +44.9% to +57.7%.',
+      },
+      {
+        claim: 'Type diagnostics attack the dominant generated TypeScript compile-error class.',
+        sourceTitles: ['Type-Constrained Code Generation'],
+        detail:
+          'The paper reports that 94% of generated TypeScript compile errors are type-check errors, versus 6% syntax errors.',
+      },
+      {
+        claim: 'Local static-analysis tooling already exposes machine-oriented repair loops.',
+        sourceTitles: ['polint Agent Playbook'],
+        detail:
+          'The playbook documents JSON output, focused rule runs, diagnostic caps, baselines, and ignore inspection for agent remediation loops.',
+      },
+    ],
+    caveats: [
+      'Machine-readable output is not enough; the diagnostic still needs precise evidence and a repair target.',
+      'Too many low-signal diagnostics can waste agent effort.',
+      'Heuristic diagnostics should say they are heuristic so agents do not overfit to weak evidence.',
+    ],
+    openQuestions: [
+      {
+        question: 'What is the minimum diagnostic schema agents need for reliable repair?',
+        whyItMatters:
+          'This could become a practical design contract for polint/exlint and for the article examples.',
+      },
+    ],
+    sources: [
+      {
+        title: 'ToolGen',
+        url: 'https://arxiv.org/abs/2401.06391',
+        kind: 'paper',
+        localRef:
+          'presentations/write-code-ai-agents-love/research/paper-text/toolgen-autocomplete-repo-codegen-2401.06391.txt',
+        note: 'Autocomplete/static tool usage for dependency validity.',
+      },
+      {
+        title: 'Type-Constrained Code Generation',
+        url: 'https://arxiv.org/abs/2504.09246',
+        kind: 'paper',
+        localRef:
+          'presentations/write-code-ai-agents-love/research/paper-text/type-constrained-codegen-2504.09246.txt',
+        note: 'Type-check errors dominate generated TS compile failures.',
+      },
+      {
+        title: 'A3-CodGen',
+        url: 'https://arxiv.org/abs/2312.05772',
+        kind: 'paper',
+        localRef:
+          'presentations/write-code-ai-agents-love/research/paper-text/a3-codgen-2312.05772.txt',
+        note: 'Curated API retrieval helps, but too much global context hurts.',
+      },
+      {
+        title: 'polint Agent Playbook',
+        url: 'https://github.com/emilwareus/polint/blob/main/docs/AGENT-PLAYBOOK.md',
+        kind: 'local-case-study',
+        localRef:
+          'presentations/write-code-ai-agents-love/research/articles/polint-agent-playbook.md',
+        note: 'Local diagnostic loop design for agents.',
+      },
+    ],
+  },
+  {
+    title: 'Static oracles catch what tests miss',
+    slug: 'static-oracles-catch-what-tests-miss',
+    summary:
+      'Behavior tests can pass while the code misses structural intent. Static oracles check dependency shape, migration completion, and refactor alignment.',
+    conclusion:
+      'Use behavior tests and static oracles together: tests check outcomes; static rules check the structural shape the outcome does not encode.',
+    status: 'working',
+    confidence: 'high',
+    sourceType: 'research',
+    publishedAt: '2026-05-22',
+    topics: ['static-analysis', 'testing', 'maintainability', 'ai-agents'],
+    tags: ['static-oracles', 'codetaste', 'needle-in-the-repo', 'constraints'],
+    usedInPosts: ['write-code-ai-agents-love'],
+    relatedSlugs: [
+      'executable-architecture-beats-prose',
+      'tests-are-context-not-just-verification',
+      'boundaries-beat-modularity-as-a-slogan',
+    ],
+    graph: {
+      edges: [
+        {
+          targetType: 'insight',
+          targetSlug: 'executable-architecture-beats-prose',
+          relation: 'supports',
+          strength: 3,
+          note: 'This is the empirical reason mechanically checkable architecture should be executable.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'tests-are-context-not-just-verification',
+          relation: 'contrasts-with',
+          strength: 3,
+          note: 'Tests remain necessary, but they do not encode every structural expectation.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'boundaries-beat-modularity-as-a-slogan',
+          relation: 'supports',
+          strength: 2,
+          note: 'The hardest Needle in the Repo dimensions are boundary and responsibility problems.',
+        },
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This should back the article claim that tests alone are not enough.',
+        },
+        {
+          targetType: 'presentation',
+          targetSlug: 'write-code-ai-agents-love-deck',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This can become the CODETASTE/NITR hard-data slide.',
+        },
+      ],
+    },
+    problem:
+      'A patch can satisfy narrow tests while violating the intended dependency direction, refactor shape, or maintainability constraint.',
+    whyItMatters:
+      'Agents are especially likely to optimize for the visible pass/fail signal. If structure is invisible, it is easy to lose.',
+    evidence: [
+      {
+        claim: 'Behaviorally correct outputs can still be structurally wrong.',
+        sourceTitles: ['Needle in the Repo'],
+        detail:
+          'The paper reports 64/483 behaviorally correct but structurally wrong outcomes, or 13.3%.',
+      },
+      {
+        claim: 'Passing tests does not imply refactor alignment.',
+        sourceTitles: ['CODETASTE'],
+        detail:
+          'GPT-5.2 open direct mode reaches 87.0% PASS but only 7.7% alignment; instructed mode reaches 76.0% PASS and 69.6% alignment.',
+      },
+      {
+        claim: 'Production-like constraints create measurable performance decay.',
+        sourceTitles: ['Constraint Decay'],
+        detail:
+          'Capable configurations lose 30 percentage points from L0 to L3 as architecture, database, and ORM constraints accumulate.',
+      },
+    ],
+    caveats: [
+      'Static oracles should not be treated as full design judgment.',
+      'Some rules should warn rather than block, especially during adoption.',
+      'The strongest claim is tests plus static oracles, not static checks instead of tests.',
+    ],
+    openQuestions: [
+      {
+        question: 'Which static oracles catch the most agent-specific regressions?',
+        whyItMatters:
+          'Import boundaries, migration completeness, generated-client usage, and route security are likely high-leverage candidates.',
+      },
+    ],
+    sources: [
+      {
+        title: 'Needle in the Repo',
+        url: 'https://arxiv.org/abs/2603.27745',
+        kind: 'paper',
+        localRef:
+          'presentations/write-code-ai-agents-love/research/paper-text/needle-in-the-repo-2603.27745.txt',
+        note: 'Functional correctness vs maintainability oracles.',
+      },
+      {
+        title: 'CODETASTE',
+        url: 'https://arxiv.org/abs/2603.04177',
+        kind: 'paper',
+        localRef:
+          'presentations/write-code-ai-agents-love/research/paper-text/codetaste-2603.04177.txt',
+        note: 'Refactoring benchmark with tests plus static rules.',
+      },
+      {
+        title: 'Constraint Decay',
+        url: 'https://arxiv.org/abs/2605.06445',
+        kind: 'paper',
+        localRef:
+          'presentations/write-code-ai-agents-love/research/paper-text/constraint-decay-2605.06445.txt',
+        note: 'Structural backend constraints reduce assertion-pass rates.',
+      },
+      {
+        title: 'Smells of LLM Generated Code',
+        url: 'https://arxiv.org/abs/2510.03029',
+        kind: 'paper',
+        localRef:
+          'presentations/write-code-ai-agents-love/research/paper-text/smells-llm-generated-code-2510.03029.txt',
+        note: 'Maintainability-risk signal for generated code.',
+      },
+    ],
+  },
+  {
+    title: 'Static fact models make rules agent-usable',
+    slug: 'static-fact-models-make-rules-agent-usable',
+    summary:
+      'Agent-useful static analysis needs stable fact families: imports, symbols, types, call graph, CFG, dataflow, tests, coverage, and generated-code metadata.',
+    conclusion:
+      'Do not expose raw AST dumps as the main abstraction. Expose typed, scoped fact views with visible precision and setup state.',
+    status: 'working',
+    confidence: 'high',
+    sourceType: 'mixed',
+    publishedAt: '2026-05-22',
+    topics: ['static-analysis', 'facts', 'code-graphs', 'ai-agents'],
+    tags: ['fact-model', 'symbols', 'types', 'call-graph'],
+    usedInPosts: ['write-code-ai-agents-love'],
+    relatedSlugs: [
+      'recoverable-structure-beats-prompt-volume',
+      'types-and-sdks-compress-intent',
+      'static-diagnostics-are-agent-interfaces',
+    ],
+    graph: {
+      edges: [
+        {
+          targetType: 'insight',
+          targetSlug: 'recoverable-structure-beats-prompt-volume',
+          relation: 'supports',
+          strength: 3,
+          note: 'Fact models are one way to make repository structure recoverable instead of guessed.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'types-and-sdks-compress-intent',
+          relation: 'extends',
+          strength: 3,
+          note: 'Types and generated SDKs are one family of static facts at API boundaries.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'static-diagnostics-are-agent-interfaces',
+          relation: 'depends-on',
+          strength: 3,
+          note: 'Good diagnostics require trustworthy facts behind the message.',
+        },
+        {
+          targetType: 'blog-post',
+          targetSlug: 'write-code-ai-agents-love',
+          relation: 'packs-into',
+          strength: 2,
+          note: 'This is a deeper research backing note, likely compressed heavily in the article.',
+        },
+        {
+          targetType: 'presentation',
+          targetSlug: 'write-code-ai-agents-love-deck',
+          relation: 'packs-into',
+          strength: 2,
+          note: 'This can appear as the static-analysis ladder visual.',
+        },
+      ],
+    },
+    problem:
+      'Many high-value architecture policies need more than string matching: resolved imports, public API facts, symbols, types, calls, control flow, dataflow, and test evidence.',
+    whyItMatters:
+      'Agents need the analyzer to expose relationships as stable facts. Otherwise rules either stay shallow or become brittle parser hacks.',
+    evidence: [
+      {
+        claim: 'Cross-file API context materially improves repository completion.',
+        sourceTitles: ['CrossCodeEval'],
+        detail:
+          'StarCoder-15.5B Python exact match rises from 8.82% in-file only to 15.72% with retrieved context and 21.01% with reference-assisted retrieval.',
+      },
+      {
+        claim: 'Type/code context improves repository-level generation.',
+        sourceTitles: ['CatCoder'],
+        detail:
+          'CatCoder reports Java pass@k improvements up to +17.35% and compile@k improvements up to +14.44% over RepoCoder.',
+      },
+      {
+        claim: 'Curated API/fact retrieval beats indiscriminate context expansion.',
+        sourceTitles: ['A3-CodGen'],
+        detail:
+          'Global retrieval F1 drops from 0.601 at k=5 to 0.526 at k=10 and 0.479 at k=15.',
+      },
+    ],
+    caveats: [
+      'Syntax-only rules are still valuable; not every policy needs semantic facts.',
+      'Graph/fact context should be queried as scoped neighborhoods, not dumped wholesale.',
+      'Typed fact APIs need setup diagnostics so missing project configuration does not look like an empty result.',
+    ],
+    openQuestions: [
+      {
+        question: 'Which fact families should be built first for agent-facing architecture rules?',
+        whyItMatters:
+          'The likely priority is resolved imports, symbols/references, type facts, test evidence, CFG, call graph, and dataflow.',
+      },
+    ],
+    sources: [
+      {
+        title: 'CrossCodeEval',
+        url: 'https://arxiv.org/abs/2310.11248',
+        kind: 'paper',
+        localRef:
+          'presentations/write-code-ai-agents-love/research/paper-text/crosscodeeval-2310.11248.txt',
+        note: 'Cross-file context for repository code completion.',
+      },
+      {
+        title: 'CatCoder',
+        url: 'https://arxiv.org/abs/2406.03283',
+        kind: 'paper',
+        localRef:
+          'presentations/write-code-ai-agents-love/research/paper-text/catcoder-2406.03283.txt',
+        note: 'Code and type context for repository-level generation.',
+      },
+      {
+        title: 'ToolGen',
+        url: 'https://arxiv.org/abs/2401.06391',
+        kind: 'paper',
+        localRef:
+          'presentations/write-code-ai-agents-love/research/paper-text/toolgen-autocomplete-repo-codegen-2401.06391.txt',
+        note: 'Static/autocomplete-like symbols as generation tools.',
+      },
+      {
+        title: 'A3-CodGen',
+        url: 'https://arxiv.org/abs/2312.05772',
+        kind: 'paper',
+        localRef:
+          'presentations/write-code-ai-agents-love/research/paper-text/a3-codgen-2312.05772.txt',
+        note: 'API retrieval and over-retrieval caveat.',
+      },
+      {
+        title: 'CodeGRAG',
+        url: 'https://arxiv.org/abs/2405.02355',
+        kind: 'paper',
+        localRef:
+          'presentations/write-code-ai-agents-love/research/paper-text/codegrag-2405.02355.txt',
+        note: 'Graph views for retrieval-augmented code generation.',
       },
     ],
   },
@@ -1479,6 +1921,878 @@ const insights = [
       },
     ],
   },
+  {
+    title: 'Voice-agent latency budget is the product',
+    slug: 'voice-agent-latency-budget-is-product',
+    summary:
+      'A real-time voice agent is judged by the whole path from user intent to audible behavior, not by one model benchmark.',
+    conclusion:
+      'Instrument capture, endpointing, STT, LLM, TTS, transport, and playback separately; optimize the full conversational budget.',
+    status: 'working',
+    confidence: 'high',
+    sourceType: 'mixed',
+    publishedAt: '2026-05-22',
+    topics: ['voice-agents', 'latency', 'observability'],
+    tags: ['voice-agents', 'latency-budget', 'realtime'],
+    usedInPosts: ['voice-agents-article-draft'],
+    relatedSlugs: [
+      'voice-agent-endpointing-is-turn-taking',
+      'streaming-stt-is-not-batch-stt',
+      'tts-latency-is-architecture',
+    ],
+    graph: {
+      edges: [
+        {
+          targetType: 'insight',
+          targetSlug: 'voice-agent-endpointing-is-turn-taking',
+          relation: 'depends-on',
+          strength: 3,
+          note: 'Endpointing is often the largest controllable latency component.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'streaming-stt-is-not-batch-stt',
+          relation: 'depends-on',
+          strength: 3,
+          note: 'STT must be measured by live finalization behavior, not batch WER alone.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'tts-latency-is-architecture',
+          relation: 'depends-on',
+          strength: 3,
+          note: 'TTS first-audio latency and streaming shape are part of the same budget.',
+        },
+        {
+          targetType: 'presentation',
+          targetSlug: 'voice-agents-deck',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This is the core frame for the voice-agent talk.',
+        },
+        {
+          targetType: 'blog-post',
+          targetSlug: 'voice-agents-article-draft',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This should become the article opening model.',
+        },
+      ],
+    },
+    problem:
+      'Voice-agent discussions collapse many latency concepts into one word, hiding whether the delay comes from endpointing, STT, LLM, TTS, transport, or playback.',
+    whyItMatters:
+      'Users experience one conversational delay. Optimizing a single model benchmark can leave the product feeling slow or interruptive.',
+    evidence: [
+      {
+        claim: 'Moonshine v2 reports much lower live response latency than Whisper on Apple M3.',
+        sourceTitles: ['Moonshine v2', 'Voice agents latency insight'],
+        detail:
+          'Moonshine v2 Table 2 reports 50 ms, 148 ms, and 258 ms for Tiny, Small, and Medium, versus 289 ms, 1,940 ms, and 11,286 ms for Whisper Tiny, Small, and Large v3.',
+      },
+      {
+        claim: 'Fish Audio S2 reports explicit TTS TTFA and RTF numbers.',
+        sourceTitles: ['Fish Audio S2', 'Voice agents TTS insight'],
+        detail:
+          'The Fish Audio S2 report states RTF 0.195 and time-to-first-audio as low as 100 ms on H200 production serving.',
+      },
+      {
+        claim: 'OpenAI exposes turn detection delay as a first-class Realtime API setting.',
+        sourceTitles: ['OpenAI Realtime API reference'],
+        detail:
+          'The Realtime reference includes server VAD silence duration, prefix padding, interruption behavior, and semantic VAD eagerness controls.',
+      },
+    ],
+    caveats: [
+      'The copied numbers are not all measured in the same environment.',
+      'Latency budgets should be re-measured on the actual Jarvis stack.',
+      'Human turn-taking baselines are useful context, not a universal SLA.',
+    ],
+    openQuestions: [
+      {
+        question: 'What is the measured Jarvis p50/p95 waterfall from mic to playback?',
+        whyItMatters:
+          'The talk needs at least one local trace to make the latency argument concrete.',
+      },
+    ],
+    sources: [
+      {
+        title: 'Voice agents latency insight',
+        url: 'presentations/voice-agents/research/insights/INSIGHT_01_latency_budget_is_the_product.md',
+        kind: 'local-case-study',
+        localRef:
+          'presentations/voice-agents/research/insights/INSIGHT_01_latency_budget_is_the_product.md',
+        note: 'Canonical long-form note with source tables and chart sketches.',
+      },
+      {
+        title: 'Moonshine v2',
+        url: 'https://arxiv.org/abs/2602.12241',
+        kind: 'paper',
+        localRef: 'presentations/voice-agents/research/paper-text/moonshine-v2-2602.12241.txt',
+        note: 'Primary live ASR latency numbers.',
+      },
+      {
+        title: 'Fish Audio S2',
+        url: 'https://arxiv.org/abs/2603.08823',
+        kind: 'paper',
+        localRef:
+          'presentations/voice-agents/research/paper-text/fish-audio-s2-2603.08823.txt',
+        note: 'Primary TTS TTFA and RTF numbers.',
+      },
+      {
+        title: 'OpenAI Realtime API reference',
+        url: 'https://developers.openai.com/api/reference/resources/realtime',
+        kind: 'official-doc',
+        localRef: 'presentations/voice-agents/research/articles/openai-realtime-api-reference.html',
+        note: 'Turn detection knobs and defaults.',
+      },
+    ],
+  },
+  {
+    title: 'Endpointing is turn-taking',
+    slug: 'voice-agent-endpointing-is-turn-taking',
+    summary:
+      'VAD answers whether speech is present; endpointing and semantic EOU decide whether the agent is allowed to talk.',
+    conclusion:
+      'Treat VAD, endpointing, semantic EOU, and barge-in as separate layers with separate metrics.',
+    status: 'working',
+    confidence: 'high',
+    sourceType: 'mixed',
+    publishedAt: '2026-05-22',
+    topics: ['voice-agents', 'vad', 'turn-taking'],
+    tags: ['endpointing', 'vad', 'semantic-vad'],
+    usedInPosts: ['voice-agents-article-draft'],
+    relatedSlugs: [
+      'voice-agent-latency-budget-is-product',
+      'barge-in-is-the-real-system-test',
+      'voice-agent-eval-needs-multiple-metrics',
+    ],
+    graph: {
+      edges: [
+        {
+          targetType: 'insight',
+          targetSlug: 'voice-agent-latency-budget-is-product',
+          relation: 'supports',
+          strength: 3,
+          note: 'Endpointing explains why low model latency can still feel slow.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'barge-in-is-the-real-system-test',
+          relation: 'supports',
+          strength: 3,
+          note: 'Interruption is a turn-taking problem during assistant speech.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'voice-agent-eval-needs-multiple-metrics',
+          relation: 'supports',
+          strength: 3,
+          note: 'Turn-taking needs false EOT, missed EOT, and interruption metrics.',
+        },
+        {
+          targetType: 'presentation',
+          targetSlug: 'voice-agents-deck',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This belongs in the VAD/turn-taking section.',
+        },
+      ],
+    },
+    problem:
+      'Simple voice agents often use a silence timer as the conversation policy, which causes either dead air or interruptions.',
+    whyItMatters:
+      'The user judges the agent by whether it speaks at the right time, not by whether the VAD classified frames correctly.',
+    evidence: [
+      {
+        claim: 'Silero is much stronger than WebRTC VAD on multi-domain VAD metrics.',
+        sourceTitles: ['Silero VAD quality metrics'],
+        detail:
+          'The local notes and Silero wiki compare WebRTC around 0.73 ROC-AUC with Silero v5/v6 around 0.96-0.97 in the summarized multi-domain benchmark.',
+      },
+      {
+        claim: 'OpenAI separates silence VAD from semantic VAD.',
+        sourceTitles: ['OpenAI Realtime API reference'],
+        detail:
+          'The Realtime API exposes server_vad and semantic_vad with different knobs: threshold/silence versus eagerness/timeouts.',
+      },
+      {
+        claim: 'LiveKit, Pipecat, and Deepgram expose learned or conversational turn logic.',
+        sourceTitles: ['LiveKit turns overview', 'Pipecat Smart Turn', 'Deepgram Flux'],
+        detail:
+          'These systems layer endpointing or semantic turn detection on top of raw acoustic VAD.',
+      },
+    ],
+    caveats: [
+      'VAD quality is not the same as turn-taking quality.',
+      'Provider EOT claims are not directly comparable.',
+      'Semantic EOU can reduce interruptions while adding latency or model errors.',
+    ],
+    openQuestions: [
+      {
+        question: 'Which endpointing mode should Jarvis use for live stage reliability?',
+        whyItMatters:
+          'A talk demo has different risk tolerance than a product support agent.',
+      },
+    ],
+    sources: [
+      {
+        title: 'Voice agents endpointing insight',
+        url: 'presentations/voice-agents/research/insights/INSIGHT_02_endpointing_is_turn_taking.md',
+        kind: 'local-case-study',
+        localRef:
+          'presentations/voice-agents/research/insights/INSIGHT_02_endpointing_is_turn_taking.md',
+        note: 'Canonical long-form note.',
+      },
+      {
+        title: 'Silero VAD quality metrics',
+        url: 'https://github.com/snakers4/silero-vad/wiki/Quality-Metrics',
+        kind: 'official-doc',
+        localRef: 'presentations/voice-agents/research/articles/silero-vad-quality-metrics.html',
+        note: 'VAD benchmark comparison.',
+      },
+      {
+        title: 'LiveKit turns overview',
+        url: 'https://docs.livekit.io/agents/logic/turns/',
+        kind: 'official-doc',
+        localRef: 'presentations/voice-agents/research/articles/livekit-turns.html',
+        note: 'Turn detection modes.',
+      },
+      {
+        title: 'Pipecat Smart Turn',
+        url: 'https://docs.pipecat.ai/server/utilities/turn-detection/smart-turn-overview',
+        kind: 'official-doc',
+        localRef: 'presentations/voice-agents/research/articles/pipecat-smart-turn.html',
+        note: 'Semantic turn-completion model.',
+      },
+      {
+        title: 'Deepgram Flux',
+        url: 'https://developers.deepgram.com/docs/flux/quickstart',
+        kind: 'official-doc',
+        localRef: 'presentations/voice-agents/research/articles/deepgram-flux-quickstart.html',
+        note: 'Conversational STT and end-of-turn events.',
+      },
+    ],
+  },
+  {
+    title: 'Streaming STT is not batch STT',
+    slug: 'streaming-stt-is-not-batch-stt',
+    summary:
+      'WER is necessary but insufficient for voice agents; live systems need finalization latency, partial stability, EOT quality, and tails.',
+    conclusion:
+      'Pick STT by conversation behavior and domain accuracy, not only by clean benchmark rank.',
+    status: 'working',
+    confidence: 'high',
+    sourceType: 'mixed',
+    publishedAt: '2026-05-22',
+    topics: ['voice-agents', 'stt', 'benchmarks'],
+    tags: ['stt', 'streaming', 'wer'],
+    usedInPosts: ['voice-agents-article-draft'],
+    relatedSlugs: [
+      'voice-agent-latency-budget-is-product',
+      'voice-agent-eval-needs-multiple-metrics',
+    ],
+    graph: {
+      edges: [
+        {
+          targetType: 'insight',
+          targetSlug: 'voice-agent-latency-budget-is-product',
+          relation: 'supports',
+          strength: 3,
+          note: 'STT finalization is one stage in the full voice budget.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'voice-agent-eval-needs-multiple-metrics',
+          relation: 'supports',
+          strength: 3,
+          note: 'STT needs live metrics beyond WER.',
+        },
+        {
+          targetType: 'presentation',
+          targetSlug: 'voice-agents-deck',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This strengthens the STT benchmark slide.',
+        },
+      ],
+    },
+    problem:
+      'Batch ASR benchmarks reward transcript accuracy and throughput, but voice agents need stable text early enough to drive turn-taking and response generation.',
+    whyItMatters:
+      'A low-WER model can still be a poor agent component if it finalizes too late or rewrites partials aggressively.',
+    evidence: [
+      {
+        claim: 'Open ASR Leaderboard reports WER and RTFx, not full turn behavior.',
+        sourceTitles: ['Open ASR Leaderboard'],
+        detail:
+          'The leaderboard standardizes average WER and inverse real-time factor across many ASR systems on A100 hardware.',
+      },
+      {
+        claim: 'Moonshine v2 measures response latency closer to live use.',
+        sourceTitles: ['Moonshine v2'],
+        detail:
+          'The paper defines response latency as the delay between VAD end-of-speech detection and transcript return.',
+      },
+    ],
+    caveats: [
+      'Open ASR RTFx is throughput, not EOT latency.',
+      'Moonshine v2 is English-focused in the paper.',
+      'Provider STT latency should be measured from the client environment.',
+    ],
+    openQuestions: [
+      {
+        question: 'How unstable are partial transcripts in the current Jarvis STT path?',
+        whyItMatters:
+          'Partial churn determines whether speculative LLM work is safe.',
+      },
+    ],
+    sources: [
+      {
+        title: 'Voice agents STT insight',
+        url: 'presentations/voice-agents/research/insights/INSIGHT_03_streaming_stt_is_not_batch_stt.md',
+        kind: 'local-case-study',
+        localRef:
+          'presentations/voice-agents/research/insights/INSIGHT_03_streaming_stt_is_not_batch_stt.md',
+        note: 'Canonical long-form note.',
+      },
+      {
+        title: 'Open ASR Leaderboard',
+        url: 'https://arxiv.org/abs/2510.06961',
+        kind: 'paper',
+        localRef:
+          'presentations/voice-agents/research/paper-text/open-asr-leaderboard-2510.06961.txt',
+        note: 'Standardized WER/RTFx benchmark.',
+      },
+      {
+        title: 'Whisper paper',
+        url: 'https://arxiv.org/abs/2212.04356',
+        kind: 'paper',
+        localRef: 'presentations/voice-agents/research/paper-text/whisper-2212.04356.txt',
+        note: 'Baseline ASR model.',
+      },
+    ],
+  },
+  {
+    title: 'TTS latency is architecture',
+    slug: 'tts-latency-is-architecture',
+    summary:
+      'Voice-agent TTS should be chosen by TTFA, streaming shape, RTF headroom, interruption behavior, and quality together.',
+    conclusion:
+      'A beautiful voice is not enough; the TTS serving path must start, stream, and stop like an interactive component.',
+    status: 'working',
+    confidence: 'high',
+    sourceType: 'mixed',
+    publishedAt: '2026-05-22',
+    topics: ['voice-agents', 'tts', 'latency'],
+    tags: ['tts', 'ttfa', 'rtf'],
+    usedInPosts: ['voice-agents-article-draft'],
+    relatedSlugs: [
+      'voice-agent-latency-budget-is-product',
+      'barge-in-is-the-real-system-test',
+      'voice-agent-eval-needs-multiple-metrics',
+    ],
+    graph: {
+      edges: [
+        {
+          targetType: 'insight',
+          targetSlug: 'voice-agent-latency-budget-is-product',
+          relation: 'supports',
+          strength: 3,
+          note: 'TTFA and RTF are part of the full user-perceived budget.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'barge-in-is-the-real-system-test',
+          relation: 'supports',
+          strength: 2,
+          note: 'TTS streams must be cancellable for interruption.',
+        },
+        {
+          targetType: 'presentation',
+          targetSlug: 'voice-agents-deck',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This strengthens the TTS benchmark slide.',
+        },
+      ],
+    },
+    problem:
+      'TTS comparisons often focus on samples and MOS-like quality, while real-time agents need playable audio quickly and cancellably.',
+    whyItMatters:
+      'Late or uncancellable TTS makes an otherwise smart voice agent feel slow, rude, or broken.',
+    evidence: [
+      {
+        claim: 'F5-TTS exposes a quality/speed tradeoff through NFE.',
+        sourceTitles: ['F5-TTS'],
+        detail:
+          'The paper reports 16 NFE Euler at WER 2.53, UTMOS 3.88, RTF 0.15 and 32 NFE Euler at WER 2.42, UTMOS 3.90, RTF 0.31.',
+      },
+      {
+        claim: 'Fish Audio S2 reports production TTFA and RTF.',
+        sourceTitles: ['Fish Audio S2'],
+        detail:
+          'Fish Audio S2 reports RTF 0.195 and TTFA as low as 100 ms on H200 serving.',
+      },
+      {
+        claim: 'StyleTTS 2 provides a strong quality and speed ancestor for Kokoro-like systems.',
+        sourceTitles: ['StyleTTS 2'],
+        detail:
+          'StyleTTS 2 reports CMOS +0.28 over LJSpeech ground truth and RTF 0.0185 in the copied table.',
+      },
+    ],
+    caveats: [
+      'StyleTTS 2 metrics are not direct Kokoro metrics.',
+      'Fish Audio S2 data is H200 production-serving data.',
+      'RTF does not equal TTFA.',
+    ],
+    openQuestions: [
+      {
+        question: 'What are Kokoro TTFA and cancellation latency in the local Jarvis setup?',
+        whyItMatters:
+          'Kokoro is the practical demo candidate, so local measurements matter.',
+      },
+    ],
+    sources: [
+      {
+        title: 'Voice agents TTS insight',
+        url: 'presentations/voice-agents/research/insights/INSIGHT_04_tts_latency_is_architecture.md',
+        kind: 'local-case-study',
+        localRef:
+          'presentations/voice-agents/research/insights/INSIGHT_04_tts_latency_is_architecture.md',
+        note: 'Canonical long-form note.',
+      },
+      {
+        title: 'F5-TTS',
+        url: 'https://arxiv.org/abs/2410.06885',
+        kind: 'paper',
+        localRef: 'presentations/voice-agents/research/paper-text/f5-tts-2410.06885.txt',
+        note: 'Flow matching TTS benchmark table.',
+      },
+      {
+        title: 'StyleTTS 2',
+        url: 'https://arxiv.org/abs/2306.07691',
+        kind: 'paper',
+        localRef: 'presentations/voice-agents/research/paper-text/styletts2-2306.07691.txt',
+        note: 'Quality and speed lineage.',
+      },
+      {
+        title: 'Kokoro-82M model card',
+        url: 'https://huggingface.co/hexgrad/Kokoro-82M',
+        kind: 'official-doc',
+        localRef: 'presentations/voice-agents/research/articles/kokoro-82m-model-card.html',
+        note: 'Small local TTS candidate.',
+      },
+    ],
+  },
+  {
+    title: 'Transport is media correctness',
+    slug: 'transport-is-media-correctness',
+    summary:
+      'WebRTC wins for browser/mobile voice because it owns media behavior, not because every demo needs lower transport latency.',
+    conclusion:
+      'Use WebRTC by default for client voice; reserve WebSocket for server streams, telephony, or controlled prototypes.',
+    status: 'working',
+    confidence: 'high',
+    sourceType: 'mixed',
+    publishedAt: '2026-05-22',
+    topics: ['voice-agents', 'webrtc', 'transport'],
+    tags: ['webrtc', 'websocket', 'media'],
+    usedInPosts: ['voice-agents-article-draft'],
+    relatedSlugs: [
+      'barge-in-is-the-real-system-test',
+      'voice-agent-latency-budget-is-product',
+    ],
+    graph: {
+      edges: [
+        {
+          targetType: 'insight',
+          targetSlug: 'barge-in-is-the-real-system-test',
+          relation: 'supports',
+          strength: 3,
+          note: 'Barge-in depends on media timing, echo cancellation, and playout control.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'voice-agent-latency-budget-is-product',
+          relation: 'supports',
+          strength: 2,
+          note: 'Transport is one segment of the user-perceived latency waterfall.',
+        },
+        {
+          targetType: 'presentation',
+          targetSlug: 'voice-agents-deck',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This belongs in the real-time transport section.',
+        },
+      ],
+    },
+    problem:
+      'A WebSocket audio demo can work while hiding media problems that appear on real browser/mobile networks.',
+    whyItMatters:
+      'Production voice needs AEC, jitter handling, timestamps, NAT traversal, playout, and cancellation state.',
+    evidence: [
+      {
+        claim: 'OpenAI recommends WebRTC for browser/mobile and WebSocket for server-side integrations.',
+        sourceTitles: ['OpenAI Realtime WebRTC docs', 'OpenAI Realtime WebSocket docs'],
+        detail:
+          'The official Realtime docs separate client-side WebRTC from server-side WebSocket use cases.',
+      },
+      {
+        claim: 'WebSocket frame overhead is not the main transport problem.',
+        sourceTitles: ['Local transport deep dive'],
+        detail:
+          'The local transport note estimates 2-14 bytes per frame, about 0.2-1.5% for a 960-byte 30 ms 16 kHz int16 audio chunk.',
+      },
+    ],
+    caveats: [
+      'WebRTC is not magic; TURN placement and app cancellation still matter.',
+      'WebSocket is valid for many server-side and controlled-network scenarios.',
+      'Transport does not remove endpointing/STT/LLM/TTS latency.',
+    ],
+    openQuestions: [
+      {
+        question: 'Should Jarvis default to WebRTC for the talk demo or keep WebSocket for simplicity?',
+        whyItMatters:
+          'Stage reliability may favor the path that is simplest to test end to end.',
+      },
+    ],
+    sources: [
+      {
+        title: 'Voice agents transport insight',
+        url: 'presentations/voice-agents/research/insights/INSIGHT_05_transport_is_media_correctness.md',
+        kind: 'local-case-study',
+        localRef:
+          'presentations/voice-agents/research/insights/INSIGHT_05_transport_is_media_correctness.md',
+        note: 'Canonical long-form note.',
+      },
+      {
+        title: 'OpenAI Realtime WebRTC docs',
+        url: 'https://developers.openai.com/api/docs/guides/realtime-webrtc',
+        kind: 'official-doc',
+        localRef: 'presentations/voice-agents/research/articles/openai-realtime-webrtc.html',
+        note: 'Browser/mobile transport guidance.',
+      },
+      {
+        title: 'OpenAI Realtime WebSocket docs',
+        url: 'https://developers.openai.com/api/docs/guides/realtime-websocket',
+        kind: 'official-doc',
+        localRef: 'presentations/voice-agents/research/articles/openai-realtime-websocket.html',
+        note: 'Server-side transport guidance.',
+      },
+      {
+        title: 'Local transport deep dive',
+        url: 'presentations/voice-agents/TRANSPORT-DEEP-DIVE.md',
+        kind: 'local-case-study',
+        localRef: 'presentations/voice-agents/TRANSPORT-DEEP-DIVE.md',
+        note: 'Existing transport research.',
+      },
+    ],
+  },
+  {
+    title: 'Barge-in is the real system test',
+    slug: 'barge-in-is-the-real-system-test',
+    summary:
+      'A voice agent is not conversational until the user can interrupt it and the system stops, cancels, and preserves state correctly.',
+    conclusion:
+      'Test interruption as an end-to-end media and state problem, not a VAD checkbox.',
+    status: 'working',
+    confidence: 'medium',
+    sourceType: 'mixed',
+    publishedAt: '2026-05-22',
+    topics: ['voice-agents', 'barge-in', 'conversation'],
+    tags: ['barge-in', 'interruption', 'aec'],
+    usedInPosts: ['voice-agents-article-draft'],
+    relatedSlugs: [
+      'voice-agent-endpointing-is-turn-taking',
+      'transport-is-media-correctness',
+      'tts-latency-is-architecture',
+    ],
+    graph: {
+      edges: [
+        {
+          targetType: 'insight',
+          targetSlug: 'voice-agent-endpointing-is-turn-taking',
+          relation: 'depends-on',
+          strength: 3,
+          note: 'Interruption is turn-taking during assistant speech.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'transport-is-media-correctness',
+          relation: 'depends-on',
+          strength: 3,
+          note: 'Echo cancellation and media timing make interruption detectable.',
+        },
+        {
+          targetType: 'presentation',
+          targetSlug: 'voice-agents-deck',
+          relation: 'packs-into',
+          strength: 2,
+          note: 'This is the systems test that makes the demo credible.',
+        },
+      ],
+    },
+    problem:
+      'Many voice demos only prove single-turn prompt/response, not whether the user can stop the agent or correct it mid-sentence.',
+    whyItMatters:
+      'Interruption failure makes a voice agent feel non-conversational even when STT, LLM, and TTS all work individually.',
+    evidence: [
+      {
+        claim: 'Realtime APIs expose interruption behavior as part of turn detection.',
+        sourceTitles: ['OpenAI Realtime API reference'],
+        detail:
+          'OpenAI Realtime turn detection includes fields such as interruption behavior alongside VAD configuration.',
+      },
+      {
+        claim: 'Transport and AEC affect whether the agent hears itself.',
+        sourceTitles: ['Local transport deep dive', 'LiveKit transport docs'],
+        detail:
+          'The local transport research highlights WebRTC echo cancellation and media timing as a decisive advantage for browser voice.',
+      },
+    ],
+    caveats: [
+      'There are fewer open barge-in benchmarks than ASR benchmarks.',
+      'AEC does not solve semantic backchannel classification.',
+      'Provider cancellation still needs app-side state handling.',
+    ],
+    openQuestions: [
+      {
+        question: 'What is Jarvis interruption stop latency at speaker volume in a real room?',
+        whyItMatters:
+          'The talk demo likely runs through speakers, where echo and false VAD matter.',
+      },
+    ],
+    sources: [
+      {
+        title: 'Voice agents barge-in insight',
+        url: 'presentations/voice-agents/research/insights/INSIGHT_06_barge_in_is_the_real_system_test.md',
+        kind: 'local-case-study',
+        localRef:
+          'presentations/voice-agents/research/insights/INSIGHT_06_barge_in_is_the_real_system_test.md',
+        note: 'Canonical long-form note.',
+      },
+      {
+        title: 'LiveKit transport docs',
+        url: 'https://docs.livekit.io/transport/',
+        kind: 'official-doc',
+        localRef: 'presentations/voice-agents/research/articles/livekit-transport.html',
+        note: 'WebRTC production substrate.',
+      },
+    ],
+  },
+  {
+    title: 'Native speech models change the boundary',
+    slug: 'native-speech-models-change-the-boundary',
+    summary:
+      'Native speech-to-speech models attack the STT-LLM-TTS cascade, but cascades remain easier to debug, evaluate, and control.',
+    conclusion:
+      'Use native speech when latency, prosody, overlap, or duplex behavior justify the loss of component transparency.',
+    status: 'working',
+    confidence: 'medium',
+    sourceType: 'research',
+    publishedAt: '2026-05-22',
+    topics: ['voice-agents', 'native-speech', 'architecture'],
+    tags: ['speech-to-speech', 'moshi', 'qwen-omni'],
+    usedInPosts: ['voice-agents-article-draft'],
+    relatedSlugs: [
+      'voice-agent-latency-budget-is-product',
+      'barge-in-is-the-real-system-test',
+    ],
+    graph: {
+      edges: [
+        {
+          targetType: 'insight',
+          targetSlug: 'voice-agent-latency-budget-is-product',
+          relation: 'extends',
+          strength: 2,
+          note: 'Native speech models try to remove cascade latency boundaries.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'barge-in-is-the-real-system-test',
+          relation: 'extends',
+          strength: 2,
+          note: 'Full-duplex native models directly target overlap and interruption.',
+        },
+        {
+          targetType: 'presentation',
+          targetSlug: 'voice-agents-deck',
+          relation: 'packs-into',
+          strength: 2,
+          note: 'This belongs in the future-facing section.',
+        },
+      ],
+    },
+    problem:
+      'Cascaded systems discard prosody and impose hard turn boundaries, but native speech systems can be harder to inspect and operate.',
+    whyItMatters:
+      'The architectural boundary determines which failures are observable, controllable, and optimizable.',
+    evidence: [
+      {
+        claim: 'Moshi explicitly targets cascade latency, text bottleneck, and turn-based limitations.',
+        sourceTitles: ['Moshi'],
+        detail:
+          'The paper reports 160 ms theoretical latency, 200 ms practical latency, 12.5 Hz Mimi codec, and full-duplex multi-stream modeling.',
+      },
+      {
+        claim: 'Qwen2.5-Omni uses a Thinker-Talker architecture for multimodal reasoning and speech output.',
+        sourceTitles: ['Qwen2.5-Omni'],
+        detail:
+          'The paper describes Talker producing audio tokens from Thinker representations with streaming audio decoding.',
+      },
+    ],
+    caveats: [
+      'Native speech claims rarely include full product evaluation.',
+      'Tool calls, moderation, and logs are simpler in cascaded text-centered systems.',
+      'Open-source native systems often need custom serving and eval harnesses.',
+    ],
+    openQuestions: [
+      {
+        question: 'Which Jarvis interaction actually needs native speech rather than a cascade?',
+        whyItMatters:
+          'Native speech complexity is only worth it if the product needs duplex/prosody, not just novelty.',
+      },
+    ],
+    sources: [
+      {
+        title: 'Voice agents native speech insight',
+        url: 'presentations/voice-agents/research/insights/INSIGHT_07_native_speech_models_change_the_boundary.md',
+        kind: 'local-case-study',
+        localRef:
+          'presentations/voice-agents/research/insights/INSIGHT_07_native_speech_models_change_the_boundary.md',
+        note: 'Canonical long-form note.',
+      },
+      {
+        title: 'Moshi',
+        url: 'https://arxiv.org/abs/2410.00037',
+        kind: 'paper',
+        localRef: 'presentations/voice-agents/research/paper-text/moshi-2410.00037.txt',
+        note: 'Full-duplex native speech model.',
+      },
+      {
+        title: 'Qwen2.5-Omni',
+        url: 'https://arxiv.org/abs/2503.20215',
+        kind: 'paper',
+        localRef: 'presentations/voice-agents/research/paper-text/qwen25-omni-2503.20215.txt',
+        note: 'Thinker-Talker architecture.',
+      },
+      {
+        title: 'GLM-4-Voice',
+        url: 'https://arxiv.org/abs/2412.02612',
+        kind: 'paper',
+        localRef: 'presentations/voice-agents/research/paper-text/glm-4-voice-2412.02612.txt',
+        note: 'End-to-end spoken chatbot architecture.',
+      },
+    ],
+  },
+  {
+    title: 'Voice-agent eval needs multiple metrics',
+    slug: 'voice-agent-eval-needs-multiple-metrics',
+    summary:
+      'A voice agent must be evaluated across speech accuracy, turn-taking, latency tails, barge-in, transport, cost, and task success.',
+    conclusion:
+      'Build a trace-based eval harness; no single WER, MOS, RTF, or demo result is enough.',
+    status: 'working',
+    confidence: 'high',
+    sourceType: 'mixed',
+    publishedAt: '2026-05-22',
+    topics: ['voice-agents', 'evaluation', 'observability'],
+    tags: ['evals', 'metrics', 'trace'],
+    usedInPosts: ['voice-agents-article-draft'],
+    relatedSlugs: [
+      'voice-agent-latency-budget-is-product',
+      'voice-agent-endpointing-is-turn-taking',
+      'streaming-stt-is-not-batch-stt',
+      'tts-latency-is-architecture',
+    ],
+    graph: {
+      edges: [
+        {
+          targetType: 'insight',
+          targetSlug: 'voice-agent-latency-budget-is-product',
+          relation: 'operationalizes',
+          strength: 3,
+          note: 'The latency budget becomes useful only when every stage emits trace events.',
+        },
+        {
+          targetType: 'insight',
+          targetSlug: 'voice-agent-endpointing-is-turn-taking',
+          relation: 'operationalizes',
+          strength: 3,
+          note: 'False EOT and missed EOT turn endpointing into measurable behavior.',
+        },
+        {
+          targetType: 'blog-post',
+          targetSlug: 'voice-agents-article-draft',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This should be the practical checklist section.',
+        },
+        {
+          targetType: 'presentation',
+          targetSlug: 'voice-agents-deck',
+          relation: 'packs-into',
+          strength: 3,
+          note: 'This should become the closing evaluation slide.',
+        },
+      ],
+    },
+    problem:
+      'Voice-agent benchmarks often optimize visible model metrics while missing the failures users feel: wrong timing, failed interruption, noisy media, and tail latency.',
+    whyItMatters:
+      'Without a multi-metric harness, teams optimize the component with the easiest benchmark instead of the system bottleneck.',
+    evidence: [
+      {
+        claim: 'STT, TTS, VAD, and transport sources use incompatible metrics.',
+        sourceTitles: [
+          'Open ASR Leaderboard',
+          'F5-TTS',
+          'Fish Audio S2',
+          'Silero VAD quality metrics',
+        ],
+        detail:
+          'The research spans WER, RTFx, UTMOS, SIM, RTF, TTFA, ROC-AUC, EOT latency, and transport behavior.',
+      },
+      {
+        claim: 'The local notes now define a trace schema for turn-level instrumentation.',
+        sourceTitles: ['Voice agents eval insight'],
+        detail:
+          'The canonical insight proposes timestamps for audio, VAD, endpointing, STT, LLM, TTS, playout, and interruption.',
+      },
+    ],
+    caveats: [
+      'The note proposes a harness; it does not yet include measured Jarvis trace data.',
+      'Metric weights should depend on product domain.',
+      'Human listening tests still matter for voice quality.',
+    ],
+    openQuestions: [
+      {
+        question: 'Which 20-50 test turns should become the Jarvis voice-agent regression set?',
+        whyItMatters:
+          'A small high-signal local eval set would make demo reliability and future posts much stronger.',
+      },
+    ],
+    sources: [
+      {
+        title: 'Voice agents eval insight',
+        url: 'presentations/voice-agents/research/insights/INSIGHT_08_voice_agent_eval_needs_multiple_metrics.md',
+        kind: 'local-case-study',
+        localRef:
+          'presentations/voice-agents/research/insights/INSIGHT_08_voice_agent_eval_needs_multiple_metrics.md',
+        note: 'Canonical long-form note.',
+      },
+      {
+        title: 'Open ASR Leaderboard',
+        url: 'https://arxiv.org/abs/2510.06961',
+        kind: 'paper',
+        localRef:
+          'presentations/voice-agents/research/paper-text/open-asr-leaderboard-2510.06961.txt',
+        note: 'WER/RTFx benchmark model.',
+      },
+    ],
+  },
 ] as const satisfies readonly Insight[];
 
 export type InsightSlug = (typeof insights)[number]['slug'];
@@ -1665,6 +2979,54 @@ const insightSections = {
       },
     },
   ],
+  'static-diagnostics-are-agent-interfaces': [
+    {
+      heading: 'A diagnostic is a structured prompt with evidence',
+      body: [
+        `The useful version of static analysis for agents is not a wall of lint text. It is a structured repair object: rule ID, severity, file, span, matched evidence, expected surface, related files, and machine-readable output. That object is a better agent interface than prose because it anchors the repair to one place in the codebase.`,
+        `ToolGen gives the mechanism from the generation side: when models can access available symbols and members, dependency coverage and static validity improve sharply. Type-Constrained Code Generation gives the type side: generated TypeScript failures are overwhelmingly type-check failures. Together they imply that static feedback should be designed as part of the agent loop, not as an afterthought.`,
+      ],
+    },
+    {
+      heading: 'Repairability is the bar',
+      body: [
+        `A weak diagnostic says "do not use raw API calls." A repairable diagnostic says which call was found, which generated client should be used, where the schema lives, and which example shows the approved path. This is where JSON/SARIF and stable rule IDs become more than CI integrations: they let agents filter, focus, rerun, and verify.`,
+        `The caveat is that diagnostics can also cause churn. The note should distinguish exact syntax facts from heuristic warnings. If the analyzer is only guessing that a branch lacks test evidence, the diagnostic should say that. Agents optimize against the feedback they receive; the feedback needs to be honest about precision.`,
+      ],
+    },
+  ],
+  'static-oracles-catch-what-tests-miss': [
+    {
+      heading: 'Passing behavior can hide structural failure',
+      body: [
+        `Needle in the Repo is the cleanest warning: some outputs pass behavior checks but fail maintainability structure. CODETASTE makes the refactoring version even sharper. GPT-5.2 open direct mode can pass tests while almost completely missing the intended refactor alignment. That is exactly the failure mode static oracles are meant to expose.`,
+        `A static oracle can check that an old API disappeared, a new generated client is used, a forbidden dependency edge is gone, or a route now carries required middleware. None of those is a replacement for tests. They are checks for structural intent that tests may not encode.`,
+      ],
+    },
+    {
+      heading: 'The agent sees the oracle it can run',
+      body: [
+        `Constraint Decay shows that production-like backend constraints are not small details. Architecture, database, and ORM choices impose measurable load. If those constraints only live in a README, the agent has to infer them while also implementing the feature. If they are encoded as static checks, they enter the same edit-check-repair loop as tests.`,
+        `The blog should use this as the hard-data justification for custom lint rules. The point is not "more rules." The point is making structural success visible: dependency direction, migration completeness, generated-code policy, security middleware, and test-evidence conventions.`,
+      ],
+    },
+  ],
+  'static-fact-models-make-rules-agent-usable': [
+    {
+      heading: 'Syntax facts are the first rung, not the ladder',
+      body: [
+        `The static-analysis thread gets shallow if it stops at AST matching. CrossCodeEval, CatCoder, ToolGen, A3-CodGen, CodeGRAG, InlineCoder, and graph-code papers all point toward relationships: imports, definitions, references, public APIs, types, callers, callees, control flow, data flow, tests, and coverage. Agents fail when those relationships are hidden or too expensive to recover.`,
+        `That means the useful product abstraction is a fact model. A rule that bans raw internal API calls may need string literals today, resolved imports tomorrow, and type facts once generated SDKs become the approved path. A rule that checks context propagation needs call graph and dataflow, not just a regex.`,
+      ],
+    },
+    {
+      heading: 'Expose scoped fact views, not raw parser internals',
+      body: [
+        `The design lesson from the local polint/exlint line of work is that rules should ask for the facts they need explicitly. A function signature that requests imports, literals, symbols, or future call-graph facts is easier to plan, cache, explain, and validate than a broad context object that can secretly read anything.`,
+        `For the article, this probably compresses into one visual: a static-analysis ladder from syntax to module graph to symbols to types to CFG/dataflow/call graph to test evidence. The caveat is important: more facts are not always better. A3-CodGen and chunking results both warn against dumping more context. The point is selective, typed, scoped fact access.`,
+      ],
+    },
+  ],
   'agents-md-should-be-an-index': [
     {
       heading: 'The instruction file is configuration, not documentation',
@@ -1725,6 +3087,134 @@ const insightSections = {
       body: [
         `The monorepo only helps agents if boundaries are explicit. Otherwise the search space gets larger, the build gets slower, and ownership gets fuzzier. An agent-friendly monorepo needs affected-test tooling, package boundaries, generated-code rules, sparse enough local commands, and docs that live close to the code they describe.`,
         `The version I would present is: put things together when they change together, and enforce the boundaries that make "together" understandable. For agents, one commit that contains the whole truth is powerful. One repo that contains every unrelated thing without ownership is not.`,
+      ],
+    },
+  ],
+  'voice-agent-latency-budget-is-product': [
+    {
+      heading: 'Latency is a waterfall, not a model property',
+      body: [
+        `The canonical research note lives at presentations/voice-agents/research/insights/INSIGHT_01_latency_budget_is_the_product.md. The important point is that a user experiences one conversational delay, while the system hides many independent clocks: audio capture, transport, VAD, endpointing, STT finalization, LLM first token, TTS first audio, playback, and cancellation.`,
+        `Moonshine v2 gives a useful ASR table because it reports response latency after VAD end-of-speech on Apple M3: 50 ms, 148 ms, and 258 ms for Moonshine v2 Tiny, Small, and Medium, compared with 289 ms, 1,940 ms, and 11,286 ms for Whisper Tiny, Small, and Large v3 in the same benchmark. Fish Audio S2 gives the TTS-side counterpart with RTF 0.195 and TTFA as low as 100 ms on H200 serving.`,
+      ],
+    },
+    {
+      heading: 'The first engineering task is instrumentation',
+      body: [
+        `The inference is not "pick the fastest model in every table." The inference is to emit timestamps for each stage and tune the full interaction budget. Endpointing can easily dominate the budget, and a faster STT model will not fix a silence policy that waits too long or a TTS path that cannot start streaming audio quickly.`,
+        `The long-form note includes a waterfall diagram, copied ASR and TTS tables, and chart candidates. Before publishing this as an article claim, the missing piece is a measured Jarvis trace: mic capture, first VAD speech, user speech stop, endpoint decision, first partial, final transcript, LLM first token, TTS first audio, playback start, and interruption events.`,
+      ],
+    },
+  ],
+  'voice-agent-endpointing-is-turn-taking': [
+    {
+      heading: 'VAD is not the same as done speaking',
+      body: [
+        `The canonical research note lives at presentations/voice-agents/research/insights/INSIGHT_02_endpointing_is_turn_taking.md. The strongest pattern is a three-layer model: VAD detects speech, endpointing decides whether a pause is enough, and semantic end-of-utterance models decide whether the user has completed the thought.`,
+        `Silero versus WebRTC VAD is useful evidence for speech/noise classification, but it does not settle turn-taking. OpenAI exposes server_vad and semantic_vad separately. LiveKit, Pipecat, and Deepgram all expose learned or conversational turn logic because silence alone is a crude proxy for completion.`,
+      ],
+    },
+    {
+      heading: 'Endpointing is where fast becomes rude',
+      body: [
+        `A shorter silence threshold can make the agent feel quick, but it also increases false interruptions. A longer silence threshold can make the agent patient, but it creates dead air. Semantic EOU tries to escape that tradeoff by predicting intent, but it adds model behavior that must be measured.`,
+        `The note copies OpenAI, LiveKit, Pipecat, Deepgram, Silero, and human turn-taking numbers into one source map. The research gap is a local Jarvis EOT dataset: false EOT, missed EOT, backchannel handling, and interruption success should be measured separately from STT WER.`,
+      ],
+    },
+  ],
+  'streaming-stt-is-not-batch-stt': [
+    {
+      heading: 'WER is necessary, but not the agent metric',
+      body: [
+        `The canonical research note lives at presentations/voice-agents/research/insights/INSIGHT_03_streaming_stt_is_not_batch_stt.md. Open ASR Leaderboard is useful because it standardizes average WER and RTFx, but those are still batch-ish metrics. Voice agents also need first partial, partial stability, finalization latency, end-of-turn latency, entity accuracy, and tail percentiles.`,
+        `The Open ASR Leaderboard table is still valuable: it shows modern systems like NVIDIA Canary Qwen, Parakeet TDT, Qwen3 ASR, Whisper Large v3, and others across WER and RTFx. The note is careful not to turn that into a universal voice-agent leaderboard because RTFx is throughput, not user-perceived turn latency.`,
+      ],
+    },
+    {
+      heading: 'Moonshine is the live-ASR source to keep close',
+      body: [
+        `Moonshine v2 is especially relevant for the deck because it defines response latency as time between VAD-detected end of speech and transcript return. That is closer to voice-agent behavior than file throughput. Its Apple M3 table gives clear chart material for the STT slide.`,
+        `The practical recommendation is to benchmark STT on the target conversation, including domain entities, pauses, interruptions, and noisy playback. Clean LibriSpeech WER is not enough for deciding whether the agent can answer at the right time.`,
+      ],
+    },
+  ],
+  'tts-latency-is-architecture': [
+    {
+      heading: 'The voice sample is not the serving system',
+      body: [
+        `The canonical research note lives at presentations/voice-agents/research/insights/INSIGHT_04_tts_latency_is_architecture.md. TTS quality still matters, but voice agents need first playable audio, streaming cadence, RTF headroom, cancellation, and serving stability. RTF is necessary but not sufficient because it measures total synthesis speed, not when audio starts.`,
+        `The note groups models by architecture: small local decoder systems like Kokoro/Piper, flow-matching systems like F5-TTS, AR speech-token systems like Fish Audio S2/Spark/Dia/Orpheus, and legacy cloning systems like XTTS. The useful deck move is to show these as latency shapes rather than one global leaderboard.`,
+      ],
+    },
+    {
+      heading: 'Use the numbers with their hardware attached',
+      body: [
+        `F5-TTS gives a clean quality/speed tradeoff: 16 NFE Euler reports LibriSpeech-PC WER 2.53, UTMOS 3.88, RTF 0.15; 32 NFE Euler reports WER 2.42, UTMOS 3.90, RTF 0.31. Fish Audio S2 reports RTF 0.195 and TTFA as low as 100 ms, but on a single NVIDIA H200 with SGLang serving.`,
+        `The local demo recommendation remains conservative: Kokoro is practical because it is tiny and easy to keep hot, while Fish S2 is the best primary-source example of where production streaming TTS is going. Direct local Kokoro TTFA still needs measurement before making a hard performance claim.`,
+      ],
+    },
+  ],
+  'transport-is-media-correctness': [
+    {
+      heading: 'The transport choice is about owning media behavior',
+      body: [
+        `The canonical research note lives at presentations/voice-agents/research/insights/INSIGHT_05_transport_is_media_correctness.md. WebSocket can stream audio and is fine for local demos, server-to-server streams, and telephony integrations. The issue is that browser/mobile voice needs media behavior: AEC, jitter buffering, packet timing, Opus, NAT traversal, stats, and playout semantics.`,
+        `OpenAI's Realtime docs and Pipecat's transport docs both point toward WebRTC for browser/mobile/client voice and WebSocket for server-side or controlled integrations. The local transport deep dive adds an important correction: WebSocket frame overhead is not the primary problem; ordered TCP behavior, playout, echo, and cancellation are.`,
+      ],
+    },
+    {
+      heading: 'WebRTC does not make the model stack fast',
+      body: [
+        `WebRTC is the media substrate. It does not solve endpointing, STT finalization, LLM first token, or TTS first audio. A perfect media path can still feel slow if the turn detector waits too long or the TTS stack has high TTFA.`,
+        `The article should therefore avoid shallow protocol tribalism. The right recommendation is situational: WebRTC by default for production browser/mobile voice, WebSocket for server streams and controlled prototypes, and a measured waterfall either way.`,
+      ],
+    },
+  ],
+  'barge-in-is-the-real-system-test': [
+    {
+      heading: 'Interruption turns demos into systems',
+      body: [
+        `The canonical research note lives at presentations/voice-agents/research/insights/INSIGHT_06_barge_in_is_the_real_system_test.md. A single-turn prompt/response demo does not prove that a voice agent is conversational. The user must be able to interrupt it, and the system must stop playout, cancel or truncate model/TTS streams, preserve transcript state, and listen to the new turn.`,
+        `Barge-in is hard because the agent is listening while it speaks. Without echo cancellation or correct media timing, it can transcribe itself, reset its own VAD, or ignore the real user. Without semantic interruption policy, it can treat backchannels like "yeah" as stop commands or ignore actual corrections.`,
+      ],
+    },
+    {
+      heading: 'The test is media plus state',
+      body: [
+        `The note proposes testing interruption at different assistant-audio positions, with speaker playback, backchannels, true stop commands, and stale model/TTS streams. The key measurements are stop latency, stale audio leakage, transcript correctness, cancellation acknowledgement, and whether the next response addresses the user's interruption.`,
+        `This insight is the practical bridge between endpointing and transport. VAD helps detect the user, WebRTC helps with echo/media timing, TTS needs cancellation, and the app needs a conversation-history contract for what the user actually heard.`,
+      ],
+    },
+  ],
+  'native-speech-models-change-the-boundary': [
+    {
+      heading: 'Native speech attacks the cascade itself',
+      body: [
+        `The canonical research note lives at presentations/voice-agents/research/insights/INSIGHT_07_native_speech_models_change_the_boundary.md. Cascaded systems split STT, LLM, and TTS. Native speech-to-speech models move speech tokens into the model boundary, preserving prosody, overlap, backchannels, and timing signals that text discards.`,
+        `Moshi is the strongest conceptual source: it names the cascade problems as compounded latency, text bottleneck, and turn-based segmentation. It reports 160 ms theoretical latency, 200 ms practical latency, Mimi at 12.5 Hz, and full-duplex multi-stream modeling. Qwen2.5-Omni, Mini-Omni, and GLM-4-Voice show adjacent designs using Thinker/Talker structures, parallel decoding, or low-bitrate speech tokenizers.`,
+      ],
+    },
+    {
+      heading: 'The cascade is still the practical baseline',
+      body: [
+        `The important caveat is that native speech does not automatically win in production. Cascades are easier to debug, moderate, log, tool-call, and swap component-by-component. Native systems often need custom serving and much richer audio-level evaluation.`,
+        `For the article and deck, native speech should be framed as "where the boundary is moving," not as a replacement recommendation for every builder. Start with a debuggable cascade, add turn-taking and barge-in, then move native if the product really needs duplex, prosody, or lower boundary latency.`,
+      ],
+    },
+  ],
+  'voice-agent-eval-needs-multiple-metrics': [
+    {
+      heading: 'No single metric describes a voice agent',
+      body: [
+        `The canonical research note lives at presentations/voice-agents/research/insights/INSIGHT_08_voice_agent_eval_needs_multiple_metrics.md. WER measures transcript closeness, MOS/UTMOS measures voice quality, RTF/RTFx measures speed or throughput, and demos measure a selected happy path. None of those alone tells whether the agent works as a conversation system.`,
+        `The research now spans incompatible metrics: WER, CER, RTFx, RTF, TTFA, UTMOS, SIM, ROC-AUC, EOT latency, jitter, packet loss, interruption success, and task success. The right output is a trace-based harness rather than a single leaderboard.`,
+      ],
+    },
+    {
+      heading: 'The eval should follow the turn trace',
+      body: [
+        `The proposed trace records audio capture, first VAD speech, speech end, endpoint decision, first partial, final transcript, LLM first token, TTS first audio, playback start, interruption, and cancellation. From that trace, the system can compute p50/p95/p99 latency, false EOT, missed EOT, entity WER, TTFA, barge-in success, and cost per live minute.`,
+        `This is the strongest practical closing for the future article: benchmark your product conversation, not just the model demo. A small Jarvis regression set with pauses, corrections, backchannels, noisy playback, and domain terms would turn this research into a defensible engineering artifact.`,
       ],
     },
   ],

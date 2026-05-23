@@ -1,0 +1,1024 @@
+                                                       F5-TTS: A Fairytaler that Fakes Fluent and Faithful Speech
+                                                                         with Flow Matching
+
+                                                                Yushen Chen1 , Zhikang Niu1 , Ziyang Ma1 , Keqi Deng2
+                                                                  Chunhui Wang3 , Jian Zhao3 , Kai Yu1 , Xie Chen1 *
+                                               1
+                                                 MoE Key Lab of Artificial Intelligence, X-LANCE Lab, Shanghai Jiao Tong University
+                                               2
+                                                 University of Cambridge 3 Geely Automobile Research Institute (Ningbo) Company Ltd.
+                                                                        {swivid,chenxie95}@sjtu.edu.cn
+
+
+                                                                  Abstract                              The synthesized speech can achieve high fidelity
+                                                                                                        and naturalness that they are almost indistinguish-
+                                                This paper introduces F5-TTS, a fully non-
+
+
+
+
+arXiv:2410.06885v3 [eess.AS] 20 May 2025
+                                                                                                        able from human speech (Shen et al., 2023; Ju et al.,
+                                                autoregressive text-to-speech system based on
+                                                                                                        2024; Chen et al., 2024; Le et al., 2024).
+                                                flow matching with Diffusion Transformer
+                                                (DiT). Without requiring complex designs such               While autoregressive (AR) based TTS models
+                                                as duration model, text encoder, and phoneme            exhibit an intuitive way of consecutively predicting
+                                                alignment, the text input is simply padded with         the next token(s) and have achieved promising zero-
+                                                filler tokens to the same length as input speech,       shot TTS capability, the inherent limitations of AR
+                                                and then the denoising is performed for speech          modeling require extra efforts addressing issues
+                                                generation, which was originally proved fea-            such as inference latency and exposure bias (Song
+                                                sible by E2 TTS. However, the original de-              et al., 2024; Du et al., 2024a; Han et al., 2024; Xin
+                                                sign of E2 TTS makes it hard to follow due
+                                                                                                        et al., 2024; Peng et al., 2024). Moreover, the qual-
+                                                to its slow convergence and low robustness.
+                                                To address these issues, we first model the             ity of speech tokenizer is essential for AR models
+                                                input with ConvNeXt to refine the text rep-             to achieve high-fidelity synthesis (Zeghidour et al.,
+                                                resentation, making it easy to align with the           2021; Défossez et al., 2022; Wu et al., 2023; Yang
+                                                speech. We further propose an inference-time            et al., 2023; Zhang et al., 2023a; Bai et al., 2024;
+                                                Sway Sampling strategy, which significantly             Niu et al., 2024). Thus, there have been studies
+                                                improves our model’s performance and effi-              exploring direct modeling in continuous space (Liu
+                                                ciency. This sampling strategy for flow step
+                                                                                                        et al., 2024a; Li et al., 2024; Meng et al., 2024) to
+                                                can be easily applied to existing flow matching
+                                                based models without retraining. Our design             enhance synthesized speech quality recently.
+                                                allows faster training and achieves an inference            Although AR models demonstrate impressive
+                                                RTF of 0.15, which is greatly improved com-             zero-shot performance as they perform implicit du-
+                                                pared to state-of-the-art diffusion-based TTS           ration modeling and can leverage diverse sampling
+                                                models. Trained on a public 100K hours multi-           strategies, non-autoregressive (NAR) models bene-
+                                                lingual dataset, our F5-TTS exhibits highly nat-        fit from fast inference through parallel processing,
+                                                ural and expressive zero-shot ability, seamless         and effectively balance synthesis quality and la-
+                                                code-switching capability, and speed control ef-
+                                                                                                        tency. Notably, diffusion models (Ho et al., 2020;
+                                                ficiency. We have released all codes and check-
+                                                points to promote community development, at             Song et al., 2020) contribute most to the success of
+                                                https://SWivid.github.io/F5-TTS/.                       current NAR speech models (Shen et al., 2023; Ju
+                                                                                                        et al., 2024). In particular, Flow Matching with Op-
+                                           1    Introduction                                            timal Transport path (FM-OT) (Lipman et al., 2022)
+                                                                                                        is widely used in recent research fields not only
+                                           Recent research in Text-to-Speech (TTS) has ex-              text-to-speech (Le et al., 2024; Guo et al., 2024b;
+                                           perienced great advancement (Shen et al., 2018;              Mehta et al., 2024; Lee et al., 2024; Eskimez et al.,
+                                           Li et al., 2019; Ren et al., 2020; Kim et al., 2020,         2024) but also image generation (Esser et al., 2024)
+                                           2021; Popov et al., 2021; Wang et al., 2023b; Tan            and music generation (Fei et al., 2024).
+                                           et al., 2024). With a few seconds of audio prompt,               Unlike AR-based models, the alignment mod-
+                                           current TTS models are able to synthesize speech             eling between input text and synthesized speech
+                                           for any given text and mimic the speaker of audio            is crucial and challenging for NAR-based mod-
+                                           prompt (Wang et al., 2023a; Zhang et al., 2023b).            els. While NaturalSpeech 3 (Ju et al., 2024) and
+                                               * Corresponding author                                   Voicebox (Le et al., 2024) use frame-wise phoneme
+
+                                                                                                    1
+Figure 1: An overview of F5-TTS training (left) and inference (right). The model is trained on the text-guided
+speech-infilling task and condition flow matching loss. The input text is converted to a character sequence, padded
+with filler tokens to the same length as input speech, and refined by ConvNeXt V2 blocks before concatenation with
+speech input. The inference leverages Sway Sampling for flow steps, with the model and an ODE solver to generate
+speech from sampled noise.
+
+
+alignment; Matcha-TTS (Mehta et al., 2024) adopts           ral and realistic synthesized results. However, we
+monotonic alignment search (Kim et al., 2020) and           found that robustness issues exist in E2 TTS for
+relies on a phoneme-level duration model; recent            the text and speech alignment. Seed-TTS (Anas-
+works find that introducing such rigid alignment            tassiou et al., 2024) employs a similar strategy and
+between text and speech hinders the model from              achieves excellent results, though not elaborated
+generating results with higher naturalness (Eskimez         in model details. In these ways of not explicitly
+et al., 2024; Anastassiou et al., 2024).                    modeling phoneme-level duration, models learn to
+    E3 TTS (Gao et al., 2023a) abandons phoneme-            assign the length of each word or phoneme accord-
+level duration and applies cross-attention on the           ing to the given total sequence length, resulting in
+input sequence but yields limited audio quality.            improved prosody and rhythm.
+DiTTo-TTS (Lee et al., 2024) uses Diffusion Trans-             In this paper, we propose F5-TTS, a Fairytaler
+former (DiT) (Peebles and Xie, 2023) with cross-            that Fakes Fluent and Faithful speech with Flow
+attention conditioned on encoded text from a pre-           matching. Maintaining the simplicity of pipeline
+trained language model. To further enhance align-           without phoneme alignment, duration predictor,
+ment, it uses the pretrained language model to fine-        text encoder, and semantically infused codec
+tune the neural audio codec, infusing semantic in-          model, F5-TTS leverages the Diffusion Trans-
+formation into the generated representations. In            former with ConvNeXt V2 (Woo et al., 2023) to bet-
+contrast, E2 TTS (Eskimez et al., 2024), based              ter tackle text-speech alignment during in-context
+on Voicebox (Le et al., 2024), adopts a simpler             learning. We stress the deep entanglement of se-
+way, which removes the phoneme and duration                 mantic and acoustic features in the E2 TTS model
+predictor and directly uses characters padded with          design, which has inherent problems and will pose
+filler tokens to the length of mel spectrograms as          alignment failure issues that could not simply be
+input. This simple scheme also achieves very natu-          solved with re-ranking. With in-depth ablation stud-
+
+
+                                                        2
+ies, our proposed F5-TTS demonstrates stronger ro-                        To view in a more general way (Kingma and Gao,
+bustness, in generating more faithful speech to the                       2024), if formulating the loss in terms of log signal-
+text prompt, while maintaining comparable speaker                         to-noise ratio (log-SNR) λ instead of flow step
+similarity. Additionally, we introduce an inference-                      t, and parameterizing to predict x0 (ϵ, commonly
+time sampling strategy for flow steps substantially                       stated in diffusion model) instead of predict x1 −x0 ,
+improving naturalness, intelligibility, and speaker                       the CFM loss is equivalent to the v-prediction (Sal-
+similarity of generation. This approach can be                            imans and Ho, 2022) loss with cosine schedule.
+seamlessly integrated into existing flow matching                            For inference, given sampled noise x0 from ini-
+based models without retraining.                                          tial distribution p0 , flow step t ∈ [0, 1] and con-
+                                                                          dition with respect to generation task, the ordi-
+2     Preliminaries                                                       nary differential equation (ODE) solver (Chen,
+2.1    Flow Matching                                                      2018) is used to evaluate ψ1 (x0 ) the integration
+                                                                          of dψt (x0 )/dt with ψ0 (x0 ) = x0 . The number
+The Flow Matching (FM) objective is to match
+                                                                          of function evaluations (NFE) is the times going
+a probability path pt from a simple distribution
+                                                                          through the neural network as we may provide mul-
+p0 , e.g., the standard normal distribution p(x) =
+                                                                          tiple flow step values from 0 to 1 as input to ap-
+N (x|0, I), to p1 approximating the data distribu-
+                                                                          proximate the integration. Higher NFE will pro-
+tion q. In short, the FM loss regresses the vector
+                                                                          duce more accurate results and certainly take more
+field ut with a neural network vt as
+                                                                          calculation time.
+          LFM (θ) = Et,pt (x) ∥vt (x) − ut (x)∥2 ,             (1)
+                                                                          2.2   Classifier-Free Guidance
+where θ parameterizes the neural network, t ∼
+                                                                          Classifier Guidance (CG) is proposed by Dhariwal
+U[0, 1] and x ∼ pt (x). vt is trained over the en-
+                                                                          and Nichol (2021), functions by adding the gradi-
+tire flow step and data range, ensuring it learns to
+                                                                          ent of an additional classifier, while such an explicit
+handle the entire transformation process from the
+                                                                          way to condition the generation process may have
+initial distribution to the target distribution.
+                                                                          several problems. Extra training of the classifier
+   As we have no prior knowledge of how to ap-
+                                                                          is required and the generation result is directly af-
+proximate pt and ut , a conditional probability path
+                                                                          fected by the quality of the classifier. Adversarial
+pt (x|x1 ) = N (x | µt (x1 ), σt (x1 )2 I) is considered
+                                                                          attacks might also occur as the guidance is intro-
+in actual training, and the Conditional Flow Match-
+                                                                          duced through the way of updating the gradient.
+ing (CFM) loss is proved to have identical gradients
+                                                                          Thus deceptive images with imperceptible details
+w.r.t. θ (Lipman et al., 2022). x1 is the random vari-
+                                                                          to human eyes may be generated, which are not
+able corresponding to training data. µ and σ is the
+                                                                          conditional.
+time-dependent mean and scalar standard deviation
+of Gaussian distribution.                                                    Classifier-Free Guidance (CFG) (Ho and Sali-
+   Remember that the goal is to construct target dis-                     mans, 2022) proposes to replace the explicit classi-
+tribution (data samples) from initial simple distri-                      fier with an implicit classifier without directly com-
+bution, e.g., Gaussian noise. With the conditional                        puting the explicit classifier and its gradient. The
+form, the flow map ψt (x) = σt (x1 )x + µt (x1 )                          gradient of a classifier can be expressed as a com-
+with µ0 (x1 ) = 0 and σ0 (x1 ) = 1, µ1 (x1 ) = x1                         bination of conditional generation probability and
+and σ1 (x1 ) = 0 is made to have all conditional                          unconditional generation probability. By dropping
+probability paths converging to p0 and p1 at the                          the condition with a certain rate during training,
+start and end. The flow thus provides a vector                            and linear extrapolating the inference outputs with
+field dψt (x0 )/dt = ut (ψt (x0 )|x1 ). Reparameter-                      and without condition c, the final guided result is
+ize pt (x|x1 ) with x0 , we have                                          obtained. We could balance between fidelity and
+                                                                          diversity of the generated samples with
+                                                   d
+LCFM (θ) = Et,q(x1 ),p(x0 ) ∥vt (ψt (x0 )) −          ψt (x0 )∥2 .
+                                                   dt                     vt,CFG = vt (ψt (x0 ), c) + α(vt (ψt (x0 ), c) − vt (ψt (x0 )))
+                                             (2)
+                                                                                                                                     (4)
+Further leveraging Optimal Transport (OT) form
+                                                                          in CFM case, where α is the CFG strength.1
+ψt (x) = (1 − t)x + tx1 , the OT-CFM loss is
+                                                                             1
+                                                                               Note that the inference time will be doubled if CFG.
+LCFM (θ) = Et,q(x1 ),p(x0 ) ∥vt ((1 − t)x0 + tx1 ) − (x1 − x0 )∥2 .       Model vt will execute the forward process twice, once with
+                                                               (3)        condition, and once without.
+
+
+                                                                      3
+3     Method                                                        speaker characteristics and text prompt is to guide
+                                                                    the content of generated speech.
+This work aims to build a high-level text-to-speech                    The sequence length N , or duration, has now
+synthesis system. We trained our model on the text-                 become a pivotal factor that necessitates informing
+guided speech-infilling task (Bai et al., 2022; Le                  the model of the desired length for sample gener-
+et al., 2024). Based on recent research (Lee et al.,                ation. One could train a separate model to predict
+2024; Eskimez et al., 2024; Liu et al., 2024b), it                  and deliver the duration based on xref , yref and
+is promising to train without phoneme-level dura-                   ygen . Here we simply estimate the duration based
+tion predictor and can achieve higher naturalness in                on the ratio of the number of characters in ygen and
+zero-shot generation deprecating explicit phoneme-                  yref . We assume that the sum-up length of char-
+level alignment. We propose our advanced archi-                     acters is no longer than mel length, thus padding
+tecture with faster convergence and more robust                     with filler tokens is done as during training.
+generation. We also propose an inference-time                          To sample from the learned distribution, the con-
+flow step sampling strategy, which significantly im-                verted mel features xref , along with concatenated
+proves our model’s performance in faithfulness to                   and extended character sequence zref ·gen serve as
+reference text and speaker similarity.                              the condition in Eq.4. We have
+3.1   Pipeline
+                                                                    vt (ψt (x0 ), c) = vt ((1−t)x0 +tx1 |xref , zref ·gen ),
+Training The infilling task is to predict a segment                                                                      (6)
+of speech given its surrounding audio and full text                 See from Fig.1 (right), we start from a sampled
+(for both surrounding transcription and the part to                 noise x0 , and what we want is the other end of
+generate). For simplicity, we reuse the symbol x                    flow x1 . Thus we use the ODE solver to gradually
+to denote an audio sample and y the corresponding                   integrate from ψ0 (x0 ) = x0 to ψ1 (x0 ) = x1 , given
+transcript for a data pair (x, y). As shown in Fig.1                dψt (x0 )/dt = vt (ψt (x0 ), xref , zref ·gen ). During
+(left), the acoustic input for training is an extracted             inference, the flow steps are provided in an ordered
+mel spectrogram features x1 ∈ RF ×N from the                        way, e.g., uniformly sampled a certain number
+audio sample x, where F is mel dimension and                        from 0 to 1 according to the NFE setting. After
+N is the sequence length. In the scope of CFM,                      getting the generated mel with model vt and ODE
+we pass in the model the noisy speech (1 − t)x0 +                   solver, we discard the part of xref . Then we lever-
+tx1 and the masked speech (1 − m) ⊙ x1 , where                      age a vocoder to convert the mel back to waveform.
+x0 denotes sampled Gaussian noise, t is sampled
+flow step, and m ∈ {0, 1}F ×N represents a binary                   3.2   F5-TTS
+temporal mask.                                                      E2 TTS directly concatenates the padded charac-
+   Following E2 TTS, we directly use alphabets                      ter sequence with input speech sequence, deeply
+and symbols for English. We opt for full pinyin to                  entangling semantic and acoustic features with a
+facilitate Chinese zero-shot generation. By break-                  large length gap of effective information, which is
+ing the raw text into such character sequence and                   the underlying cause of hard training and poses sev-
+padding it with filler tokens ⟨F ⟩ to the same length               eral problems in a zero-shot scenario (Sec.5.1). To
+as mel frames, we form an extended sequence z                       alleviate the problem of slow convergence and low
+with ci denoting the i-th character:                                robustness, we propose F5-TTS which accelerates
+                                                                    training and inference and shows a strong robust-
+       z = (c1 , c2 , . . . , cM , ⟨F ⟩, . . . , ⟨F ⟩).   (5)       ness in generation. Also, an inference-time Sway
+                                   |      {z        }
+                                    (N −M ) times                   Sampling is introduced, which allows inference
+                                                                    faster (using less NFE) while maintaining perfor-
+The model is trained to reconstruct m ⊙ x1 with                     mance. This sampling way of flow step can be
+(1 − m) ⊙ x1 and z, which equals to learn the target                directly applied to other CFM-based models with-
+distribution p1 in form of P (m⊙x1 |(1−m)⊙x1 , z)                   out retraining.
+approximating real data distribution q.                             Model As shown in Fig.1, we use latent Diffu-
+Inference To generate a speech with the desired                     sion Transformer (DiT) (Peebles and Xie, 2023)
+content, we have the audio prompt’s mel spectro-                    as backbone. To be specific, we use DiT blocks
+gram features xref , its transcription yref , and a                 with zero-initialized adaptive Layer Norm (adaLN-
+text prompt ygen . Audio prompt serves to provide                   zero). To enhance the model’s alignment ability,
+
+                                                                4
+we also leverage ConvNeXt V2 blocks (Woo et al.,              further schedule the flow step with a single-peak
+2023). Its predecessor ConvNeXt V1 (Liu et al.,               logit-normal (Atchison and Shen, 1980) sampling,
+2022) is used in many works and shows a strong                in order to give more weight to intermediate flow
+temporal modeling capability in speech domain                 steps by sampling them more frequently. We spec-
+tasks (Siuzdak, 2023; Okamoto et al., 2024).                  ulate that such sampling distributes the model’s
+   As described in Sec.3.1, the model input is char-          learning difficulty more evenly over different flow
+acter sequence, noisy speech, and masked speech.              step t ∈ [0, 1].
+Before concatenation in the feature dimension, the               In contrast, we train our model with traditional
+character sequence first goes through ConvNeXt                uniformly sampled flow step t ∼ U[0, 1] but ap-
+blocks. Experiments have shown that this way of               ply a non-uniform sampling during inference. In
+providing individual modeling space allows text               specific, we define a Sway Sampling function as
+input to better prepare itself before later in-context                                       π
+learning. Unlike the phoneme-level force align-                  fsway (u; s) = u + s · (cos( u) − 1 + u), (7)
+                                                                                             2
+ment done in Voicebox, a rigid boundary for text is                                                           2
+not explicitly introduced. The semantic and acous-            which is monotonic with coefficient s ∈ [−1, π−2   ].
+tic features are jointly learned with the entire model.       We first sample u ∼ U[0, 1], then apply this func-
+Not directly feeding the model with inputs of sig-            tion to obtain sway sampled flow step t. With
+nificant length gap as E2 TTS does, the proposed              s < 0, the sampling is sway to left; with s > 0, the
+text refinement mitigates the impact of using inputs          sampling is sway to right; and s = 0 case equals
+with mismatched effective information lengths, de-            to uniform sampling. Fig.3 shows the probability
+spite equal physical length in magnitude as E2 TTS.           density function of Sway Sampling on flow step t.
+   The flow step t for CFM is provided as the condi-             Conceptually, CFM models focus more on
+tion of adaLN-zero rather than appended to the con-           sketching the contours of speech in the early stage
+catenated input sequence in Voicebox. We found                (t → 0) from pure noise and later focus more on
+that an additional mean pooled token of text se-              the embellishment of fine-grained details. There-
+quence for adaLN condition is not essential for               fore, the alignment between speech and text will be
+the TTS task, maybe because the TTS task requires             determined based on the first few generated results.
+more rigorously guided results and the mean pooled            With a scale parameter s < 0, we make model infer-
+text token is more coarse.                                    ence more with smaller t, thus providing the ODE
+   We adopt some position embedding settings in               solver with more startup information to evaluate
+Voicebox. The flow step is embedded with a sinu-              more precisely in initial integration steps.
+soidal position. The concatenated input sequence
+                                                              4       Experimental Setup
+is added with a convolutional position embedding.
+We apply a rotary position embedding (RoPE) (Su               Datasets We utilize the in-the-wild multilingual
+et al., 2024) for self-attention rather than symmet-          speech dataset Emilia (He et al., 2024) to train our
+ric bi-directional ALiBi bias (Press et al., 2021).           base models. After simply filtering out transcrip-
+And for extended character sequence z, we also add            tion failure and misclassified language speech, we
+it with an absolute sinusoidal position embedding             retain approximately 95K hours of English and
+before feeding it into ConvNeXt blocks.                       Chinese data. We also trained small models for
+   Compared with Voicebox and E2 TTS, we aban-                ablation study and architecture search on Wenet-
+doned the U-Net (Ronneberger et al., 2015) style              Speech4TTS (Ma et al., 2024) Premium subset,
+skip connection structure and switched to using               consisting of a 945 hours Mandarin corpus. Base
+DiT with adaLN-zero. Without a phoneme-level                  model configurations are introduced below, and
+duration predictor and explicit alignment process,            small model configurations are in Appendix B.1.
+and nor with extra text encoder and semantically              Three test sets are adopted for evaluation, which are
+infused neural codec model in DiTTo-TTS, we give              LibriSpeech-PC test-clean (Meister et al., 2023),
+the text input a little freedom (individual modeling          Seed-TTS test-en (Anastassiou et al., 2024) with
+space) to let it prepare itself before concatenation          1088 samples from Common Voice (Ardila et al.,
+and in-context learning with speech input.                    2019), and Seed-TTS test-zh with 2020 samples
+Sampling As stated in Sec.2.1, the CFM could                  from DiDiSpeech (Guo et al., 2021)2 . Most of the
+be viewed as v-prediction with a cosine schedule.                 2
+                                                                  https://github.com/BytedanceSpeech/
+For image synthesis, Esser et al. (2024) propose to           seed-tts-eval
+
+
+                                                          5
+previous English-only models are evaluated on dif-         spectrograms to audio signals.
+ferent subsets of LibriSpeech test-clean while the         Baselines We compare our models with lead-
+used prompt list is not released, which makes fair         ing TTS systems including, (mainly) autoregres-
+comparison difficult. Thus we build and release a          sive models: VALL-E 2 (Chen et al., 2024),
+4-to-10-second LibriSpeech-PC subset with 1127             MELLE (Meng et al., 2024), FireRedTTS (Guo
+samples to facilitate community comparisons.               et al., 2024a) and CosyVoice (Du et al., 2024b);
+Training Our base models are trained to 1.2M               non-autoregressive models: Voicebox (Le et al.,
+updates with a batch size of 307,200 audio frames          2024), NaturalSpeech 3 (Ju et al., 2024), DiTTo-
+(0.91 hours), for over one week on 8 NVIDIA A100           TTS (Lee et al., 2024), MaskGCT (Wang et al.,
+80G GPUs. The AdamW optimizer (Loshchilov,                 2024), Seed-TTSDiT (Anastassiou et al., 2024) and
+2017) is used with a peak learning rate of 7.5e-           our reproduced E2 TTS (Eskimez et al., 2024). De-
+5, linearly warmed up for 20K updates, and lin-            tails of compared models see Appendix A.
+early decays over the rest of the training. We             Metrics We measure the performances under
+set 1 for the max gradient norm clip. The F5-              cross-sentence task (Wang et al., 2023a; Le et al.,
+TTS base model has 22 layers, 16 attention heads,          2024). We report Word Error Rate (WER) and
+1024/2048 embedding/feed-forward network (FFN)             speaker Similarity between generated and the origi-
+dimension for DiT; and 4 layers, 512/1024 embed-           nal target speeches (SIM-o (Le et al., 2024)) for ob-
+ding/FFN dimension for ConvNeXt V2; in total               jective evaluation. For WER, we employ Whisper-
+335.8M parameters. The reproduced E2 TTS, a                large-v3 (Radford et al., 2023) to transcribe English
+333.2M flat U-Net equipped Transformer, has 24             and Paraformer-zh (Gao et al., 2023b) for Chinese,
+layers, 16 attention heads, and 1024/4096 embed-           following (Anastassiou et al., 2024). For SIM-o,
+ding/FFN dimension. Both models use RoPE as                we use a WavLM-large-based (Chen et al., 2022)
+mentioned in Sec.3.2, a dropout rate of 0.1 for at-        speaker verification model to extract speaker em-
+tention and FFN, the same convolutional position           beddings for calculating the cosine similarity of
+embedding as in Voicebox(Le et al., 2024).                 synthesized and ground truth speeches. We use
+   We directly use alphabets and symbols for En-           Comparative Mean Opinion Scores (CMOS) and
+glish, use jieba3 and pypinyin4 to process raw Chi-        Similarity Mean Opinion Scores (SMOS) for sub-
+nese characters to full pinyins. The character em-         jective evaluation. Details of subjective evaluations
+bedding vocabulary size is 2546, counting in the           can be found in Appendix C.
+special filler token and all other language charac-
+ters exist in the Emilia dataset as there are many         5   Experimental Results
+code-switched sentences. For audio samples we
+use 100-dimensional log mel-filterbank features            Tab.1 and 2 show the main results of objective
+with 24 kHz sampling rate and hop length 256. A            and subjective evaluations. We report the average
+random 70% to 100% of mel frames is masked for             score of three random seed generation results with
+infilling task training. For CFG (Sec.2.2) training,       our model and open-sourced baselines. We use by
+first the masked speech input is dropped with a rate       default a CFG strength of 2 and a Sway Sampling
+of 0.3, then the masked speech again but with text         coefficient of −1 for our F5-TTS.
+input together is dropped with a rate of 0.2 (Le              F5-TTS achieves a WER of 2.42 on LibriSpeech-
+et al., 2024). We assume that the two-stage control        PC test-clean with 32 NFE, demonstrating its ro-
+of CFG training may have the model learn more              bustness in zero-shot generation. Inference with
+with text alignment.                                       16 NFE, F5-TTS gains an RTF of 0.15 while still
+                                                           supporting high-quality generation with a WER of
+Inference The inference process is mainly elab-
+                                                           2.53. The reproduced E2 TTS shows an excellent
+orated in Sec.3.1. We use the Exponential Mov-
+                                                           speaker similarity (SIM) but much worse WER
+ing Averaged (EMA) (Karras et al., 2024) weights
+                                                           in the zero-shot scenario, indicating the inherent
+for inference, and the Euler ODE solver for F5-
+                                                           deficiency of alignment robustness.
+TTS (midpoint for E2 TTS as described in Eskimez
+et al. (2024)). We use the pretrained vocoder Vo-             From the evaluation results on the Seed-TTS
+cos (Siuzdak, 2023) to convert generated log mel           test sets, F5-TTS behaves similarly with a close
+                                                           WER to ground truth and comparable SIM scores.
+   3
+       https://github.com/fxsjy/jieba                      It produces smooth and fluent speech in zero-shot
+   4
+       https://github.com/mozillazg/python-pinyin          generation with a CMOS of 0.31 (0.21) and SMOS
+
+                                                       6
+ Model            #Param.    #Data WER(%)↓ SIM-o↑ RTF↓                  Model              WER(%)↓ SIM-o↑ CMOS↑ SMOS↑
+                     LibriSpeech test-clean                                                 Seed-TTS test-en
+ Ground Truth (2.2 hours subset)           2.2     0.754    -           Ground Truth            2.06     0.73     0.00    3.91
+ VALL-E 2             -       50K EN       2.44    0.643   0.732        Vocoder Resynthesized   2.09     0.70      -        -
+ MELLE                -       50K EN       2.10    0.625   0.549        CosyVoice               3.39     0.64      0.02   3.64
+ MELLE-R2             -       50K EN       2.14    0.608   0.276        FireRedTTS              3.82     0.46     -1.46   2.94
+ Voicebox           330M      60K EN       1.9     0.662   0.64         MaskGCT                 2.623*   0.717*     -       -
+ DiTTo-TTS          740M      55K EN       2.56    0.627   0.162        Seed-TTSDiT             1.733*   0.790*     -       -
+ Ground Truth (40 samples subset)          1.94    0.68     -           E2 TTS (32 NFE)         2.19     0.71      0.06   3.81
+ Voicebox         330M        60K EN       2.03    0.64    0.64         F5-TTS (16 NFE)         1.89     0.67     0.16    3.79
+ NaturalSpeech 3 500M         60K EN       1.94    0.67    0.296        F5-TTS (32 NFE)         1.83     0.67     0.31    3.89
+ MaskGCT         1048M       100K Multi.   2.634   0.687    -                               Seed-TTS test-zh
+                   LibriSpeech-PC test-clean                            Ground Truth            1.26     0.76     0.00    3.72
+ Ground Truth (1127 samples 2 hrs)         2.23    0.69     -           Vocoder Resynthesized   1.27     0.72      -        -
+ Vocoder Resynthesized                     2.32    0.66     -           CosyVoice               3.10     0.75     -0.06   3.54
+ CosyVoice      ∼300M        170K Multi.   3.59    0.66    0.92         FireRedTTS              1.51     0.63     -0.49   3.28
+ FireRedTTS     ∼580M        248K Multi.   2.69    0.47    0.84         MaskGCT                 2.273*   0.774*     -       -
+ E2 TTS (32 NFE) 333M        100K Multi.   2.95    0.69    0.68         Seed-TTSDiT             1.178*   0.809*     -       -
+ F5-TTS (16 NFE) 336M        100K Multi.   2.53    0.66    0.15         E2 TTS (32 NFE)         1.97     0.73     -0.04   3.44
+ F5-TTS (32 NFE) 336M        100K Multi.   2.42    0.66    0.31         F5-TTS (16 NFE)         1.74     0.75     0.02    3.72
+                                                                        F5-TTS (32 NFE)         1.56     0.76     0.21    3.83
+
+Table 1: Comparison results on LibriSpeech(-PC) test-
+clean. The Real-Time Factor (RTF) is computed with                     Table 2: Results on two test sets, Seed-TTS test-en
+the inference time of 10s speech on NVIDIA RTX 3090.                   and test-zh. The boldface indicates the best result, the
+#Param. stands for the number of learnable parameters                  underline denotes the second best, and * denotes scores
+and #Data refers to the used training dataset in hours.                reported in baseline papers.
+
+
+of 3.89 (3.83) on Seed-TTS test-en (test-zh), and
+surpasses some baseline models trained with larger
+scales. As stated in Sec.3.1, we simply estimate
+duration based on the ratio of the audio prompt’s
+transcript length and the text prompt length, rather
+than relying on an extra duration predictor. It is
+also worth mentioning that Seed-TTS with the best                      Figure 2: Seed-TTS test-zh evaluation results of 155M
+                                                                       small models trained with WenetSpeech4TTS Premium
+result is trained with orders of larger model size
+                                                                       a 945 hours Mandarin Corpus.
+and dataset (several million hours) than ours.
+   A robustness test on ELLA-V (Song et al., 2024)
+hard sentences is further included in Appendix B.5.                    dates, while E2 TTS is 9.63 and 0.53. We were first
+The ablation of vocoders and additional evalua-                        faced with unsatisfactory results with reproduced
+tion with a non-PC test set are in Appendix B.6.                       E2 TTS in Mandarin. On the one hand, E2 TTS
+An analysis of training stability with varying data                    converges slowly; on the other hand, we found that
+scales is in Appendix B.7.                                             E2 TTS consistently failed (unable to solve with
+                                                                       re-ranking) on 7% test samples (WER>50%) all
+5.1   Ablation of Model Architecture                                   along the training process, speculated of larger dis-
+To clarify our F5-TTS’s efficiency and stress the                      tribution gap with train set. To disclose the possi-
+limitation of E2 TTS. We conduct in-depth abla-                        ble reasons for E2 TTS’s deficiency, we investigate
+tion studies. We trained small models (all around                      the models’ behaviors with different inputs. See
+155M parameters) to 800K updates on the Wenet-                         from Tab.4 in Appendix B.2, by dropping the audio
+Speech4TTS Premium 945 hours Mandarin dataset                          prompt, and synthesizing speech solely with the
+with half the batch size compared to base models.                      text prompt, E2 TTS is free of failures (F5-TTS
+Configuration details see Appendix B.1.                                also benefits but because of more standard output
+   Fig.2 shows the overall trend of productive small                   that is easier to be recognized by the ASR model).
+models’ WER and SIM scores evaluated on Seed-                          This phenomenon implied a deep entanglement of
+TTS test-zh. F5-TTS (32 NFE w/o SS) achieves                           semantic and acoustic features within E2 TTS’s
+a WER of 4.17 and a SIM of 0.54 at 800K up-                            model design, and it greatly hinders real-world ap-
+
+                                                                   7
+plication as the failed generation cannot be solved
+with re-ranking. Supervised fine-tuning facing out-
+of-domain data or a tremendous pretraining scale
+under the slow convergence speed is mandatory
+for E2 TTS, which is inconvenient for industrial
+deployment and a crushing burden for individuals.
+   From Tab.3 GFLOPs, structures without many                Figure 3: The probability density function of Sway
+skip connections natively allow faster training              Sampling with different coefficient s, and small models’
+and inference. However, pure adaLN DiT (F5-                  corresponding performance on Seed-TTS test-zh.
+TTS−Conv2Text) failed to learn alignment given
+simply padded character sequences, while MMDiT
+                                                             the subsequent inference (skip the flow steps be-
+(Esser et al., 2024) learned fast and collapsed fast,
+                                                             fore t′ ). The model succeeds in overriding leaked
+resulting in severe repeated utterance with wild tim-
+                                                             utterances and producing speech following the text
+bre and prosody. We assume that the pure MMDiT
+                                                             prompt if Sway Sampling is used, and fails with-
+structure is far too flexible for TTS task that re-
+                                                             out. Uniformly sampled flow steps will have the
+quires faithful generation following guidance. Thus
+                                                             model producing speech dominated by leaked in-
+we focus on enhancing the modeling ability of DiT.
+                                                             formation, speaking the duplicated audio prompt’s
+Based on the concept of refining the input text rep-
+                                                             context. Similarly, a leaked timbre can be overrid-
+resentation to better align with speech modality,
+                                                             den with another speaker’s utterance as an audio
+and keep the simplicity of system design, F5-TTS
+                                                             prompt, leveraging Sway Sampling.
+is proven effective. F5-TTS easily handles zero-
+shot generation, showing stronger robustness.                   The experiment result is a shred of strong evi-
+   We further ablate with adding the same branch             dence proving that the early flow steps are crucial
+for input speech (F5-TTS+Conv2Audio), and also               for sketching the silhouette of target speech based
+conduct experiments to figure out whether the long           on given prompts faithfully, the later steps focus
+skip connection and the refinement of input text             more on formed intermediate noisy output, where
+are beneficial to the counterpart backbone, i.e. F5-         our sway-to-left sampling (s < 0) finds the prof-
+TTS and E2 TTS, named F5-TTS+LongSkip and                    itable niche and takes advantage of it. We empha-
+E2 TTS+Conv2Text respectively. From Fig.2, F5-               size that our inference-time Sway Sampling can be
+TTS+Conv2Audio trades much alignment robust-                 easily applied to existing CFM-based models with-
+ness (+1.61 WER) with a slightly higher speaker              out retraining. And we will work in the future to
+similarity (+0.01 SIM). The long skip connection             combine it with training-time noise schedulers and
+structure can not simply fit into DiT to improve             distillation techniques to further boost efficiency.
+speaker similarity, while the ConvNeXt for input
+text refinement can not directly apply to the flat           6   Conclusion
+U-Net Transformer to improve WER as well, both
+showing significant degradation of performance.              This work introduces F5-TTS, a fully non-
+                                                             autoregressive text-to-speech system based on flow
+5.2   Ablation of Sway Sampling                              matching with diffusion transformer (DiT). With
+It is clear from Fig.3 that a Sway Sampling with             a tidy pipeline, literally text in and speech out, F5-
+more negative s value further improves perfor-               TTS achieves state-of-the-art zero-shot ability com-
+mance. Appendix B.3 with massive ablation re-                pared to existing works trained on industry-scale
+sults on base models, provides more evidence of              data. We adopt ConvNeXt for text modeling and
+the effectiveness of the proposed strategy.                  propose the test-time Sway Sampling strategy to
+   To be more concrete and intuitive, we conduct             further improve the robustness of speech genera-
+a "leak and override" experiment. We first re-               tion and inference efficiency. Our design allows
+place the Gaussian noise input x0 at inference               faster training and inference, by achieving a test-
+time with a ground-truth-information-leaked input            time RTF of 0.15, which is competitive with other
+(1 − t′ )x0 + t′ x′ref , where t′ = 0.1 and x′ref is a       heavily optimized TTS models of similar perfor-
+duplicate of the audio prompt mel features. Then,            mance. We will open-source our code, and models,
+we provide a text prompt different from the dupli-           to enhance transparency and facilitate reproducible
+cated audio transcript and let the model continue            research in this area.
+
+                                                         8
+Limitations                                                  Sanyuan Chen, Shujie Liu, Long Zhou, Yanqing Liu,
+                                                               Xu Tan, Jinyu Li, Sheng Zhao, Yao Qian, and Furu
+There are two limitations to this work. First, al-             Wei. 2024. VALL-E 2: Neural codec language mod-
+though F5-TTS accelerates the training and infer-              els are human parity zero-shot text to speech synthe-
+ence while maintaining the simplicity of the system            sizers. arXiv preprint arXiv:2406.05370.
+through better structure design, the mel spectro-            Zhengyang Chen, Sanyuan Chen, Yu Wu, Yao Qian,
+gram sequence length is still much longer than the             Chengyi Wang, Shujie Liu, Yanmin Qian, and
+text modality. Therefore, research and employ-                 Michael Zeng. 2022. Large-scale self-supervised
+                                                               speech representation learning for automatic speaker
+ment of a more efficient and hopefully universal               verification. In Proc. ICASSP, pages 6147–6151.
+continuous representation compatible with highly               IEEE.
+expressive speech synthesis remains a critical direc-
+                                                             Alexandre Défossez, Jade Copet, Gabriel Synnaeve, and
+tion and can further improve efficiency and perfor-            Yossi Adi. 2022. High fidelity neural audio compres-
+mance. Second, although F5-TTS has great zero-                 sion. arXiv preprint arXiv:2210.13438.
+shot generation ability and can deeply mimic the
+                                                             Prafulla Dhariwal and Alexander Nichol. 2021. Diffu-
+reference audio, it lacks fine-grained control of par-
+                                                               sion models beat gans on image synthesis. Advances
+alinguistic details, e.g. emotion, which is of great           in neural information processing systems, 34:8780–
+research and practical application value.                      8794.
+
+Ethics Statements                                            Chenpeng Du, Yiwei Guo, Hankun Wang, Yifan Yang,
+                                                               Zhikang Niu, Shuai Wang, Hui Zhang, Xie Chen, and
+This work is purely a research project. F5-TTS is              Kai Yu. 2024a. VALL-T: Decoder-only generative
+                                                               transducer for robust and decoding-controllable text-
+trained on large-scale public multilingual speech              to-speech. arXiv preprint arXiv:2401.14321.
+data and could synthesize speech of high natural-
+ness and speaker similarity. Given the potential             Zhihao Du, Qian Chen, Shiliang Zhang, Kai Hu, et al.
+                                                               2024b. Cosyvoice: A scalable multilingual zero-
+risks in the misuse of the model, such as spoofing
+                                                               shot text-to-speech synthesizer based on supervised
+voice identification, it should be imperative to im-           semantic tokens. arXiv preprint arXiv:2407.05407.
+plement watermarks and develop a detection model
+to identify audio outputs.                                   Sefik Emre Eskimez, Xiaofei Wang, Manthan Thakker,
+                                                               Canrun Li, et al. 2024. E2 TTS: Embarrassingly
+                                                               easy fully non-autoregressive zero-shot TTS. arXiv
+                                                               preprint arXiv:2406.18009.
+References
+                                                             Patrick Esser, Sumith Kulal, Andreas Blattmann, Rahim
+Philip Anastassiou, Jiawei Chen, Jitong Chen, Yuanzhe          Entezari, et al. 2024. Scaling rectified flow trans-
+  Chen, et al. 2024. Seed-TTS: A family of high-               formers for high-resolution image synthesis. In Proc.
+  quality versatile speech generation models. arXiv            ICML.
+  preprint arXiv:2406.02430.
+                                                             Zhengcong Fei, Mingyuan Fan, Changqian Yu, and
+Rosana Ardila, Megan Branson, Kelly Davis, Michael             Junshi Huang. 2024. Flux that plays music. arXiv
+  Henretty, Michael Kohler, Josh Meyer, Reuben                 preprint arXiv:2409.00587.
+  Morais, Lindsay Saunders, Francis M Tyers, and
+  Gregor Weber. 2019. Common voice: A massively-             Yuan Gao, Nobuyuki Morioka, Yu Zhang, and Nanxin
+  multilingual speech corpus.      arXiv preprint              Chen. 2023a. E3 TTS: Easy end-to-end diffusion-
+  arXiv:1912.06670.                                            based text to speech. In Proc. ASRU, pages 1–8.
+                                                               IEEE.
+Jhon Atchison and Sheng M Shen. 1980. Logistic-
+  normal distributions: Some properties and uses.            Zhifu Gao, Zerui Li, Jiaming Wang, Haoneng Luo, Xian
+  Biometrika, 67(2):261–272.                                   Shi, Mengzhe Chen, Yabin Li, Lingyun Zuo, Zhihao
+                                                               Du, Zhangyu Xiao, et al. 2023b. FunASR: A funda-
+He Bai, Tatiana Likhomanenko, Ruixiang Zhang, Zi-              mental end-to-end speech recognition toolkit. arXiv
+  jin Gu, Zakaria Aldeneh, and Navdeep Jaitly. 2024.           preprint arXiv:2305.11013.
+  dMel: Speech tokenization made simple. arXiv
+  preprint arXiv:2407.15835.                                 Hao-Han Guo, Kun Liu, Fei-Yu Shen, Yi-Chen Wu,
+                                                               Feng-Long Xie, Kun Xie, and Kai-Tuo Xu. 2024a.
+He Bai, Renjie Zheng, Junkun Chen, Mingbo Ma, Xin-             FireRedTTS: A foundation text-to-speech frame-
+  tong Li, and Liang Huang. 2022. A3t: Alignment-              work for industry-level generative speech applica-
+  aware acoustic and text pretraining for speech syn-          tions. arXiv preprint arXiv:2409.03283.
+  thesis and editing. In International Conference on
+  Machine Learning, pages 1399–1411. PMLR.                   Tingwei Guo, Cheng Wen, Dongwei Jiang, Ne Luo, et al.
+                                                                2021. Didispeech: A large scale Mandarin speech
+Ricky T. Q. Chen. 2018. torchdiffeq.                            corpus. In Proc. ICASSP, pages 6968–6972. IEEE.
+
+
+                                                         9
+Yiwei Guo, Chenpeng Du, Ziyang Ma, Xie Chen, and                Jaehyeon Kim, Jungil Kong, and Juhee Son. 2021.
+  Kai Yu. 2024b. Voiceflow: Efficient text-to-speech               Conditional variational autoencoder with adversar-
+  with rectified flow matching. In Proc. ICASSP, pages             ial learning for end-to-end text-to-speech. In Inter-
+  11121–11125. IEEE.                                               national Conference on Machine Learning, pages
+                                                                   5530–5540. PMLR.
+Bing Han, Long Zhou, Shujie Liu, Sanyuan Chen,
+  Lingwei Meng, Yanming Qian, Yanqing Liu, Sheng                Diederik Kingma and Ruiqi Gao. 2024. Understand-
+  Zhao, Jinyu Li, and Furu Wei. 2024. VALL-E R:                   ing diffusion objectives as the ELBO with simple
+  Robust and efficient zero-shot text-to-speech syn-              data augmentation. Advances in Neural Information
+  thesis via monotonic alignment. arXiv preprint                  Processing Systems, 36.
+  arXiv:2406.07855.
+                                                                Matthew Le, Apoorv Vyas, Bowen Shi, Brian Karrer,
+Haorui He, Zengqiang Shang, Chaoren Wang, Xuyuan                 et al. 2024. Voicebox: Text-guided multilingual uni-
+  Li, et al. 2024. Emilia: An extensive, multilingual,           versal speech generation at scale. Advances in neural
+  and diverse speech dataset for large-scale speech gen-         information processing systems, 36.
+  eration. arXiv preprint arXiv:2407.05361.
+                                                                Keon Lee, Dong Won Kim, Jaehyeon Kim, and Jae-
+Jonathan Ho, Ajay Jain, and Pieter Abbeel. 2020. De-              woong Cho. 2024. DiTTo-TTS: Efficient and scal-
+  noising diffusion probabilistic models. Advances                able zero-shot text-to-speech with diffusion trans-
+  in neural information processing systems, 33:6840–              former. arXiv preprint arXiv:2406.11427.
+  6851.
+                                                                Sang-gil Lee, Wei Ping, Boris Ginsburg, Bryan Catan-
+Jonathan Ho and Tim Salimans. 2022. Classifier-                   zaro, and Sungroh Yoon. 2022. Bigvgan: A univer-
+  free diffusion guidance.      arXiv preprint                    sal neural vocoder with large-scale training. arXiv
+  arXiv:2207.12598.                                               preprint arXiv:2206.04658.
+
+Wei-Ning Hsu, Benjamin Bolte, Yao-Hung Hubert Tsai,             Naihan Li, Shujie Liu, Yanqing Liu, Sheng Zhao, and
+  Kushal Lakhotia, Ruslan Salakhutdinov, and Abdel-               Ming Liu. 2019. Neural speech synthesis with trans-
+  rahman Mohamed. 2021. Hubert: Self-supervised                   former network. In Proceedings of the AAAI con-
+  speech representation learning by masked prediction             ference on artificial intelligence, volume 33, pages
+  of hidden units. IEEE/ACM Transactions on Audio,                6706–6713.
+  Speech, and Language Processing, 29:3451–3460.                Tianhong Li, Yonglong Tian, He Li, Mingyang Deng,
+Keith Ito and Linda Johnson. 2017. The LJ speech                  and Kaiming He. 2024. Autoregressive image gen-
+  dataset.                                                        eration without vector quantization. arXiv preprint
+                                                                  arXiv:2406.11838.
+Zeqian Ju, Yuancheng Wang, Kai Shen, Xu Tan, Detai
+                                                                Yaron Lipman, Ricky TQ Chen, Heli Ben-Hamu,
+  Xin, Dongchao Yang, Yanqing Liu, Yichong Leng,
+                                                                  Maximilian Nickel, and Matt Le. 2022. Flow
+  Kaitao Song, Siliang Tang, et al. 2024. Natural-
+                                                                  matching for generative modeling. arXiv preprint
+  speech 3: Zero-shot speech synthesis with factor-
+                                                                  arXiv:2210.02747.
+  ized codec and diffusion models. arXiv preprint
+  arXiv:2403.03100.                                             Zhijun Liu, Shuai Wang, Sho Inoue, Qibing Bai, and
+                                                                  Haizhou Li. 2024a. Autoregressive diffusion trans-
+Jacob Kahn, Morgane Riviere, Weiyi Zheng, Evgeny                  former for text-to-speech synthesis. arXiv preprint
+   Kharitonov, et al. 2020. Libri-light: A benchmark              arXiv:2406.05551.
+   for ASR with limited or no supervision. In Proc.
+   ICASSP, pages 7669–7673. IEEE.                               Zhijun Liu, Shuai Wang, Pengcheng Zhu, Mengx-
+                                                                  iao Bi, and Haizhou Li. 2024b. E1 TTS: Simple
+Wei Kang, Xiaoyu Yang, Zengwei Yao, Fangjun Kuang,                and fast non-autoregressive TTS. arXiv preprint
+ Yifan Yang, Liyong Guo, Long Lin, and Daniel                     arXiv:2409.09351.
+  Povey. 2024. Libriheavy: a 50,000 hours asr cor-
+  pus with punctuation casing and context. In Proc.             Zhuang Liu, Hanzi Mao, Chao-Yuan Wu, Christoph Fe-
+  ICASSP, pages 10991–10995. IEEE.                                ichtenhofer, Trevor Darrell, and Saining Xie. 2022.
+                                                                  A convnet for the 2020s. In Proceedings of the
+Tero Karras, Miika Aittala, Jaakko Lehtinen, Janne Hell-          IEEE/CVF conference on computer vision and pat-
+  sten, Timo Aila, and Samuli Laine. 2024. Analyzing              tern recognition, pages 11976–11986.
+  and improving the training dynamics of diffusion
+  models. In Proceedings of the IEEE/CVF Confer-                I Loshchilov. 2017. Decoupled weight decay regulariza-
+  ence on Computer Vision and Pattern Recognition,                 tion. arXiv preprint arXiv:1711.05101.
+  pages 24174–24184.
+                                                                Linhan Ma, Dake Guo, Kun Song, Yuepeng Jiang,
+Jaehyeon Kim, Sungwon Kim, Jungil Kong, and Sun-                  Shuai Wang, Liumeng Xue, Weiming Xu, Huan
+   groh Yoon. 2020. Glow-TTS: A generative flow for               Zhao, Binbin Zhang, and Lei Xie. 2024. Wenet-
+   text-to-speech via monotonic alignment search. Ad-             Speech4TTS: A 12,800-hour Mandarin TTS corpus
+   vances in Neural Information Processing Systems,               for large speech generation model benchmark. arXiv
+   33:8067–8077.                                                  preprint arXiv:2406.05763.
+
+
+                                                           10
+Shivam Mehta, Ruibo Tu, Jonas Beskow, Éva Székely,             Takaaki Saeki, Detai Xin, Wataru Nakata, Tomoki
+  and Gustav Eje Henter. 2024. Matcha-TTS: A fast                Koriyama, Shinnosuke Takamichi, and Hiroshi
+  TTS architecture with conditional flow matching. In            Saruwatari. 2022. Utmos: Utokyo-sarulab sys-
+  Proc. ICASSP, pages 11341–11345. IEEE.                         tem for voicemos challenge 2022. arXiv preprint
+                                                                 arXiv:2204.02152.
+Aleksandr Meister, Matvei Novikov, Nikolay Karpov,
+  Evelina Bakhturina, Vitaly Lavrukhin, and Boris              Tim Salimans and Jonathan Ho. 2022. Progressive dis-
+  Ginsburg. 2023. LibriSpeech-PC: Benchmark for                  tillation for fast sampling of diffusion models. arXiv
+  evaluation of punctuation and capitalization capabil-          preprint arXiv:2202.00512.
+  ities of end-to-end ASR models. In Proc. ASRU,
+  pages 1–7. IEEE.                                             Jonathan Shen, Ruoming Pang, Ron J Weiss, Mike
+                                                                 Schuster, et al. 2018. Natural TTS synthesis by con-
+Lingwei Meng, Long Zhou, Shujie Liu, Sanyuan                     ditioning wavenet on mel spectrogram predictions.
+  Chen, et al. 2024. Autoregressive speech synthe-               In Proc. ICASSP, pages 4779–4783. IEEE.
+  sis without vector quantization. arXiv preprint
+                                                               Kai Shen, Zeqian Ju, Xu Tan, Yanqing Liu, et al. 2023.
+  arXiv:2407.08551.
+                                                                 Naturalspeech 2: Latent diffusion models are natural
+                                                                 and zero-shot speech and singing synthesizers. arXiv
+Zhikang Niu, Sanyuan Chen, Long Zhou, Ziyang Ma,
+                                                                 preprint arXiv:2304.09116.
+  Xie Chen, and Shujie Liu. 2024. NDVQ: Robust neu-
+  ral audio codec with normal distribution-based vector        Hubert Siuzdak. 2023. Vocos: Closing the gap between
+  quantization. arXiv preprint arXiv:2409.12717.                 time-domain and fourier-based neural vocoders
+                                                                 for high-quality audio synthesis. arXiv preprint
+Takuma Okamoto, Yamato Ohtani, Tomoki Toda, and                  arXiv:2306.00814.
+  Hisashi Kawai. 2024. Convnext-TTS and Convnext-
+  VC: Convnext-based fast end-to-end sequence-to-              Yakun Song, Zhuo Chen, Xiaofei Wang, Ziyang Ma,
+  sequence text-to-speech and voice conversion. In               and Xie Chen. 2024. ELLA-V: Stable neural codec
+  Proc. ICASSP, pages 12456–12460. IEEE.                         language modeling with alignment-guided sequence
+                                                                 reordering. arXiv preprint arXiv:2401.07333.
+William Peebles and Saining Xie. 2023. Scalable diffu-
+  sion models with transformers. In Proceedings of the         Yang Song, Jascha Sohl-Dickstein, Diederik P Kingma,
+  IEEE/CVF International Conference on Computer                  Abhishek Kumar, Stefano Ermon, and Ben Poole.
+ Vision, pages 4195–4205.                                        2020. Score-based generative modeling through
+                                                                 stochastic differential equations. arXiv preprint
+Puyuan Peng, Po-Yao Huang, Daniel Li, Abdelrahman                arXiv:2011.13456.
+  Mohamed, and David Harwath. 2024. Voicecraft:
+  Zero-shot speech editing and text-to-speech in the           Jianlin Su, Murtadha Ahmed, Yu Lu, Shengfeng Pan,
+  wild. arXiv preprint arXiv:2403.16973.                          Wen Bo, and Yunfeng Liu. 2024. Roformer: En-
+                                                                  hanced transformer with rotary position embedding.
+Vadim Popov, Ivan Vovk, Vladimir Gogoryan, Tasnima                Neurocomputing, 568:127063.
+  Sadekova, and Mikhail Kudinov. 2021. Grad-tts:
+  A diffusion probabilistic model for text-to-speech.          Xu Tan, Jiawei Chen, Haohe Liu, Jian Cong, et al. 2024.
+  In International Conference on Machine Learning,               Naturalspeech: End-to-end text-to-speech synthesis
+  pages 8599–8608. PMLR.                                         with human-level quality. IEEE Transactions on Pat-
+                                                                 tern Analysis and Machine Intelligence.
+Ofir Press, Noah A Smith, and Mike Lewis. 2021.
+                                                               Chengyi Wang, Sanyuan Chen, Yu Wu, Ziqiang Zhang,
+  Train short, test long: Attention with linear biases
+                                                                 et al. 2023a. Neural codec language models are
+  enables input length extrapolation. arXiv preprint
+                                                                 zero-shot text to speech synthesizers. arXiv preprint
+  arXiv:2108.12409.
+                                                                 arXiv:2301.02111.
+Alec Radford, Jong Wook Kim, Tao Xu, Greg Brock-               Tianrui Wang, Long Zhou, Ziqiang Zhang, Yu Wu, Shu-
+  man, Christine McLeavey, and Ilya Sutskever. 2023.              jie Liu, Yashesh Gaur, Zhuo Chen, Jinyu Li, and Furu
+  Robust speech recognition via large-scale weak su-             Wei. 2023b. VioLA: Unified codec language mod-
+  pervision. In International conference on machine               els for speech recognition, synthesis, and translation.
+  learning, pages 28492–28518. PMLR.                              arXiv preprint arXiv:2305.16107.
+Yi Ren, Chenxu Hu, Xu Tan, Tao Qin, Sheng Zhao,                Yuancheng Wang, Haoyue Zhan, Liwei Liu, Ruihong
+  Zhou Zhao, and Tie-Yan Liu. 2020. Fastspeech                   Zeng, Haotian Guo, Jiachen Zheng, Qiang Zhang,
+  2: Fast and high-quality end-to-end text to speech.            Shunsi Zhang, and Zhizheng Wu. 2024. MaskGCT:
+  arXiv preprint arXiv:2006.04558.                               Zero-shot text-to-speech with masked generative
+                                                                 codec transformer. arXiv preprint arXiv:2409.00750.
+Olaf Ronneberger, Philipp Fischer, and Thomas Brox.
+  2015. U-net: Convolutional networks for biomedical           Sanghyun Woo, Shoubhik Debnath, Ronghang Hu, Xin-
+  image segmentation. In Proc. MICCAI, pages 234–                lei Chen, Zhuang Liu, In So Kweon, and Saining
+  241. Springer.                                                 Xie. 2023. Convnext v2: Co-designing and scaling
+
+
+                                                          11
+  convnets with masked autoencoders. In Proceedings
+  of the IEEE/CVF Conference on Computer Vision
+  and Pattern Recognition, pages 16133–16142.
+Yi-Chiao Wu, Israel D Gebru, Dejan Marković, and
+  Alexander Richard. 2023. Audiodec: An open-
+  source streaming high-fidelity neural audio codec.
+  In Proc. ICASSP, pages 1–5. IEEE.
+Detai Xin, Xu Tan, Kai Shen, Zeqian Ju, et al. 2024.
+  Rall-e: Robust codec language modeling with chain-
+  of-thought prompting for text-to-speech synthesis.
+  arXiv preprint arXiv:2404.03204.
+Dongchao Yang, Songxiang Liu, Rongjie Huang,
+  Jinchuan Tian, Chao Weng, and Yuexian Zou.
+  2023. Hifi-codec: Group-residual vector quantiza-
+  tion for high fidelity audio codec. arXiv preprint
+  arXiv:2305.02765.
+Neil Zeghidour, Alejandro Luebs, Ahmed Omran,
+  Jan Skoglund, and Marco Tagliasacchi. 2021.
+  Soundstream: An end-to-end neural audio codec.
+  IEEE/ACM Transactions on Audio, Speech, and Lan-
+  guage Processing, 30:495–507.
+Heiga Zen, Viet Dang, Rob Clark, Yu Zhang, Ron J
+  Weiss, Ye Jia, Zhifeng Chen, and Yonghui Wu. 2019.
+  Libritts: A corpus derived from librispeech for text-
+  to-speech. arXiv preprint arXiv:1904.02882.
+Xin Zhang, Dong Zhang, Shimin Li, Yaqian Zhou, and
+  Xipeng Qiu. 2023a. Speechtokenizer: Unified speech
+  tokenizer for speech large language models. arXiv
+  preprint arXiv:2308.16692.
+Ziqiang Zhang, Long Zhou, Chengyi Wang, Sanyuan
+  Chen, et al. 2023b. Speak foreign languages with
+  your own voice: Cross-lingual neural codec language
+  modeling. arXiv preprint arXiv:2303.03926.
+
+
+
+
+                                                          12
+A   Baseline Details                                        the official code and pre-trained checkpoint to
+                                                            evaluate5 .
+VALL-E 2 (Chen et al., 2024) A large-scale
+TTS model shares the same architecture as                   MaskGCT (Wang et al., 2024) A large-scale
+VALL-E (Wang et al., 2023a) but employs a                   non-autoregressive TTS model without pre-
+repetition-aware sampling strategy that promotes            cise alignment information between text and
+more deliberate sampling choices, trained on                speech following the mask-and-predict learning
+Libriheavy (Kang et al., 2024) 50K hours English            paradigm. The model is multi-stage, with a 695M
+dataset. We compared with results reported                  text-to-semantic model (T2S) and then a 353M
+in Meng et al. (2024).                                      semantic-to-acoustic (S2A) model. The model is
+                                                            trained on Emilia (He et al., 2024) dataset with
+MELLE (Meng et al., 2024) An autoregressive                 around 100K Chinese and English in-the-wild
+large-scale model leverages continuous-valued               speech data. We compare with results reported
+tokens with variational inference for text-to-speech        in Wang et al. (2024).
+synthesis. Its variants allow to prediction of
+                                                            Seed-TTS (Anastassiou et al., 2024) A family of
+multiple mel-spectrogram frames at each time step,
+                                                            high-quality versatile speech generation models
+noted by MELLE-Rx with x denotes reduction
+                                                            trained on unknown tremendously large data
+factor. The model is trained on Libriheavy (Kang
+                                                            that is of orders of magnitudes larger than the
+et al., 2024) 50K hours English dataset. We
+                                                            previously largest TTS systems (Anastassiou
+compared with results reported in Meng et al.
+                                                            et al., 2024). Seed-TTSDiT is a large-scale fully
+(2024).
+                                                            non-autoregressive model. We compare with
+Voicebox (Le et al., 2024) A non-autoregressive             results reported in Anastassiou et al. (2024).
+large-scale model based on flow matching trained
+                                                            E2 TTS (Eskimez et al., 2024) A fully non-
+with infilling task. We compared with the 330M
+                                                            autoregressive TTS system proposes to model
+parameters trained on 60K hours dataset English-
+                                                            without the phoneme-level alignment in Voicebox,
+only model’s results reported in Le et al. (2024)
+                                                            originally trained on Libriheavy (Kang et al.,
+and Ju et al. (2024).
+                                                            2024) 50K English dataset. We compare with our
+NaturalSpeech 3 (Ju et al., 2024) A non-                    reproduced 333M multilingual E2 TTS trained on
+autoregressive large-scale TTS system leverages             Emilia (He et al., 2024) dataset with around 100K
+a factorized neural codec to decouple speech                Chinese and English in-the-wild speech data.
+representations and a factorized diffusion model            CosyVoice (Du et al., 2024b) A two-stage large-
+to generate speech based on disentangled at-                scale TTS system, first autoregressive text-to-token,
+tributes. The 500M base model is trained on                 then a flow matching diffusion model. The model
+Librilight (Kahn et al., 2020) a 60K hours English          is of around 300M parameters, trained on 170K
+dataset. We compared with scores reported in Ju             hours of multilingual speech data. We obtain the
+et al. (2024).                                              evaluation result with the official code and pre-
+DiTTo-TTS (Lee et al., 2024) A large-scale non-             trained checkpoint6 .
+autoregressive TTS model uses a cross-attention
+                                                            B       Experimental Result Supplements
+Diffusion Transformer and leverages a pretrained
+language model to enhance the alignment. We                 The UTMOS (Saeki et al., 2022) scores reported in
+compare with DiTTo-en-XL, a 740M model                      this section are evaluated with an open-source MOS
+trained on 55K hours English-only dataset, using            prediction model7 . The UTMOS is an objective
+scores reported in Lee et al. (2024).                       metric measuring naturalness.
+
+FireRedTTS (Guo et al., 2024a) A foundation                 B.1      Small Model Configuration
+TTS framework for industry-level generative                 The detailed configuration of small models is
+speech applications. The autoregressive text-to-            shown in Tab.3. In the Transformer column, the
+semantic token model has 400M parameters and                    5
+the token-to-waveform generation model has                       https://github.com/FireRedTeam/FireRedTTS
+                                                                6
+                                                                 https://huggingface.co/model-scope/
+about half the parameters. The system is trained            CosyVoice-300M
+                                                               7
+with 248K hours of labeled speech data. We use                   https://github.com/tarepan/SpeechMOS
+
+
+                                                       13
+numbers denote the Model Dimension, the Number                        B.3   Sway Sampling Effectiveness on Base
+of Layers, the Number of Heads, and the multiples                           Models
+of Hidden Size. In the ConvNeXt column, the num-                      From Tab.5, it is clear that our Sway Sampling strat-
+bers denote the Model Dimension, the Number of                        egy for test-time flow steps consistently improves
+Layers, and the multiples of Hidden Size. GFLOPs                      the zero-shot generation performance in aspects of
+are evaluated using the thop Python package.                          faithfulness to prompt text (WER), speaker similar-
+   As mentioned in Sec.3.2, F5-TTS leverages an                       ity (SIM), and naturalness (UTMOS). The gain of
+adaLN DiT backbone with ConvNeXt V2 blocks,                           applying Sway Sampling to E2 TTS (Eskimez et al.,
+while E2 TTS is a flat U-Net equipped Transformer.                    2024) proves that our Sway Sampling strategy is
+F5-TTS+LongSkip adds an additional long skip                          universally applicable to existing flow matching
+structure connecting the first to the last layer (Lee                 based TTS models.
+et al., 2024) in the Transformer. For the Multi-
+Model Diffusion Transformer (MMDiT) (Esser                             Model              WER(%)↓         SIM-o↑   UTMOS↑   RTF↓
+et al., 2024), a double stream transformer, the set-                                    LibriSpeech-PC test-clean
+ting denotes one stream configuration.                                 Ground Truth                2.23    0.69     4.09     -
+                                                                       Vocoder Resynthesized       2.32    0.66     3.64     -
+ Model            Transformer ConvNeXt #Param. GFLOPs                  E2 TTS (16 NFE w/ SS)       2.86    0.71     3.66    0.34
+                                                                       E2 TTS (32 NFE w/ SS)       2.84    0.72     3.70    0.68
+ F5-TTS            768,18,12,2   512,4,2    158M         173
+                                                                       E2 TTS (32 NFE w/o SS)      2.95    0.69     3.56    0.68
+ F5-TTS−Conv2Text 768,18,12,2       -       153M         164
+ F5-TTS+Conv2Audio 768,16,12,2   512,4,2    163M         181           F5-TTS (16 NFE w/ SS)       2.43    0.66     3.87    0.26
+ F5-TTS+LongSkip   768,18,12,2   512,4,2    159M         175           F5-TTS (32 NFE w/ SS)       2.41    0.66     3.89    0.53
+ E2 TTS            768,20,12,4      -       157M         293           F5-TTS (32 NFE w/o SS)      2.84    0.62     3.70    0.53
+ E2 TTS+Conv2Text 768,20,12,4    512,4,2    161M         301                                   Seed-TTS test-en
+ MMDiT             512,16,16,2      -       151M         104
+                                                                       Ground Truth                2.06    0.73     3.53     -
+                                                                       Vocoder Resynthesized       2.09    0.70     3.33     -
+   Table 3: Details of small model configurations.                     E2 TTS (16 NFE w/ SS)       1.99    0.72     3.55    0.34
+                                                                       E2 TTS (32 NFE w/ SS)       1.98    0.73     3.57    0.68
+                                                                       E2 TTS (32 NFE w/o SS)      2.19    0.71     3.33    0.68
+                                                                       F5-TTS (16 NFE w/ SS)       1.88    0.66     3.70    0.26
+B.2   Ablation study on Input Condition                                F5-TTS (32 NFE w/ SS)       1.87    0.66     3.72    0.53
+The ablation study on different input conditions is                    F5-TTS (32 NFE w/o SS)      1.93    0.63     3.51    0.53
+
+conducted with three settings:                                                                 Seed-TTS test-zh
+                                                                       Ground Truth                1.26    0.76     2.78     -
+   • Common input with text and audio prompts.                         Vocoder Resynthesized       1.27    0.72     2.61     -
+                                                                       E2 TTS (16 NFE w/ SS)       1.80    0.78     2.84    0.34
+   • Providing ground truth duration information                       E2 TTS (32 NFE w/ SS)       1.77    0.78     2.87    0.68
+                                                                       E2 TTS (32 NFE w/o SS)      1.97    0.73     2.49    0.68
+     rather than an estimate.
+                                                                       F5-TTS (16 NFE w/ SS)       1.61    0.75     2.87    0.26
+                                                                       F5-TTS (32 NFE w/ SS)       1.58    0.75     2.91    0.53
+   • Retaining only text input, dropping audio                         F5-TTS (32 NFE w/o SS)      1.93    0.69     2.58    0.53
+     prompt (using blank).
+
+In Tab.4, all evaluations take the 155M small mod-                    Table 5: Base model evaluation results on LibriSpeech-
+                                                                      PC test-clean, Seed-TTS test-en and test-zh, with and
+els’ checkpoints trained on WenetSpeech4TTS Pre-
+                                                                      without proposed test-time Sway Sampling (SS, with
+mium at 800K updates. Analysis see Sec.5.1.                           coefficient s = −1) strategy for flow steps. All gen-
+                                                                      erations leverage the midpoint ODE solver for ease of
+ Model          Common Input GT Duration Text-Only                    ablation.
+                  WER↓ SIM↑ WER↓ SIM↑ WER↓ SIM↑
+ F5-TTS            4.17   0.54    3.87     0.54   3.22    0.21
+ F5-TTS+Conv2Audio 5.78   0.55    5.28     0.55   3.78    0.21
+ F5-TTS+LongSkip   5.17   0.53    5.03     0.53   3.35    0.21        B.4   Comparison of ODE Solvers
+ E2 TTS            9.63   0.53    9.48     0.53   3.48    0.21
+ E2 TTS+Conv2Text 18.10   0.49   17.94     0.49   3.06    0.21        The comparison results of using the Euler (first-
+                                                                      order), midpoint (second-order), or improved Heun
+Table 4: Ablation study on different input conditions.                (third-order, Heun-3) ODE solver during F5-TTS
+The boldface indicates the best result, and the underline             inference are shown in Tab.6. The Euler is inher-
+denotes the second best. All scores are the average of                ently faster and performs slightly better typically
+three random seed results.                                            for larger NFE inference with Sway Sampling (oth-
+                                                                      erwise the Euler solver results in degradation).
+
+                                                                 14
+                     LibriSpeech-PC test-clean        Seed-TTS test-en                Seed-TTS test-zh
+ F5-TTS            WER(%)↓ SIM-o↑ UTMOS↑         WER(%)↓ SIM-o↑ UTMOS↑           WER(%)↓ SIM-o↑ UTMOS↑           RTF↓
+ Ground Truth        2.23      0.69     4.09       2.06        0.73     3.53       1.26      0.76      2.78         -
+ s = −1
+ 16 NFE Euler        2.53      0.66     3.88       1.89        0.67     3.76       1.74      0.75      2.96       0.15
+ 16 NFE midpoint     2.43      0.66     3.87       1.88        0.66     3.70       1.61      0.75      2.87       0.26
+ 32 NFE Euler        2.42      0.66     3.90       1.83        0.67     3.76       1.56      0.76      2.95       0.31
+ 32 NFE midpoint     2.41      0.66     3.89       1.87        0.66     3.72       1.58      0.75      2.91       0.53
+ 16 NFE Heun-3       2.39      0.65     3.87       1.80        0.66     3.70       1.55      0.75      2.88       0.44
+ s = −0.8
+ 16 NFE Euler        2.82      0.65     3.73       2.14        0.65     3.70       2.28      0.72      2.74       0.15
+ 16 NFE midpoint     2.58      0.65     3.86       1.86        0.65     3.68       1.70      0.73      2.83       0.26
+ 32 NFE Euler        2.50      0.66     3.89       1.81        0.67     3.74       1.62      0.75      2.94       0.31
+ 32 NFE midpoint     2.42      0.66     3.89       1.84        0.66     3.70       1.62      0.75      2.91       0.53
+ 16 NFE Heun-3       2.40      0.65     3.85       1.78        0.66     3.68       1.56      0.74      2.84       0.44
+
+
+Table 6: Evaluation results of F5-TTS on LibriSpeech-PC test-clean, Seed-TTS test-en and Seed-TTS test-zh,
+employing the Euler, midpoint or Heun-3 ODE solver, and with different Sway Sampling s values.
+
+
+B.5      ELLA-V Hard Sentences Evaluation                       Model          WER(%)↓    Sub.(%)↓   Del.(%)↓   Ins.(%)↓
+                                                                StyleTTS 2      4.83*      2.17*      2.03*      0.61*
+ELLA-V (Song et al., 2024) proposed a challenging               CosyVoice       8.30*      3.47*      2.74*      1.93*
+set containing 100 difficult textual patterns evalu-            E1 TTSDM D      4.29*      1.89*      1.62*      0.74*
+ating the robustness of the TTS model. Following                E2 TTS          8.58       3.70       4.82       0.06
+                                                                F5-TTS          4.40       1.81       2.40       0.18
+previous works (Chen et al., 2024; Meng et al.,
+2024; Eskimez et al., 2024), we include generated
+samples in our demo page8 . We additionally com-               Table 7: Results of zero-shot TTS WER on ELLA-V
+                                                               hard sentences. The asterisk * denotes the score reported
+pare our model with the objective evaluation results
+                                                               in E1 TTS. Sub. for Substitution, Del. for Deletion, and
+reported in E1 TTS (Liu et al., 2024b).                        Ins. for Insertion.
+   StyleTTS 2 is a TTS model leveraging style dif-
+fusion and adversarial training with large speech
+language models. CosyVoice is a two-stage large-               ances, where the ASR model transcribes correctly
+scale TTS system, consisting of a text-to-token                for one, and fails for another (e.g. quokkas to Co-
+AR model and a token-to-speech flow matching                   cos).
+model. Concurrent with our work, E1 TTSDM D is
+a diffusion-based NAR model with a distribution                B.6 Comparison of Vocoders and between PC
+matching distillation technique to achieve one-step                and non-PC
+TTS generation. Since the prompts used by E1
+TTSDM D are not released, we randomly sample                   The inference results with pretrained BigVGAN
+3-second-long speeches in our LibriSpeech-PC test-             (Lee et al., 2022) and Vocos (Siuzdak, 2023) respec-
+clean set as audio prompts. The evaluation result              tively as vocoder are shown in Tab.8, along with
+is in Tab.7. We evaluate the reproduced E2 TTS                 additional evaluation on a non-Capitalized version
+and our F5-TTS with 32 NFE and Sway Sampling                   removing all Punctuations (non-PC) of the filtered
+and report the averaged score of three random seed             LibriSpeech-PC test-clean subset. The non-PC ver-
+results.                                                       sion equals an ordinary LibriSpeech test-clean sub-
+   We note that a higher WER compared to the re-               set, with which we provide more comprehensive
+sults on commonly used test sets is partially due              comparisons with previous works.
+to mispronunciation (yogis to yojus, cavorts to                   Moreover, we include WER scores measuring
+caverts, etc.). The high Deletion rate indicates               with a Hubert-large-based (Hsu et al., 2021) ASR
+a word-skipping phenomenon when our model en-                  model9 in Tab.8, with which our reproduced multi-
+counters a stack of repeating words. The low Inser-            lingual E2 TTS with 32 NFE and Vocos as vocoder
+tion rate makes it clear that our model is free of end-        achieves a WER of 2.92 on LibriSpeech-PC test-
+less repetition. We further emphasize that prompts             clean and 2.66 if Sway Sampling applied.
+from different speakers will spell very distinct utter-
+                                                                  9
+                                                                   https://huggingface.co/facebook/
+   8
+       https://SWivid.github.io/F5-TTS/                        hubert-large-ls960-ft
+
+
+                                                          15
+ NFE steps          LibriSpeech-PC test-clean    LibriSpeech-non-PC test-clean       Seed-TTS test-en        Seed-TTS test-zh
+ & Vocoder           WER(%)↓       SIM-o ↑        WER(%)↓         SIM-o ↑           WER(%)↓ SIM-o ↑         WER(%)↓ SIM-o ↑
+ Ground Truth        2.23 (1.89)     0.69         2.29 (1.86)            0.69         2.06          0.73       1.26       0.76
+ 16 NFE - Vocos      2.53   (2.34)   0.66         2.72   (2.53)          0.66         1.89          0.67       1.74       0.75
+ 16 NFE - BigVGAN    2.21   (1.96)   0.67         2.55   (2.34)          0.67         1.65          0.66       1.64       0.74
+ 32 NFE - Vocos      2.42   (2.09)   0.66         2.44   (2.16)          0.66         1.83          0.67       1.56       0.76
+ 32 NFE - BigVGAN    2.11   (1.81)   0.67         2.28   (2.03)          0.67         1.62          0.66       1.53       0.74
+
+
+Table 8: F5-TTS Base model evaluation results on LibriSpeech-PC test-clean, LibriSpeech-non-PC test-clean,
+Seed-TTS test-en and test-zh with BigVGAN and Vocos, default setting as in Sec.5. The WER scores in brackets
+indicate results leveraging the Hubert-large-based ASR model.
+
+                Train Set                       LibriTTS - 585 hours                         LJSpeech - 24 hours
+                 Test Set                LibriSpeech-PC test-clean                      LJSpeech in-set tests
+        Model (#Param.)     Update    WER(%)↓ SIM-o ↑ UTMOS ↑                      WER(%)↓ SIM-o ↑ UTMOS ↑
+          Ground Truth          -        2.23            0.69            4.09         2.36          0.72           4.36
+          USLM (361M)           -         6.1            0.43              -            -             -              -
+                             100K        29.5            0.53            3.78         5.64          0.72           4.17
+                             200K        4.58            0.59            4.07         2.93          0.72           4.18
+          F5-TTS small       300K        2.71            0.60            4.11         3.26          0.71           4.12
+             (158M)          400K        2.44            0.60            4.11         3.90          0.70           4.05
+                             500K        2.20            0.60            4.10         4.68          0.70           3.99
+                             600K        2.23            0.59            4.10         5.25          0.69           3.93
+
+
+Table 9: F5-TTS small models evaluation results on LibriSpeech-PC test-clean (model trained on LibriTTS 585
+hours multi-speaker dataset), and on LJSpeech in-set test samples (model trained on 24 hours single-speaker
+LJSpeech); Vocos as vocoder, Whisper-large-v3 as ASR model. The scores of USLM (Zhang et al., 2023a) are
+evaluated with the official checkpoint pre-trained on LibriTTS.
+
+
+B.7 Training and Inference Performance with                          C     Subjective Evaluation Details
+    Different Dataset Scales
+                                                                     To evaluate speech quality, we conduct a CMOS
+                                                                     subjective evaluation. 20 natives were invited for
+We train F5-TTS 158M small models on LibriTTS                        both English and Mandarin to evaluate 30 rounds
+(Zen et al., 2019) 585 hours and LJSpeech (Ito and                   with randomly selected utterances for all three test
+Johnson, 2017) 24 hours English datasets to pro-                     sets and all model variants. Evaluators were in-
+vide insights on our model’s training stability with                 formed in detail about the guidelines and scoring
+different dataset scales, typically to see whether it                criteria for the CMOS test, for example, the general
+can maintain stable training on limited data. Both                   instruction part:
+training takes place with the same configuration as
+described in Sec.5.1 and Appendix B.1 despite a                          • Most important: use high-quality studio head-
+batch size of 307,200 audio frames (0.91 hours) as                         phones and a good sound card!
+base models. Every 100K update takes approxi-
+                                                                         • Listen through all test files and test sets before
+mately 8 hours on 8 NVIDIA H100 SXM GPUs.
+                                                                           you do any ratings to get used to the material.
+   Same as Sec.5, we report the average score of
+three random seed generation results, using a CFG                        • Rate the quality of the test items only com-
+strength of 2, a Sway Sampling coefficient of −1,                          pared to the reference on top.
+and 32 NFE steps. Since LJSpeech is a single-                            • Try to rate the overall impression of a test item
+speaker dataset, we measure the metrics on in-set                          and don’t concentrate on single aspects.
+tests (1000 samples organized with 4 to 7 seconds
+to infer with an around 3-second prompt). It is                        For the CMOS test, the overall quality of a gen-
+clear from Tab.9 (and Fig.2 in comparison with E2                    erated speech is first rated from −3 (bad quality
+TTS small) that our design enables stable training                   compared to the reference) to +3 (much better than
+to learn speech-text alignment (without grapheme-                    the reference) integer scale, then reported in aver-
+to-phoneme) with varying data amounts.                               age differentials with received scores of ground
+
+                                                                16
+truth speech. For SMOS, a 1 to 5 with 0.5 as an
+interval rating is employed (higher better). Judges
+are to score the similarity between the synthesized
+and prompt speech with clearly differentiated in-
+structions mentioning:
+
+   • Try to rate concentrating on the speaker simi-
+     larity aspects with reference speech.
+
+   We encourage more rigorous and transparent
+subjective evaluations, such as releasing used sam-
+ples if not open-sourcing the model checkpoints.
+Meanwhile inviting more evaluators leads to more
+comprehensive and fair rating scores. Just for ref-
+erence, DiTTo-TTS (Lee et al., 2024) received and
+reported 6 and 12 ratings for SMOS and CMOS, re-
+spectively, NaturalSpeech 3 (Ju et al., 2024) invited
+12 natives to judge 20 samples for CMOS and 10
+samples for SMOS.
+
+
+
+
+                                                        17
+

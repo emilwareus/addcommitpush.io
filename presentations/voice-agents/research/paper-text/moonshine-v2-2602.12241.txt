@@ -1,0 +1,467 @@
+                                          Moonshine v2: Ergodic Streaming Encoder ASR for Latency-Critical Speech
+                                                                       Applications
+
+
+                                                                      Manjunath Kudlur Evan King James Wang Pete Warden
+                                                                                                 Moonshine AI
+
+
+                                                                 Abstract                               models that leverage server-scale compute and edge mod-
+
+
+
+
+arXiv:2602.12241v1 [cs.CL] 12 Feb 2026
+                                                                                                        els that run locally on resource-constrained devices. While
+                                             Latency-critical speech applications—including
+                                                                                                        cloud ASR can achieve excellent accuracy by utilizing large
+                                             live transcription, voice commands, and real-
+                                                                                                        models and extensive computational resources, edge ASR
+                                             time translation—demand low time-to-first-token
+                                                                                                        is essential for applications where network connectivity is
+                                             (TTFT) and high transcription accuracy, particu-
+                                                                                                        unreliable or unavailable, such as offline voice assistants,
+                                             larly on resource-constrained edge devices. Full-
+                                                                                                        medical dictation in remote settings, real-time captioning
+                                             attention Transformer encoders remain a strong
+                                                                                                        for accessibility, and privacy-sensitive voice commands on
+                                             accuracy baseline for automatic speech recogni-
+                                                                                                        mobile devices. Edge deployment also eliminates network
+                                             tion (ASR) because every frame can directly at-
+                                                                                                        round-trip latency and reduces privacy concerns by keeping
+                                             tend to every other frame, which resolves oth-
+                                                                                                        audio data on-device.
+                                             erwise locally ambiguous acoustics using dis-
+                                             tant lexical context. However, this global depen-          In edge use cases, latency and transcription quality are the
+                                             dency incurs quadratic complexity in sequence              two key—and often competing—constraints. Achieving
+                                             length, inducing an inherent “encode-the-whole-            human-perceivable real-time performance requires minimiz-
+                                             utterance” latency profile. For streaming use              ing time-to-first-token (TTFT) and maintaining low per-
+                                             cases, this causes TTFT to grow linearly with              token latency, while simultaneously delivering word error
+                                             utterance length as the encoder must process the           rates (WERs) competitive with cloud-based alternatives.
+                                             entire prefix before any decoder token can be emit-        Balancing these competing objectives on devices with lim-
+                                             ted. To better meet the needs of on-device, stream-        ited memory, compute, and power budgets remains a central
+                                             ing ASR use cases we introduce Moonshine v2,               challenge in practical ASR deployment.
+                                             an ergodic streaming-encoder ASR model that
+                                                                                                        Existing edge ASR models leverage a full-attention encoder
+                                             employs sliding-window self-attention to achieve
+                                                                                                        architecture, which allows every frame to directly attend
+                                             bounded, low-latency inference while preserving
+                                                                                                        to every other frame in a sequence of speech audio. This
+                                             strong local context. Our models achieve state
+                                                                                                        enables powerful contextual disambiguation as it resolves
+                                             of the art word error rates across standard bench-
+                                                                                                        locally ambiguous acoustics using distant lexical informa-
+                                             marks, attaining accuracy on-par with models 6x
+                                                                                                        tion that occurs earlier or later in a chunk of speech audio.
+                                             their size while running significantly faster. These
+                                                                                                        However, full attention also introduces quadratic complexity
+                                             results demonstrate that carefully designed local
+                                                                                                        in sequence length and imposes an inherent “encode-the-
+                                             attention is competitive with the accuracy of full
+                                                                                                        whole-utterance” latency profile: in streaming scenarios,
+                                             attention at a fraction of the size and latency cost,
+                                                                                                        the encoder must process the entire prefix (or wait for the
+                                             opening new possibilities for interactive speech
+                                                                                                        complete utterance) before decoder tokens can be emitted,
+                                             interfaces on edge devices.
+                                                                                                        resulting in high TTFT that scales linearly with utterance
+                                                                                                        length. In practical applications, this reduces system respon-
+                                                                                                        siveness and limits interactivity.
+                                         1. Introduction
+                                                                                                        In this paper, we introduce Moonshine v2, a family of er-
+                                         Modern automatic speech recognition (ASR) systems are          godic streaming encoder ASR models designed specifically
+                                         separated into two deployment paradigms: cloud-based           for latency-critical edge applications. Moonshine v2 models
+                                           .   Correspondence to:        Manjunath Kudlur <keve-        employ sliding-window attention in a position-free encoder
+                                         man@moonshine.ai>.                                             to enable low-latency streaming inference while maintain-
+                                                                                                        ing state-of-the-art accuracy on standard benchmarks. We
+                                                                                                                                           2
+
+                                                                              uses a Transformer encoder with global attention, and
+             600                                                              NVIDIA’s Parakeet models build on FastConformer-style
+                                                                              encoders (Rekesh et al., 2023).
+
+
+ TTFT (ms)
+             400                                                              Full attention helps accuracy because it lets each frame
+                                                                              incorporate evidence from any other frame, enabling
+             200                                                              global disambiguation (e.g., long-range coarticulation,
+                                                                              speaker/style consistency, and resolving locally ambiguous
+                                                                              acoustics using distant lexical context). This ability to inte-
+              0                                                               grate long-range context is one reason these models achieve
+                   0         2         4         6            8          10
+                                                                              strong recognition accuracy. However, this same global
+                                    Audio processed (s)                       dependency that enables superior accuracy also creates a
+                     0.1 TOPS                          0.5 TOPS
+                                                                              fundamental latency bottleneck for streaming applications.
+                      1 TOPS               0.1 TOPS (sliding window, w=20)
+               250 ms voice-delay limit
+
+                                                                              Time-to-first-token (TTFT). For latency-critical ASR, a
+Figure 1. Illustrative time-to-first-token (TTFT) for a full-attention        key metric is TTFT: the wall-clock time from audio arrival
+encoder as a function of audio length, for processors with different
+                                                                              to the first emitted text token. With a full-attention encoder,
+peak throughput (TOPS). The estimate includes both a linear non-
+                                                                              TTFT grows with the amount of audio that must be encoded
+attention term and a quadratic self-attention mixing term. The
+dotted horizontal line shows a 0.1 TOPS sliding-window encoder                before decoding can start. Moreover, even with a fixed
+with w = 20 frames. The dashed line indicates a 250 ms one-way                model size, the attention mixing work grows quadratically
+delay limit often used as a practical upper bound for acceptable              with sequence length.
+interactive voice in private networks (Cisco Systems, 2026).
+                                                                              Figure 1 illustrates this effect for a 100M-parameter encoder
+                                                                              processing 50 Hz features (Whisper-style). We estimate
+train three variants of increasing size— tiny, small, and                     encoder compute as opstotal (N ) = 6P T + 4dLT 2 with
+medium—and show that the models achieve transcription                         T = 50N frames, and convert operations to time assum-
+quality and speed on-par with models 6x their size while                      ing a peak throughput of X TOPS (i.e., X · 1012 ops/s).
+running significantly faster (i.e., Whisper Large v3). We                     The plotted curves show the resulting TTFT (ms) versus
+release the models under a permissive license, encouraging                    audio duration for several hardware budgets. We also in-
+community adoption for on-device, latency-critical ASR                        clude a constant TTFT line for sliding-window attention
+applications.                                                                 at 0.1 TOPS using opstotal (N ) = 6P T + 4dLT w with
+                                                                              w = 20 frames (matching the Moonshine v2 streaming
+The paper is structured as follows. Section 2 analyzes                        lookback+lookahead window).
+the latency-accuracy trade-offs inherent in full-attention
+encoders and motivates our sliding window approach. Sec-                      We plot only 0.1–1 TOPS because our focus is edge de-
+tion 3 details the Moonshine v2 architecture, including the                   ployment (phones and smaller devices), where achievable
+audio preprocessor, sliding-window encoder, adapter, and                      throughput is often in the 10s–100s of GOPS. A simple san-
+decoder components. Section 4 presents our experimental                       ity check is peak MAC/cycle ≈ (instr/cycle)×(MAC/instr),
+setup and benchmark results across standard ASR datasets.                     e.g., an Arm Cortex-A55 might reach ≈ 16 MAC/cycle;
+Finally, Section 5 discusses implications and future direc-                   at 2.31 GHz this is ≈ 37 GMAC/s (≈ 74 GOPS). Even
+tions for ergodic streaming ASR.                                              when edge devices advertise multi-10s of TOPS, sustaining
+                                                                              1 TOPS in practice is difficult due to memory bandwidth
+                                                                              and thermals, so we focus on the 0.1–1 TOPS regime. The
+2. Motivation                                                                 horizontal line at 250 ms marks a commonly used one-way
+This section motivates the need for low-latency, streaming-                   delay limit for acceptable interactive voice in private net-
+friendly encoder architectures in ASR, highlighting the                       works (Cisco Systems, 2026).
+trade-offs between recognition accuracy and time-to-first-                    A key takeaway is that even a very strong edge-class budget
+token (TTFT) latency in current models.                                       of 500 GOPS (≈ 0.5 TOPS) crosses the 250 ms threshold
+                                                                              at roughly 4.1 s of audio in this model, making “responsive”
+2.1. Full-attention encoders: accurate, but                                   first-token latency impractical for longer utterances without
+     latency-heavy                                                            streaming.
+Many high-accuracy ASR systems rely on encoder archi-                         For sliding-window attention, we show only the 0.1 TOPS
+tectures that use full self-attention over the entire input                   line because it already falls below the 250 ms voice-delay
+sequence. For example, Whisper (Radford et al., 2022)                         limit; higher-throughput hardware would reduce the line
+                                                                                                                              3
+
+further.                                                        3.2. Encoder
+                                                                The encoder is a standard Transformer stack with sliding-
+2.2. Sliding-window attention encoders:
+                                                                window self-attention. Each layer attends to a fixed number
+     streaming-friendly latency
+                                                                of past frames (left context) and, optionally, a small number
+A natural way to reduce TTFT is to replace full self-           of future frames (right context). We denote the attention
+attention with sliding-window self-attention, where each        window as (wleft , wright ) in frames.
+frame attends only to a bounded local neighborhood. With a
+fixed window size w, the attention mixing cost becomes
+linear in sequence length (O(T w) rather than O(T 2 )),         No positional embeddings (ergodic encoder). We do not
+and—crucially for streaming—the encoder can emit usable         use any absolute or relative positional embeddings in the
+representations incrementally as soon as the required local     encoder. As a result, encoder computations are translation-
+context has arrived.                                            invariant in time: for any local window, the same function
+                                                                is applied regardless of where that window occurs in the
+In a causal sliding-window encoder, the representation at       utterance. Informally, the encoder is ergodic in the sense
+time t depends only on past frames, so it can be produced       that it has no explicit notion of absolute position; it can only
+immediately without waiting for future audio. If a small        infer structure from the content of the local context provided
+right context is used (lookahead), the algorithmic latency is   by sliding-window attention.
+bounded by wright frames (e.g., wright ×20 ms at 50 Hz). This
+bounded, constant lookahead makes latency predictable and       In Moonshine v2, we use (16, 4) for the first two and last
+largely independent of utterance duration, enabling respon-     two encoder layers, and (16, 0) for all intermediate layers.
+sive partial hypotheses for live transcription.                 Since each encoder input frame corresponds to 20 ms of
+                                                                audio (50 Hz), a right window of wright = 4 implies an
+                                                                algorithmic lookahead of 4 × 20 ms = 80 ms: to produce
+3. Approach                                                     the representation at time step t for layers with lookahead,
+Moonshine v2 consists of four high-level stages: an audio       the model may use information up to frame t + 4, i.e., up to
+preprocessor, a streaming encoder, an adapter, and a decoder.   80 ms of future audio.
+We start by detailing the audio preprocessor.                   Layers with (16, 0) are strictly causal: their output at time
+                                                                t depends only on frames ≤ t (plus whatever future infor-
+3.1. Audio preprocessor                                         mation has already been mixed into the current frame by
+                                                                earlier lookahead layers). Overall, this design keeps encoder
+Our audio preprocessor is intentionally lightweight: it con-
+                                                                lookahead bounded and small while still allowing limited
+verts raw audio to a 50 Hz feature sequence (matching
+                                                                future context near the bottom and top of the stack.
+Whisper’s feature rate) using simple operations with no
+right context. Many of the frontend choices were informed
+guesses and engineering intuition rather than a comprehen-      Provisional vs. finalized encoder states. We note that
+sive ablation study; a full sweep over alternative frontends    the right-context layers also imply that, in steady state, a
+is cost-prohibitive for us and out of scope for this paper.     finalized representation for time step t cannot be produced
+The original Moonshine model (Jeffries et al., 2024) used       until additional future audio has arrived. In our setting, a
+a full-attention encoder and a different frontend with an       conservative bound is 16 frames of extra audio, i.e., 16 ×
+effective feature rate of 41.6 Hz. In Moonshine v2 we stan-     20 ms = 320 ms of future context.
+dardize on 50 Hz features to align with Whisper (Radford        For applications such as live caption display, we can still
+et al., 2022) and to simplify comparisons.                      decode from provisional (not-yet-finalized) encoder states:
+Specifically, the frontend processes audio by segmenting        the newest suffix may be less accurate, but as more audio
+it into non-overlapping 80-sample windows (equivalent to        arrives the provisional states are overwritten by finalized
+5 ms at 16 kHz), performing per-frame cepstral mean and         ones and the displayed transcription naturally improves.
+variance normalization (CMVN) (Acero & Huang, 1995),
+and applying an asinh nonlinearity. The asinh function,         3.3. Adapter
+like tanh, is smooth and nearly linear around zero, but it
+                                                                The adapter bridges the ergodic encoder and the decoder. It
+increases logarithmically for large values rather than satu-
+                                                                adds a learned positional embedding to the encoder outputs,
+rating, which we found balances compression and dynamic
+                                                                and (when needed) applies a linear projection so that the
+range effectively. Finally, two causal stride-2 convolutions
+                                                                representation dimension matches the decoder dimension.
+reduce the frame rate by approximately a factor of four,
+                                                                In other words, the encoder remains position-free, while the
+yielding about 50 feature frames per second.
+                                                                decoder receives position-aware inputs.
+                                                                                                                                        4
+
+                  Audio
+
+
+
+  Full-Attention Encoder
+
+                                                                                                                                     time
+
+                  Audio
+
+
+
+Sliding-Window Encoder
+
+
+
+Figure 2. Conceptual TTFT timelines. In full attention, encoding begins after the entire audio has arrived. With sliding-window attention,
+encoding proceeds incrementally and overlaps with audio capture, so the remaining work after the last chunk is smaller.
+
+
+                                                                       transcript still requires a token-by-token loop, which adds
+                                                [1, N]                 latency to the full output.
+                                                                       A fully ergodic, infinite-streaming alternative would be to
+                                                                       predict directly from encoder features using a linear clas-
+                                                                       sifier trained with CTC (Graves et al., 2006), or to use a
+               Frame Blocking                                          monotonic transducer objective such as RNN-T (Graves,
+                                                                       2012) or Token-and-Duration Transducer (TDT) (Xu et al.,
+                                               [1, T, 80]              2023). Parakeet-class models follow this general direction
+                Frame CMVN
+                                                                       (CTC/RNN-T/TDT-style training and decoding) and shift
+                           asinh                                       much of the modeling capacity into a larger encoder (Rekesh
+                                                                       et al., 2023). Marrying these objectives with our position-
+                Linear + SiLU                 [1, T, dim]              free (ergodic) encoder is a promising direction that we leave
+                                                                       to future work.
+
+            Causal Conv1     stride: 2        [1, T1, dim]             4. Evaluation & Results
+                                                                       We trained three model sizes (Table 1) and evaluate them on
+            Causal Conv2     stride: 2                                 standard ASR benchmarks and latency-sensitive streaming
+                                                                       scenarios.
+                                              [1, T2, dim]
+                                                                       Note on parameter distribution. The decoder has substan-
+               Token Features                                          tially more parameters than the encoder, largely because
+                                                                       each decoder layer includes additional cross-attention pro-
+                                                                       jection matrices (in addition to self-attention), and because
+Figure 3. Audio preprocessor overview with tensor shapes, single-      our decoder uses SwiGLU feed-forward blocks while the
+example. Dimensions T = ⌊ 80N
+                               ⌋, T1 = ⌈ T2 ⌉, and T2 = ⌈ T21 ⌉        encoder does not.
+
+                                                                       4.1. Experimental setup
+3.4. Decoder                                                           4.1.1. T RAINING .
+The decoder is a standard causal Transformer with rotary               Data. We use the same data sources and preprocessing
+positional embeddings (RoPE) in each layer (Su et al., 2023).          pipeline as in the original Moonshine work (Jeffries et al.,
+It autoregressively generates text tokens and cross-attends            2024) (see their Section 3.2, Training data collection &
+to the adapter features.                                               preprocessing). Relative to that setup ( ≈200K hours total),
+                                                                       we add an additional 100K hours of internally prepared
+While our ergodic streaming encoder makes the first us-                speech data, for a total of roughly 300K hours.
+able features available quickly (and thus TTFT can be very
+low), the decoder remains autoregressive: generating a long
+                                                                                                                               5
+
+                                             Architecture                            Params (M)
+                      Model     Enc dim Dec dim Layers (Enc/Dec)         Pre    Enc Adap          Dec   Total
+                      Tiny        320       320              6/6        2.08 7.39      1.31 22.80 33.57
+                      Small       620       512             10/10       7.74 43.49     2.86 69.27 123.36
+                      Medium      768       640             14/14      11.86 93.66     3.64 135.77 244.93
+
+                          Table 1. Moonshine v2 model architecture sizes and parameter breakdown by block.
+
+
+Tokenizer & optimization. We use the same tokenizer as              tection (VAD) model) and the transcript text being returned.
+in the original Moonshine work (Jeffries et al., 2024). We          This is representative of, e.g,. the amount of time an embed-
+also use the same optimizer (Schedule-Free; (Defazio et al.,        ded voice command system might take to detect a command
+2024)) with a starting learning rate of 2 × 10−3 . Training         after a typical utterance. We compare against Whisper be-
+was run for 400K steps with an effective batch size of 512          cause it has been adopted in embedded applications (via,
+on a cluster of 8 NVIDIA H100 GPUs.                                 e.g., whisper.cpp) despite its original design intent as an
+                                                                    offline model, and against the original Moonshine models
+4.1.2. I MPLEMENTATION .                                            since they were designed for real-time use cases.
+We evaluate accuracy using the implementation in the Trans-
+formers library (Wolf et al., 2019). Note that this code            Compute cost. We empirically measure compute cost by
+path does not yet perform fully efficient streaming; it relies      totalling the duration of the audio processing times for each
+on the flash-attention backend’s sliding-window attention           model, and then expressing that as a percentage of the total
+when available. We measure latency separately using our             audio duration. This is the inverse of the commonly used
+own library implementation of Moonshine in C++, which               real-time factor (RTF) metric, but it reflects the compute
+leverages the ONNX runtime on CPU. 1                                load required for a real-time application.
+                                                                    We run empirical evaluations on an Apple M3.
+4.1.3. B ENCHMARKS .
+We evalute the performance of Moonshine v2 using the                4.2. Results
+following benchmarks.
+                                                                    Table 3 reports WERs for individual datasets. We include
+                                                                    it for completeness, but the more informative view is the
+Word error rate (WER). We evaluate the WER of Moon-                 accuracy–parameter tradeoff in Figure 4. That plot shows
+shine v2 variants against similarly-sized models on the Open        Pareto frontiers in parameter count versus accuracy. The
+ASR leaderboard (Srivastav et al., 2025).                           NVIDIA and Moonshine models lie on a similar frontier
+                                                                    and sit above OpenAI’s. Moonshine fills the lower end of
+Time-to-first-token (TTFT). We empirically establish                the frontier (in parameter count), which is precisely the
+the latency differences between full and sliding window             region we target: efficient ASR models for 0.1–1 TOPs
+attention by comparing TTFT measurements of the original            and memory-constrained edge processors (e.g., sub-1 GB).
+Moonshine (Jeffries et al., 2024) full attention encoder to         NVIDIA’s models, by contrast, are optimized for GPUs with
+the Moonshine v2 sliding window encoder.                            tens of GB of memory and multi-PFLOP compute.
+                                                                    Figure 5 shows the differences in TTFT between full atten-
+Response latency. We perform empirical latency eval-                tion and sliding-window attention encoders by comparing
+uations between Moonshine v2, the original Moonshine                the original Moonshine models with Moonshine v2. For
+models, and the OpenAI Whisper models (Radford et al.,              longer utterances, even the largest Moonshine v2 achieves
+2022) (as implemented in faster-whisper 2 ). ASR models             lower TTFT to the smaller Moonshine v1 models.
+like Whisper were originally intended for offline processing
+                                                                    Table 2 compares the response latency between Moonshine,
+scenarios, where the overall throughput of the system is
+                                                                    Moonshine v2, and Whisper models. The Moonshine v2
+important. Since our use case targets online processing ap-
+                                                                    models demonstrate substantially lower latency than compa-
+plications (e.g., live captioning), we measure the real-time
+                                                                    rable Whisper models: Moonshine v2 Tiny achieves 50 ms
+response latency rather than throughput. We define this as
+                                                                    latency (5.8x faster than Whisper Tiny), Moonshine v2
+the amount of time taken between detecting the end of a
+                                                                    Small achieves 148 ms (13.1x faster than Whisper Small),
+speech segment in an audio stream (via a voice activity de-
+                                                                    and Moonshine v2 Medium achieves 258 ms (43.7x faster
+   1                                                                than Whisper Large v3), while also requiring less compute
+       https://github.com/moonshine-ai/moonshine
+   2
+       https://github.com/SYSTRAN/faster-whisper                    load on the same hardware.
+                                                                                                                                                                               6
+
+                                      Other models                                                                                            nvidia/canary-qwen-2.5b
+                           94         Moonshine v2
+                                                                            Moonshine v2 Medium
+                                                                                                                nvidia/parakeet-tdt-0.6b-v2
+                                      OpenAI
+                                      NVIDIA
+
+
+
+
+ Accuracy (100 - WER, %)
+                                                                Moonshine v2 Small                                                  openai/whisper-large-v3
+                           92                                                        openai/whisper-large-v3-turbo
+
+
+
+
+                           90
+
+
+                                           Moonshine v2 Tiny
+                           88
+
+
+
+                           86
+                                101                                102                                                103                                                104
+                                                                             Parameters (M, log scale)
+
+                                                 Figure 4. Accuracy vs. parameter count on Open ASR leaderboard averages.
+
+
+       Model                                    Latency (ms)   Compute Load (%)                 Dataset              Tiny (34M)       Small (123M)            Med. (245M)
+       Moonshine Tiny                                     27                  5.91              AMI                         19.03               12.54               10.68
+       Moonshine Base                                     44                  7.34              Earnings-22                 20.27               13.53               11.90
+       Moonshine v2 Tiny                                  50                  8.03              GigaSpeech                  13.90               10.41                9.46
+       Moonshine v2 Small                                148                 17.97              Libri (clean)                4.49                2.49                2.08
+       Moonshine v2 Medium                               258                 28.95              Libri (other)               12.09                6.78                5.00
+       Whisper Tiny                                      289                  8.46              SPGISpeech                   6.16                3.19                2.58
+       Whisper Base                                      553                 16.19              TED-LIUM                     6.12                3.77                2.99
+       Whisper Small                                    1940                 56.84              VoxPopuli                   14.02                9.98                8.54
+       Whisper Large v3                                11286                330.65
+                                                                                                Average                     12.01                 7.84                  6.65
+
+Table 2. Empirical response latency and compute load comparison
+                                                                                              Table 3. WER (%) for Moonshine v2 on Open ASR benchmarks.
+for Moonshine and Whisper models. These values reflect the
+amount of time taken between the end of a speech utterance and
+the returned transcript in a real-time, live transcription scenario
+running on an Apple MacBook M3.
+
+
+
+5. Discussion & Conclusion
+                                                                                              ditional languages, enabling low-latency, on-device speech
+While our ergodic streaming encoder enables bounded, low-
+                                                                                              recognition across diverse linguistic contexts.
+latency TTFT, Moonshine v2 still employs a full-attention
+autoregressive decoder. This means that once the encoder                                      We introduced Moonshine v2, a family of streaming ASR
+begins emitting features, the decoder must generate tokens                                    models designed for latency-critical, on-device applications.
+one-by-one through a serial loop. For very long transcripts,                                  By replacing full-attention encoders with ergodic streaming
+this sequential generation can add latency to the full output,                                encoders that use sliding-window self-attention, we achieve
+even though the first tokens appear quickly. Future work                                      bounded TTFT independent of utterance length while main-
+could explore monotonic alignment models or streaming-                                        taining strong transcription accuracy. Our models achieve
+friendly decoding strategies that further reduce end-to-end                                   state-of-the-art results on standard benchmarks, matching
+latency. Additionally, our current models focus exclusively                                   the performance of models 6x their size while running sig-
+on English ASR. However, the architectural principles of                                      nificantly faster. These results demonstrate that carefully
+ergodic streaming encoders with sliding-window attention                                      designed local attention can rival the accuracy of global
+generalize naturally to other languages. Building on our                                      attention at a fraction of the computational cost, making
+prior work with specialized, language-specific models (King                                   real-time, interactive speech interfaces practical on resource-
+et al., 2025), we plan to train Moonshine v2 variants for ad-                                 constrained edge devices.
+                                                                                                                                                          7
+
+                                                                                             Radford, A., Kim, J. W., Xu, T., Brockman, G., McLeavey,
+                                                                                               C., and Sutskever, I. Robust speech recognition via large-
+            102
+                                                                                               scale weak supervision, 2022. URL https://arxiv.
+                                                                                               org/abs/2212.04356.
+
+TTFT (ms)
+                                                                                             Rekesh, D., Koluguri, N. R., Kriman, S., Majumdar, S.,
+                                                                                               Noroozi, V., Huang, H., Hrinchuk, O., Puvvada, K., Ku-
+            101
+                                                                                               mar, A., Balam, J., and Ginsburg, B. Fast conformer with
+                                                         moonshine/tiny (27M)
+                                                         moonshine/tiny-streaming (34M)
+                                                                                               linearly scalable attention for efficient speech recognition,
+                                                         moonshine/base (61M)                  2023. URL https://arxiv.org/abs/2305.05084.
+                                                         moonshine/small-streaming (123M)
+                                                         moonshine/medium-streaming (245M)
+                  0   5   10        15              20               25              30
+                               Audio Duration (s)                                            Srivastav, V., Zheng, S., Bezzam, E., Bihan, E. L., Moumen,
+                                                                                               A., and Gandhi, S. Open asr leaderboard: Towards repro-
+                                                                                                ducible and transparent multilingual speech recognition
+Figure 5. Time to first token (TTFT) versus input audio duration                                evaluation. arXiv preprint arXiv:2510.06961, 2025.
+for Moonshine and Moonshine v2 models. The original Moonshine
+models use a full-attention encoder, which results in TTFT latency
+                                                                                             Su, J., Lu, Y., Pan, S., Murtadha, A., Wen, B., and Liu, Y.
+that grows with input audio duration. Sliding window attention                                 Roformer: Enhanced transformer with rotary position em-
+in the Moonshine v2 encoder results in a fixed encoding latency,                               bedding, 2023. URL https://arxiv.org/abs/2104.
+regardless of audio duration.                                                                  09864.
+
+                                                                                             Wolf, T., Debut, L., Sanh, V., Chaumond, J., Delangue,
+References                                                                                    C., Moi, A., Cistac, P., Rault, T., Louf, R., Funtowicz,
+Acero, A. and Huang, X. Augmented cepstral normalization                                      M., and Brew, J. Huggingface’s transformers: State-of-
+  for robust speech recognition. In Proc. IEEE Workshop                                       the-art natural language processing, 2019. URL https:
+  on Automatic Speech Recognition, December 1995.                                             //arxiv.org/abs/1910.03771.
+
+Cisco Systems. Understanding delay in packet voice           Xu, H., Jia, F., Majumdar, S., Huang, H., Watanabe, S., and
+  networks.                                                    Ginsburg, B. Efficient sequence transduction by jointly
+  urlhttps://www.cisco.com/c/en/us/support/docs/voice/voice-   predicting tokens and durations, 2023. URL https://
+  quality/5125-delay-details.html, 2026. States that for       arxiv.org/abs/2304.06795.
+  private voice networks 200 ms one-way delay is a
+  reasonable goal and 250 ms is a limit. Accessed
+  2026-01-29.
+Defazio, A., Yang, X. A., Mehta, H., Mishchenko, K.,
+  Khaled, A., and Cutkosky, A. The road less scheduled,
+  2024. URL https://arxiv.org/abs/2405.15682.
+Graves, A. Sequence transduction with recurrent neural
+  networks, 2012. URL https://arxiv.org/abs/1211.
+  3711.
+Graves, A., Fernández, S., Gomez, F., and Schmidhuber,
+  J. Connectionist temporal classification: Labelling un-
+  segmented sequence data with recurrent neural networks.
+  In Proceedings of the 23rd International Conference on
+  Machine Learning (ICML), pp. 369–376, 2006. doi:
+  10.1145/1143844.1143891.
+Jeffries, N., King, E., Kudlur, M., Nicholson, G., Wang, J.,
+   and Warden, P. Moonshine: Speech recognition for live
+   transcription and voice commands, 2024. URL https:
+  //arxiv.org/abs/2410.15608.
+King, E., Sabra, A., Kudlur, M., Wang, J., and Warden, P.
+  Flavors of moonshine: Tiny specialized asr models for
+  edge devices. arXiv preprint arXiv:2509.02523, 2025.
+

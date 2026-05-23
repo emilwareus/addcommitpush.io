@@ -184,6 +184,30 @@ This supports the "generated SDKs beat raw API calls" flavor. The point is not t
 
 References: R43, R49, R51, R62, R63, R64, R65, R66. Data: `data/names_types_apis.csv`.
 
+### 28. Static diagnostics are agent interfaces
+
+The static-analysis insight should be split from the general "static surfaces" claim. A diagnostic is not just a human warning; for agents it is a structured repair protocol: rule ID, file, span, evidence, expected surface, severity, and machine-readable output. ToolGen gives the mechanism: exposing valid dependency/member choices improves dependency coverage by 31.4-39.1% and static validity by 44.9-57.7%. Type-Constrained Code Generation shows why richer static feedback matters: 94% of generated TypeScript compile errors are type-check errors, not syntax errors.
+
+The practical conclusion is that agent-facing lint/type/static output should be designed for repair. Good diagnostics should include exact evidence and the approved replacement path. Bad diagnostics are vague style complaints that make agents churn.
+
+References: R43, R51, R64, D12, D31, D32, D33. Insight: `insights/INSIGHT_27_static_diagnostics_are_agent_interfaces.md`.
+
+### 29. Static oracles catch what tests miss
+
+The research supports a separate insight for structural/static oracles. Needle in the Repo reports 64/483 behaviorally correct but structurally wrong outcomes (13.3%). CODETASTE makes the same point for refactoring: GPT-5.2 open direct mode reaches 87.0% PASS but only 7.7% alignment, while instructed mode reaches 76.0% PASS and 69.6% alignment. Constraint Decay adds the production-constraint version: capable configurations lose 30 percentage points from L0 to L3 as architecture/database/ORM constraints accumulate.
+
+This is the cleanest evidence for custom lint/static rules in the talk. Tests check behavior; static oracles check shape: dependency direction, old pattern removed, new pattern present, generated client used, security middleware present, route test evidence exists.
+
+References: R46, R59, R60, R67, R71, R72. Data: `data/feature_constraints_planning.csv`. Insight: `insights/INSIGHT_28_static_oracles_catch_what_tests_miss.md`.
+
+### 30. Static analysis needs fact models, not parser dumps
+
+The exlint/polint-relevant research should become a third static-analysis insight: useful agent rules need stable fact families. Syntax facts are only the first layer. Higher-value rules need resolved imports, package exports, symbols/references, type facts, CFG, dataflow, call graph, test facts, and coverage evidence. CrossCodeEval shows current-file context alone predicts only about 2% of cross-file references, while retrieved/reference-assisted context raises StarCoder Python exact match from 8.82 to 15.72 and 21.01. CatCoder, ToolGen, A3-CodGen, GraphCodeBERT, CodeGRAG, and InlineCoder all point toward structured facts and neighborhoods.
+
+The practical conclusion is not "dump the AST into the prompt." It is "give rules and agents typed, scoped fact views with precision tiers." The analyzer should know which facts a rule needs, whether setup is missing, and whether the diagnostic is exact or heuristic.
+
+References: R30, R43, R49, R51, R54, R55, R62, R63, R64, D31-D33. Data: `data/names_types_apis.csv`, `data/repository_graph_context.csv`. Insight: `insights/INSIGHT_29_fact_models_make_static_rules_agent_usable.md`.
+
 ## Candidate Talk Frame
 
 1. Agents are new maintainers with no memory.

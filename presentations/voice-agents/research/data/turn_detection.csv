@@ -1,0 +1,11 @@
+system,layer,frame_or_audio_window,default_or_reported_threshold,default_delay_or_latency,source_id,caveat
+Silero VAD,VAD,512 samples at 16 kHz equals 32 ms,threshold 0.5,min_speech 250 ms; min_silence 100 ms,R-VA-006,"Speech/non-speech only; not end-of-thought."
+Silero VAD v6,VAD quality benchmark,multi-domain validation,ROC-AUC,0.97 ROC-AUC; 0.92 accuracy,R-VA-005,"Silero wiki quality table; not turn completion."
+WebRTC VAD,VAD,10/20/30 ms frames,aggressiveness 0-3,0.73 ROC-AUC multi-domain validation,R-VA-005,"Very fast but weaker speech/noise separation."
+OpenAI server_vad,Endpointing,streaming input audio,threshold 0.5,prefix_padding 300 ms; silence_duration 500 ms,R-VA-007,"Official defaults; behavior model/provider dependent."
+OpenAI semantic_vad,Semantic turn detection,streaming input audio,eagerness low/medium/high/auto,max timeouts 8s/4s/2s,R-VA-007,"More natural but can add latency."
+LiveKit turn detector,Context-aware turn detection,transcript and pause patterns,,CPU inference roughly 50-160 ms; <500 MB RAM,R-VA-008,"Open-weights model; language-specific TNR varies."
+Pipecat Smart Turn v3,Context-aware turn detection,most recent 8 s of user turn,,CPU inference under 100 ms; around 65 ms in Pipecat Cloud 1x,R-VA-009,"Runs after VAD detects pause."
+Deepgram Flux,Conversational STT + EOT,audio chunks recommended 80 ms,eot_threshold default 0.7,EOT around 260 ms; p95 within 1.5 s,R-VA-020,"Vendor claim; final EOT vs eager EOT tradeoff matters."
+Human conversation,Human baseline,ordinary conversation,,cross-language mean response offset around 208 ms,R-VA-022,"Humans predict turn endings; not a direct engineering target."
+ITU G.114,Network planning,one-way transmission time,,400 ms should not be exceeded generally,R-VA-023,"Network latency guidance, not full AI-agent latency."

@@ -1,0 +1,7 @@
+dimension,webrtc,websocket,source_id,caveat
+Best fit,"Browser/mobile voice, production client media","Server-to-server, telephony streams, controlled prototypes",R-VA-031,"OpenAI/Pipecat guidance aligns on this split."
+Transport behavior,"Media-native RTP/SRTP, usually UDP, adaptive","TCP stream, ordered delivery",R-VA-029,"WebRTC can still use TURN/TCP in constrained networks."
+Audio stack,"Opus, RTP timestamps, jitter buffer, packet-loss tools","Application-owned framing, timing, buffering, playback",R-VA-029,"WebSocket can work well when network is controlled."
+Echo cancellation,"Browser media constraints and WebRTC media path make AEC/NS/AGC first-class","Capture-side constraints possible, but transport does not solve media timing",R-VA-032,"Avoid double-applying model-based noise cancellation."
+Barge-in,"Separate media/control paths and timestamped playout make interruption easier","Audio/control events often share ordered channel",R-VA-007,"The app still must implement cancellation semantics."
+NAT traversal,"ICE/STUN/TURN built in","Usually simple firewall path but no media traversal stack",R-VA-029,"TURN adds relay cost and latency."

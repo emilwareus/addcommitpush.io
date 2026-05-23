@@ -1,0 +1,475 @@
+                                          Moonshine: Speech Recognition for Live Transcription and Voice Commands
+
+
+                                                      Nat Jeffries Evan King Manjunath Kudlur Guy Nicholson James Wang Pete Warden
+                                                                                                 Useful Sensors
+
+
+                                                                  Abstract                                 our development of one such application—a Caption Box
+                                                                                                           built to provide rapid, accurate, and private offline transcrip-
+
+
+
+
+arXiv:2410.15608v2 [cs.SD] 22 Oct 2024
+                                              This paper introduces Moonshine, a family of
+                                                                                                           tion of English speech—we found that current models are
+                                              speech recognition models optimized for live tran-
+                                                                                                           ill-suited to the task. When deployed on a low-cost ARM-
+                                              scription and voice command processing. Moon-
+                                                                                                           based processor, we noticed that even the smallest Whisper
+                                              shine is based on an encoder-decoder transformer
+                                                                                                           tiny.en model had a firm lower latency bound of 500
+                                              architecture and employs Rotary Position Em-
+                                                                                                           milliseconds, irrespective of the duration of audio. User
+                                              bedding (RoPE) instead of traditional absolute
+                                                                                                           feedback indicated that this level of latency failed to provide
+                                              position embeddings. The model is trained on
+                                                                                                           a smooth and responsive user experience, which motivated
+                                              speech segments of various lengths, but with-
+                                                                                                           us to investigate deeper.
+                                              out using zero-padding, leading to greater ef-
+                                              ficiency for the encoder during inference time.              Whisper, which is based on an encoder-decoder transformer
+                                              When benchmarked against OpenAI’s Whisper                    architecture, processes fixed-length audio sequences in 30-
+                                              tiny.en, Moonshine Tiny demonstrates a 5x re-                second chunks regardless of the actual speech content of
+                                              duction in compute requirements for transcribing             the audio. This means that shorter audio sequences require
+                                              a 10-second speech segment while incurring no in-            padding with zeros to meet the length requirement, resulting
+                                              crease in word error rates across standard evalua-           in a constant computational overhead in the encoder. While
+                                              tion datasets. These results highlight Moonshine’s           the decoder’s processing time is proportional to the length
+                                              potential for real-time and resource-constrained             of the utterance, the constant overhead of fixed-length en-
+                                              applications.                                                coding places a firm lower bound to latency—e.g., the 500
+                                                                                                           milliseconds we identified during our own testing with the
+                                                                                                           Caption Box. Our initial attempts to remove this bottle-
+                                         1. Introduction                                                   neck involved fine-tuning and distilling 1 Whisper models
+                                                                                                           to handle variable-length sequences in the encoder, utilizing
+                                         Real-time automatic speech recognition (ASR) is essential         open audio datasets. However, these open datasets proved
+                                         for many applications, including live transcription during        insufficient to surpass Whisper’s Word Error Rate (WER).
+                                         presentations, accessibility tools for individuals with hear-     Recognizing the limits of available data and the opportunity
+                                         ing impairments, and voice command processing for conver-         to leverage recent advancements in model architectures, we
+                                         sational interfaces in smart devices and wearables. These         opted to develop and train new models from scratch.
+                                         applications often run directly on low-cost hardware, where
+                                         strict resource constraints and a lack of internet connectivity   Our first task was to better quantify the bottleneck imposed
+                                         introduce unique technical challenges that are not present in     by Whisper’s fixed-length encoder. In an empirical test,
+                                         other ASR domains.                                                we compared the GFLOPS (i.e., billion floating-point op-
+                                                                                                           erations) needed for processing 30 seconds of zero-padded
+                                         The introduction of OpenAI’s Whisper has led to a signifi-        audio to the GFLOPS that would be required to instead pro-
+                                         cant improvement in the accuracy of general-purpose ASR           cess only a < 30 second subset of the same audio—i.e., we
+                                         systems (Radford et al., 2022). However, one of the pri-          measured the potential for speed-ups if Whisper instead had
+                                         mary challenges in applications of on-device ASR is the           a variable-length encoder. Our results (Figure 1) showed
+                                         need to minimize latency—the time delay between a spoken          potential for a 35x speed-up in the best case, and nearly a
+                                         utterance and the corresponding text appearing, e.g., on a        5x speed-up overall. Clearly, improvements to Whisper’s
+                                         live transcription display—without losing accuracy. During        architecture could yield lightweight, low-latency speech-to-
+                                           .   Correspondence to:         Manjunath Kudlur <keve-              1
+                                                                                                                 Hence the name Moonshine. We progressed to not use distil-
+                                         man@usefulsensors.com>.                                           lation eventually, but the name stuck.
+Moonshine: Speech Recognition for Live Transcription and Voice Commands                                                                                                      2
+
+                                             20
+                                                                                                               Requiring an exact 30-second segment causes the encoder
+                                                                                                               to incur a fixed computation cost, no matter the duration
+                                             15
+
+
+
+                 GFLOPS to decode
+                                                                                                               of actual speech in the audio segment. However, since
+                                             10
+                                                                                                               Whisper’s model architecture is an off-the-shelf, variable-
+                                             5                                       Fixed-length encoder      length sequence-to-sequence transformer, zero-padding is
+                                                                                     Variable-length encoder
+                                             0                                                                 not strictly necessary. An audio segment that is shorter
+                                                  0   5   10        15         20            25          30
+                                                                                                               than 30 seconds can indeed be processed through the
+
+
+Speed-up (log scale)
+                                      40x
+                                                                                     Variable-length encoder   model’s frontend to yield a [seq_length, dim] vector
+                                      20x
+
+
+
+                                  Absolute
+                                      10x
+                                                                                                               sequence where seq_length <= 1500.
+                                             5x                                                                There are several options for adding the position embedding
+                                             2x                                                                to a variable-length audio input. We compared the default
+                                                                                                               implementation in OpenAI’s Whisper inference code (i.e.,
+                                                  0   5   10        15          20          25          30     using zero-padding to form 30-second segments) with two
+                                                               Seconds of audio
+                                                                                                               other options, as illustrated in the center and right-most
+                                                                                                               columns of Figure 2—namely, using the prefix and the
+Figure 1. GFLOPS required by Whisper tiny.en for decoding
+                                                                                                               suffix of the position embedding. We computed the WER
+as a function of input audio duration. OpenAI’s Whisper models
+                                                                                                               for the tiny.en model using these two options on the
+use a fixed-length encoder that requires any audio less than 30
+seconds to be zero-padded; testing with a hypothetical variable-                                               test.clean split of the Librispeech dataset. This split
+length encoder shows that we can attain significant speed-ups by                                               has 2620 examples, 9 of which are more than 30 seconds in
+removing this requirement.                                                                                     length. We ignore these 9 examples in this evaluation. We
+                                                                                                               use a beam size of 5, so as to not suffer the pitfalls of greedy
+                                                                                                               decoding such as repetitions. With the standard inference
+text models that are better-suited to resource-constrained                                                     code provided by OpenAI, we get a WER of 5.21%. When
+applications.                                                                                                  the input is not zero-padded, however, we get worse results.
+                                                                                                               When using only a prefix of the position embedding, the
+Toward tackling the challenges faced by on-device, low-                                                        tiny.en model has a WER of 107.38%. We notice a
+latency ASR applications, this paper introduces the Moon-                                                      lot of repetitions towards the end of the transcription, even
+shine family of ASR models. Moonshine models are de-                                                           with the beam search. When instead using the suffix of
+signed to match Whisper’s accuracy while optimizing com-                                                       the position embedding, the accuracy degradation is not as
+putational efficiency by eliminating zero-padding require-                                                     dramatic, producing a WER of 18.45%—still more than
+ments, instead scaling processing demands proportionally                                                       three times worse than the baseline.
+to audio input length. We describe Moonshine’s architec-
+ture and training process, and provide a detailed analysis                                                     These results indicate that the OpenAI Whisper models
+of its performance benefits in comparison with Whisper                                                         are trained with examples that are all exactly 30 seconds
+models. Section 2 motivates our development of Moon-                                                           long. The models indeed produce high quality transcrip-
+shine by quantifying the WER when adapting Whisper for                                                         tions for long-form audio. However, the fixed computation
+variable-length audio. Section 3 describes the Moonshine                                                       budget needed for their encoder makes them inefficient for
+architecture, dataset preparation, and training process, while                                                 low-latency applications, such as live transcription. Since
+Section 4 provides an evaluation of the results on standard                                                    the audio segments in these applications tend to be short
+speech recognition datasets. Section 5 concludes.                                                              and/or vary in length, our effort to train models optimized
+                                                                                                               for variable-length sequences is well-motivated.
+
+2. Issues with fixed sequence length encoder
+                                                                                                               3. Approach
+Whisper models use absolute position embeddings in both
+the encoder and decoder. The encoder in particular uses                                                        This section describes Moonshine’s model architecture be-
+sinusoidal position embeddings of shape [1500, dim],                                                           fore detailing our data collection, preprocessing, and model
+where dim is the transformer encoder’s dimension. The                                                          training process.
+standard inference code provided by OpenAI zero-pads the
+input audio to an exact 30-second segment before passing it                                                    3.1. Model architecture
+down to the model. Audio feature generation and 2 convolu-                                                     Moonshine is an off-the-shelf encoder-decoder Transformer
+tion layers convert this audio segment to a [1500, dim]                                                        (Vaswani et al., 2017) model. The input is an audio signal
+vector sequence that gets added to the sinusoidal position                                                     sampled at 16,000 Hz. We do not use any hand-engineering
+embedding. The left-most column of Figure 2 illustrates                                                        (e.g., Mel spectrograms) to extract audio features. Instead,
+this mechanism.
+Moonshine: Speech Recognition for Live Transcription and Voice Commands                                                                 3
+
+                Zero-Padded                                  Truncated (Prefix)                         Truncated (Suffix)
+       x + positional_embedding[:,:]            x + positional_embedding[:x.shape[1],:]      x + positional_embedding[-x.shape[1]:,:]
+
+
+
+
+                      +                                  +                                                                   +
+
+
+
+
+                  5.21% WER                                      107.38% WER                                18.45% WER
+
+
+
+
+Figure 2. Variations of absolute position embeddings usage and the corresponding WER produced by Whisper tiny.en (test.clean
+split of the Librispeech dataset). Simply adapting Whisper’s inference code to avoid encoding of fixed-length audio (as in the center and
+right-most columns) introduces significant increases in WER, motivating our development of new models with variable-length encoding.
+
+
+the input is processed by a short stem of 3 convolution layers          process to filter out low-quality instances. First, we lower-
+with strides 64, 3, and 2 respectively. The filter widths,              case and normalize the caption text, removing or replacing,
+number of channels and activation functions are shown in                e.g., ambiguous unicode characters, emoji, and punctuation.
+Figure 3. These set of strides compress the input by a                  We then use Whisper large v3 to generate a pseudo-label
+factor of 384x. Note that in the Whisper model, the input is            of the audio content, applying the same text normalization
+compressed by 320x—firstly 160x in the Mel spectogram                   to this pseudo-label as we do the caption. Finally, we com-
+computation, then by a further 2x in the convolution stem.              pute a normalized Levenshtein distance (between [0.0, 1.0],
+We use Rotary Position Embeddings (RoPE) (Su et al., 2023)              where 0.0 is identical and 1.0 is orthogonal) between the
+at each layer of the encoder and decoder. Table 1 compares              normalized caption and the pseudo-label, filtering out labels
+Moonshine’s architecture with OpenAI’s Whisper models.                  with a distance above a threshold. This allows us to treat the
+                                                                        human-generated labels in captions as ground truth without
+We use the same byte-level BPE text tokenizer used in Llama
+                                                                        introducing excessive noise. After filtering out noisy labels,
+1 and 2 (Touvron et al., 2023; Sennrich et al., 2015) for
+                                                                        we prepare the remaining text by applying standardized
+tokenizing English text. The original vocabulary size is
+                                                                        punctuation and capitalization.
+32000; we add 768 special tokens for future extensions.
+                                                                        Preprocessing unlabeled speech. The majority of speech
+3.2. Training data collection & preprocessing                           available on the web is unlabeled. In these cases, we lever-
+                                                                        age the Whisper large v3 model to generate training labels
+We train Moonshine on a combination of 90K hours                        for our lighter-weight Moonshine model. The risk inherent
+from open ASR datasets and over 100K hours from own                     in training one model on another model’s outputs is that
+internally-prepared dataset, totalling around 200K hours.               the new model learns the old model’s errors. From inspec-
+From open datasets, we use Common Voice 16.1 (Ardila                    tion, we noted that the majority of hallucinated outputs from
+et al., 2020), the AMI corpus (Carletta et al., 2005), Gi-              Whisper large v3 occurred below a predictable value of the
+gaSpeech (Chen et al., 2021), LibriSpeech (Panayotov                    average log probability of the output. We thus mitigate
+et al., 2015), the English subset of multilingual Lib-                  the risk of introducing hallucination and other noise in the
+riSpeech (Pratap et al., 2020), and People’s Speech (Galvez             training set by filtering out instances with an average log
+et al., 2021). We then augment this training corpus with                probability below this threshold. During this process, we
+data that we collect from openly-available sources on the               benefited from speed-ups provided by batched inference in
+web. We discuss preparation methods for our self-collected              the WhisperX implementation (Bain et al., 2023).
+data in the following.
+                                                                        Controlling instance duration. We assemble successive
+Preprocessing noisily-labeled speech. Many speech                       speech segments into longer training instances, such that
+sources available on the web have subtitles or captions avail-          the resulting instance duration is ∈ [4, 30] seconds with no
+able, which can serve as labels. However, captions tend be              more than 2 seconds between successive segments. For
+noisy—they may be manually-generated and thus contain                   our manually-captioned data sources, we use timestamped
+text that is orthogonal to the audio content, or they may               segments provided by a subtitle file (e.g., an .srt file); for
+contain the names of speakers or verbal descriptions of non-            our pseudo-labeled audio, we use the timestamps output by
+speech content. In cases where a manually-generated but                 Whisper. Upon combining this data with open datasets, the
+possibly-unreliable caption is available, we use a heuristic
+Moonshine: Speech Recognition for Live Transcription and Voice Commands                                                                                  4
+
+                                                                                                                      BPE
+                                            ...
+                                                                                     next-token
+                                                                                      prediction
+
+                    Encoder
+                     Blocks             FFN + GELU                                                 ...
+                                        self-attention
+
+
+                                            RoPE
+                                                                                             FFN + SwiGLU
+                                                                                                                             Decoder
+                                                                                             cross-attention                 Blocks
+                                                    GELU
+
+
+                                   Conv1D            kernel size: 3                          self-attention
+                                                          stride: 2
+
+
+                                                    GELU
+                                                                                                   RoPE
+
+
+                                                     kernel size: 7
+                                   Conv1D                 stride: 3
+
+
+                                                    tanh
+
+
+                                                   kernel size: 127
+                                   Conv1D                 stride: 64
+
+
+
+
+                                            Figure 3. Moonshine’s model architecture.
+
+                Parameter                   Moonshine Tiny             Whisper tiny.en                         Moonshine Base          Whisper base.en
+              Dimension                                    288                       384                               416                   512
+            Encoder layers                                  6                         4                                 8                     6
+           Decoder layers                                   6                         4                                 8                     6
+           Attention heads                                  8                         6                                                8
+        Encoder FFN activation                                                                        GELU
+        Decoder FFN activation                      SwiGLU                          GELU                          SwiGLU                    GELU
+        Parameters in Millions                        27.1                           37.8                           61.5                     72.6
+ FLOPs normalized to Whisper tiny.en                  0.7x                           1.0x                           1.6x                     2.3x
+
+                                                Table 1. Model shapes and GFLOPs
+
+
+duration of instances in our aggregate training set obeys a                         7%
+slightly bimodal distribution as depicted in Figure 4.                              6%
+                                                                                    5%
+3.3. Training
+                                                                        Frequency
+                                                                                    4%
+We performed training on a 32x H100 GPU cluster, using                              3%
+GPU data parallelism provided by Huggingface’s Accel-                               2%
+erate library (Gugger et al., 2022). We used Accelerate’s
+                                                                                    1%
+BF16 mixed precision optimizations. We trained the mod-
+els for 250K steps with a batch size of 32 per GPU (1024                            0%
+                                                                                         0               5       10          15       20    25      30
+global batch size). We leveraged the AdamW variation of                                                               Duration (seconds)
+the schedule-free optimizer (Defazio et al., 2024); gradient
+norm clipping and the initial learning rate warmed up to                Figure 4. Distribution of training instance durations after combin-
+1.4e-3 after 8192 steps.                                                ing open and internally-prepared datasets. A slightly bimodal
+                                                                        distribution results from our preprocessing procedure, which as-
+                                                                        sembles successive audio segments into instances between 4 and
+                                                                        30 seconds in length.
+Moonshine: Speech Recognition for Live Transcription and Voice Commands                                                                       5
+
+      14%         Moonshine Base                                                 3.0x                                 Moonshine Base (GPU)
+                  Whisper base.en
+      12%
+                                                                                 2.5x
+                                                                34%
+                                                                      Speed-up
+      10%
+WER
+                                                                                 2.0x
+      8%
+      6%                                                                         1.5x
+      4%
+             5)   0)     5)    0)     5)    0)     5)     0)    5)                      5)             0)              5)                0)
+            ,1    ,2   ,2     ,3     ,3     ,4     ,4    ,5     ,5                      ,1          ,2                ,2              ,3
+        [10    [15    [20   [25     [30   [35   [40   [45   [50                    [10             [15             [20              [25
+                              Duration (seconds)                                                       Duration (seconds)
+
+Figure 5. Left: Word Error Rates (WER) across various ranges of input audio duration. Right: Speed-up in decoding time of Moonshine
+Base over Whisper base.en across various ranges of input audio duration.
+
+
+                                Whisper            Moonshine                                                 Whisper          Moonshine
+                               base.en               Base                                                   tiny.en             Tiny
+        AMI                      21.13              17.79                               AMI                   24.24            22.77
+     Earnings22                  15.09              17.65                            Earnings22               19.12            21.25
+     Gigaspeech                  12.83              12.19                            Gigaspeech               14.08            14.41
+ LibreSpeech (Clean)              4.25               3.23                        LibreSpeech (Clean)           5.66             4.52
+ LibreSpeech (Other)             10.35               8.18                        LibreSpeech (Other)          15.45            11.71
+     SPGISpeech                   4.26               5.46                            SPGISpeech                5.93              7.7
+      TEDLium                     4.87               5.22                             TEDLium                  5.97             5.64
+      Voxpopuli                   9.76              10.81                             Voxpopuli               12.00            13.27
+            Average                 10.32               10.07                            Average              12.81              12.66
+
+Table 2. WER comparison of base Moonshine vs. Whisper models               Table 3. WER comparison of tiny Moonshine vs. Whisper models
+
+
+
+4. Evaluations                                                             a WER greater than 100%. Fewer than 0.5% of examples in
+                                                                           our training set are shorter than a second. We hypothesize
+Our experiments measure Moonshine against OpenAI’s                         that this weakens generalization to the Earnings22 dataset.
+Whisper models, specifically Whisper tiny.en and
+base.en. These two are the most suitable for running
+                                                                           4.1. Accuracy vs. Input Length
+on low cost edge devices given their lower memory and
+compute requirements. We measure the WER on datasets in                    Moonshine models demonstrate the ability to transcribe
+the OpenASR Leaderboard (Srivastav et al., 2023). We use                   audio clips of varying lengths. However, we hypothesize
+greedy decoding, with a heuristic limit of 6 output tokens                 that shorter inputs may result in higher WER due to the lack
+per second of audio to avoid repeated output sequences.                    of sufficient contextual information. Conversely, for longer
+                                                                           clips—particularly those exceeding the sequence lengths
+Moonshine Tiny and Base models achieve better average
+                                                                           observed during training—there is a notable increase in
+WER compared to their Whisper counterparts (tiny.en
+                                                                           transcription errors due to hallucinations. To evaluate this
+and base.en, respectively), as depicted in Table 2 and
+                                                                           behavior, we measured the WER across a range of audio
+Table 3. Earnings22 is the dataset for which Moonshine per-
+                                                                           segments from the TEDLium dataset, with clip durations
+forms the worst compared to Whisper. 8% of the examples
+                                                                           varying between 10 and 55 seconds.
+in Earnings22 are less than 1 second long, and the corre-
+sponding transcriptions are short utterances such as “So.”,                To evaluate inference speed across different clip lengths,
+“Yes.”, “Okay.”, etc. Moonshine models tend to produce                     we compare Moonshine and Whisper on GPU (H100). The
+repeated tokens in the output for such examples, leading to                results are depicted in Figure 5. The speed-up comparison
+Moonshine: Speech Recognition for Live Transcription and Voice Commands                                                              6
+
+      40%                                                                40%
+                                                 Moonshine Base
+                                                 Whisper base.en
+      20%                                                                20%
+
+WER   10%                                                          WER   10%
+
+      5%                                                                 5%
+
+      3%                                                                 3%
+            60    50     40       30     20      10    0     10                30    25      20      15        10       5        0
+                              Linear Gain (dB)                                                     SNR (dB)
+
+Figure 6. Robustness comparisons on LibriSpeech test-clean. Left: WER as linear gain of test audio increases. Moonshine degrades
+more at the lowest gains, but maintains superior WER values at -40 dB and beyond. Right: WER as signal-to-noise ratio increases under
+additive computer fan noise. Moonshine degrades similarly to OpenAI’s Whisper counterpart while maintaining superior WER values.
+
+
+is limited to clips up to Whisper’s 30-second maximum,               5. Discussion & Conclusion
+as longer clips require multiple Whisper runs, introducing
+overhead and skewing the results unfairly against Whisper.          We briefly discuss limitations before concluding the paper
+Moonshine demonstrates superior performance, particularly           in this section.
+on shorter sequences, due to its support for variable se-           Architectures and optimizers. As in any research of
+quence lengths in the encoder.                                      this kind, many variations of model architecture could be
+                                                                    explored. Likewise, recent advancements in optimizers—
+4.2. Robustness to Input Speech Signal Level                        particularly Shampoo (Gupta et al., 2018) and SOAP (Vyas
+                                                                    et al., 2024)—show promise for improving WERs in our
+During this work, we observed that the robustness of Whis-
+                                                                    architecture. Conducting an ablation study on these model
+per models varies relative to the level of the input speech
+                                                                    architectures and training methods would significantly en-
+signal. To measure the impact of input levels (i.e., linear
+                                                                    hance the community’s understanding of the models’ limi-
+gain) on Moonshine, we tested model robustness as increas-
+                                                                    tations. However, due to resource constraints, particularly
+ing gain is applied to the audio samples in the dataset. As
+                                                                    limited affordability of GPUs, such studies are beyond the
+shown in the left portion of Figure 6, Moonshine Base main-
+                                                                    scope of this paper. Consequently, we chose our architec-
+tains superior WER over most of this range until the input
+                                                                    ture and optimizer based on the authors’ experience and a
+speech signal is very attenuated. At this point (where gain
+                                                                    thorough review of relevant literature.
+is below -40 dB, i.e., the input audio is very quiet) the WER
+rises above the Whisper model. For practical applications            Generalization to shorter audio segments. The relatively
+where high speech attenuation can be avoided in system               low performance that we observed on the Earnings22 dataset
+design, Moonshine Base is robust to varying input levels.            motivates collection of more data representative of this case,
+                                                                     and investigation of training techniques to introduce more
+4.3. Robustness to Additive Noise                                    contextual information in the model. This will likely im-
+                                                                     prove model performance with no changes to architecture.
+We tested the noise robustness of the Moonshine Base model
+by measuring the WER for the fan noise observed in a tablet         In this paper we introduced Moonshine, a family of
+computer application under load. In user studies, we quanti-        lightweight ASR models optimized for low latency, on-
+fied the signal-to-noise ratio (SNR) for this application in        device speech-to-text applications. We outlined our model
+the range [9, 17] dB depending on the speaker. We calculate         architecture, data collection and preprocessing procedures,
+the level of additive noise corresponding to a given SNR            and training. We benchmarked Moonshine against two
+based on the average signal power of individual dataset ex-         OpenAI Whisper models—tiny.en and base.en—
+amples with quiet sections removed. The right portion of            showing that their Moonshine counterparts provide up to 3x
+Figure 6 shows how the performance degrades as fan noise            reductions in latency scaled to the duration of input audio.
+increases. Whisper’s robustness to noise is known (Radford          Our work opens the door for new applications of real-time
+et al., 2022); Moonshine Base maintains this robustness             ASR in live transcription, accessibility technologies, and
+while providing a superior WER.                                     smart devices.
+Moonshine: Speech Recognition for Live Transcription and Voice Commands                                                   7
+
+6. Acknowledgements                                             Panayotov, V., Chen, G., Povey, D., and Khudanpur, S.
+                                                                  Librispeech: an asr corpus based on public domain au-
+We would like to acknowledge the developers of the excel-         dio books. In Acoustics, Speech and Signal Processing
+lent x-transformers 2 library, which formed the basis             (ICASSP), 2015 IEEE International Conference on, pp.
+of the Moonshine training code. We would also like to thank       5206–5210. IEEE, 2015.
+the folks at Lambda Labs for providing reliable server up-
+time and alacritous support. Finally, we are thankful for the   Pratap, V., Xu, Q., Sriram, A., Synnaeve, G., and Collobert,
+giants, whose shoulders we all stand on.                          R. Mls: A large-scale multilingual dataset for speech
+                                                                  research. ArXiv, abs/2012.03411, 2020.
+References                                                      Radford, A., Kim, J. W., Xu, T., Brockman, G., McLeavey,
+Ardila, R., Branson, M., Davis, K., Henretty, M., Kohler,         C., and Sutskever, I. Robust speech recognition via large-
+  M., Meyer, J., Morais, R., Saunders, L., Tyers, F. M.,          scale weak supervision, 2022. URL https://arxiv.
+  and Weber, G. Common voice: A massively-multilingual            org/abs/2212.04356.
+  speech corpus. In Proceedings of the 12th Conference on
+                                                                Sennrich, R., Haddow, B., and Birch, A. Neural machine
+  Language Resources and Evaluation (LREC 2020), pp.
+                                                                  translation of rare words with subword units. arXiv
+  4211–4215, 2020.
+                                                                  preprint arXiv:1508.07909, 2015.
+Bain, M., Huh, J., Han, T., and Zisserman, A. Whisperx:
+                                                                Srivastav, V., Majumdar, S., Koluguri, N., Moumen, A.,
+  Time-accurate speech transcription of long-form audio.
+                                                                  Gandhi, S., et al. Open automatic speech recogni-
+  INTERSPEECH 2023, 2023.
+                                                                  tion leaderboard.   https://huggingface.co/
+Carletta, J., Ashby, S., Bourban, S., Flynn, M., Guille-          spaces/hf-audio/open_asr_leaderboard,
+  mot, M., Hain, T., Kadlec, J., Karaiskos, V., Kraaij, W.,       2023.
+  Kronenthal, M., et al. The ami meeting corpus: A pre-
+  announcement. In International workshop on machine            Su, J., Lu, Y., Pan, S., Murtadha, A., Wen, B., and Liu,
+  learning for multimodal interaction, pp. 28–39. Springer,       Y. Roformer: Enhanced transformer with rotary position
+  2005.                                                           embedding, 2023. URL https://arxiv.org/abs/
+                                                                  2104.09864.
+Chen, G., Chai, S., Wang, G., Du, J., Zhang, W.-Q.,
+  Weng, C., Su, D., Povey, D., Trmal, J., Zhang, J.,            Touvron, H., Martin, L., Stone, K., Albert, P., and et al.,
+  et al. Gigaspeech: An evolving, multi-domain asr corpus         A. A. Llama 2: Open foundation and fine-tuned chat mod-
+  with 10,000 hours of transcribed audio. arXiv preprint          els, 2023. URL https://arxiv.org/abs/2307.
+  arXiv:2106.06909, 2021.                                         09288.
+
+Defazio, A., Yang, X. A., Mehta, H., Mishchenko,                Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones,
+  K., Khaled, A., and Cutkosky, A. The road less                  L., Gomez, A. N., Kaiser, Ł., and Polosukhin, I. Atten-
+  scheduled, 2024. URL https://arxiv.org/abs/                     tion is all you need. In Advances in neural information
+  2405.15682.                                                     processing systems, pp. 5998–6008, 2017.
+
+Galvez, D., Diamos, G., Ciro, J., Cerón, J. F., Achorn, K.,    Vyas, N., Morwani, D., Zhao, R., Shapira, I., Brandfon-
+  Gopi, A., Kanter, D., Lam, M., Mazumder, M., and Reddi,         brener, D., Janson, L., and Kakade, S. Soap: Improving
+  V. J. The people’s speech: A large-scale diverse english        and stabilizing shampoo using adam. arXiv preprint
+  speech recognition dataset for commercial usage. arXiv          arXiv:2409.11321, 2024.
+  preprint arXiv:2111.09344, 2021.
+Gugger, S., Debut, L., Wolf, T., Schmid, P., Mueller,
+  Z., Mangrulkar, S., Sun, M., and Bossan, B. Ac-
+  celerate: Training and inference at scale made sim-
+  ple, efficient and adaptable. https://github.com/
+  huggingface/accelerate, 2022.
+Gupta, V., Koren, T., and Singer, Y. Shampoo: Pre-
+  conditioned stochastic tensor optimization. In Interna-
+  tional Conference on Machine Learning, pp. 1842–1850.
+  PMLR, 2018.
+   2
+       https://github.com/lucidrains/x-transformers
+

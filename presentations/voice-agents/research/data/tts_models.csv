@@ -1,0 +1,11 @@
+model,family,params_m,quality_metric,quality_value,wer_percent,rtf,ttfa_ms,hardware_or_context,source_id,caveat
+Kokoro-82M,Kokoro,82,No direct controlled Kokoro MOS,, ,0.2,,32-vCPU AMD EPYC community benchmark,R-VA-010,"Kokoro model card lacks controlled MOS/RTF table; RTF is community benchmark."
+StyleTTS 2,StyleTTS,,CMOS vs ground truth LJSpeech,+0.28,,0.0185,,Research benchmark,R-VA-011,"Not the same artifact as Kokoro; useful architectural ancestor."
+F5-TTS 16 NFE,F5-TTS,336,UTMOS LibriSpeech-PC,3.88,2.53,0.15,,RTX 3090,R-VA-012,"Flow matching; RTF is total synthesis speed, not TTFA."
+F5-TTS 32 NFE,F5-TTS,336,UTMOS LibriSpeech-PC,3.90,2.42,0.31,,RTX 3090,R-VA-012,"Higher NFE improves WER slightly but doubles RTF."
+Spark-TTS,Spark,500,UTMOS LibriSpeech,4.35,1.98,,,Paper benchmark,R-VA-013,"No primary RTF/TTFA found in paper."
+Fish Audio S2,Fish Audio,4400,Seed-TTS test-en WER,,0.99,0.195,100,NVIDIA H200 + SGLang,R-VA-014,"Best primary TTFA story but measured on H200 production serving."
+Fish Audio S2,Fish Audio,4400,Seed-TTS test-zh CER,,0.54,0.195,100,NVIDIA H200 + SGLang,R-VA-014,"CER for Chinese; not WER."
+Fish Speech v1.5,Fish Audio,500,WER,,6.89,0.2,,RTX 4060 Mobile,R-VA-015,"Earlier Fish system; not S2."
+XTTS v2,XTTS,,Feature claim,, ,,,Official docs/model card,R-VA-016,"Official controlled RTF table not found; docs mention streaming."
+Piper,Piper,20,No controlled benchmark,, ,0.2,,Community/local estimates,R-VA-017,"Fast deterministic local TTS, no zero-shot cloning."
