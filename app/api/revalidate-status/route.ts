@@ -3,12 +3,8 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 
 const bearerHeaderName = 'authorization';
 const expectedPrefix = 'Bearer ';
-const cronHeaderName = 'x-vercel-cron';
 
 function isAuthorized(req: Request, secret: string | undefined): boolean {
-  const cronHeader = req.headers.get(cronHeaderName);
-  if (cronHeader) return true; // allow Vercel Cron jobs
-
   const authHeader = req.headers.get(bearerHeaderName);
   if (!secret || !authHeader || !authHeader.startsWith(expectedPrefix)) return false;
   const token = authHeader.slice(expectedPrefix.length);
