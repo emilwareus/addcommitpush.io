@@ -147,11 +147,14 @@ You onboard your agent 100 times a day. Make it VERY easy. My personal favorites
 
 Research states "machine-checkable contracts" agents can run in a fresh environment. I agree. 
 
-**Insights:** [INSIGHT_02](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_02_agent_instructions_are_config.md) · [INSIGHT_23](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_23_setup_is_part_of_the_task.md)
+**Insights:** [INSIGHT_03](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_03_reproducible_setup_is_agent_infrastructure.md) · [INSIGHT_23](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_23_setup_is_part_of_the_task.md)
 
 **Papers**
 
+- [Beyond pip install / Installamatic](https://arxiv.org/abs/2412.06294) — `[installamatic-2412.06294.pdf](../../presentations/write-code-ai-agents-love/research/papers/installamatic-2412.06294.pdf)` · `[installamatic-2412.06294.txt](../../presentations/write-code-ai-agents-love/research/paper-text/installamatic-2412.06294.txt)`
 - [SetupBench](https://arxiv.org/abs/2507.09063) — `[setupbench-2507.09063.pdf](../../presentations/write-code-ai-agents-love/research/papers/setupbench-2507.09063.pdf)` · `[setupbench-2507.09063.txt](../../presentations/write-code-ai-agents-love/research/paper-text/setupbench-2507.09063.txt)`
+- [GitTaskBench](https://ojs.aaai.org/index.php/AAAI/article/download/40533/44494) — `[gittaskbench-aaai-2026.pdf](../../presentations/write-code-ai-agents-love/research/papers/gittaskbench-aaai-2026.pdf)` · `[gittaskbench-aaai-2026.txt](../../presentations/write-code-ai-agents-love/research/paper-text/gittaskbench-aaai-2026.txt)`
+- [SWE-bench](https://arxiv.org/abs/2310.06770) — `[swe-bench-2310.06770.pdf](../../presentations/write-code-ai-agents-love/research/papers/swe-bench-2310.06770.pdf)` · `[swe-bench-2310.06770.txt](../../presentations/write-code-ai-agents-love/research/paper-text/swe-bench-2310.06770.txt)` *(pre-baked envs; setup assumed)*
 
 **Practitioner**
 
@@ -296,21 +299,6 @@ I write a lot of go this time around, and I really like the "Three Dot Labs" arc
 **Practitioner**
 
 - [Nx: Enforce module boundaries](https://nx.dev/docs/features/enforce-module-boundaries) — `[nx-enforce-module-boundaries.html](../../presentations/write-code-ai-agents-love/research/articles/nx-enforce-module-boundaries.html)`
-
-### Setup / bootstrap
-
-Can a fresh machine install deps, configure services, and run tests without tribal knowledge? Installamatic: agents installed 21/40 Python repos (55%) at least once in 10 tries. SetupBench: 34.4%–62.4% overall success depending on model (93-instance benchmark). SWE-bench uses pre-baked Docker images—setup is assumed, not measured there.
-
-**Insights:** [INSIGHT_03](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_03_reproducible_setup_is_agent_infrastructure.md) · [INSIGHT_23](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_23_setup_is_part_of_the_task.md)
-
-**Papers**
-
-- [Beyond pip install / Installamatic](https://arxiv.org/abs/2412.06294) — `[installamatic-2412.06294.pdf](../../presentations/write-code-ai-agents-love/research/papers/installamatic-2412.06294.pdf)` · `[installamatic-2412.06294.txt](../../presentations/write-code-ai-agents-love/research/paper-text/installamatic-2412.06294.txt)`
-- [SetupBench](https://arxiv.org/abs/2507.09063) — `[setupbench-2507.09063.pdf](../../presentations/write-code-ai-agents-love/research/papers/setupbench-2507.09063.pdf)` · `[setupbench-2507.09063.txt](../../presentations/write-code-ai-agents-love/research/paper-text/setupbench-2507.09063.txt)`
-- [GitTaskBench](https://ojs.aaai.org/index.php/AAAI/article/download/40533/44494) — `[gittaskbench-aaai-2026.pdf](../../presentations/write-code-ai-agents-love/research/papers/gittaskbench-aaai-2026.pdf)` · `[gittaskbench-aaai-2026.txt](../../presentations/write-code-ai-agents-love/research/paper-text/gittaskbench-aaai-2026.txt)`
-- [SWE-bench](https://arxiv.org/abs/2310.06770) — `[swe-bench-2310.06770.pdf](../../presentations/write-code-ai-agents-love/research/papers/swe-bench-2310.06770.pdf)` · `[swe-bench-2310.06770.txt](../../presentations/write-code-ai-agents-love/research/paper-text/swe-bench-2310.06770.txt)` *(pre-baked envs; setup assumed)*
-
-Plot data: `[setup_verification.csv](../../presentations/write-code-ai-agents-love/research/data/setup_verification.csv)`
 
 ## The Code
 
