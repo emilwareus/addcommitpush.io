@@ -55,6 +55,14 @@ Important caveat: this study did not deeply evaluate semantic correctness. It pe
 sanity check over sampled outputs. I should use it as evidence for efficiency, not as proof that
 AGENTS.md improves correctness.
 
+### R17 methodology (for pairing with R18)
+
+Real OSS only: 10 GitHub repos, 124 small merged PRs replayed at pre-merge commits with paired
+with/without **existing developer** root `AGENTS.md` (≤100 LoC, ≤5 files). Single agent (Codex
+`gpt-5.2-codex`). Metrics: wall-clock and tokens (Table 1, arXiv **~p. 4**). Not synthetic;
+not LLM-generated context files. Full reconciliation with R18: see
+[INSIGHT_02](./INSIGHT_02_agent_instructions_are_config.md) section "Reconciling R17 vs R18".
+
 ## Context files can also increase cost and reduce success
 
 Evaluating AGENTS.md gives the counterweight. It distinguishes developer-provided context files
@@ -73,7 +81,22 @@ redundant config can make the system noisier.
 | `uv` mentioned | 1.6 uses per instance | <0.01 when not mentioned | Agents obey concrete tool guidance. |
 | Repo-specific tools mentioned | 2.5 uses per instance | <0.05 when not mentioned | Naming tools explicitly changes behavior. |
 
-Source trace: R18, `paper-text/evaluating-agents-md-2602.11988.txt`.
+Source trace: R18, `paper-text/evaluating-agents-md-2602.11988.txt`, §4.2 Table 2 / Figure 3
+(arXiv **~p. 6**); docs-stripped ablation Figure 5 (**~p. 7**).
+
+### R18 methodology (real OSS benchmarks, not synthetic)
+
+- **SWE-bench Lite:** popular repos, no native dev context file; compare NONE vs **LLM-generated**
+  file per agent's init recommendation.
+- **AGENT BENCH:** 138 tasks from 12 **niche** repos that already have developer context files;
+  compare NONE vs LLM vs **HUMAN** file; issues + tests built with LLM pipeline (§3, **~pp. 3–5**).
+- **Success** = all instance tests pass; **cost** = inference USD from step counts (§4.1, **~p. 6**).
+- **Mechanism:** files increase exploration/testing; agents **follow** instructions (`uv`, `pytest`,
+  repo tools spike when mentioned, §4.3, **~pp. 6–7**). Extra policy makes tasks harder, not
+  "ignored."
+
+R17 (efficiency on PR replay with human file) and R18 (resolution + cost on issue benchmarks) are
+**not a direct contradiction**—see INSIGHT_02 "Reconciling R17 vs R18."
 
 The useful inference is not that context files are bad. The useful inference is that context files
 change the agent's policy. If the file contains extra requirements, vague overview, stale commands,

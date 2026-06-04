@@ -58,24 +58,59 @@ prevents long exploration tails.
 - Small PR scope (<=100 LoC)
 - Does not isolate which content in AGENTS.md drives the gain
 
+### Corpus and task shape (real OSS, not synthetic)
+
+- **Data source:** Real open-source GitHub repositories from Mohsenimofidi et al.'s prior
+  corpus of repos with agent instruction files (R15 in `references.md`), not toy/synthetic
+  codebases.
+- **Sampling:** Root-only `AGENTS.md`; LLM + manual filter for conventions, architecture, and
+  project description (§3.1.2, arXiv PDF **~p. 3**).
+- **Tasks:** **124** paired runs from **10** repos: replay **merged PRs** at the pre-merge commit;
+  agent asked to recreate the PR from an LLM-generated GitHub-issue-style description when the
+  PR body is thin (§3.1.3–3.1.5, **~pp. 3–4**).
+- **PR filters:** ≤100 LoC changed, ≤5 files, code-only, merged, PR **after** `AGENTS.md` existed
+  (§3.1.3, **~p. 3**).
+- **What is measured:** Wall-clock time and token counts only. "Comparable task completion" in
+  the abstract means a **50-PR manual sanity check** (non-empty, non-trivial diffs), **not**
+  test-pass resolution (§3.1.8, **~p. 4**; §5 roadmap, **~p. 5**).
+
+Source trace: R17, `paper-text/agents-md-impact-2601.20404.txt`, §3–5; JAWs PDF is **5 pages**
+([arXiv:2601.20404](https://arxiv.org/abs/2601.20404)).
+
 ## Gloaguen et al. (R18): context files can hurt when over-broad
 
 ### Study design
 
-- AGENT BENCH: 138 instances from 12 repositories with developer-written context files
-- Also evaluated on SWE-BENCH LITE
-- Three conditions: no context file, developer-provided file, LLM-generated file
-- Multiple agents (Claude Sonnet 4.5, GPT-5.2 Codex, and others)
+- **Two benchmarks, both real OSS:**
+  - **SWE-bench Lite:** 300 instances, 11 **popular** Python repos, **no** developer context files
+    at benchmark creation (§4.1 Datasets, arXiv PDF **~p. 5**).
+  - **AGENT BENCH (new):** **138** instances from **12 niche** repos that already ship
+    developer-written root context files; built because popular SWE-bench repos lack real
+    `AGENTS.md`/`CLAUDE.md` and may be partially memorized (§1, §3, **~pp. 1–5**).
+- **Three conditions** (Figure 1, §4.1 Settings, **~pp. 2 & 5–6**):
+  - **NONE:** no context file (on AGENT BENCH, developer file removed).
+  - **LLM:** context file auto-generated with each agent's recommended init flow on pre-patch
+    repo state **R**.
+  - **HUMAN:** developer's pre-patch file (**AGENT BENCH only**).
+- **Agents:** Claude Code (Sonnet 4.5), Codex (GPT-5.2, GPT-5.1 mini), Qwen Code (Qwen3-30B);
+  one sample per instance (§4.1, **~p. 5**).
+- **Success metric:** Patch must make **all** instance tests pass (`exec_R◦X̂(T) = PASS`), i.e.
+  SWE-bench-style **resolution rate**, not runtime (§3.1, §4.1 Metrics, **~pp. 3 & 6**).
+- **AGENT BENCH construction:** GitHub search → Python + tests + ≥400 PRs → filtered PRs →
+  standardized issue text → **LLM-generated unit tests** where PRs lack tests → manual
+  de-overfitting (§3.2, **~pp. 3–5**; Table 1 **~p. 4**).
 
 ### Key results
 
-| Condition comparison | Effect on success rate |
-|---|---|
-| Developer-provided vs no file (AGENT BENCH) | +4% average |
-| LLM-generated vs no file (SWE-BENCH LITE) | -3% average |
-| Cost increase from context files | >20% |
+| Condition comparison | Resolution / success | Steps & cost |
+|---|---|---|
+| LLM-generated vs none (SWE-bench Lite) | **−0.5 pp** avg resolution | **+2.45** steps, **+20%** cost (Table 2, **~p. 6**) |
+| LLM-generated vs none (AGENT BENCH) | **−2.0 pp** avg resolution | **+3.92** steps, **+23%** cost (Table 2, **~p. 6**) |
+| Developer-provided vs none (AGENT BENCH) | **+4%** avg resolution | **+3.34** steps, up to **+19%** cost (§4.2, **~pp. 6–7**) |
+| LLM-generated: cells with drop | **5 / 8** model×benchmark settings (Figure 3, **~p. 6**) | steps up in **every** setting |
 
-Source trace: R18, `paper-text/evaluating-agents-md-2602.11988.txt`.
+Source trace: R18, `paper-text/evaluating-agents-md-2602.11988.txt`, §4.2, Table 2, Figure 3
+([arXiv:2602.11988](https://arxiv.org/abs/2602.11988)).
 
 ### Behavioral changes from context files
 
@@ -95,6 +130,44 @@ Source trace: R18, `paper-text/evaluating-agents-md-2602.11988.txt`.
 
 The paper's recommendation: "omit LLM-generated context files for the time being" and "include
 only minimal requirements (e.g., specific tooling to use with this repository)."
+
+### Docs-stripped ablation (when context replaces missing READMEs)
+
+When all other documentation (`.md`, `docs/`, examples) is removed after generating the context
+file, **LLM-generated** files **+2.7%** average resolution on AGENT BENCH and beat developer files
+(Figure 5, §4.2, **~p. 7**). Inference: broad always-loaded context hurts most when it **duplicates**
+existing docs; on under-documented niche repos, a context file can act as the only manual.
+
+## Reconciling R17 vs R18 (complementary, not contradictory)
+
+Both papers use **real GitHub OSS**. Neither uses purely synthetic codebases. They still answer
+different questions under different experimental contracts.
+
+| Dimension | R17 (Lulla et al.) | R18 (Gloaguen et al.) |
+|---|---|---|
+| Primary outcome | Runtime, tokens | **Test-pass resolution rate** |
+| Context file | **Existing human** root `AGENTS.md` only | **None / LLM-generated / human** (human only on AGENT BENCH) |
+| Task | Replay **small merged PRs** (≤100 LoC) | **Issue-resolution** benchmarks (SWE-bench Lite + AGENT BENCH) |
+| Agents | **Codex only** (`gpt-5.2-codex`) | Claude Code, Codex (2 models), Qwen Code |
+| Design | Paired: same snapshot ± file | Benchmark instances; LLM file via agent `/init`-style generation |
+| "Success" | Sanity check on 50 outputs | Full test suite must pass |
+
+**When R17's cost/runtime gains apply (~Table 1, p. 4):** Developer-written root file already
+tuned to the repo; agent reproduces a **small** historical change; outcome is **fewer tokens and
+less wall-clock**, not proven correct patches.
+
+**When R18's success drop and ~20–23% cost rise apply (~Table 2, p. 6):** File adds **policy**
+(especially LLM-generated or long human files); agent **obeys** it → more `pytest`, grep/read,
+repo tools, reasoning tokens (Figures 6–7, **~pp. 6–7**); tasks get **harder and pricier** without
+reliable gains on **resolution**.
+
+**Resolves the blog tension:** Command-like lines (`make test-e2e` seeds DB) match R17's
+orientation signal. Broad behavioral prose (hexagonal architecture, "all domain logic in domain")
+match R18's extra-requirements mechanism—agents follow them and burn steps.
+
+**Non-claim:** R17 does **not** contradict R18's resolution results; it largely does not measure
+resolution. R18 does **not** measure paired PR-replay efficiency with an established human file on
+the same 124 tasks.
 
 ## Santos et al. (R19): what developers actually encode
 
@@ -203,9 +276,11 @@ Exclude:
 4. **Compliance with instructions is a separate dimension from task success** (R73: systematic
    gap between solving the task and following scaffold rules).
 
-5. **The R17 vs R18 tension resolves cleanly:** well-scoped, human-written instructions help;
-   LLM-generated or over-broad instructions hurt. The file is only as good as its signal-to-noise
-   ratio.
+5. **The R17 vs R18 tension resolves cleanly** (see "Reconciling R17 vs R18"): they measure
+   different outcomes on different tasks. R17: human file → faster/cheaper PR replay. R18:
+   LLM-generated or over-broad file → lower resolution and ~20–23% higher cost on issue benchmarks;
+   minimal human file → small +4% resolution gain on AGENT BENCH with cost still up. Signal-to-noise
+   and **what you optimize for** (latency vs tests passing) both matter.
 
 ### Inference (author conclusion):
 
@@ -233,6 +308,8 @@ Exclude:
 2. **R19 concern frequency bar chart**: showing Architecture at 72.6% dominance.
 3. **R18 three-condition comparison**: no file vs developer-provided vs LLM-generated, showing
    the non-linear relationship.
+3b. **R17 vs R18 comparison table** ("Reconciling R17 vs R18"): same OSS, different outcomes
+   (efficiency vs resolution)—use for the love/hate AGENTS.md section.
 4. **"Control plane, not README" slide**: the talk hook, with the distinction between config
    (versioned, tested, scoped) and documentation (aspirational, verbose, stale).
 5. **Practical content checklist**: include/exclude table as a takeaway slide.
