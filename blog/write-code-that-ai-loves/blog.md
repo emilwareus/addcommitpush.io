@@ -63,21 +63,19 @@ These are the files that your coding agent automatically loads into context when
 I have a love hate relationship to my CLAUDE/AGENTS.md. First off, I hate that Claude Code refuse to officially support AGENTS.md. Secondly it does not follow instructions properly. But this is probably because it is very hard to verbally describe clear instructions to my agent. It works really well for things like: 
 
 - Run make test-e2e to run all integrations tests, this properly seeds the database. 
-- Read the architecture/good-to-know-patterns.md when reviewing. 
+- Read the architecture/good-to-know-patterns.md when reviewing.
 
 etc. Clear prompts of what commands / things to do when. But stuff I like to work better, but frankly does not: 
 
 - Follow the hexagonal architecture guidelines.
-- We use DDD in our codebase, make sure to define all business behaviour in the domain. 
+- We use DDD in our codebase, make sure to define all business behaviour in the domain.
 
 Writing good behavioural prompts, patterns + anti-patterns are often forgotten. Research also shows that the runtime is cut by roughly 30% and output tokens is cut by 16% ish where [AGENTS.md](http://AGENTS.md) are present. This makes sense to me, as these files can remove a bit of the "exploring" of the codebase with some initial guidance. BUT, a counter-study found that can also reduce the success raite by ~20%. But, real code is hard to measure in a controlled study, and both these studies used benchmarks that the models have potentially traiend on (OSS) or synthetic codebases. So, my personal tips are: 
 
-1. These files will not fix everything, dont try to. 
-2. Code is better docs than these files, write good code to learn from instead. 
+1. These files will not fix everything, dont try to.
+2. Code is better docs than these files, write good code to learn from instead.
 3. Keep them clear, short, and focus on commands and bootstraping exploration
-4. Avoid "general stuff" that inferes a lot in it. "write good code". 
-
-
+4. Avoid "general stuff" that inferes a lot in it. "write good code".
 
 **Insights:** [INSIGHT_02](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_02_agent_instructions_are_config.md) · [INSIGHT_24](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_24_context_files_are_config_with_debt.md)
 
@@ -100,7 +98,29 @@ Writing good behavioural prompts, patterns + anti-patterns are often forgotten. 
 
 ### Layered context
 
-Hot context loads always (root rules, commands, gotchas). Cold context loads on demand (subdirectory rules, skills, deep docs). More context is not always better: Evaluating AGENTS.md found noisy files hurt success; Lost in the Middle shows models miss facts buried in long inputs; A3-CodGen found too much retrieved global context can reduce quality.
+More context is absolutely not always better. Better context is better. Layered context or "cold loaded" context, such as skills, documentation, CLI stuff, etc., can absolutely be valuable! Especially as a codebase grows it becomes a very bad idea to shove everything into the root AGENTS.md. Letting the model choose when to read what docs, readmes, etc. have improved performance quite a bit for my. The layout I run is in the root monorepo:   
+
+For main architectural / cross spanding knowledge. 
+
+thoughts/architecture/
+
+-- [0-README-INDEX.md](http://0-README-INDEX.md) (index to all other architecture files)
+
+-- [1-BOUNDED-CONTEXT.md](http://1-BOUNDED-CONTEXT.md)  
+-- [2-TESTNG-STRATEGY.md](http://1-BOUNDED-CONTEXT.md) 
+
+-- 3-.... etc. 
+
+And then for very specifc things
+
+backend/features/agents/evals/
+
+-- AGENT.md (Almost ONLY the index of what to read here)
+
+[-- PROMPT-ENGINEERING-IN-INTERNAL-AGENTS.md](http://README.md)  
+-- [RUNNING-EVALS.md](http://RUNNING-EVALS.md)   
+
+Trying to keep things pretty thin here. and IMO for the local things, the code should be so obvious it should not need docs on how to use/edit it. But I added "prompt engineering" as an example here, as my experience is that my friend Claude needs some guidance here. Another trick I do is in my SpecDrivenDevelopment pipeline, in the research phase, I force the models to enumerate the 3-5 most important archtiecture documents that it must read in plan and implementation to get a better sense of the codebase. This increased the autonomy a bit of the agent in my own experience.
 
 **Insights:** [INSIGHT_08](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_08_context_should_be_layered.md) · [INSIGHT_16](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_16_more_context_can_hurt.md)
 
@@ -118,7 +138,14 @@ Hot context loads always (root rules, commands, gotchas). Cold context loads on 
 
 ### Setup commands
 
-Exact copy-paste commands for install, lint, typecheck, test, and build belong in instruction files. Agents treat setup as the first task—if commands are missing or wrong, they burn tokens before touching the real work. SetupBench exists because bootstrap is a measured failure mode, not an assumed prerequisite.
+You onboard your agent 100 times a day. Make it VERY easy. My personal favorites are: 
+
+- Creating a new worktree spins up the dockerized service fully and seeds the database + starts web
+- make check runs ALL checks, and this makes it easy to just say "run check and iterate unitl all green"
+- make setup-mac/linux/server/etc. that just completely install everything to get coding working in your env. 
+- devcontainers have actually been useful here :)
+
+Research states "machine-checkable contracts" agents can run in a fresh environment. I agree. 
 
 **Insights:** [INSIGHT_02](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_02_agent_instructions_are_config.md) · [INSIGHT_23](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_23_setup_is_part_of_the_task.md)
 
@@ -136,7 +163,32 @@ Plot data: `[setup_verification.csv](../../presentations/write-code-ai-agents-lo
 
 ### Subagents
 
-Separate agent instances with their own context window: explore a subsystem, return a compact summary to the parent. ContextBench: heavier agent scaffolding gives only marginal retrieval gains over minimal baselines. Agentless (localize → repair → validate, no multi-agent choreography) reached 19% on SWE-bench Lite—simple workflow + good repo structure can match elaborate setups. Subagents help for bounded read-only exploration; they do not replace missing repo structure.
+Subagents are agents your main agent can spin up to perform work with an isolated context window. In most coding agents, it is like hiring a team of juniors, telling them to work on the same thing and **not** communicating with each other. Great! Trying to force a "human way of working" into subagents, like a designer, backend engineer, etc., is wrong in my opinion. 
+
+The root context window has more power than the parallelized agents, and your underlying LLM is already an "expert" in these things. Where subagents shine is in "context compression": you need to perform a context-heavy task and compress the results back to the main agent. That means searching the codebase, locating relevant files/patterns, searching the web for things with a high noise-to-signal ratio. Your main context window does not need to be filled with the steps of how it got to the result—it just needs the insight. The main window should still do the code editing IMO. There are other ways to handle retrieval, like a well-structured codebase probably has higher impact.
+
+Regardless, this is roughly how you create a subagent:
+
+You can create subagents like this:
+
+- **Claude Code:** `.claude/agents/research-codebase.md` (or `~/.claude/agents/` for all projects). Also `/agents` in the CLI.
+- **Cursor:** `.cursor/agents/research-codebase.md` (or `~/.cursor/agents/` for all projects).
+- **Codex:** ask explicitly in the prompt (“spawn an explorer for `backend/…`, return a short summary”) or define roles in `.codex/config.toml` under `[agents]`.
+
+Each file is markdown + YAML frontmatter + instructions—for example:
+
+```markdown
+---
+name: research-codebase
+description: Read-only exploration of a subtree; use when mapping architecture or finding entry points.
+model: inherit
+readonly: true
+---
+
+Explore only the paths you were given. Return layout, key modules, and 3–5 files to read next. No edits.
+```
+
+Claude delegates from `description`; Cursor via `@research-codebase` or natural language; Codex only spawns subagents when you ask (parent keeps architecture, child stays read-heavy).
 
 **Insights:** [INSIGHT_07](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_07_simplicity_beats_agent_theater.md)
 
@@ -155,7 +207,18 @@ Separate agent instances with their own context window: explore a subsystem, ret
 
 ### RepoMap / Architecture map
 
-Compact map of modules, dependencies, tests, and entry points—not a dump of raw source files. RepoGraph: +32.8% relative improvement on SWE-bench with a line-level dependency graph. Repository Intelligence Graph (RIG): +12.2% accuracy, −53.9% completion time; average map ~5,000 tokens. ContextBench: agents over-fetch (file recall ~0.68–0.73) but under-use what they retrieve. Selective graph slices beat dumping large graph context (RepoGraph: 2-hop can lose to 1-hop).
+The research here is pretty clear, if your agents understand the "Graph" of your codebase, the performance improves. Concretely, this is: who calls whom, what depends on what, what builds what, what tests leads to where, does this test branch where I want it to, and so on. Research are not as clear what to build and how to inject it into the agentic loop, and there are a few approaches. 
+
+- Call graph slices in the prompt. Parse the repo, pull a small neighborhood around the suspect symbol. Dumping a huge subgraph hurts; query it.
+- Build/test map at session start. What builds what, what tests cover what. Extract from CMake, CTest, package files. Ground truth so the agent stops wandering build scripts.
+- Skinny symbol map on every edit (Aider style). Important defs and signatures across the repo. Shape before opening every file.
+- Search wide, rank narrow (Cody style). Keyword, graph, git, docs in; then cut to what fits the context window.
+
+But you are probably not building a code agent harness, you are probably build a good ol' code-thingy. So, to make this acitonable: make sure you coding agent has access to the LSP/IDE-pluging. This gives some of this power to the agents, helping it navigate your codebase and sometimes powering retrivial.
+
+BUT, if you are building an agentic harness (who isn't??), the call graph slice seems to have the highest imact. Makeing in queryable, extracting neighborhoods that typically impact impact each other. I learned on my last startup that call graphs are hard to build, so I'll (probably) just keep to LSP's for now. 
+
+
 
 **Insights:** [INSIGHT_01](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_01_context_maps.md) · [INSIGHT_21](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_21_repository_graphs_need_selective_slices.md)
 
@@ -179,7 +242,30 @@ Plot data: `[repository_graph_context.csv](../../presentations/write-code-ai-age
 
 ### Monorepo
 
-One repo at one commit holds app code, schemas, generated SDKs, infra, docs, and tests together. Agent sees a consistent system state instead of guessing which external wiki or package version is current. Practitioner evidence (Google monorepo paper, docs-as-code); no single agent benchmark isolates “monorepo vs polyrepo.” Caveat: without tooling, monorepos get slow (Dropbox: 87 GB repo, clone/CI pain).
+MONOREPO, you can stop reading now. That's it. 
+
+Jokes aside, I loved monorepos before AI took my job. It just makes everything soo much easier to maintain and ship. Sure, if you are Google (which has a monorepo) this is probably hard. But for the average startup, go! And by mono I really mean MONO. Here is a quick-list of what to put in your repo: 
+
+- Frontend
+- Backend
+- Website
+- Blog
+- Docs
+- Infrastructure as code
+- All services (MICROSERVICE != A LOT OF REPOS).
+- All research and plan documents that you create in your SpecDD workflow
+- All agent-driven review documents
+- Architecture docs
+- Compliance documentation
+- Grafana settings
+- The best place to eat ice cream in town
+- All .env secrets (encrypted + commited using SOPS)
+
+
+
+Sure, MCPs makes stuff searchable and retrievable in other systems. Have fun. Don't use use a no-code-tool to buld you blog, teach your marketing people how to prompt with claude code instead of ChatJippety.   
+  
+Additionally, this means that you have a completely co-versioned company. Keeping things in sync becomes much easiear when everything is on the same SHA.
 
 **Insights:** [INSIGHT_19](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_19_monorepos_are_agent_context_infrastructure.md)
 
