@@ -218,8 +218,6 @@ But you are probably not building a code agent harness, you are probably build a
 
 BUT, if you are building an agentic harness (who isn't??), the call graph slice seems to have the highest imact. Makeing in queryable, extracting neighborhoods that typically impact impact each other. I learned on my last startup that call graphs are hard to build, so I'll (probably) just keep to LSP's for now. 
 
-
-
 **Insights:** [INSIGHT_01](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_01_context_maps.md) · [INSIGHT_21](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_21_repository_graphs_need_selective_slices.md)
 
 **Papers**
@@ -261,10 +259,8 @@ Jokes aside, I loved monorepos before AI took my job. It just makes everything s
 - The best place to eat ice cream in town
 - All .env secrets (encrypted + commited using SOPS)
 
-
-
 Sure, MCPs makes stuff searchable and retrievable in other systems. Have fun. Don't use use a no-code-tool to buld you blog, teach your marketing people how to prompt with claude code instead of ChatJippety.   
-  
+
 Additionally, this means that you have a completely co-versioned company. Keeping things in sync becomes much easiear when everything is on the same SHA.
 
 **Insights:** [INSIGHT_19](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_19_monorepos_are_agent_context_infrastructure.md)
@@ -279,7 +275,13 @@ Additionally, this means that you have a completely co-versioned company. Keepin
 
 ### Bounded Context / Layout
 
-Folders and modules with clear ownership, import direction, and public surfaces—not “more files = better.” Revisiting Modularity: no clear positive correlation between modularity score and LLM code generation quality (sometimes weak negative). Chunking study: Declaration-level chunks (27.71% EM) and cAST (28.19%) beat isolated function chunks (24.21%)—coherent neighborhoods matter more than tiny splits. CodeChain: modular decomposition + verified submodules improved pass@1 on competitive programming tasks.
+There is actually not a lot of research that finds that "good architecture = good code generation". And there is also a the debate of "what is even good architecture"... but I do think there are some wins here, and it is not about the agent. As a developer working with AI generated code we need to have a mental model of the work we are doing. This mental model was something we used to build by crying over our keyboards for hours on end. But now it cry in tokens instead of tears, and the mental model of the codebase becomes harder to form. We get cognetive debt.   
+  
+I think that a good bounded contexts within the codebase reduces the cognetive debt, makes it easier to grasp and understand the code, and there fore makes the developers take better decisison = better code gen in the long run. It may not improve the toking shotgun today, but it improves your ability to aim it.
+
+I write a lot of go this time around, and I really like the "Three Dot Labs" architecture: [https://threedots.tech](https://threedots.tech/), which is a bit of DDD, event driven, hexagonal-ish, with strong testing guidelines. Here, a bounded context is just a "service", that may be deployed on its own, but can also run in a big monolith along other services, it may not import another bounded context directly, has clear responsebilities, interfaces, APIs, and dependencies. This works well for me and my team, but the goal of this is to keep your cognetive debt low... so you do what's best for you IMO.
+
+
 
 **Insights:** [INSIGHT_15](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_15_modularity_is_not_magic_boundaries_are.md) · [INSIGHT_26](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_26_static_surfaces_are_agent_affordances.md)
 
