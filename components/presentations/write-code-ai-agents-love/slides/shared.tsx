@@ -17,6 +17,7 @@ export function SlideShell({
 export function Claim({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
     <h2
+      data-slide-claim
       className={`mb-10 max-w-5xl text-center text-4xl font-bold leading-tight text-primary neon-glow md:text-5xl ${className}`}
     >
       {children}
@@ -79,6 +80,7 @@ export function CodeBlock({
 export function SourceLink({ href, children }: { href: string; children: ReactNode }) {
   return (
     <a
+      data-source-link
       href={href}
       className="mt-5 inline-flex text-sm font-medium text-muted-foreground underline decoration-primary/40 underline-offset-4 hover:text-primary"
     >

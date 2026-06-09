@@ -31,15 +31,8 @@ export function ImpactEffortSlide() {
     <SlideShell>
       <Claim>Start with high impact and manageable effort.</Claim>
 
-      <div className="relative h-[470px] w-full max-w-6xl">
-        <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 text-sm font-mono uppercase tracking-[0.24em] text-muted-foreground">
-          impact
-        </div>
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-sm font-mono uppercase tracking-[0.24em] text-muted-foreground">
-          effort
-        </div>
-
-        <div className="absolute inset-x-16 bottom-12 top-0">
+      <div className="relative h-[470px] w-full max-w-6xl px-8 pb-8">
+        <div className="relative h-full w-full">
           <div className="grid h-full grid-cols-4 grid-rows-4 rounded-lg border border-border/80 bg-card/40 shadow-lg shadow-black/20">
             {Array.from({ length: 16 }).map((_, index) => (
               <div key={index} className="border border-border/35" />
@@ -54,19 +47,16 @@ export function ImpactEffortSlide() {
           <MatrixItem label="custom rules" x={3} y={4} dx={45} dy={20} />
           <MatrixItem label="code quality" x={4} y={3} />
           <MatrixItem label="bounded context" x={4} y={4} />
-        </div>
 
-        <div className="absolute bottom-12 left-16 right-16 flex justify-between pt-3 text-sm text-muted-foreground">
-          <span>1</span>
-          <span>2</span>
-          <span>3</span>
-          <span>4</span>
-        </div>
-        <div className="absolute bottom-12 left-16 top-0 flex -translate-x-7 flex-col-reverse justify-between py-2 text-sm text-muted-foreground">
-          <span>1</span>
-          <span>2</span>
-          <span>3</span>
-          <span>4</span>
+          <span className="absolute -bottom-7 left-0 text-sm font-mono uppercase tracking-[0.24em] text-muted-foreground">
+            lower impact/effort
+          </span>
+          <span className="absolute -bottom-7 right-0 text-sm font-mono uppercase tracking-[0.24em] text-muted-foreground">
+            high effort
+          </span>
+          <span className="absolute -left-2 top-0 -translate-x-full text-sm font-mono uppercase tracking-[0.24em] text-muted-foreground">
+            high impact
+          </span>
         </div>
       </div>
     </SlideShell>

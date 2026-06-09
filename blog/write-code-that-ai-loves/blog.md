@@ -96,25 +96,24 @@ Writing good behavioral prompts, patterns + anti-patterns are often forgotten. R
 
 More context is absolutely not always better. Better context is better. Layered context or "cold loaded" context, such as skills, documentation, CLI stuff, etc., can absolutely be valuable! Especially as a codebase grows it becomes a very bad idea to shove everything into the root AGENTS.md. Letting the model choose when to read what docs, readmes, etc. have improved performance quite a bit for my. The layout I run is in the root monorepo:   
 
-For main architectural / cross spanning knowledge. 
+For main architectural / cross spanning knowledge.
 
+```text
 thoughts/architecture/
+-- 0-README-INDEX.md   (index to all other architecture files)
+-- 1-BOUNDED-CONTEXT.md
+-- 2-TESTNG-STRATEGY.md
+-- 3-.... etc.
+```
 
--- [0-README-INDEX.md](http://0-README-INDEX.md) (index to all other architecture files)
+And then for very specific things:
 
--- [1-BOUNDED-CONTEXT.md](http://1-BOUNDED-CONTEXT.md)  
--- [2-TESTNG-STRATEGY.md](http://1-BOUNDED-CONTEXT.md) 
-
--- 3-.... etc. 
-
-And then for very specific things
-
+```text
 backend/features/agents/evals/
-
--- AGENT.md (Almost ONLY the index of what to read here)
-
-[-- PROMPT-ENGINEERING-IN-INTERNAL-AGENTS.md](http://README.md)  
--- [RUNNING-EVALS.md](http://RUNNING-EVALS.md)   
+-- AGENT.md   (Almost ONLY the index of what to read here)
+-- PROMPT-ENGINEERING-IN-INTERNAL-AGENTS.md
+-- RUNNING-EVALS.md
+```
 
 Trying to keep things pretty thin here. and IMO for the local things, the code should be so obvious it should not need docs on how to use/edit it. But I added "prompt engineering" as an example here, as my experience is that my friend Claude needs some guidance here. Another trick I do is in my SpecDrivenDevelopment pipeline, in the research phase, I force the models to enumerate the 3-5 most important architecture documents that it must read in plan and implementation to get a better sense of the codebase. This increased the autonomy a bit of the agent in my own experience.
 
@@ -345,6 +344,8 @@ But I also think the other side is true. Tests are one of the best ways to give 
 
 The stronger point is about visible executable behavior. In [FeatureBench](https://arxiv.org/abs/2602.10975), exposing ground-truth unit tests improved resolved rate by +50.0 percentage points for Gemini-3-Pro-Preview and +43.3 points for GPT-5.1-Codex on the Lite set. I would not frame that as "leak tests." I would frame it as: runnable examples are extremely powerful steering.
 
+The taxonomy I use comes straight from [Three Dots Labs](https://threedots.tech/post/microservices-test-architecture/). I stole it with pride. The diagrams below walk it from the inside out, one boundary at a time, and each one spells out what that test proves and what it is good for.
+
 I especially like component tests. If you have a service around some kind of context, like user context, scheduled context, tenant context, or whatever it is, you should be able to run that in a test suite without mocking every direct dependency (such as the database related to that service). You test it in a pretty realistic environment, and you test the actual behavior. Then you do not need to go all the way through Playwright for everything. Playwright also tests the browser, fonts, rendering, timing, and a lot of other things that can be brittle. I want a deterministic backend or service-level test where the agent can get a clear failure, fix the thing, and run it again.
 
 Those tests can be written almost like user stories. They describe what the system should achieve, they become easy to inspect, and they communicate back to the agent what it actually changed. You can read them quickly and see whether the test takes the right path through the system.
@@ -371,6 +372,7 @@ Plot data: `[setup_verification.csv](../../presentations/write-code-ai-agents-lo
 **Practitioner**
 
 - [Anthropic: Claude Code best practices](https://code.claude.com/docs/en/best-practices) — `[anthropic-claude-code-best-practices.html](../../presentations/write-code-ai-agents-love/research/articles/anthropic-claude-code-best-practices.html)`
+- [Three Dots Labs: Microservices test architecture in Go](https://threedots.tech/post/microservices-test-architecture/)
 
 ### Examples as specs
 
@@ -804,3 +806,7 @@ For agents, adding these things to its verification loop have been really powerf
 **Insights:** [INSIGHT_04](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_04_tests_are_the_agent_feedback_loop.md) · [INSIGHT_17](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_17_quality_gates_must_cover_smells.md) · [INSIGHT_27](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_27_static_diagnostics_are_agent_interfaces.md) · [INSIGHT_28](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_28_static_oracles_catch_what_tests_miss.md)
 
 **Sources:** [CODETASTE](https://arxiv.org/abs/2603.04177) · [Needle in the Repo](https://arxiv.org/abs/2603.27745) · [polint README](https://github.com/emilwareus/polint) · [polint Agent Playbook](https://github.com/emilwareus/polint/blob/main/docs/AGENT-PLAYBOOK.md)
+
+## Conclusion
+
+Thanks for getting to the end of this VERY long post :) Hope you learned something! Ping me if you have thoughts or questions, point your agent to this blog and evaluate your codebase, and start with SDK gen + custom lint rules! Best of luck!

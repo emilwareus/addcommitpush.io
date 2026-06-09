@@ -16,7 +16,7 @@ import { useSlideStep } from '@/app/presentations/write-code-ai-agents-love/layo
 import { Claim, SlideShell } from './shared';
 
 const modes = ['system', 'unit', 'adapter', 'component', 'e2e', 'matrix'] as const;
-type TestMode = (typeof modes)[number];
+export type TestMode = (typeof modes)[number];
 
 const modeCopy: Record<
   TestMode,
@@ -396,13 +396,17 @@ function TestMatrix() {
   );
 }
 
-export function CodeQualityStructureSlide() {
-  const step = useSlideStep();
-  const mode = currentMode(step);
+export function CodeQualityStructureVisual({
+  mode,
+  step = modes.indexOf(mode),
+}: {
+  mode: TestMode;
+  step?: number;
+}) {
   const isMatrix = mode === 'matrix';
 
   return (
-    <SlideShell>
+    <>
       <Claim>{modeCopy[mode].claim}</Claim>
 
       <div className="w-full max-w-7xl">
@@ -434,6 +438,17 @@ export function CodeQualityStructureSlide() {
           </div>
         </div>
       </div>
+    </>
+  );
+}
+
+export function CodeQualityStructureSlide() {
+  const step = useSlideStep();
+  const mode = currentMode(step);
+
+  return (
+    <SlideShell>
+      <CodeQualityStructureVisual mode={mode} step={step} />
     </SlideShell>
   );
 }

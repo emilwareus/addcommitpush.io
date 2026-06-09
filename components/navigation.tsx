@@ -50,7 +50,7 @@ export function Navigation() {
             </span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden lg:flex items-center gap-8">
             {links.map((link) => {
               const Icon = link.icon;
               return (
@@ -86,7 +86,7 @@ export function Navigation() {
           </div>
 
           <button
-            className="md:hidden transition-colors"
+            className="lg:hidden transition-colors"
             style={{ color: 'var(--navbar-foreground)' }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = 'var(--navbar-hover)';
@@ -103,7 +103,7 @@ export function Navigation() {
 
         {mobileMenuOpen && (
           <div
-            className="md:hidden mt-4 pb-4 space-y-3 border-t pt-4"
+            className="lg:hidden mt-4 pb-4 space-y-3 border-t pt-4"
             style={{ borderColor: 'var(--navbar-border)' }}
           >
             {links.map((link) => {
