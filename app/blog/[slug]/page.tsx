@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { getPostBySlug, getAllSlugs } from '@/lib/posts';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import type { ReactNode } from 'react';
 
 // Fully static: error if dynamic APIs are used
 export const dynamic = 'error';
@@ -53,27 +54,38 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   }
 
   // Dynamic content import
-  const postContent = await (async () => {
+  const postContent = await (async (): Promise<{
+    content: ReactNode;
+    references: ReactNode;
+  }> => {
     switch (slug) {
       case 'recruiting-engineers-as-a-startup': {
         const { RecruitingEngineersContent } =
           await import('@/components/blog-posts/recruiting-engineers-as-a-startup');
-        return <RecruitingEngineersContent />;
+        return { content: <RecruitingEngineersContent />, references: null };
       }
       case 'saas-zero-to-one-hindsight': {
         const { SaasZeroToOneHindsightContent } =
           await import('@/components/blog-posts/saas-zero-to-one-hindsight');
-        return <SaasZeroToOneHindsightContent />;
+        return { content: <SaasZeroToOneHindsightContent />, references: null };
       }
       case 'diffusion-deep-research': {
         const { DiffusionDeepResearchContent } =
           await import('@/components/blog-posts/diffusion-deep-research');
-        return <DiffusionDeepResearchContent />;
+        return { content: <DiffusionDeepResearchContent />, references: null };
       }
       case 'context-engineering-claude-code': {
         const { ContextEngineeringClaudeCodeContent } =
           await import('@/components/blog-posts/context-engineering-claude-code');
-        return <ContextEngineeringClaudeCodeContent />;
+        return { content: <ContextEngineeringClaudeCodeContent />, references: null };
+      }
+      case 'write-code-that-ai-agents-love': {
+        const { WriteCodeThatAiAgentsLoveContent, WriteCodeThatAiAgentsLoveReferences } =
+          await import('@/components/blog-posts/write-code-that-ai-agents-love');
+        return {
+          content: <WriteCodeThatAiAgentsLoveContent />,
+          references: <WriteCodeThatAiAgentsLoveReferences />,
+        };
       }
       default:
         notFound();
@@ -113,7 +125,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
               </div>
             </header>
 
-            {postContent}
+            {postContent.content}
 
             <footer className="mt-12 pt-8 border-t border-border">
               <div className="flex flex-wrap gap-2">
@@ -124,6 +136,8 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                 ))}
               </div>
             </footer>
+
+            {postContent.references}
           </article>
         </div>
       </div>

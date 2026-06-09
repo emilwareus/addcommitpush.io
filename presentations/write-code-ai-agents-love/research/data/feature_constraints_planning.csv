@@ -1,0 +1,41 @@
+chart_id,source,metric,series,value,unit,note,local_ref
+race_bench_agents,RACE-bench,Patch apply rate,AutoCodeRover,96.21,percent,"Full benchmark, 528 instances.",paper-text/race-bench-feature-addition-2603.26337.txt
+race_bench_agents,RACE-bench,Patch apply rate,TraeAgent,78.98,percent,"Full benchmark, 528 instances.",paper-text/race-bench-feature-addition-2603.26337.txt
+race_bench_agents,RACE-bench,Patch apply rate,mini-SWE-Agent,95.83,percent,"Full benchmark, 528 instances.",paper-text/race-bench-feature-addition-2603.26337.txt
+race_bench_agents,RACE-bench,Resolved rate,AutoCodeRover,28.79,percent,"Full benchmark, 528 instances.",paper-text/race-bench-feature-addition-2603.26337.txt
+race_bench_agents,RACE-bench,Resolved rate,TraeAgent,52.65,percent,"Full benchmark, 528 instances.",paper-text/race-bench-feature-addition-2603.26337.txt
+race_bench_agents,RACE-bench,Resolved rate,mini-SWE-Agent,70.08,percent,"Full benchmark, 528 instances.",paper-text/race-bench-feature-addition-2603.26337.txt
+race_reasoning_waterfall,RACE-bench,Recall@Files,mini-SWE-Agent all,0.890,fraction,"Reasoning coverage falls as granularity moves toward implementation steps.",paper-text/race-bench-feature-addition-2603.26337.txt
+race_reasoning_waterfall,RACE-bench,Recall@Tasks,mini-SWE-Agent all,0.751,fraction,"Reasoning coverage falls as granularity moves toward implementation steps.",paper-text/race-bench-feature-addition-2603.26337.txt
+race_reasoning_waterfall,RACE-bench,Recall@Steps,mini-SWE-Agent all,0.445,fraction,"Reasoning coverage falls as granularity moves toward implementation steps.",paper-text/race-bench-feature-addition-2603.26337.txt
+race_failure_profile,RACE-bench,Reasoning recall drop,Applied patch but tests fail,35.7,percent,"Applied patches that fail tests have lower reasoning recall than successful runs.",paper-text/race-bench-feature-addition-2603.26337.txt
+race_failure_profile,RACE-bench,Over-prediction increase,Applied patch but tests fail,94.1,percent,"Applied patches that fail tests have much higher over-prediction.",paper-text/race-bench-feature-addition-2603.26337.txt
+constraint_decay,Constraint Decay,Assertion pass-rate drop,L0 to L3 capable configs,30.0,percentage_points,"Average loss from unconstrained baseline to fully specified structural requirements.",paper-text/constraint-decay-2605.06445.txt
+constraint_decay,Constraint Decay,Relative baseline loss,L0 to L3 capable configs,40.0,percent,"Relative loss of baseline performance.",paper-text/constraint-decay-2605.06445.txt
+constraint_marginal,Constraint Decay,Marginal A% effect,Clean architecture,-9.1,percentage_points,"Matched-pair marginal effect.",paper-text/constraint-decay-2605.06445.txt
+constraint_marginal,Constraint Decay,Marginal A% effect,PostgreSQL,-19.3,percentage_points,"Largest marginal effect.",paper-text/constraint-decay-2605.06445.txt
+constraint_marginal,Constraint Decay,Marginal A% effect,SQLite,-14.3,percentage_points,"Database constraints drive most decay.",paper-text/constraint-decay-2605.06445.txt
+constraint_frameworks,Constraint Decay,Average assertion pass rate,Express,51.4,percent,"Lightweight frameworks top tier.",paper-text/constraint-decay-2605.06445.txt
+constraint_frameworks,Constraint Decay,Average assertion pass rate,Koa,50.7,percent,"Lightweight frameworks top tier.",paper-text/constraint-decay-2605.06445.txt
+constraint_frameworks,Constraint Decay,Average assertion pass rate,Flask,49.3,percent,"Lightweight frameworks top tier.",paper-text/constraint-decay-2605.06445.txt
+constraint_frameworks,Constraint Decay,Average assertion pass rate,FastAPI,24.2,percent,"Convention/type-validation-heavy framework trailed.",paper-text/constraint-decay-2605.06445.txt
+constraint_frameworks,Constraint Decay,Average assertion pass rate,Django,25.4,percent,"Convention-heavy framework trailed.",paper-text/constraint-decay-2605.06445.txt
+constraint_failure_taxonomy,Constraint Decay,Failure share,Logic errors,71.0,percent,"Dominant coarse failure category.",paper-text/constraint-decay-2605.06445.txt
+constraint_failure_taxonomy,Constraint Decay,Logic-error root cause,Qwen incorrect query logic,25.5,percent,"Data-layer defect.",paper-text/constraint-decay-2605.06445.txt
+constraint_failure_taxonomy,Constraint Decay,Logic-error root cause,Qwen DB/ORM runtime error,21.2,percent,"Data-layer defect.",paper-text/constraint-decay-2605.06445.txt
+codetaste_instructed,CODETASTE,Alignment score,GPT-5.2 instructed track,69.6,percent,"Detailed refactoring intent provided.",paper-text/codetaste-2603.04177.txt
+codetaste_instructed,CODETASTE,Test pass rate,GPT-5.2 instructed track,76.0,percent,"Detailed refactoring intent provided.",paper-text/codetaste-2603.04177.txt
+codetaste_instructed,CODETASTE,Alignment score,Claude Sonnet 4.5 instructed track,32.4,percent,"Large correctness gap despite high instruction-following rate.",paper-text/codetaste-2603.04177.txt
+codetaste_instructed,CODETASTE,Alignment score,GPT-5.1 Codex Mini instructed track,34.6,percent,"Large correctness gap despite high instruction-following rate.",paper-text/codetaste-2603.04177.txt
+codetaste_open,CODETASTE,Alignment score,GPT-5.2 open direct,7.7,percent,"Vague focus area; agent must infer human refactoring choice.",paper-text/codetaste-2603.04177.txt
+codetaste_open,CODETASTE,Alignment score,GPT-5.2 open plan,14.1,percent,"Propose-then-implement nearly doubled GPT-5.2 alignment.",paper-text/codetaste-2603.04177.txt
+codetaste_open,CODETASTE,Alignment score,GPT-5.2 open multiplan oracle,19.4,percent,"Oracle selection over multiple plans.",paper-text/codetaste-2603.04177.txt
+codetaste_scale,CODETASTE,Average files edited,Human refactor task,91.52,files,"Average selected refactoring size.",paper-text/codetaste-2603.04177.txt
+codetaste_scale,CODETASTE,Average LOC changed,Human refactor task,2605.39,lines,"Average selected refactoring size.",paper-text/codetaste-2603.04177.txt
+codetaste_scale,CODETASTE,Average tests per instance,Repository test suite,1638.53,tests,"Validation scale.",paper-text/codetaste-2603.04177.txt
+codetaste_scale,CODETASTE,Average additive rules,OpenGrep static rules,29.66,rules,"Static rules check intended additions.",paper-text/codetaste-2603.04177.txt
+codetaste_scale,CODETASTE,Average reductive rules,OpenGrep static rules,63.41,rules,"Static rules check intended removals.",paper-text/codetaste-2603.04177.txt
+featurebench_difficulty,FeatureBench,Resolved rate,Claude Opus 4.5,11.0,percent,"FeatureBench feature work remains hard despite strong SWE-bench scores.",paper-text/featurebench-2602.10975.txt
+featurebench_difficulty,FeatureBench,Resolved rate,GPT-5.1-Codex,12.5,percent,"FeatureBench feature work remains hard despite strong SWE-bench scores.",paper-text/featurebench-2602.10975.txt
+featurebench_scale,FeatureBench,Typical implementation size,FeatureBench task,790.2,lines,"Approximate LOC required per task.",paper-text/featurebench-2602.10975.txt
+featurebench_scale,FeatureBench,Typical implementation size,SWE-Dev comparison,190.0,lines,"SWE-Dev comparison figure from FeatureBench.",paper-text/featurebench-2602.10975.txt

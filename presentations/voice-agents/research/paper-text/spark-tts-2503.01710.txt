@@ -1,0 +1,1342 @@
+                                                       Spark-TTS: An Efficient LLM-Based Text-to-Speech Model with
+                                                                 Single-Stream Decoupled Speech Tokens
+                                                     Xinsheng Wang1,2 ,* Mingqi Jiang2,3 , Ziyang Ma4,5 , Ziyu Zhang6 , Songxiang Liu7 , Linqin Li3 , Zheng Liang4 ,
+                                                            Qixi Zheng4 , Rui Wang3 , Xiaoqin Feng3 , Weizhen Bian1 , Zhen Ye1 , Sitong Cheng1 , Ruibin Yuan1 ,
+                                                               Zhixian Zhao6 , Xinfa Zhu6 , Jiahao Pan1 , Liumeng Xue1,2 , Pengcheng Zhu2,8 , Yunlin Chen3 ,
+                                                                                    Zhifei Li3 , Xie Chen4 , Lei Xie6 , Yike Guo1 , Wei Xue1 †
+                                                                  1
+                                                                      Hong Kong University of Science and Technology 2 SparkAudio Open Source Community
+                                            3
+                                                Shanghai Mobvoi Information Technology Co., Ltd 4 Shanghai Jiao Tong University 5 Nanyang Technological University
+                                                        6
+                                                            ASLP@NPU, Northwestern Polytechnical University 7 Independent Researcher 8 Fuxi AI Lab, NetEase, Inc
+                                                                                            w.xinshawn@gmail.com, weixue@ust.hk
+                                                                           Abstract                                                                                          Transcript
+
+                                                                                                                    Reference Audio (Zero-shot)
+                                                    Recent advancements in large language mod-                                                                       or
+                                                                                                                                                                                             Qwen2.5
+                                                                                                                                  I need a speaker who meets
+                                                                                                                                                                             Spark-TTS       BiCodec
+                                                    els (LLMs) have driven significant progress in                                                                                           Decoder
+
+
+
+
+arXiv:2503.01710v1 [cs.SD] 3 Mar 2025
+                                                                                                                                     the following criteria:
+
+                                                    zero-shot text-to-speech (TTS) synthesis. How-                              male, low pitch, slow speed, e.g.,
+                                                                                                                                  pitch=150 Mel, speed=3 SPS
+                                                    ever, existing foundation models rely on multi-
+                                                    stage processing or complex architectures for                   Attributes (Voice Creation)                           Generated Speech
+                                                    predicting multiple codebooks, limiting effi-
+                                                    ciency and integration flexibility. To over-                   Figure 1: Spark-TTS enables zero-shot voice cloning
+                                                    come these challenges, we introduce Spark-                     from reference audio while also generating new speak-
+                                                    TTS, a novel system powered by BiCodec, a                      ers through coarse- or fine-grained attribute control. The
+                                                    single-stream speech codec that decomposes                     final waveform is directly reconstructed from the pre-
+                                                    speech into two complementary token types:                     dicted speech tokens using BiCodec’s decoder.
+                                                    low-bitrate semantic tokens for linguistic con-
+                                                    tent and fixed-length global tokens for speaker
+                                                    attributes. This disentangled representation,                  et al., 2017) and Finite Scalar Quantization
+                                                    combined with the Qwen2.5 LLM and a chain-                     (FSQ) (Mentzer et al., 2023), codec-based LLMs
+                                                    of-thought (CoT) generation approach, en-                      have emerged as the predominant paradigm for
+                                                    ables both coarse-grained control (e.g., gen-                  zero-shot TTS. The integration of extensive train-
+                                                    der, speaking style) and fine-grained adjust-                  ing data with large-scale model architectures
+                                                    ments (e.g., precise pitch values, speaking
+                                                                                                                   has enabled these systems to achieve unprece-
+                                                    rate). To facilitate research in controllable
+                                                    TTS, we introduce VoxBox, a meticulously cu-
+                                                                                                                   dented levels of naturalness, often rendering
+                                                    rated 100,000-hour dataset with comprehensive                  synthetic speech indistinguishable from human
+                                                    attribute annotations. Extensive experiments                   speech (Anastassiou et al., 2024; Du et al., 2024b;
+                                                    demonstrate that Spark-TTS not only achieves                   Chen et al., 2024b; Ye et al., 2024a).
+                                                    state-of-the-art zero-shot voice cloning but also                 Despite the remarkable progress in LLM-based
+                                                    generates highly customizable voices that sur-                 zero-shot TTS, several fundamental challenges per-
+                                                    pass the limitations of reference-based synthe-                sist. Current codec-based TTS architectures exhibit
+                                                    sis. Source code, pre-trained models, and au-
+                                                                                                                   significant complexity, requiring either dual genera-
+                                                    dio samples are available at https://github.
+                                                    com/SparkAudio/Spark-TTS.                                      tive models (Wang et al., 2023a; Anastassiou et al.,
+                                                                                                                   2024) or intricate parallel multi-stream code predic-
+                                        1           Introduction                                                   tion mechanisms (Kreuk et al., 2023; Le Lan et al.,
+                                                                                                                   2024) that deviate substantially from conventional
+                                        Recent advances in speech tokenization have                                text LLM frameworks. This divergence stems from
+                                        revolutionized text-to-speech (TTS) synthesis by                           inherent limitations in existing audio codecs - while
+                                        bridging the fundamental gap between contin-                               semantic tokens provide compactness, they neces-
+                                        uous speech signals and discrete token-based                               sitate additional models for acoustic feature pre-
+                                        large language models (LLMs) (Anastassiou et al.,                          diction (Du et al., 2024a; Huang et al., 2023) and
+                                        2024; Zhu et al., 2024; Wang et al., 2024c).                               lack integrated timbre control capabilities. Acous-
+                                        Through sophisticated quantization techniques, par-                        tic tokens, meanwhile, rely on complex codebook
+                                        ticularly Vector Quantization (VQ) (Van Den Oord                           architectures like group-VQ (Défossez et al., 2022;
+                                                * Project leader.                                                  Van Den Oord et al., 2017). The field also struggles
+                                                †
+                                                    Corresponding author.                                          with the creation of novel voices, as current sys-
+tems are predominantly limited to reference-based            • Coarse- and Fine-Grained Voice Control:
+generation (Zhang et al., 2023b; Chen et al., 2024a),          Spark-TTS implements a comprehensive at-
+lacking the capability to synthesize voices with pre-          tribute control system that seamlessly inte-
+cisely specified characteristics. This limitation is           grates both categorical and continuous param-
+further compounded by insufficient granularity in              eters within a text LLM-compatible architec-
+attribute control, especially for fine-grained char-           ture. As demonstrated in Fig. 1, this inno-
+acteristics such as pitch modulation, despite recent           vation transcends traditional reference-based
+advances in instruction-based generation (Du et al.,           approaches to zero-shot TTS.
+2024b). Furthermore, the prevalent use of propri-
+etary datasets in current research creates significant       • Benchmark Dataset: We introduce VoxBox,
+challenges for standardized evaluation and mean-               a rigorously curated 100,000-hour speech cor-
+ingful comparison of methods (Anastassiou et al.,              pus, developed through systematic data collec-
+2024; Ye et al., 2024a). These limitations collec-             tion, cleaning, and attribute annotation. This
+tively underscore the need for a unified approach              resource establishes a standardized bench-
+that can simplify architecture, enable flexible voice          mark for TTS research and evaluation.
+creation with comprehensive attribute control, and       2     Related Work
+establish reproducible benchmarks through open
+data resources.                                          2.1    Single-Stream Speech Tokenizer
+   To address these fundamental limitations, we in-      Early single-stream speech tokenizers primarily fo-
+troduce Spark-TTS, a unified system that achieves        cused on extracting semantic tokens (Huang et al.,
+zero-shot TTS with comprehensive attribute con-          2023; Du et al., 2024a; Tao et al., 2024). While
+trol through a single codec LLM, maintaining ar-         pure semantic tokens enable low-bitrate encoding,
+chitectural alignment with conventional text LLMs.       they necessitate an additional acoustic feature pre-
+In addition, we present VoxBox, a meticulously           diction module in semantic token-based speech syn-
+curated and annotated open-source speech dataset         thesis (Du et al., 2024a,b).
+that establishes a foundation for reproducible re-          Recently, single-stream-based acoustic tokeniza-
+search in speech synthesis. Specifically, we in-         tion has gained considerable attention (Xin et al.,
+troduce BiCodec, a novel tokenization framework          2024; Wu et al., 2024). WavTokenizer (Ji et al.,
+that preserves the efficiency of semantic tokens         2024a) employs a convolution-based decoder to im-
+while enabling fine-grained control over timbre-         prove reconstruction quality, while X-codec2 (Ye
+related attributes. BiCodec achieves this through        et al., 2025) enlarges the code space with FSQ.
+combining low-bitrate semantic tokens with fixed-        Instead of following a pure encoder-VQ-decoder
+length global tokens, effectively capturing both lin-    paradigm, decoupling speech content has proven
+guistic content and time-invariant acoustic char-        effective in reducing bitrate using a single code-
+acteristics. Building upon BiCodec, we leverage          book (Li et al., 2024a; Zheng et al., 2024).
+Qwen2.5 (Yang et al., 2024) through targeted fine-          Among these methods, TiCodec (Ren et al.,
+tuning, seamlessly integrating TTS capabilities          2024) is the most similar to our approach in
+within the text LLM paradigm. To enable compre-          handling global information. However, unlike
+hensive voice control, we implement a hierarchical       TiCodec, the proposed BiCodec employs semantic
+attribute system combining coarse-grained labels         tokens as its time-variant tokens. Instead of using
+(gender, pitch, speaking speed) with fine-grained        group GVQ (Ren et al., 2024), we propose a novel
+numerical values, orchestrated through a chain-of-       global embedding quantization method based on
+thought (CoT) prediction framework.                      FSQ with learnable queries and a cross-attention
+   Our primary contributions encompass:                  mechanism. This approach enables the generation
+                                                         of a relatively longer token sequence, offering a
+   • New Tokenization: We present BiCodec, a             more expressive and flexible representation.
+     unified speech tokenization that generates a
+     hybrid token stream combining semantic and          2.2    LLM-based Zero-Shot TTS
+     global tokens. This approach maintains lin-         Prevalent codec LLMs zero-shot TTS predomi-
+     guistic fidelity while enabling sophisticated       nantly fall into two categories. The first type in-
+     attribute control through LM-based mecha-           volves predicting single-stream codes using LLMs,
+     nisms.                                              followed by the generation of codes enriched with
+                                                                                     3.1      Overview
+                                      Input Audio
+
+                           Global       Semantic
+                                                                                     As shown in Fig. 2, BiCodec includes a Global
+                                                               wav2vec 2.0
+                          Tokenizer     Tokenizer                                    Tokenizer and a Semantic Tokenizer. The for-
+                                                                                     mer extracts global tokens from the Mel spectro-
+                                                                                     gram of input audio. The latter uses features from
+    Fixed Number (32 tokens)                    Low Bitrate (50 token per seconds)   wav2vec 2.0 (Baevski et al., 2020) as input to ex-
+                                                                                     tract semantic tokens.
+                        Decoder
+                                               Reconstructed Audio
+                                                                                        The BiCodec architecture follows a standard VQ-
+                                                                                     VAE encoder-decoder framework, augmented with
+Figure 2: Illustration of the BiCodec. The Global Tok-                               a global tokenizer. The decoder reconstructs dis-
+enizer processes the Mel spectrogram to produce global                               crete tokens back into audio. For an input audio
+tokens with fixed length, while the Semantic Tokenizer
+                                                                                     signal x ∈ [−1, 1]T , with sample number of T ,
+adopts features from wav2vec 2.0 to produce 50 TPS
+semantic tokens. The decoder reconstructs the wave-                                  BiCodec functions as follows:
+form from the generated tokens. The detailed structure
+                                                                                                 z = Es (F (x)), g = Eg (Mel(x)),
+of BiCodec is provided in Appendix A.
+                                                                                                 gf = CrossAttention(g, h),
+                                                                                                                                                     (1)
+detailed acoustic or continuous semantic features                                                zq = Qs (z), gq = Qg (gf ),
+through another LLM (Zhang et al., 2023b; Chen                                                   x̂ = G(zq , Ag (gq )),
+et al., 2024a; Wang et al., 2024a) or generative dif-
+fusion models (Anastassiou et al., 2024; Casanova                                    where Es (·) is the encoder of the semantic tok-
+et al., 2024). The second type involves predicting                                   enizer, F (·) is the pre-trained wav2vec 2.01 , Eg (·)
+multi-stream codes using carefully designed par-                                     is the encoder of the global tokenizer, Mel(·) is to
+allel strategies (Le Lan et al., 2024; Copet et al.,                                 extract Mel spectrogram from x, h is a sequence
+2024) or masked generative patterns (Garcia et al.,                                  of learnable queries matching the length of the fi-
+2023; Ziv et al., 2024; Li et al., 2024b).                                           nal global token sequence, Qs (·) is a quantization
+   By leveraging the single-stream tokens produced                                   layer with VQ, Qg (·) is a quantization layer with
+by the proposed BiCodec, Spark-TTS simplifies                                        FSQ, Ag (·) is an aggregation module with a pool-
+the modeling of speech tokens within an LLM                                          ing layer, and G(·) is the decoder that reconstructs
+framework that is fully unified with text LLMs.                                      the time-domain signal x̂.
+The most comparable work is the concurrent TTS
+model Llasa (Ye et al., 2025), which employs an                                      3.2      Model Structure
+FSQ-based tokenizer to encode speech into single-                                    Encoder and Decoder The encoder of the seman-
+stream codes with a codebook size of 65,536, fol-                                    tic tokenizer Es and the decoder G are fully convo-
+lowed by LLaMA (Touvron et al., 2023) for speech                                     lutional neural networks built with ConvNeXt (Liu
+token prediction. In contrast, Spark-TTS extends                                     et al., 2022) blocks. To effectively capture seman-
+beyond zero-shot TTS by integrating speaker at-                                      tic information, based on the relationship between
+tribute labels, enabling controllable voice creation.                                different layer features of wav2vec 2.0 (XLSR-53)
+Additionally, Spark-TTS achieves higher zero-shot                                    and semantics (Pasad et al., 2023), we select fea-
+TTS performance while using fewer model param-                                       tures from the 11th, 14th, and 16th layers, aver-
+eters, enhancing both efficiency and flexibility.                                    aging them to obtain the semantic feature, which
+                                                                                     serves as the input for the semantic tokenizer. The
+                                                                                     features from the first two layers show a strong
+3     BiCodec
+                                                                                     correlation with words, while the features from the
+                                                                                     16th layer exhibit the strongest correlation with
+To achieve both the compact nature and seman-
+                                                                                     phonemes.
+tic relevance of semantic tokens, while also en-
+                                                                                        The global tokenizer’s encoder, Eg , uses the
+abling acoustic attribute control within an LM, we
+                                                                                     ECAPA-TDNN architecture (Desplanques et al.,
+propose BiCodec, which discretizes input audio
+                                                                                     2020) following the implementation by Wes-
+into: (i) Semantic tokens at 50 tokens per second
+                                                                                     peaker (Wang et al., 2023b) up to the final pooling
+(TPS), capturing linguistic content, and (ii) Fixed-
+                                                                                     layer. After encoding, the global tokenizer extracts
+length global tokens, encoding speaker attributes
+                                                                                        1
+and other global speech characteristics.                                                    https://huggingface.co/facebook/wav2vec2-large-xlsr-53
+                                                                                                     Text Token
+                                                     G          S                       E
+                                                                                                     Attribute Token
+                                                                                                     Fine-grained Attribute Token
+                                       Speech Language Model                                         Global Token
+                                                                                                     Semantic Token
+                                                                                                     Ignore Token
+       I   T                    A           F             G          S                      E
+                                                                                                  E End of Sequence
+               Text Tokenizer       Attribute Tokenizer        Speech Tokenizer                    I Task Indicate Token
+                                                                                        T A F G S Turn of Token Type
+                   Text                 Attributes                   Speech
+                                                                                            Randomly Omitted During Training
+
+
+Figure 3: Speech language model of Spark-TTS. During inference, if the input contains attribute tokens representing
+gender, pitch level, and speed level, the model can predict the corresponding fine-grained attribute tokens, global
+tokens, and semantic tokens without requiring reference audio in a CoT manner. Otherwise, global tokens can be
+derived from the reference audio for zero-shot TTS.
+a fixed-length sequence representation gf using a                   output and the quantized results, employing stop-
+cross-attention mechanism with a set of learnable                   gradients. Additionally, the straight-through esti-
+queries.                                                            mator (Bengio et al., 2013) is used to enable the
+   Quantization The semantic tokenizer employs                      backpropagation of gradients.
+single-codebook vector quantization for quantiza-                      To ensure training stability, in the initial stages,
+tion. Inspired by DAC (Kumar et al., 2024), we                      the global embedding derived from the averaged
+use factorized codes to project the encoder’s output                gq is not integrated into the decoder. Instead, this
+into a low-dimensional latent variable space prior                  embedding is obtained directly from the pooling
+to quantization.                                                    of gf . Meanwhile, the FSQ codebook is updated
+   Considering that the global tokenizer requires a                 using an L1 loss between embedding obtained from
+set of discrete tokens to represent time-independent                gf and that from pool(gq ). As training progresses
+global information, FSQ is employed rather than                     and stabilizes, this teacher-student form will be
+VQ to mitigate the potential risk of training col-                  omitted after a specific training step.
+lapse associated with VQ. Details about the model                      To further ensure semantic relevance, following
+structure can be seen in Appendix A.                                X-Codec (Ye et al., 2024b), a wav2vec 2.0 recon-
+                                                                    struction loss is applied after quantization, with
+3.3   Training objective                                            ConvNeXt-based blocks serving as the predictor.
+Loss Functions BiCodec is trained end-to-end em-
+ploying a Generative Adversarial Network (GAN)                      4        Language Modeling of Spark-TTS
+methodology (Goodfellow et al., 2020) to mini-                      4.1        Overview
+mize reconstruction loss, together with L1 feature
+                                                                    As illustrated in Fig. 3, the Spark-TTS speech lan-
+matching loss (via discriminators) (Kumar et al.,
+                                                                    guage model adopts a decoder-only transformer
+2019, 2024) while simultaneously optimizing the
+                                                                    architecture, unified with a typical textual lan-
+VQ codebook.
+                                                                    guage model. We employ the pre-trained textual
+   Following (Kumar et al., 2024), we compute
+                                                                    LLM Qwen2.5-0.5B2 (Yang et al., 2024) as the
+the frequency domain reconstruction loss using L1
+                                                                    backbone of the speech language model. Unlike
+loss on multi-scale mel-spectrograms. Multi-period
+                                                                    CosyVoice2 (Du et al., 2024a), Spark-TTS does not
+discriminator (Kong et al., 2020; Engel et al., 2020;
+                                                                    require flow matching to generate acoustic features.
+Gritsenko et al., 2020) and multi-band multi-scale
+                                                                    Instead, BiCodec’s decoder directly processes the
+STFT discriminator (Kumar et al., 2024) are used
+                                                                    LM’s output to produce the final audio, signifi-
+for waveform discrimination and frequency domain
+                                                                    cantly simplifying the textual LLM-based speech
+discrimination, respectively.
+                                                                    generation pipeline.
+   VQ codebook learning incorporates both a code-
+                                                                      In addition to zero-shot TTS, Spark-TTS sup-
+book loss and a commitment loss. Following the
+                                                                    ports voice creation using various attribute labels.
+approach in (Xin et al., 2024), the codebook loss
+                                                                         2
+is calculated as the L1 loss between the encoder                             https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct
+During inference, if attribute labels for gender,             In practice, Lzst and Lcontrol are mixed during
+pitch level, and speed level are provided, the lan-        training. Specifically, each audio example is struc-
+guage model can predict fine-grained pitch values,         tured into two training samples according to Lzst
+speed values, global tokens, and semantic tokens           and Lcontrol respectively.
+through a chain-of-thought (CoT) manner. If no
+attribute labels are provided, global tokens are ex-       5       VoxBox
+tracted from the reference audio, enabling zero-           5.1       Overview
+shot TTS.
+                                                           To facilitate voice creation and establish a fair com-
+4.2   Tokenizer                                            parison benchmark for future research, we intro-
+Text Tokenizer Similar to textual LLMs, Spark-             duce VoxBox, a well-annotated dataset for both En-
+TTS employs a byte pair encoding (BPE)-based               glish and Chinese. All data sources in VoxBox orig-
+tokenizer to process raw text. Here, we adopt the          inate from open-source datasets, ensuring broad
+Qwen2.5 tokenizer (Yang et al., 2024), which sup-          accessibility. To enhance data diversity, we collect
+ports multiple languages.                                  not only common TTS datasets, but also datasets
+   Attribute Tokenizer To enable voice creation            used for speech emotion recognition. Each au-
+based on speech attributes, Spark-TTS encodes              dio file in VoxBox is annotated with gender, pitch,
+attribute information at two levels: (i) Coarse-           and speed. Additionally, we also perform data
+Grained: Attribute labels representing high-level          cleaning on datasets with lower text quality. Af-
+speech characteristics, including gender, pitch (cat-      ter data cleaning, VoxBox comprises 4.7 million
+egorized into five discrete levels), and speed (cate-      audio files, sourced from 29 open datasets, total-
+gorized into five discrete levels); (ii) Fine-Grained:     ing 102.5k hours of speech data. Details about
+Attribute values enabling precise control over pitch       VoxBox and the source datasets can be found in
+and speed, which are quantized by rounding to the          Appendix E.
+nearest integer during tokenization.                       5.2       Clean and Annotation
+   Speech Tokenizer The speech tokenizer consists
+of a global tokenizer and a semantic tokenizer. Us-        Gender Annotation Given the strong performance
+ing both global and semantic tokens, the BiCodec           of pre-trained WavLM in speaker-related tasks (Li
+decoder reconstructs the waveform signal.                  et al., 2024c), we fine-tune the WavLM-large model
+                                                           for gender classification using datasets that contain
+4.3   Training Objective                                   explicit gender labels (detailed in Appendix E.2).
+The decoder-only language model is trained by              Our fine-tuned model achieves 99.4% accuracy on
+minimizing the negative log-likelihood of token            the AISHELL-3 test set. We then use this gender
+predictions. Let T represent the tokenized tex-            classification model to annotate datasets previously
+tual prompt and G denote the global speech token           lacking gender labels.
+prompt; the optimization for zero-shot TTS is de-             Pitch Annotation We extract the average pitch
+fined as follows:                                          value from each audio clip using PyWorld3 , round-
+               To
+              X                                            ing it to the nearest integer to obtain fine-grained
+    Lzst = −      log P (ot |T , G, o<t ; θLM ), (2)       pitch value tokens. For the definition of pitch lev-
+              t=1
+                                                           els, we first convert the average pitch of each audio
+where o ∈ NTo represents the semantic tokens to be         clip to the Mel scale. We then conduct a statistical
+predicted in the zero-shot TTS scenario, and θLM           analysis of all Mel scale pitch for all males and
+denotes the parameters of the language model.              females separately. Based on the 5th, 20th, 70th,
+   For the case of voice creation, the optimization        and 90th percentiles, we establish boundaries for
+is defined as follows:                                     five pitch levels: very low, low, moderate, high, and
+                Tc
+                                                           very high (detailed in Appendix E.1).
+                X
+ Lcontrol = −         log P (ct |T , A, c<t ; θLM ), (3)      Speed Annotation Compared to character-
+                t=1                                        based (Vyas et al., 2023), word-based (Ji et al.,
+                                                           2024b), or phoneme-based (Lyth and King, 2024)
+where A represents the attribute label prompt, and
+                                                           speaking rate calculations, syllable-based measure-
+the output c encompasses F, G, and S. Here, F
+                                                           ments provide a more direct correlation with speak-
+denotes the fine-grained attribute value prompt, and
+S is speech semantic tokens.                                   3
+                                                                   https://pypi.org/project/pyworld/
+ing rate. Here, we initially apply Voice Activity        epochs, using a batch size of 768 samples.
+Detection (VAD) to eliminate silent segments at
+both ends. Subsequently, we calculate the syllables      6.2   Reconstruction Performance of BiCodec
+per second (SPS), which is then rounded to the           Comparsion with Other Methods The reconstruc-
+nearest integer to serve as the fine-grained speed       tion performance of BiCodec compared to other
+value token. Using the 5th, 20th, 80th, and 95th         methods is presented in Table 1. As can be seen,
+percentiles, we establish boundaries for five dis-       within the low-bitrate range (<1 kbps), BiCodec
+tinct speed levels: very slow, slow, moderate, fast,     surpasses all methods on most metrics, except for
+and very fast (detailed in Appendix E.1).                UTMOS, where it ranks second to StableCodec,
+   Data Cleaning For datasets exhibiting lower text      and SIM, where it ranks second to X-Codec2,
+quality, we conduct an additional cleaning process.      thereby achieving a new state-of-the-art (SOTA)
+Specifically, for Emilia (He et al., 2024), the orig-    performance.
+inal transcripts were obtained using the Whisper-           Notably, BiCodec’s semantic tokens are ex-
+based (ASR) system (Radford et al., 2023), em-           tracted from wav2vec 2.0 rather than raw audio,
+ploying the whisper-medium model, which occa-            resulting in stronger semantic alignment compared
+sionally resulted in inaccuracies. To address this,      to codecs that directly process waveform-based
+we employ another ASR model, FunASR (Gao                 representations. Further experimental results and
+et al., 2023)4 , to re-recognize the audio. We then      analyses are provided in Appendix A.3.
+use the original scripts as ground truth to calculate       Effectiveness of Global Tokenizer We first eval-
+the Word Error Rate (WER) and excluded samples           uate the optimal length for the global token se-
+with a WER exceeding 0.05. For the MLS-English,          quence. As shown in Table 2, we compare the
+LibriSpeech, LibriTTS-R, and datasets originally         impact of different sequence lengths on reconstruc-
+designed for emotion recognition, we employ the          tion quality. The results without FSQ quantization
+whisper-large-v35 model for speech recognition,          serve as a benchmark reference. Notably, increas-
+comparing the recognition results with the original      ing the global token sequence length consistently
+scripts. Samples exhibiting insertions or deletions      improves reconstruction quality, with performance
+are excluded from the dataset.                           approaching the benchmark at the length of 32.
+                                                            Furthermore, Table 2 compares our proposed
+6       Experiments                                      quantization method—which incorporates learn-
+                                                         able queries and FSQ—against the GVQ-based
+6.1      Implementation Details                          method introduced by Ren et al. (Ren et al., 2024)
+BiCodec is trained on the full training set of the       for time-invariant codes. Our approach demon-
+LibriSpeech dataset, comprising 960 hours of En-         strates a substantial performance improvement over
+glish speech data. Additionally, we include 1,000        the GVQ-based method, highlighting the effective-
+hours of speech data from both Emilia-CN and             ness of FSQ with learnable queries in enhancing
+Emilia-EN, bringing the total training data to ap-       global token representation.
+proximately 3,000 hours. All audio samples are
+resampled to 16 kHz. The global token length is          6.3   Control Capabilities of Spark-TTS
+set as 32. For optimization, we use the AdamW            Spark-TTS enables controllable generation by in-
+optimizer with moving average coefficients coef-         putting attribute labels or fine-grained attribute val-
+ficients β1 = 0.8 and β2 = 0.9. The model con-           ues. In label-based control, the model automati-
+verges within approximately 800k training steps          cally generates the corresponding attribute values
+using a batch size with 614.4 seconds of speech.         (e.g., pitch and speed). However, when these val-
+   The Spark-TTS language model is trained us-           ues are manually specified, the system switches to
+ing the entire VoxBox training set. If a dataset         fine-grained control.
+lacks predefined train/test splits, we use the entire       Gender To assess Spark-TTS’s capability in gen-
+processed dataset for training. The training em-         der control, we compare it with textual prompt-
+ploys the AdamW optimizer with β1 = 0.9 and              based controllable TTS models, including VoxIn-
+β2 = 0.96. The model undergoes training over 3           struct(Zhou et al., 2024b) and Parler-TTS(Lyth and
+    4
+                                                         King, 2024). For evaluation, we reorganize the
+      ZH: https://huggingface.co/funasr/paraformer-zh
+EN: https://huggingface.co/FunAudioLLM/SenseVoiceSmall   test prompts of real speech from PromptTTS (Guo
+    5
+      https://huggingface.co/openai/whisper-large-v3     et al., 2023) based on the prompt structures used in
+Table 1: Comparisons of various codec models for speech reconstruction on the LibriSpeech test-clean dataset.
+Detailed information about these models can be found in Appendix A.2.
+
+                            Codebook                 Token Rate          Bandwidth                 PESQ      PESQ
+      Model                                 Nq                                           STOI↑                        UTMOS↑        SIM↑
+                              Size                     (TPS)               (bps)                   NB↑       WB↑
+      Encodec                   1024          8            600             6000           0.94      3.17      2.75       3.07       0.89
+      DAC                       1024         12            600             6000           0.95      4.15      4.01       4.00       0.98
+      Encodec                   1024          2            150             1500           0.84      1.94      1.56       1.58        0.6
+      Mimi                      2048          8            100             1100           0.91       2.8      2.25       3.56       0.73
+      BigCodec                  8192          1             80             1040           0.94      3.27      2.68       4.11       0.84
+      DAC                       1024          2            100             1000           0.73       1.4      1.14       1.29       0.32
+      SpeechTokenizer           1024          2            100             1000           0.77      1.59      1.25       2.28       0.36
+      X-codec                   1024          2            100             1000           0.86      2.88      2.33       4.21       0.72
+      WavTokenizer               4096        1              75             900            0.89      2.64      2.14       3.94       0.67
+      X-codec2                  65536        1              50             800            0.92      3.04      2.43       4.13       0.82
+      StableCodec               15625        2              50             697            0.91      2.91      2.24       4.23       0.62
+      Single-Codec               8192        1             23.4            304            0.86      2.42      1.88       3.72       0.60
+      BiCodec                   8192         1             50              650            0.92      3.13      2.51       4.18       0.80
+
+
+Table 2: Performance of BiCodec with varying global                           pitch and speaking rate based on coarse-grained la-
+token lengths for reconstruction on the LibriSpeech test-                     bels, while Fig. 5 presents the fine-grained control
+clean dataset, where "w/o" indicates the omission of
+                                                                              performance for pitch and speed. As shown, Spark-
+FSQ-based quantization, and gvq-32 means the global
+tokenizer is implemented with group VQ. For perfor-                           TTS accurately generates speech that aligns with
+mance results on the LibriTTS test-clean dataset, refer                       the specified attribute labels, demonstrating precise
+to Appendix A.3.                                                              control over both coarse-grained and fine-grained
+                                                                              attributes.
+  Global                  PESQ     PESQ
+              STOI↑                              UTMOS↑           SIM↑
+  Token                   NB↑      WB↑
+ w/o FSQ        0.915      3.14     2.52            4.15          0.83        6.4       Zero-shot TTS Performance
+ gvq-32         0.912      2.91     2.30            4.06          0.74
+                                                                              To evaluate Spark-TTS’s zero-shot TTS capabil-
+ 8              0.916      3.04     2.41            4.16          0.74        ity, we assess its performance on Seed-TTS-eval
+ 16             0.919      3.08     2.45            4.15          0.77
+ 32             0.922      3.13     2.51            4.18          0.80        and compare it with existing zero-shot TTS mod-
+                                                                              els. The results are presented in Table 4, where
+Table 3: Gender control performance of various models.                        speech intelligibility is evaluated using the Char-
+                                                                              acter Error Rate (CER) for Chinese and the WER
+  Method          VoxInstruct          Parler-tts      Spark-TTS              for English, following the Seed-TTS-eval6 . As
+  Acc (%)↑              82.99           98.12               99.77             can been seen, Spark-TTS demonstrates significant
+                                                                              superiority in intelligibility for zero-shot TTS sce-
+VoxInstruct and Parler-TTS. The gender accuracy                               narios. On test-zh, Spark-TTS achieves a CER
+(Acc) of the generated speech is measured using                               second only to the closed-source model Seed-TTS,
+our gender predictor, which is specifically trained                           while it ranks second only to F5-TTS (Chen et al.,
+for gender annotation. The results, presented in                              2024b) for English WER. This high intelligibility
+Table 3, show that Spark-TTS significantly out-                               is partly attributed to the semantic feature-based Bi-
+performs other controllable TTS systems in gen-                               Codec and further validates the high quality of our
+der control, demonstrating its strong capability in                           VoxBox dataset in terms of transcripts. In terms of
+attribute-based voice generation.                                             speaker similarity, while Spark-TTS is relatively
+   Pitch and Speed Spark-TTS enables control-                                 weaker than multi-stage or NAR-based methods,
+lable generation by inputting attribute labels or                             it significantly outperforms the single-stage model
+fine-grained attribute values. In label-based con-                            Llasa (Ye et al., 2025). Notably, Spark-TTS, with
+trol, the model automatically generates the corre-                            just 0.5B model parameters and 100k hours of train-
+sponding attribute values (e.g., pitch and speed).                            ing data, surpasses Llasa, which has 8B parameters
+However, when these values are manually speci-                                and is trained on 250k hours of data.
+fied, the system switches to fine-grained control.
+                                                                                  6
+Fig. 4 illustrates the control confusion matrices for                                 https://github.com/BytedanceSpeech/seed-tts-eval
+                            Pitch Level of Predicted Speech                                                           Pitch Level of Predicted Speech
+                                                               0         2        1        4         73                                                          7           0        0        7        51
+                                                                                                                                                                                                                     speech quality.
+                                                               0         1        2        66        23                                                          5           2        2       72        44
+                                                                                                                                                                                                                     Table 4: Results of Spark-TTS and recent TTS models
+
+
+
+                      very low low moderate high very high                                                      very low low moderate high very high
+                                                               6         8        91       30        4                                                           19         21       97       20           4
+                                                                                                                                                                                                                     on the Seed test sets (test-zh for Chinese and test-en for
+                                                               28        83       6        0         0                                                           26         71        1        1           0         English). † denotes closed-sourced models.
+                                                               66        6        0        0         0                                                           43          6        0        0           1
+                                                                                                                                                                                                                                                 test-zh           test-en
+                                                        very low low moderate high very high                                                                very low low moderate high very high                         Model
+                                                                 Pitch Level in Control                                                                              Pitch Level in Control                                                   CER↓ SIM↑          WER↓ SIM↑
+                                                               (a) Pitch for Male                                                                            (b) Pitch for Female                                                    Multi-Stage or NAR Methods
+
+
+
+
+                            Speed Level of Predicted Speech                                                           Speed Level of Predicted Speech
+                                                               0         0        0         7        88                                                          0           0        0        0        43               Seed-TTS†
+                                                                                                                                                                                                                                               1.12   0.796      2.25     0.762
+                                                                                                                                                                                                                         FireRedTTS            1.51   0.635      3.82     0.460
+                                                               0         0        9        90        12                                                          0           0        1       47        57
+                                                                                                                                                                                                                         MaskGCT               2.27   0.774      2.62     0.714
+                                                                                                                                                                                                                         E2 TTS (32 NFE)†      1.97   0.730      2.19     0.710
+
+
+
+                      very slow slow moderate fast very fast                                                    very slow slow moderate fast very fast
+                                                               0         42       91        3        0                                                           0           6        99      53           0
+                                                                                                                                                                                                                         F5-TTS (32 NFE)       1.56   0.741      1.83     0.647
+                                                               57        58       0         0        0                                                           17          94       0        0           0             CosyVoice             3.63   0.723      4.29     0.609
+                                                                                                                                                                                                                         CosyVoice2            1.45   0.748      2.57     0.652
+                                                               43        0        0         0        0                                                           83          0        0        0           0
+                                                     very slow slow moderate fast very fast                                                                 very slow slow moderate fast very fast
+                                                                                                                                                                                                                                          One-Stage AR Methods
+                                                               Speed Level in Control                                                                                 Speed Level in Control
+                                                                                                                                                                                                                         Llasa-1B-250k         1.89   0.669      3.22     0.572
+                                                         (c) Speed for English                                                                              (d) Speed for Chinese                                        Llasa-3B-250k         1.60   0.675      3.14     0.579
+                                                                                                                                                                                                                         Llasa-8B-250k         1.59   0.684      2.97     0.574
+Figure 4: Confusion matrix of coarse-grained pitch and
+                                                                                                                                                                                                                         Spark-TTS             1.20   0.672      1.98     0.584
+speed control results. In pitch-controllable generation,
+each label’s generated samples consist of 50 Chinese
+and 50 English samples. In speed-controllable genera-                                                                                                                                                                Table 5: Quality comparison of zero-shot TTS audio
+tion, each label’s generated samples consist of 50 male                                                                                                                                                              generation on the LibriSpeech test-clean set. GT repre-
+and 50 female samples.                                                                                                                                                                                               sents ground truth.
+                                        400                                                                                                             500
+
+
+
+
+Pitch Value of Generated Speech (Mel)                                                                           Pitch Value of Generated Speech (Mel)
+                                        350                                                                                                             450                                                           Method         GT    CosyVoice CosyVoice2 Spark-TTS
+                                                                                                                                                        400
+                                        300                                                                                                                                                                           UTMOS↑ 4.08             4.09       4.23           4.35
+                                                                                                                                                        350
+                                        250
+                                                                                                                                                        300
+                                        200                                                                                                             250                                                          7     Conclusion
+                                        150                                                                                                             200
+
+                                                                        200            300                400
+                                                                                                                                                        150
+                                                                                                                                                                      200         300         400              500
+                                                                                                                                                                                                                     This paper introduces BiCodec, which retains the
+                                                                     Pitch Value in Control (Mel)                                                                        Pitch Value in Control (Mel)
+                                                                                                                                                                                                                     advantages of semantic tokens, including high com-
+                                                               (a) Pitch for Male                                                                                (b) Pitch for Female                                pression efficiency and high intelligibility, while
+                                        8                                                                                                               8
+
+
+
+
+Speed Value of Generated Speech (SPS)                                                                           Speed Value of Generated Speech (SPS)
+                                        7                                                                                                               7                                                            addressing the limitation of traditional semantic to-
+                                        6                                                                                                               6                                                            kens, which cannot control timbre-related attributes
+                                        5                                                                                                               5                                                            within an LM, by incorporating global tokens. Bi-
+                                        4                                                                                                               4                                                            Codec achieves a new SOTA reconstruction quality,
+                                        3                                                                                                               3                                                            operating at 50 TPS with a bit rate of 0.65 kbps, sur-
+                                        2                                                                                                               2                                                            passing other codecs within the sub-1 kbps range.
+                                                1               2       3     4     5      6     7        8                                                  1        2       3     4     5      6     7       8
+                                                                    Speed Value in Control (SPS)                                                                          Speed Value in Control (SPS)
+                                                                                                                                                                                                                     Building on BiCodec, we develop Spark-TTS, a
+                                                  (c) Speed for English                                                                                      (d) Speed for Chinese                                   text-to-speech model that integrates the textual lan-
+Figure 5: Fine-grained pitch and speed control results.                                                                                                                                                              guage model Qwen2.5. Spark-TTS enables voice
+For pitch-controllable generation, each generated value                                                                                                                                                              generation based on specified attributes and sup-
+includes one Chinese sample and one English sample.                                                                                                                                                                  ports zero-shot synthesis. To our knowledge, this
+For speed-controllable generation, each generated value                                                                                                                                                              is the first TTS model to offer fine-grained control
+includes 10 male samples and 10 female samples.                                                                                                                                                                      over both pitch and speaking rate, while simulta-
+  Following CosyVoice2 (Du et al., 2024b), we                                                                                                                                                                        neously supporting zero-shot TTS. Additionally,
+evaluate the quality of the generated speech on                                                                                                                                                                      to facilitate comparative research, we introduce
+the LibriSpeech test-clean set. As shown in Ta-                                                                                                                                                                      VoxBox, an open-source dataset designed for con-
+ble 5, our method produces audio of significantly                                                                                                                                                                    trollable speech synthesis. VoxBox not only filters
+higher quality than the original and outperforms                                                                                                                                                                     out low-quality textual data but also provides com-
+CosyVoice2, the SOTA open-source TTS model                                                                                                                                                                           prehensive annotations, including gender, pitch,
+with multi-stage modeling. This demonstrates                                                                                                                                                                         and speaking rate, significantly enhancing training
+the strong performance of Spark-TTS in terms of                                                                                                                                                                      for controlled generation tasks.
+Limitation                                                  Yoshua Bengio, Nicholas Léonard, and Aaron Courville.
+                                                              2013. Estimating or propagating gradients through
+Despite its advantages, Spark-TTS also has no-                stochastic neurons for conditional computation.
+table limitations. Similar to Llasa (Ye et al., 2025),        arXiv preprint arXiv:1308.3432.
+which relies on a single codebook and a textual lan-        Felix Burkhardt, Johannes Wagner, Hagen Wierstorf,
+guage model, Spark-TTS exhibits relatively lower              Florian Eyben, and Björn Schuller. 2023. Speech-
+speaker similarity metrics in zero-shot TTS com-              based age and gender prediction with transformers.
+                                                              In Speech Communication; 15th ITG Conference,
+pared to multi-stage or NAR methods. This may
+                                                              pages 46–50. VDE.
+be due to the greater speaker variability introduced
+by the AR language model during inference. Cur-             Carlos Busso, Murtaza Bulut, Chi-Chun Lee, Abe
+                                                              Kazemzadeh, Emily Mower, Samuel Kim, Jean-
+rently, Spark-TTS does not impose additional dis-
+                                                              nette N Chang, Sungbok Lee, and Shrikanth S
+entanglement constraints between global tokens                Narayanan. 2008. Iemocap: Interactive emotional
+and semantic tokens. In future work, we aim to                dyadic motion capture database. Language resources
+enhance global token control over timbre by intro-            and evaluation, 42:335–359.
+ducing perturbations to formants or pitch in the            Houwei Cao, David G Cooper, Michael K Keutmann,
+semantic token input. This approach will promote              Ruben C Gur, Ani Nenkova, and Ragini Verma. 2014.
+better disentanglement of timbre information, al-             Crema-d: Crowd-sourced emotional multimodal ac-
+lowing BiCodec’s decoder to exert absolute control            tors dataset. IEEE transactions on affective comput-
+                                                              ing, 5(4):377–390.
+over timbre. By doing so, we aim to reduce ran-
+domness introduced by the AR model, improving               Edresson Casanova, Kelly Davis, Eren Gölge, Görkem
+the speaker similarity in zero-shot synthesis.                Göknar, Iulian Gulea, Logan Hart, Aya Aljafari,
+                                                              Joshua Meyer, Reuben Morais, Samuel Olayemi,
+                                                              et al. 2024.     Xtts: a massively multilingual
+                                                              zero-shot text-to-speech model. arXiv preprint
+References                                                    arXiv:2406.04904.
+Adaeze Adigwe, Noé Tits, Kevin El Haddad, Sarah Os-         Guoguo Chen, Shuzhou Chai, Guanbo Wang, Jiayu
+  tadabbas, and Thierry Dutoit. 2018. The emotional           Du, Wei-Qiang Zhang, Chao Weng, Dan Su, Daniel
+  voices database: Towards controlling the emotion di-        Povey, Jan Trmal, Junbo Zhang, et al. 2021. Gi-
+  mension in voice generation systems. arXiv preprint         gaspeech: An evolving, multi-domain asr corpus with
+  arXiv:1806.09514.                                           10,000 hours of transcribed audio. arXiv preprint
+                                                              arXiv:2106.06909.
+Philip Anastassiou, Jiawei Chen, Jitong Chen, Yuanzhe
+  Chen, Zhuo Chen, Ziyi Chen, Jian Cong, Lelai Deng,        Sanyuan Chen, Shujie Liu, Long Zhou, Yanqing Liu,
+  Chuang Ding, Lu Gao, et al. 2024. Seed-tts: A family        Xu Tan, Jinyu Li, Sheng Zhao, Yao Qian, and Furu
+  of high-quality versatile speech generation models.         Wei. 2024a. Vall-e 2: Neural codec language models
+  arXiv preprint arXiv:2406.02430.                            are human parity zero-shot text to speech synthesiz-
+                                                              ers. arXiv preprint arXiv:2406.05370.
+Asger Heidemann Andersen, Jan Mark de Haan, Zheng-
+  Hua Tan, and Jesper Jensen. 2017. A non-intrusive         Yushen Chen, Zhikang Niu, Ziyang Ma, Keqi Deng,
+  short-time objective intelligibility measure. In 2017       Chunhui Wang, Jian Zhao, Kai Yu, and Xie Chen.
+  IEEE International Conference on Acoustics, Speech          2024b. F5-tts: A fairytaler that fakes fluent and
+  and Signal Processing (ICASSP), pages 5085–5089.            faithful speech with flow matching. arXiv preprint
+  IEEE.                                                       arXiv:2410.06885.
+                                                            Zhengyang Chen, Sanyuan Chen, Yu Wu, Yao Qian,
+Rosana Ardila, Megan Branson, Kelly Davis, Michael
+                                                              Chengyi Wang, Shujie Liu, Yanmin Qian, and
+  Henretty, Michael Kohler, Josh Meyer, Reuben
+                                                              Michael Zeng. 2022. Large-scale self-supervised
+  Morais, Lindsay Saunders, Francis M Tyers, and
+                                                              speech representation learning for automatic speaker
+  Gregor Weber. 2019. Common voice: A massively-
+                                                              verification. In ICASSP 2022-2022 IEEE Interna-
+  multilingual speech corpus.      arXiv preprint
+                                                              tional Conference on Acoustics, Speech and Signal
+  arXiv:1912.06670.
+                                                              Processing (ICASSP), pages 6147–6151. IEEE.
+Alexei Baevski, Yuhao Zhou, Abdelrahman Mohamed,            Jade Copet, Felix Kreuk, Itai Gat, Tal Remez, David
+  and Michael Auli. 2020. wav2vec 2.0: A framework            Kant, Gabriel Synnaeve, Yossi Adi, and Alexandre
+  for self-supervised learning of speech representations.     Défossez. 2024. Simple and controllable music gen-
+  Advances in neural information processing systems,          eration. Advances in Neural Information Processing
+  33:12449–12460.                                             Systems, 36.
+Evelina Bakhturina, Vitaly Lavrukhin, Boris Ginsburg,       Alexandre Défossez, Jade Copet, Gabriel Synnaeve, and
+  and Yang Zhang. 2021. Hi-Fi Multi-Speaker English           Yossi Adi. 2022. High fidelity neural audio compres-
+  TTS Dataset. arXiv preprint arXiv:2104.01497.               sion. arXiv preprint arXiv:2210.13438.
+Alexandre Défossez, Laurent Mazaré, Manu Orsini,              Jiaqi Li, Peiyang Shi, et al. 2024. Emilia: An ex-
+  Amélie Royer, Patrick Pérez, Hervé Jégou, Edouard           tensive, multilingual, and diverse speech dataset for
+  Grave, and Neil Zeghidour. 2024. Moshi: a speech-           large-scale speech generation. In 2024 IEEE Spo-
+  text foundation model for real-time dialogue. arXiv         ken Language Technology Workshop (SLT), pages
+  preprint arXiv:2410.00037.                                  885–890. IEEE.
+
+Brecht Desplanques, Jenthe Thienpondt, and Kris De-         Zhichao Huang, Chutong Meng, and Tom Ko. 2023.
+  muynck. 2020. Ecapa-tdnn: Emphasized channel                Repcodec: A speech representation codec for speech
+  attention, propagation and aggregation in tdnn based        tokenization. arXiv preprint arXiv:2309.00169.
+  speaker verification. Interspeech 2020.
+                                                            Philip Jackson and SJUoSG Haq. 2014. Surrey audio-
+Zhihao Du, Qian Chen, Shiliang Zhang, Kai Hu, Heng            visual expressed emotion (savee) database. Univer-
+  Lu, Yexin Yang, Hangrui Hu, Siqi Zheng, Yue                 sity of Surrey: Guildford, UK.
+  Gu, Ziyang Ma, et al. 2024a. Cosyvoice: A scal-
+  able multilingual zero-shot text-to-speech synthesizer    Jesin James, Li Tian, and Catherine Watson. 2018. An
+  based on supervised semantic tokens. arXiv preprint          open source emotional speech corpus for human
+  arXiv:2407.05407.                                            robot interaction applications. Interspeech 2018.
+Zhihao Du, Yuxuan Wang, Qian Chen, Xian Shi, Xiang          Shengpeng Ji, Ziyue Jiang, Wen Wang, Yifu Chen,
+  Lv, Tianyu Zhao, Zhifu Gao, Yexin Yang, Changfeng           Minghui Fang, Jialong Zuo, Qian Yang, Xize Cheng,
+  Gao, Hui Wang, et al. 2024b. Cosyvoice 2: Scal-             Zehan Wang, Ruiqi Li, et al. 2024a. Wavtok-
+  able streaming speech synthesis with large language         enizer: an efficient acoustic discrete codec tok-
+  models. arXiv preprint arXiv:2412.10117.                    enizer for audio language modeling. arXiv preprint
+                                                              arXiv:2408.16532.
+Jesse Engel, Lamtharn Hantrakul, Chenjie Gu, and
+   Adam Roberts. 2020. Ddsp: Differentiable digital         Shengpeng Ji, Jialong Zuo, Minghui Fang, Ziyue Jiang,
+   signal processing. arXiv preprint arXiv:2001.04643.        Feiyang Chen, Xinyu Duan, Baoxing Huai, and Zhou
+                                                              Zhao. 2024b. Textrolspeech: A text style control
+Zhifu Gao, Zerui Li, Jiaming Wang, Haoneng Luo, Xian
+                                                              speech corpus with codec language text-to-speech
+  Shi, Mengzhe Chen, Yabin Li, Lingyun Zuo, Zhihao
+                                                              models. In ICASSP 2024-2024 IEEE International
+  Du, Zhangyu Xiao, et al. 2023. Funasr: A funda-
+                                                              Conference on Acoustics, Speech and Signal Process-
+  mental end-to-end speech recognition toolkit. arXiv
+                                                              ing (ICASSP), pages 10301–10305. IEEE.
+  preprint arXiv:2305.11013.
+
+Hugo Flores Garcia, Prem Seetharaman, Rithesh Kumar,        Zeyu Jin, Jia Jia, Qixin Wang, Kehan Li, Shuoyi
+  and Bryan Pardo. 2023. Vampnet: Music generation            Zhou, Songtao Zhou, Xiaoyu Qin, and Zhiyong Wu.
+  via masked acoustic token modeling. arXiv preprint          2024. Speechcraft: A fine-grained expressive speech
+  arXiv:2307.04686.                                           dataset with natural language description. In Pro-
+                                                              ceedings of the 32nd ACM International Conference
+Ian Goodfellow, Jean Pouget-Abadie, Mehdi Mirza,              on Multimedia, pages 1255–1264.
+   Bing Xu, David Warde-Farley, Sherjil Ozair, Aaron
+   Courville, and Yoshua Bengio. 2020. Generative           Yuma Koizumi, Heiga Zen, Shigeki Karita, Yifan Ding,
+   adversarial networks. Communications of the ACM,           Kohei Yatabe, Nobuyuki Morioka, Michiel Bacchi-
+   63(11):139–144.                                            ani, Yu Zhang, Wei Han, and Ankur Bapna. 2023.
+                                                              Libritts-r: A restored multi-speaker text-to-speech
+Alexey Gritsenko, Tim Salimans, Rianne van den Berg,          corpus. arXiv preprint arXiv:2305.18802.
+  Jasper Snoek, and Nal Kalchbrenner. 2020. A spec-
+  tral energy distance for parallel speech synthesis. Ad-   Jungil Kong, Jaehyeon Kim, and Jaekyoung Bae. 2020.
+  vances in Neural Information Processing Systems,            Hifi-gan: Generative adversarial networks for effi-
+  33:13062–13072.                                             cient and high fidelity speech synthesis. Advances
+                                                              in neural information processing systems, 33:17022–
+Hao-Han Guo, Kun Liu, Fei-Yu Shen, Yi-Chen Wu,                17033.
+  Feng-Long Xie, Kun Xie, and Kai-Tuo Xu. 2024. Fir-
+  eredtts: A foundation text-to-speech framework for        Felix Kreuk, Gabriel Synnaeve, Adam Polyak, Uriel
+  industry-level generative speech applications. arXiv        Singer, Alexandre Défossez, Jade Copet, Devi Parikh,
+  preprint arXiv:2409.03283.                                  Yaniv Taigman, and Yossi Adi. 2023. Audiogen: Tex-
+                                                              tually guided audio generation. In The Eleventh In-
+Zhifang Guo, Yichong Leng, Yihan Wu, Sheng Zhao,              ternational Conference on Learning Representations.
+  and Xu Tan. 2023. Prompttts: Controllable text-to-
+  speech with text descriptions. In ICASSP 2023-2023        Kundan Kumar, Rithesh Kumar, Thibault De Boissiere,
+  IEEE International Conference on Acoustics, Speech          Lucas Gestin, Wei Zhen Teoh, Jose Sotelo, Alexan-
+  and Signal Processing (ICASSP), pages 1–5. IEEE.            dre De Brebisson, Yoshua Bengio, and Aaron C
+                                                              Courville. 2019. Melgan: Generative adversarial net-
+Haorui He, Zengqiang Shang, Chaoren Wang, Xuyuan              works for conditional waveform synthesis. Advances
+  Li, Yicheng Gu, Hua Hua, Liwei Liu, Chen Yang,              in neural information processing systems, 32.
+Rithesh Kumar, Prem Seetharaman, Alejandro Luebs,            Zhao, Binbin Zhang, and Lei Xie. 2024. Wenet-
+  Ishaan Kumar, and Kundan Kumar. 2024. High-                speech4tts: A 12,800-hour mandarin tts corpus for
+  fidelity audio compression with improved rvqgan.           large speech generation model benchmark. arXiv
+  Advances in Neural Information Processing Systems,         preprint arXiv:2406.05763.
+  36.
+                                                           Ziyang Ma, Zhisheng Zheng, Jiaxin Ye, Jinchao
+Gael Le Lan, Varun Nagaraja, Ernie Chang, David Kant,        Li, Zhifu Gao, Shiliang Zhang, and Xie Chen.
+  Zhaoheng Ni, Yangyang Shi, Forrest Iandola, and            2023. emotion2vec: Self-supervised pre-training
+  Vikas Chandra. 2024. Stack-and-delay: a new code-          for speech emotion representation. arXiv preprint
+  book pattern for music generation. In ICASSP 2024-         arXiv:2312.15185.
+  2024 IEEE International Conference on Acoustics,
+  Speech and Signal Processing (ICASSP), pages 796–        MagicData. 2019. Magicdata mandarin chinese read
+  800. IEEE.                                                speech corpus.
+Keon Lee, Kyumin Park, and Daeyoung Kim. 2023.             Luz Martinez, Mohammed Abdelwahab, and Carlos
+  Dailytalk: Spoken dialogue dataset for conversational      Busso. 2020. The msp-conversation corpus. Inter-
+  text-to-speech. In ICASSP 2023-2023 IEEE Interna-          speech 2020.
+  tional Conference on Acoustics, Speech and Signal
+  Processing (ICASSP), pages 1–5. IEEE.                    Fabian Mentzer, David Minnen, Eirikur Agustsson,
+                                                             and Michael Tschannen. 2023. Finite scalar quan-
+Hanzhao Li, Liumeng Xue, Haohan Guo, Xinfa Zhu,              tization: Vq-vae made simple. arXiv preprint
+  Yuanjun Lv, Lei Xie, Yunlin Chen, Hao Yin, and             arXiv:2309.15505.
+  Zhifei Li. 2024a. Single-codec: Single-codebook
+  speech codec towards high-performance speech gen-        Tu Anh Nguyen, Wei-Ning Hsu, Antony d’Avirro,
+  eration. arXiv preprint arXiv:2406.07422.                  Bowen Shi, Itai Gat, Maryam Fazel-Zarani, Tal Re-
+                                                             mez, Jade Copet, Gabriel Synnaeve, Michael Has-
+Xu Li, Qirui Wang, and Xiaoyu Liu. 2024b. Masksr:            sid, et al. 2023. Expresso: A benchmark and analy-
+  Masked language model for full-band speech restora-        sis of discrete expressive speech resynthesis. arXiv
+  tion. arXiv preprint arXiv:2406.02092.                     preprint arXiv:2308.05725.
+Yue Li, Xinsheng Wang, Li Zhang, and Lei Xie.
+                                                           Kari Ali Noriy, Xiaosong Yang, and Jian Jun Zhang.
+  2024c. Scdnet: Self-supervised learning feature-
+                                                             2023.     Emns/imz/corpus: An emotive single-
+  based speaker change detection. arXiv preprint
+                                                             speaker dataset for narrative storytelling in games,
+  arXiv:2406.08393.
+                                                             television and graphic novels. arXiv preprint
+                                                             arXiv:2305.13137.
+Zheng Lian, Haiyang Sun, Licai Sun, Kang Chen,
+  Mngyu Xu, Kexin Wang, Ke Xu, Yu He, Ying Li,
+  Jinming Zhao, et al. 2023. Mer 2023: Multi-label         Vassil Panayotov, Guoguo Chen, Daniel Povey, and
+  learning, modality robustness, and semi-supervised         Sanjeev Khudanpur. 2015. Librispeech: an asr cor-
+  learning. In Proceedings of the 31st ACM Interna-          pus based on public domain audio books. In 2015
+  tional Conference on Multimedia, pages 9610–9614.          IEEE international conference on acoustics, speech
+                                                             and signal processing (ICASSP), pages 5206–5210.
+Rui Liu, Yifan Hu, Yi Ren, Xiang Yin, and Haizhou Li.        IEEE.
+  2024. Generative expressive conversational speech
+  synthesis. In Proceedings of the 32nd ACM Interna-       Julian D Parker, Anton Smirnov, Jordi Pons, CJ Carr,
+  tional Conference on Multimedia, pages 4187–4196.           Zack Zukowski, Zach Evans, and Xubo Liu. 2024.
+                                                              Scaling transformers for low-bitrate high-quality
+Zhuang Liu, Hanzi Mao, Chao-Yuan Wu, Christoph Fe-            speech coding. arXiv preprint arXiv:2411.19842.
+  ichtenhofer, Trevor Darrell, and Saining Xie. 2022.
+  A convnet for the 2020s. In Proceedings of the           Ankita Pasad, Bowen Shi, and Karen Livescu. 2023.
+  IEEE/CVF conference on computer vision and pat-            Comparative layer-wise analysis of self-supervised
+  tern recognition, pages 11976–11986.                       speech models. In ICASSP 2023-2023 IEEE Interna-
+                                                             tional Conference on Acoustics, Speech and Signal
+Steven R Livingstone and Frank A Russo. 2018. The            Processing (ICASSP), pages 1–5. IEEE.
+   ryerson audio-visual database of emotional speech
+   and song (ravdess): A dynamic, multimodal set of fa-    Soujanya Poria, Devamanyu Hazarika, Navonil Ma-
+   cial and vocal expressions in north american english.     jumder, Gautam Naik, Erik Cambria, and Rada Mi-
+  PloS one, 13(5):e0196391.                                  halcea. 2018. Meld: A multimodal multi-party
+                                                             dataset for emotion recognition in conversations.
+Dan Lyth and Simon King. 2024. Natural language guid-        arXiv preprint arXiv:1810.02508.
+  ance of high-fidelity text-to-speech with synthetic
+  annotations. arXiv preprint arXiv:2402.01912.            Vineel Pratap, Qiantong Xu, Anuroop Sriram, Gabriel
+                                                             Synnaeve, and Ronan Collobert. 2020. Mls: A large-
+Linhan Ma, Dake Guo, Kun Song, Yuepeng Jiang,                scale multilingual dataset for speech research. ArXiv,
+  Shuai Wang, Liumeng Xue, Weiming Xu, Huan                  abs/2012.03411.
+Alec Radford, Jong Wook Kim, Tao Xu, Greg Brock-          Hongji Wang, Chengdong Liang, Shuai Wang,
+  man, Christine McLeavey, and Ilya Sutskever. 2023.        Zhengyang Chen, Binbin Zhang, Xu Xiang, Yan-
+  Robust speech recognition via large-scale weak su-        lei Deng, and Yanmin Qian. 2023b. Wespeaker: A
+  pervision. In International conference on machine         research and production oriented speaker embedding
+  learning, pages 28492–28518. PMLR.                        learning toolkit. In ICASSP 2023-2023 IEEE Inter-
+                                                            national Conference on Acoustics, Speech and Signal
+Yong Ren, Tao Wang, Jiangyan Yi, Le Xu, Jianhua Tao,        Processing (ICASSP), pages 1–5. IEEE.
+  Chu Yuan Zhang, and Junzuo Zhou. 2024. Fewer-
+  token neural speech codec with time-invariant codes.    Kaisiyuan Wang, Qianyi Wu, Linsen Song, Zhuoqian
+  In ICASSP 2024-2024 IEEE International Confer-            Yang, Wayne Wu, Chen Qian, Ran He, Yu Qiao, and
+  ence on Acoustics, Speech and Signal Processing           Chen Change Loy. 2020. Mead: A large-scale audio-
+  (ICASSP), pages 12737–12741. IEEE.                        visual dataset for emotional talking-face generation.
+                                                            In European Conference on Computer Vision, pages
+Antony W Rix, John G Beerends, Michael P Hollier,           700–717. Springer.
+  and Andries P Hekstra. 2001. Perceptual evaluation      Xiaofei Wang, Manthan Thakker, Zhuo Chen, Naoyuki
+  of speech quality (pesq)-a new method for speech          Kanda, Sefik Emre Eskimez, Sanyuan Chen, Min
+  quality assessment of telephone networks and codecs.      Tang, Shujie Liu, Jinyu Li, and Takuya Yoshioka.
+  In 2001 IEEE international conference on acoustics,       2024a. Speechx: Neural codec language model as
+  speech, and signal processing. Proceedings (Cat. No.      a versatile speech transformer. IEEE/ACM Transac-
+  01CH37221), volume 2, pages 749–752. IEEE.                tions on Audio, Speech, and Language Processing.
+Takaaki Saeki, Detai Xin, Wataru Nakata, Tomoki           Yuancheng Wang, Haoyue Zhan, Liwei Liu, Ruihong
+  Koriyama, Shinnosuke Takamichi, and Hiroshi               Zeng, Haotian Guo, Jiachen Zheng, Qiang Zhang,
+  Saruwatari. 2022. Utmos: Utokyo-sarulab sys-              Xueyao Zhang, Shunsi Zhang, and Zhizheng Wu.
+  tem for voicemos challenge 2022. arXiv preprint           2024b. Maskgct: Zero-shot text-to-speech with
+  arXiv:2204.02152.                                         masked generative codec transformer. arXiv preprint
+                                                            arXiv:2409.00750.
+Yao Shi, Hui Bu, Xin Xu, Shaoji Zhang, and Ming
+  Li. 2020. Aishell-3: A multi-speaker mandarin           Zhichao Wang, Yuanzhe Chen, Xinsheng Wang, Lei Xie,
+  tts corpus and the baselines.   arXiv preprint            and Yuping Wang. 2024c. Streamvoice+: Evolving
+  arXiv:2010.11567.                                         into end-to-end streaming zero-shot voice conversion.
+                                                            IEEE Signal Processing Letters.
+Dehua Tao, Daxin Tan, Yu Ting Yeung, Xiao Chen, and
+                                                          Haibin Wu, Naoyuki Kanda, Sefik Emre Eskimez, and
+  Tan Lee. 2024. Toneunit: A speech discretization
+                                                            Jinyu Li. 2024. Ts3-codec: Transformer-based
+  approach for tonal language speech synthesis. arXiv
+                                                            simple streaming single codec. arXiv preprint
+  preprint arXiv:2406.08989.
+                                                            arXiv:2411.18803.
+Jianhua Tao, Fangzhou Liu, Meng Zhang, and Huibin         Detai Xin, Xu Tan, Shinnosuke Takamichi, and Hi-
+   Jia. 2008. Design of speech corpus for mandarin text     roshi Saruwatari. 2024. Bigcodec: Pushing the limits
+   to speech. In The blizzard challenge 2008 workshop.      of low-bitrate neural speech codec. arXiv preprint
+                                                            arXiv:2409.05377.
+Hugo Touvron, Thibaut Lavril, Gautier Izacard, Xavier
+  Martinet, Marie-Anne Lachaux, Timothée Lacroix,         Junichi Yamagishi, Christophe Veaux, and Kirsten Mac-
+  Baptiste Rozière, Naman Goyal, Eric Hambro,               Donald. 2019. CSTR VCTK Corpus: English multi-
+  Faisal Azhar, et al. 2023. Llama: Open and effi-          speaker corpus for CSTR voice cloning toolkit (ver-
+  cient foundation language models. arXiv preprint          sion 0.92).
+  arXiv:2302.13971.
+                                                          An Yang, Baosong Yang, Beichen Zhang, Binyuan Hui,
+Aaron Van Den Oord, Oriol Vinyals, et al. 2017. Neural      Bo Zheng, Bowen Yu, Chengyuan Li, Dayiheng Liu,
+  discrete representation learning. Advances in neural      Fei Huang, Haoran Wei, et al. 2024. Qwen2. 5 tech-
+  information processing systems, 30.                       nical report. arXiv preprint arXiv:2412.15115.
+                                                          Zhen Ye, Zeqian Ju, Haohe Liu, Xu Tan, Jianyi Chen,
+Apoorv Vyas, Bowen Shi, Matthew Le, Andros Tjandra,         Yiwen Lu, Peiwen Sun, Jiahao Pan, Weizhen Bian,
+  Yi-Chiao Wu, Baishan Guo, Jiemin Zhang, Xinyue            Shulin He, et al. 2024a. Flashspeech: Efficient zero-
+  Zhang, Robert Adkins, William Ngan, et al. 2023.          shot speech synthesis. In Proceedings of the 32nd
+  Audiobox: Unified audio generation with natural           ACM International Conference on Multimedia, pages
+  language prompts. arXiv preprint arXiv:2312.15821.        6998–7007.
+Chengyi Wang, Sanyuan Chen, Yu Wu, Ziqiang Zhang,         Zhen Ye, Peiwen Sun, Jiahe Lei, Hongzhan Lin, Xu Tan,
+  Long Zhou, Shujie Liu, Zhuo Chen, Yanqing Liu,            Zheqi Dai, Qiuqiang Kong, Jianyi Chen, Jiahao Pan,
+  Huaming Wang, Jinyu Li, et al. 2023a. Neural codec        Qifeng Liu, et al. 2024b. Codec does matter: Ex-
+  language models are zero-shot text to speech synthe-      ploring the semantic shortcoming of codec for audio
+  sizers. arXiv preprint arXiv:2301.02111.                  language model. arXiv preprint arXiv:2408.17175.
+Zhen Ye, Xinfa Zhu, Chi-Min Chan, Xinsheng Wang,            style captioning and stylistic speech synthesis. In
+  Xu Tan, Jiahe Lei, Yi Peng, Haohe Liu, Yizhu Jin,         Proceedings of the 32nd ACM International Confer-
+  Zheqi DAI, et al. 2025. Llasa: Scaling train-time         ence on Multimedia, pages 7513–7522.
+  and inference-time compute for llama-based speech
+  synthesis. arXiv preprint arXiv:2502.04128.             Alon Ziv, Itai Gat, Gael Le Lan, Tal Remez, Felix Kreuk,
+                                                            Alexandre Défossez, Jade Copet, Gabriel Synnaeve,
+Jiahui Yu, Xin Li, Jing Yu Koh, Han Zhang, Ruom-            and Yossi Adi. 2024. Masked audio generation us-
+   ing Pang, James Qin, Alexander Ku, Yuanzhong Xu,         ing a single non-autoregressive transformer. arXiv
+   Jason Baldridge, and Yonghui Wu. 2021. Vector-           preprint arXiv:2401.04577.
+   quantized image modeling with improved vqgan.
+   arXiv preprint arXiv:2110.04627.
+Heiga Zen, Viet Dang, Rob Clark, Yu Zhang, Ron J
+  Weiss, Ye Jia, Zhifeng Chen, and Yonghui Wu. 2019.
+  Libritts: A corpus derived from librispeech for text-
+  to-speech. arXiv preprint arXiv:1904.02882.
+Xin Zhang, Dong Zhang, Shimin Li, Yaqian Zhou, and
+  Xipeng Qiu. 2023a. Speechtokenizer: Unified speech
+  tokenizer for speech large language models. arXiv
+  preprint arXiv:2308.16692.
+Ziqiang Zhang, Long Zhou, Chengyi Wang, Sanyuan
+  Chen, Yu Wu, Shujie Liu, Zhuo Chen, Yanqing Liu,
+  Huaming Wang, Jinyu Li, et al. 2023b. Speak for-
+  eign languages with your own voice: Cross-lingual
+  neural codec language modeling. arXiv preprint
+  arXiv:2303.03926.
+Jinming Zhao, Tenggan Zhang, Jingwen Hu, Yuchen
+   Liu, Qin Jin, Xinchao Wang, and Haizhou Li.
+   2022. M3ed: Multi-modal multi-scene multi-
+   label emotional dialogue database. arXiv preprint
+   arXiv:2205.10237.
+Youqiang Zheng, Weiping Tu, Yueteng Kang, Jie
+  Chen, Yike Zhang, Li Xiao, Yuhong Yang, and
+  Long Ma. 2024. Freecodec: A disentangled neu-
+  ral speech codec with fewer tokens. arXiv preprint
+  arXiv:2412.01053.
+Kun Zhou, Berrak Sisman, Rui Liu, and Haizhou Li.
+  2021. Seen and unseen emotional style transfer
+  for voice conversion with a new emotional speech
+  dataset. In ICASSP 2021-2021 IEEE International
+  Conference on Acoustics, Speech and Signal Process-
+  ing (ICASSP), pages 920–924. IEEE.
+Shuoyi Zhou, Yixuan Zhou, Weiqing Li, Jun Chen,
+  Runchuan Ye, Weihao Wu, Zijian Lin, Shun Lei, and
+  Zhiyong Wu. 2024a. The codec language model-
+  based zero-shot spontaneous style tts system for
+  covoc challenge 2024. In 2024 IEEE 14th Inter-
+  national Symposium on Chinese Spoken Language
+  Processing (ISCSLP), pages 496–500. IEEE.
+Yixuan Zhou, Xiaoyu Qin, Zeyu Jin, Shuoyi Zhou, Shun
+  Lei, Songtao Zhou, Zhiyong Wu, and Jia Jia. 2024b.
+  Voxinstruct: Expressive human instruction-to-speech
+  generation with unified multilingual codec language
+  modelling. In Proceedings of the 32nd ACM Interna-
+  tional Conference on Multimedia, pages 554–563.
+Xinfa Zhu, Wenjie Tian, Xinsheng Wang, Lei He, Yujia
+  Xiao, Xi Wang, Xu Tan, Sheng Zhao, and Lei Xie.
+  2024. Unistyle: Unified style modeling for speaking
+A     BiCodec                                               • SpeechTokenizer (Zhang et al., 2023a): An
+                                                              RVQ-based codec with semantic distillation
+The model structure of BiCodec is illustrated in              for speech.
+Fig. 6. BiCodec primarily consists of three compo-
+nents:                                                      • X-codec (Ye et al., 2024b): An RVQ-based
+                                                              codec with semantic distillation for speech.
+    • Semantic Tokenizer
+                                                            • X-codec2 (Ye et al., 2025): A FSQ-based
+    • Global Tokenizer                                        single-stream codec with semantic distillation
+                                                              for speech.
+    • Decoder
+                                                            • StableCodec (Parker et al., 2024): A residual
+Additionally, to compute the feature loss with the            FSQ-based tokenizer for speech.
+input wav2vec 2.0 features, an extra ConvNeXt               • WavTokenizer (Ji et al., 2024a): A single VQ
+block is incorporated to predict wav2vec 2.0 fea-             codebook-based tokenizer for universal audio.
+tures, to further ensure the semantic relevance.
+                                                        A.3    Additional Experiment
+A.1    Model Configurations                             To evaluate the performance of BiCodec at lower
+The semantic tokenizer consists of 12 ConvNeXt          bitrates, we apply a downsampling operation in
+blocks and 2 downsampling blocks. The down-             the semantic encoder, reducing the semantic token
+sampling blacks is only for semantic codes with         rate to 25 TPS. We compare BiCodec with Single-
+lower than 50 TPS. The codebook size of VQ is           Codec (Li et al., 2024a), which operates at a similar
+8192. The ECAPA-TDNN in the global tokenizer            bitrate, on the LibriSpeech test-clean and LibriTTS
+features an embedding dimension of 512. Mean-           test-clean datasets. The results are presented in
+while, the vector number of the learnable queries       Table 6 and Table 7.
+in the global tokenizer equal to the final goal token      Global Token Length The reconstruction per-
+sequence length. For the FSQ module, the FSQ            formance of BiCodec with varying global token
+dimension is set to 6, with each dimension having       lengths on the LibriTTS test-clean dataset is pre-
+4 levels, resulting in a codebook size of 4096.         sented in Table 8.
+   The upsampling rates in the Transposed Con-             Performance on Other Datasets To evaluate
+volution Blocks are set to [8, 5, 4, 2] for 16 kHz      the generalization ability of BiCodec, we con-
+sampled audio and [8, 5, 4, 3] for 24 kHz sampled       ducted experiments on a broader range of diverse
+audio. The reconstruction performance of BiCodec        datasets. The results are presented in Table 9.
+with 24 kHz sampled audio is presented in Table 9.
+                                                        B     Inference of Spark-TTS
+A.2    Compared Methods                                 Zero-shot TTS There are two inference strategies
+    • Encodec (Défossez et al., 2022): An RVQ-          for zero-shot TTS:
+      based codec designed for universal audio com-         • Using the text to be synthesized along with
+      pression.                                               the global tokens from a reference audio as
+                                                              the prompt to generate speech, e.g., [<content
+    • DAC (Kumar et al., 2024): An RVQ-based
+                                                              text> <global token> → <semantic token>].
+      codec for universal audio.
+                                                            • Incorporating both the transcript and semantic
+    • Mimi (Défossez et al., 2024): An RVQ-based              tokens of the reference audio as a prefix in the
+      codec with semantic constraint for speech.              prompt, e.g., [<content text> <reference text>
+                                                              <global token> <semantic token of reference>
+    • Single-Codec (Li et al., 2024a): A single-              → <semantic token>].
+      stream Mel codec that incorporates speaker
+      embeddings. The reconstruction results for        Among these, the second approach achieves higher
+      this method are provided by the authors.          speaker similarity. The results reported in Table 4
+                                                        are based on this second inference strategy. A com-
+    • BigCodec (Xin et al., 2024): A VQ-based           parison between the two inference methods is pro-
+      single-stream codec for speech.                   vided in Table 10.
+                                                                                             Reconstructed Audio
+         Cross Attention
+
+         Add                                                                                          Conv1d
+                                                                                                                        ResidualUnit
+
+
+                                                                                                 Transposed
+                                                                       ECAPA TDNN                                     ConvTranspose1d
+                                                                                                 Conv Blocks
+
+
+                                                                                                                           Snake
+                               wav2vec 2.0        Learnable Queries                                   Conv1d
+
+
+
+                               ConvNeXt                                                           ConvNeXt
+                                                                            FSQ
+                                Blocks                                                             Blocks
+        LeakyReLU                                                                                                      ConvNeXt Block
+
+                                                  Global Tokenizer                                Upsampling
+                              Downsampling                             Global Tokens                                   ConvTranspose1d
+          Conv1d                                                                                    Blocks
+                                 Blocks
+
+
+      ConvNeXt Block                                                                                                     LeakyReLU
+                               Linear Layer                               Pooling                Linear Layer
+
+
+                                                                                            Decoder
+                                                                                                                          ConvNeXt
+                                    VQ            Semantic Tokens
+                                                                                                                           Blocks
+
+
+               Semantic Tokenizer                                                                                  Predicted Wav2vec Feature
+
+
+                                      Figure 6: Model Structure of BiCodec
+             Table 6: Performance of BiCodec with lower bitrate on the LibriSpeech test-clean dataset.
+
+                                Codebook    Token                 PESQ PESQ
+     Model                               Nq       Bandwidth STOI↑           UTMOS↑ SIM↑
+                                  Size       Rate                  NB↑ WB↑
+     Single-Codec                   8192      1       23.4            304            0.86      2.42        1.88       3.72             0.60
+     BiCodec-4096-25                4096      1        25             300            0.88      2.53        1.97       4.00             0.70
+     BiCodec-8192-25                8192      1        25             325            0.89      2.62        2.05       4.13             0.71
+     BiCodec-4096-50                4096      1        50             600            0.92      3.03        2.42       4.17             0.78
+
+
+   Voice Creation Controllable TTS includes two                                     mantic token prediction and flow matching for
+levels of control for inference:                                                    acoustic feature generation.
+    • Coarse-grained control: The prompt consists                             • FireRedTTS (Guo et al., 2024): A two-stage
+      of the text to be synthesized along with at-                              model similar to Seed-TTS, using an AR LM
+      tribute labels, e.g., [<content text> <attribute                          for semantic tokens and flow matching for
+      label> → <attribute values> <global tokens>                               acoustic features.
+      <semantic token>]. In this process, the fine-
+      grained attribute values are predicted first, fol-                      • MaskGCT (Wang et al., 2024b): A NAR
+      lowed by the generation of global tokens and                              model that applies masking-based generative
+      then semantic tokens, in a CoT manner.                                    strategies for speech synthesis.
+
+    • Fine-grained control: The prompt includes the                           • E2 TTS : A flow matching-based model that
+      text to be synthesized, attribute levels, and pre-                        predicts Mel spectrograms as acoustic fea-
+      cise attribute values, e.g., [<content text> <at-                         tures.
+      tribute label> <attribute values> → <global
+                                                                              • F5-TTS (Chen et al., 2024b): A flow
+      tokens> <semantic token>].
+                                                                                matching-based method that also uses Mel
+C    Compared Zero-shot Methods                                                 spectrograms as acoustic features.
+
+    • Seed-TTS (Anastassiou et al., 2024): A two-                             • CosyVoice (Du et al., 2024a): A two-stage
+      stage model that employs an AR LM for se-                                 model with an AR LM for semantic token pre-
+    Table 7: Reconstruction performance of BiCodec with various bitrates on the LibriTTS test-clean dataset.
+
+            Codebook    Token                 PESQ PESQ
+                     Nq       Bandwidth STOI↑            UTMOS↑ SIM↑
+              Size       Rate                  NB↑ WB↑
+            4096     1    25     300     0.88  2.47 1.91   3.88 0.67
+            8192     1    25     325     0.88  2.56 1.98   4.02 0.68
+            4096     1    50     600     0.91  2.96 2.36   4.10 0.75
+            8192     1    50     650     0.92  3.08 2.46   4.11 0.78
+
+
+Table 8: Performance of BiCodec with varying global           • SIM: A speaker similarity metric, computed
+token lengths for reconstruction on the LibriTTS test-          as the cosine similarity between the speaker
+clean dataset, where "w/o" indicates the omission of
+                                                                embeddings of the reconstructed speech (gen-
+FSQ-based quantization, and gvq-32 means the global
+tokenizer is implemented with group VQ.                         erated speech in TTS) and the original input
+                                                                speech (prompt speech in TTS). We extract
+ Global       PESQ PESQ                                         speaker embeddings using WavLM-large, fine-
+        STOI↑           UTMOS↑ SIM↑
+ Token         NB↑ WB↑                                          tuned on the speaker verification task (Chen
+ w/o    0.923 3.1 2.48    4.09 0.81                             et al., 2022).
+ gvq-32 0.913 2.91 2.30   4.06 0.71
+ 8      0.916 2.97 2.34   4.10 0.72
+ 16     0.918 3.03 2.40   4.08 0.74                       E     VoxBox
+ 32     0.921 3.08 2.46   4.11 0.78
+                                                          E.1     Criteria for Pitch and Speed
+                                                                  Categorization
+      diction and flow matching for acoustic feature
+      generation.                                             • Speed The adoption of the 5th, 20th, 80th,
+                                                                and 95th percentiles to segment speech rates
+    • CosyVoice2 (Du et al., 2024b): An improved
+                                                                into distinct categories is founded on the need
+      version of CosyVoice, maintaining the two-
+                                                                to accurately reflect the natural distribution of
+      stage structure with an AR LM for semantic
+                                                                speech tempo variations within the population.
+      tokens and flow matching for acoustic fea-
+                                                                These percentiles help to capture the extremes
+      tures.
+                                                                and the more central values of speech rate,
+    • Llasa (Ye et al., 2025): A single-stream codec-           ensuring that each category is meaningful and
+      based TTS model that uses a single AR lan-                representative of specific vocal characteristics.
+      guage model for direct single-stream code pre-
+      diction.
+                                                              • Pitch Similar to the segmentation of speech
+                                                                rate, the division of pitch also starts from hu-
+D    Objective Metircs                                          man subjective perception and the actual dis-
+                                                                tribution characteristics. However, because
+    • STOI (Andersen et al., 2017): A widely                    humans are more sensitive to higher frequen-
+      used metric for assessing speech intelligibility.         cies within the range of human fundamental
+      Scores range from 0 to 1, with higher values              frequencies, the 5th, 20th, 70th, and 90th per-
+      indicating better intelligibility.                        centiles are used as the division boundaries.
+    • PESQ (Rix et al., 2001): A speech quality
+      assessment metric that compares the recon-                Pitch Group for Male
+      structed speech to a reference speech signal.
+      We evaluate using both wide-band (WB) and                 Very Low:    < 145 Mel
+      narrow-band (NB) settings.                                Low:         145–164 Mel
+                                                                Moderate:    164–211 Mel
+    • UTMOS (Saeki et al., 2022): An automatic                  High:        211–250 Mel
+      Mean Opinion Score (MOS) predictor, provid-               Very High:   >= 250 Mel
+      ing an estimate of overall speech quality.
+Table 9: Reconstruction performance on various datasets: Data-P comprises low-quality Chinese recordings made
+by internal staff using mobile phones; Data-S consists of expressive Chinese data recorded in a professional studio;
+and Data-M is a multilingual dataset collected from in-the-wild sources.
+
+                                 Codebook       Traing                 PESQ       PESQ
+  Data             Method                                  STOI↑                             UTMOS↑        SIM↑
+                                   Size          Data                   NB↑       WB↑
+               X-codec2           65536          150k        0.89       2.69       2.10        3.16         0.73
+  Data-P        BiCodec            8192           3k         0.90       2.80       2.22        3.22         0.78
+              BiCodec-24k          8192           20k        0.90       2.80       2.19        3.20         0.78
+               X-codec2           65536          150k        0.92       2.81       2.30        3.16         0.69
+  Data-S        BiCodec            8192           3k         0.93       3.04       2.50        3.28         0.82
+              BiCodec-24k          8192           20k        0.93       3.00       2.44        3.24         0.82
+               X-codec2           65536          150k        0.84       2.43       1.87        2.17         0.75
+  Data-M        BiCodec            8192           3k         0.85       2.56       1.91        2.17         0.76
+              BiCodec-24k          8192           20k        0.85       2.57       1.91        2.28         0.76
+
+
+Table 10: Zero-shot performance of Spark-TTS with           plicit gender labels, including VCTK (Yamagishi
+and without reference audio as a prefix.                    et al., 2019), AISHELL-3 (Shi et al., 2020), MLS-
+                                                            English (Pratap et al., 2020), MAGICDATA (Mag-
+                           test-zh   test-en                icData, 2019), and CommonVoice (Ardila et al.,
+Model
+                         CER↓ SIM↑ WER↓ SIM↑                2019).
+Spark-TTS            1.20 0.678 1.98 0.584
+Spark-TTS w/o prefix 0.98 0.628 1.32 0.474                  E.3     Annotation
+                                                            In addition to the attributes involved in the exper-
+      Pitch Group for Female                                iments of this paper, to make VoxBox applicable
+                                                            to a wider range of scenarios, we have also anno-
+      Very Low:     < 225 Mel
+                                                            tated more information for each sample of VoxBox,
+      Low:          225–258 Mel
+                                                            including age and emotion. Similar to the gen-
+      Moderate:     258–314 Mel
+                                                            der annotations, we fine-tune the WavLM-large
+      High:         314–353 Mel
+                                                            model based on AISHELL-3, VCTK, MAGIC-
+      Very High:    >= 353 Mel
+                                                            DATA, CommonVoice, and HQ-Conversations to
+                                                            predict five age ranges: Child, Teenager, Young
+      Speaking Rate Group for Chinese                       Adult, Middle-aged, and Elderly. The performance
+                                                            metrics for both the gender and age predictors are
+      Very Slow:    < 2.7 SPS                               presented in Table 11, where both Wav2vec 2.0-
+      Slow:         2.7–3.6 SPS                             ft (Burkhardt et al., 2023) and SpeechCraft (Jin
+      Moderate:     3.6–5.2 SPS                             et al., 2024) are based on the pre-trained Wav2vec
+      Fast:         5.2–6.1 SPS                             2.0 model.
+      Very Fast:    >= 6.1 SPS
+                                                            Table 11: Comparison of different models on attribute
+                                                            predictions: All evaluations are conducted on the
+      Speaking Rate Group for English                       AISHELL-3 test dataset.
+
+      Very Slow:    < 2.6 SPS                                 Model                Age Acc↑       Gender Acc↑
+      Slow:         2.6–3.4 SPS
+      Moderate:     3.4–4.8 SPS                               wav2vec 2.0-ft          80.2             98.8
+      Fast:         4.8–5.5 SPS                               SpeechCraft             87.7             97.7
+      Very Fast:    >= 5.5 SPS                                Our                     95.6             99.4
+
+E.2     Data for Gender Predictor Training                    For datasets without emotion labels in the orig-
+We fine-tune the WavLM-large model for gen-                 inal metadata, we assign various emotion labels,
+der classification using datasets that contain ex-          sourced from different models, to the relevant sam-
+ples. Specifically, we provide the following tags:     • Dailytalk:     A   multi-speaker  En-
+                                                         glish speech corpus with conversa-
+   • emotion2vec Emotion: Emotion label pre-             tional style for TTS. Source:https:
+     dicted with Emtion2vec (Ma et al., 2023).           //github.com/keonlee9420/DailyTalk
+
+   • Confidence Score: Confidence score of the         • Emilia: A multi-speaker multilingual speech
+     the predicted emotion2vec label given by emo-       corpus containing six languages for TTS.
+     tion2vec.                                           Source: https://emilia-dataset.github.
+                                                         io/Emilia-Demo-Page/
+   • SenseVoiceSmall Emotion: Emotion label
+     predicted with SenseVoiceSmall7 .                 • EMNS: An emotional single-speaker English
+                                                         speech corpus for TTS. Source: https://
+   • Text Emotion: Emotion label predicted with          www.openslr.org/136
+     Qwen2.5-72B-Instruct 8 with text as input.
+     The prompt case for English text can be found     • EmoV-DB:      An    emotional   multi-
+     in Box                                              speaker English speech corpus contain-
+                                                         ing four emotions for TTS. Source:
+      Prompt for Text Emotion Tag (English)              https://mega.nz/folder/KBp32apT#
+   Please assess the emotion of the following            gLIgyWf9iQ-yqnWFUFuUHg/mYwUnI4K
+   text and select the most appropriate label
+                                                       • ESD: An emotional multi-speaker bilin-
+   from these options:
+                                                         gual speech corpus containing five emotions
+   [Fearful, Happy, Disgusted, Sad, Surprised,
+                                                         for TTS. Source: https://hltsingapore.
+   Angry, Neutral].
+                                                         github.io/ESD/
+   Please note, only provide the label with-
+   out any additional description or reasoning.        • Expresso: A multi-speaker English speech
+   Here is the text: "Clearly, the need for a            corpus with reading and improvising con-
+   personal loan is written in the stars."               versational style for TTS. Source: https:
+                                                         //speechbot.github.io/expresso/
+E.4     Data Statistics
+                                                       • Gigaspeech: A multi-speaker English speech
+The distributions of speaking rate, duration, and        corpus with reading style for TTS. Source:
+pitch are shown in Fig 7, while the distributions of     https://github.com/SpeechColab/
+gender and age are presented in Fig 8.                   GigaSpeech
+E.5     Source Data                                    • Hi-Fi TTS: A multi-speaker English speech
+   • AISHELL-3: A multi-speaker Mandarin                 corpus with reading style for TTS. Source:
+     speech corpus for TTS. Source: https://             https://openslr.org/109/
+     www.openslr.org/93/
+                                                       • HQ-Conversations: A mutli-speaker Man-
+   • CASIA: An emotional multi-speaker Man-              darin speech corpus with conversational
+     darin speech corpus containing six emotions         style for TTS. Source:    https://www.
+     for TTS. Source: https://gitcode.com/               magicdatatech.com/iscslp-2024/
+     open-source-toolkit/bc5e6
+                                                       • IEMOCAP: An emotional multi-speaker En-
+   • CREMA-D: An emotional multi-speaker                 glish speech corpus containing five emotions
+     multilingual speech corpus containing               for TTS. Source: https://sail.usc.edu/
+     six emotions and four intensity levels              iemocap/iemocap_release.htm
+     for TTS. Source:https://github.com/
+     CheyneyComputerScience/CREMA-D                    • JL-Corpus: An emotional multi-speaker En-
+                                                         glish speech corpus containing five primary
+   7
+     https://huggingface.co/FunAudioLLM/                 emotions and five secondary emotions for
+SenseVoiceSmall
+   8
+     https://huggingface.co/Qwen/Qwen2.                  TTS. Source: https://www.kaggle.com/
+5-72B-Instruct                                           datasets/tli725/jl-corpus
+                1e6   Speaking Rate Distribution for English                          1e6    Pitch Distribution for Male Speakers                          1e6   Duration Distribution for English
+            4                                                                     8
+                                                                                  7
+            3                                                                     6                                                                    2
+                                                                                  5
+Frequency   2                                                         Frequency   4                                                        Frequency
+                                                                                  3                                                                    1
+            1                                                                     2
+                                                                                  1
+            0 0       1      2      3       4       5      6      7               0 0        100         200        300      400     500               0 0       5        10          15         20   25
+                              Syllables per Second                                                         Pitch (Mel)                                                     Duration (s)
+                1e6   Speaking Rate Distribution for Chinese                          1e6   Pitch Distribution for Female Speakers                         1e6   Duration Distribution for Chinese
+            4                                                                                                                                          4
+                                                                                  4
+
+            3                                                                                                                                          3
+                                                                                  3
+
+Frequency   2                                                         Frequency   2                                                        Frequency   2
+
+            1                                                                     1                                                                    1
+
+            0 0       1      2         3       4      5    6      7               0 0        100       200      300         400      500               0 0       5        10         15         20    25
+                                 Syllables per Second                                                   Pitch (Mel)                                                        Duration (s)
+
+                                                                      Figure 7: Data distribution of VoxBox.
+
+
+
+
+                                                               Figure 8: Gender and age distribution of VoxBox.
+
+
+            • Librispeech: A mutli-speaker English                                                                       for TTS. Source: https://affective-meld.
+              speech corpus with reading style for TTS.                                                                  github.io/
+              Source: https://tensorflow.google.cn/
+              datasets/catalog/librispeech                                                                            • MER2023: An emotional mutli-speaker
+                                                                                                                        Mandarin speech corpus containing six
+            • LibriTTS-R: Sound quality improved ver-                                                                   emotions for TTS. Source: http://www.
+              sion of the LibriTTS (Zen et al., 2019) cor-                                                              merchallenge.cn/datasets
+              pus which is a large-scale corpus of En-
+              glish speech for TTS. Source: https://www.                                                              • MLS-English: A mutli-speaker English
+              openslr.org/141/                                                                                          speech corpus for TTS. Source: https://
+            • M3ED: An emotional mutli-speaker Man-                                                                     www.openslr.org/94/
+              darin speech corpus containing seven emo-
+              tions for TTS. Source: https://github.                                                                  • MSP-Podcast: An emotional mutli-speaker
+              com/aim3-ruc/rucm3ed                                                                                      English speech corpus containing eight
+                                                                                                                        emotions for TTS. Source: https://ecs.
+            • MAGICDATA: A mutli-speaker Mandarin                                                                       utdallas.edu/research/researchlabs/
+              speech corpus with conversational style for                                                               msp-lab/MSP-Podcast.html
+              TTS. Source: https://openslr.org/68/
+            • MEAD: An emotional mutli-speaker English                                                                • NCSSD-CL: A mutli-speaker bilingual
+              speech corpus containing eight emotions and                                                               speech corpus for TTS. Source: https://
+              three intensity levels for TTS. Source: https:                                                            github.com/uniBruce/Mead
+              //github.com/uniBruce/Mead
+                                                                                                                      • NCSSD-RL: A mutli-speaker bilingual
+            • MELD: An emotional mutli-speaker English                                                                  speech corpus for TTS. Source: https://
+              speech corpus containing seven emotions                                                                   github.com/uniBruce/Mead
+    • RAVDESS: An emotional mutli-speaker
+      English   speech   corpus    containing
+      eight emotions and two intensity lev-
+      els for TTS. Source:      https://www.
+      kaggle.com/datasets/uwrfkaggler/
+      ravdess-emotional-speech-audio
+
+    • SAVEE: An emotional mutli-speaker
+      English speech corpus containing seven
+      emotions for TTS. Source:       https:
+      //www.kaggle.com/datasets/ejlok1/
+      surrey-audiovisual-expressed-emotion-savee
+
+    • TESS: An emotional mutli-speaker English
+      speech corpus containing seven emotions
+      for TTS. Source: https://tspace.library.
+      utoronto.ca/handle/1807/24487
+
+    • VCTK: A mutli-speaker English speech cor-
+      pus for TTS. Source: https://datashare.
+      ed.ac.uk/handle/10283/2651
+
+    • WenetSpeech4TTS: A large-scale mutli-
+      speaker Mandarin speech corpus for TTS.
+      Source:      https://wenetspeech4tts.
+      github.io/wenetspeech4tts/
+
+F    SparkVox: A Toolkit for Speech
+     Related Tasks
+The training code for Spark-TTS will be inte-
+grated into the open-source SparkVox framework.
+SparkVox is a training framework designed for
+speech-related tasks, supporting a variety of ap-
+plications, including: vocoder, codec, TTS, and
+speech understanding. Additionally, SparkVox pro-
+vides various file processing tools for both text
+and speech data, facilitating efficient data handling.
+Its simplified framework structure is illustrated in
+Fig. 9.
+                                                              SparkVox
+
+
+ bins      egs                                                            sparkvox
+
+
+                                                  tools                                      utils            models
+
+
+                         tokenizers                features                predictor
+  train
+           tasks                                                                           log_utils
+train_pl
+                                                                                           file_utils
+                                                                                                        TTS   vocoder   codec
+                                                             ssl                          train_utils
+                     audio         bpe       acoustic
+                                                          features       age     gender   audio_utils
+                   tokenizers   tokenizers    signals
+                                                           extract
+
+
+
+                                         Figure 9: Framework of SparkVox.
+                                 Table 12: VoxBox Statistics
+
+                                                                      Duration (h)
+Data                                  Language #Utterance
+                                                               Male    Female        Total
+AISHELL-3 (Shi et al., 2020)          Chinese     88,035     16.01     69.61     85.62
+CASIA (Tao et al., 2008)              Chinese     857        0.25      0.2       0.44
+Emilia-CN (He et al., 2024)           Chinese     15,629,241 22,017.56 12,741.89 34,759.45
+ESD (Zhou et al., 2021)               Chinese     16,101     6.69      7.68      14.37
+HQ-Conversations (Zhou et al., 2024a) Chinese     50,982     35.77     64.23     100
+M3ED (Zhao et al., 2022)              Chinese     253        0.04      0.06      0.1
+MAGICDATA (MagicData, 2019)           Chinese     609,474    360.31    393.81    754.13
+MER2023 (Lian et al., 2023)           Chinese     1,667      0.86      1.07      1.93
+NCSSD-CL-CN (Liu et al., 2024)        Chinese     98,628     53.83     59.21     113.04
+NCSSD-RC-CN (Liu et al., 2024)        Chinese     21,688     7.05      22.53     29.58
+WenetSpeech4TTS (Ma et al., 2024)     Chinese     8,856,480 7,504.19 4,264.3     11,768.49
+Total                                 Chinese     25,373,406 30,002.56 17,624.59 47,627.15
+CREMA-D (Cao et al., 2014)            English     809        0.3       0.27      0.57
+Dailytalk (Lee et al., 2023)          English     23,754     10.79     10.86     21.65
+EmiliaEN (He et al., 2024)            English     8,303,103 13,724.76 6,573.22 20,297.98
+EMNS (Noriy et al., 2023)             English     918        0         1.49      1.49
+EmoV-DB (Adigwe et al., 2018)         English     3,647      2.22      2.79      5
+Expresso (Nguyen et al., 2023)        English     11,595     5.47      5.39      10.86
+Gigaspeech (Chen et al., 2021)        English     6,619,339 4,310.19 2,885.66 7,195.85
+Hi-Fi TTS (Bakhturina et al., 2021)   English     323,911    133.31    158.38    291.68
+IEMOCAP (Busso et al., 2008)          English     2,423      1.66      1.31      2.97
+JL-Corpus (James et al., 2018)        English     893        0.26      0.26      0.52
+Librispeech (Panayotov et al., 2015)  English     230,865    393.95    367.67    761.62
+LibriTTS-R (Koizumi et al., 2023)     English     363,270    277.87    283.03    560.9
+MEAD (Wang et al., 2020)              English     3,767      2.26      2.42      4.68
+MELD (Poria et al., 2018)             English     5,100      2.14      1.94      4.09
+MLS-English (Pratap et al., 2020)     English     6,319,002 14,366.25 11,212.92 25,579.18
+MSP-Podcast (Martinez et al., 2020)   English     796        0.76      0.56      1.32
+NCSSD-CL-EN (Liu et al., 2024)        English     62,107     36.84     32.93     69.77
+NCSSD-RL-EN (Liu et al., 2024)        English     10,032     4.18      14.92     19.09
+RAVDESS (Livingstone and Russo, 2018) English     950        0.49      0.48      0.97
+SAVEE (Jackson and Haq, 2014)         English     286        0.15      0.15      0.31
+TESS (Yu et al., 2021)                English     1,956      0         1.15      1.15
+VCTK (Yamagishi et al., 2019)         English     44,283     16.95     24.51     41.46
+Total                                 English     22,332,806 33,290.8 21,582.31 54,873.11
+Overall Total                                     47,706,212 63,293.36 39,206.9   102,500.26
+

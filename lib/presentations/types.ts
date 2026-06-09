@@ -2,6 +2,7 @@ export interface Slide {
   slug: string;
   title: string;
   steps: number;
+  section?: string;
 }
 
 export function createSlideRegistry(slides: Slide[]) {

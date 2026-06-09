@@ -1,0 +1,204 @@
+{
+  "documents": [
+    {
+      "type": "presentation",
+      "slug": "voice-agents-deck",
+      "title": "Building Real-Time Voice Agents",
+      "path": "presentations/voice-agents/SLIDES.md",
+      "topics": ["voice-agents", "real-time", "presentations"]
+    },
+    {
+      "type": "blog-post",
+      "slug": "voice-agents-article-draft",
+      "title": "Future voice agents article",
+      "path": "presentations/voice-agents/research/summary.md",
+      "topics": ["voice-agents", "stt", "tts", "turn-taking", "webrtc"]
+    }
+  ],
+  "insights": [
+    {
+      "slug": "latency-budget-is-the-product",
+      "title": "Latency Budget Is The Product",
+      "path": "insights/INSIGHT_01_latency_budget_is_the_product.md",
+      "topics": ["latency", "voice-agents", "observability"],
+      "edges": [
+        {
+          "targetType": "insight",
+          "targetSlug": "endpointing-is-turn-taking",
+          "relation": "depends-on",
+          "strength": 3
+        },
+        {
+          "targetType": "insight",
+          "targetSlug": "streaming-stt-is-not-batch-stt",
+          "relation": "depends-on",
+          "strength": 3
+        },
+        {
+          "targetType": "insight",
+          "targetSlug": "tts-latency-is-architecture",
+          "relation": "depends-on",
+          "strength": 3
+        },
+        {
+          "targetType": "presentation",
+          "targetSlug": "voice-agents-deck",
+          "relation": "packs-into",
+          "strength": 3
+        }
+      ]
+    },
+    {
+      "slug": "endpointing-is-turn-taking",
+      "title": "Endpointing Is Turn-Taking",
+      "path": "insights/INSIGHT_02_endpointing_is_turn_taking.md",
+      "topics": ["vad", "endpointing", "turn-taking"],
+      "edges": [
+        {
+          "targetType": "insight",
+          "targetSlug": "barge-in-is-the-real-system-test",
+          "relation": "supports",
+          "strength": 3
+        },
+        {
+          "targetType": "insight",
+          "targetSlug": "voice-agent-eval-needs-multiple-metrics",
+          "relation": "supports",
+          "strength": 3
+        }
+      ]
+    },
+    {
+      "slug": "streaming-stt-is-not-batch-stt",
+      "title": "Streaming STT Is Not Batch STT",
+      "path": "insights/INSIGHT_03_streaming_stt_is_not_batch_stt.md",
+      "topics": ["stt", "streaming", "benchmarks"],
+      "edges": [
+        {
+          "targetType": "insight",
+          "targetSlug": "latency-budget-is-the-product",
+          "relation": "supports",
+          "strength": 3
+        },
+        {
+          "targetType": "insight",
+          "targetSlug": "voice-agent-eval-needs-multiple-metrics",
+          "relation": "supports",
+          "strength": 3
+        }
+      ]
+    },
+    {
+      "slug": "tts-latency-is-architecture",
+      "title": "TTS Latency Is Architecture",
+      "path": "insights/INSIGHT_04_tts_latency_is_architecture.md",
+      "topics": ["tts", "streaming", "latency"],
+      "edges": [
+        {
+          "targetType": "insight",
+          "targetSlug": "latency-budget-is-the-product",
+          "relation": "supports",
+          "strength": 3
+        },
+        {
+          "targetType": "insight",
+          "targetSlug": "barge-in-is-the-real-system-test",
+          "relation": "depends-on",
+          "strength": 2
+        }
+      ]
+    },
+    {
+      "slug": "transport-is-media-correctness",
+      "title": "Transport Is Media Correctness",
+      "path": "insights/INSIGHT_05_transport_is_media_correctness.md",
+      "topics": ["webrtc", "websocket", "transport"],
+      "edges": [
+        {
+          "targetType": "insight",
+          "targetSlug": "barge-in-is-the-real-system-test",
+          "relation": "supports",
+          "strength": 3
+        },
+        {
+          "targetType": "insight",
+          "targetSlug": "voice-agent-eval-needs-multiple-metrics",
+          "relation": "supports",
+          "strength": 2
+        }
+      ]
+    },
+    {
+      "slug": "barge-in-is-the-real-system-test",
+      "title": "Barge-In Is The Real System Test",
+      "path": "insights/INSIGHT_06_barge_in_is_the_real_system_test.md",
+      "topics": ["barge-in", "interruption", "conversation"],
+      "edges": [
+        {
+          "targetType": "insight",
+          "targetSlug": "endpointing-is-turn-taking",
+          "relation": "depends-on",
+          "strength": 3
+        },
+        {
+          "targetType": "insight",
+          "targetSlug": "transport-is-media-correctness",
+          "relation": "depends-on",
+          "strength": 2
+        }
+      ]
+    },
+    {
+      "slug": "native-speech-models-change-the-boundary",
+      "title": "Native Speech Models Change The Boundary",
+      "path": "insights/INSIGHT_07_native_speech_models_change_the_boundary.md",
+      "topics": ["native-speech", "speech-to-speech", "architecture"],
+      "edges": [
+        {
+          "targetType": "insight",
+          "targetSlug": "latency-budget-is-the-product",
+          "relation": "extends",
+          "strength": 2
+        },
+        {
+          "targetType": "insight",
+          "targetSlug": "barge-in-is-the-real-system-test",
+          "relation": "extends",
+          "strength": 2
+        },
+        {
+          "targetType": "presentation",
+          "targetSlug": "voice-agents-deck",
+          "relation": "packs-into",
+          "strength": 2
+        }
+      ]
+    },
+    {
+      "slug": "voice-agent-eval-needs-multiple-metrics",
+      "title": "Voice Agent Eval Needs Multiple Metrics",
+      "path": "insights/INSIGHT_08_voice_agent_eval_needs_multiple_metrics.md",
+      "topics": ["evaluation", "observability", "benchmarks"],
+      "edges": [
+        {
+          "targetType": "insight",
+          "targetSlug": "latency-budget-is-the-product",
+          "relation": "operationalizes",
+          "strength": 3
+        },
+        {
+          "targetType": "blog-post",
+          "targetSlug": "voice-agents-article-draft",
+          "relation": "packs-into",
+          "strength": 3
+        },
+        {
+          "targetType": "presentation",
+          "targetSlug": "voice-agents-deck",
+          "relation": "packs-into",
+          "strength": 3
+        }
+      ]
+    }
+  ]
+}

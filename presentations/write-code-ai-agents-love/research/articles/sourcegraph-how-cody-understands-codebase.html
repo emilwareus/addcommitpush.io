@@ -1,0 +1,1858 @@
+<!DOCTYPE html><!-- Last Published: Tue Mar 31 2026 14:54:47 GMT+0000 (Coordinated Universal Time) --><html data-wf-domain="webflow.sourcegraph.com" data-wf-page="6751f86bb527ce80e7f4b2cc" data-wf-site="673f71b4ebbb99190437de75" data-wf-intellimize-customer-id="117411137" lang="en" data-wf-collection="6751f86bb527ce80e7f4b23c" data-wf-item-slug="how-cody-understands-your-codebase"><head><meta charset="utf-8"/><link href="https://cdn.prod.website-files.com" rel="preconnect" crossorigin="anonymous"/><title>How Cody understands your codebase | Sourcegraph Blog</title><meta content="Context is key for AI coding assistants. Cody uses several methods of context fetching to provide answers and code relevant to enterprise-scale codebases." name="description"/><meta content="How Cody understands your codebase | Sourcegraph Blog" property="og:title"/><meta content="Context is key for AI coding assistants. Cody uses several methods of context fetching to provide answers and code relevant to enterprise-scale codebases." property="og:description"/><meta content="https://cdn.prod.website-files.com/6750d0c3f154999a486dade7/6786d701afd06319e40cffc8_how-cody-understands-you-code-og.avif" property="og:image"/><meta content="How Cody understands your codebase | Sourcegraph Blog" property="twitter:title"/><meta content="Context is key for AI coding assistants. Cody uses several methods of context fetching to provide answers and code relevant to enterprise-scale codebases." property="twitter:description"/><meta content="https://cdn.prod.website-files.com/6750d0c3f154999a486dade7/6786d701afd06319e40cffc8_how-cody-understands-you-code-og.avif" property="twitter:image"/><meta property="og:type" content="website"/><meta content="summary_large_image" name="twitter:card"/><meta content="width=device-width, initial-scale=1" name="viewport"/><link href="https://cdn.prod.website-files.com/673f71b4ebbb99190437de75/css/sourcegraph-staging.shared.c10a48084.min.css" rel="stylesheet" type="text/css" integrity="sha384-wQpICEdmSow2B1NWmuFpSaUEJOrUNU1YeyrML/tlsaIbmJnNFPhXppRPbSRP0H+7" crossorigin="anonymous"/><script type="text/javascript">!function(o,c){var n=c.documentElement,t=" w-mod-";n.className+=t+"js",("ontouchstart"in o||o.DocumentTouch&&c instanceof DocumentTouch)&&(n.className+=t+"touch")}(window,document);</script><link href="https://cdn.prod.website-files.com/673f71b4ebbb99190437de75/679a3e4d8b05843d7a83fb51_favicon.png" rel="shortcut icon" type="image/x-icon"/><link href="https://cdn.prod.website-files.com/673f71b4ebbb99190437de75/679a361ed2aff34e606e50d2_Favicon-1.png" rel="apple-touch-icon"/><link href="https://sourcegraph.com/blog/how-cody-understands-your-codebase" rel="canonical"/><style>.anti-flicker, .anti-flicker * {visibility: hidden !important; opacity: 0 !important;}</style><style>[data-wf-hidden-variation], [data-wf-hidden-variation] * {
+        display: none !important;
+      }</style><script type="text/javascript">localStorage.removeItem('intellimize_opt_out_117411137'); if (localStorage.getItem('intellimize_data_tracking_type') !== 'always') { localStorage.setItem('intellimize_data_tracking_type', 'always'); }</script><script type="text/javascript">(function(e){var s={r:[]};e.wf={r:s.r,ready:t=>{s.r.push(t)}}})(window)</script><script type="text/javascript">(function(e,t,p){var n=document.documentElement,s={p:[],r:[]},u={p:s.p,r:s.r,push:function(e){s.p.push(e)},ready:function(e){s.r.push(e)}};e.intellimize=u,n.className+=" "+p,setTimeout(function(){n.className=n.className.replace(RegExp(" ?"+p),"")},t)})(window, 4000, 'anti-flicker')</script><link href="https://cdn.intellimize.co/snippet/117411137.js" rel="preload" as="script"/><script type="text/javascript">var wfClientScript=document.createElement("script");wfClientScript.src="https://cdn.intellimize.co/snippet/117411137.js",wfClientScript.async=!0,wfClientScript.onerror=function(){document.documentElement.className=document.documentElement.className.replace(RegExp(" ?anti-flicker"),"")},document.head.appendChild(wfClientScript);</script><link href="https://api.intellimize.co" rel="preconnect" crossorigin="true"/><link href="https://log.intellimize.co" rel="preconnect" crossorigin="true"/><link href="https://117411137.intellimizeio.com" rel="preconnect"/><link href="rss.xml" rel="alternate" title="RSS Feed" type="application/rss+xml"/><style>
+    .w-richtext [class^="hljs-"] {
+      color: inherit !important;
+    }
+  </style>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-TB4NLS7');</script>
+<!-- End Google Tag Manager -->
+
+<!-- PostHog Tracking -->
+<script>
+    !function(t,e){var o,n,p,r;e.__SV||(window.posthog && window.posthog.__loaded)||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init Rr Mr fi Or Ar ci Tr Cr capture Mi calculateEventProperties Lr register register_once register_for_session unregister unregister_for_session Hr getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSurveysLoaded onSessionId getSurveys getActiveMatchingSurveys renderSurvey displaySurvey canRenderSurvey canRenderSurveyAsync identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty Ur jr createPersonProfile zr kr Br opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing get_explicit_consent_status is_capturing clear_opt_in_out_capturing Dr debug M Nr getPageViewId captureTraceFeedback captureTraceMetric $r".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+    posthog.init('phc_9JYIyauwwM4NGtas1N3g9m35NewZlSvKzgz35I9GFUw', {
+        api_host: 'https://us.i.posthog.com',
+        defaults: '2025-05-24',
+        person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
+    })
+</script>
+<!-- End PostHog Tracking -->
+
+<!-- Load js-cookie library for telemetry. See https://github.com/js-cookie/js-cookie -->
+<script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
+
+<!-- Internal Sourcegraph v2 telemetry export -->
+<script>
+    /**
+    * Record a telemetry event to Sourcegraph.com.
+    */
+    function logEvent(feature, action, privateMetadata = {}) {
+        privateMetadata.path = window.location.pathname
+        const event = {
+            feature,
+            action,
+            source: {
+                client: 'about.web',
+                clientVersion: '2.0 (Webflow)',
+            },
+            timestamp: new Date(Date.now()).toISOString(),
+            parameters: {
+                version: 0,
+                privateMetadata,
+            },
+            marketingTracking: {
+                url: window.location.href,
+            },
+        }
+
+        fetch('https://sourcegraph.com/.api/graphql?ExportTelemetryEventsFromMarketingHome', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Accept: 'application/json',
+            },
+            body: JSON.stringify({
+                query: `
+                    mutation ExportTelemetryEventsFromAbout($events: [TelemetryEventInput!]!) {
+                        telemetry {
+                            recordEvents(events: $events) {
+                                alwaysNil
+                            }
+                        }
+                    }`,
+                variables: { events: [event] },
+            }),
+        }).catch(() => {
+            // Swallow errors.
+        })
+    }
+
+    /**
+    * Log page view events.
+    */
+    window.addEventListener('load', () => {    
+        logEvent('aboutPage', 'view')
+    })
+
+    /**
+    * Log form submissions.
+    */
+    document.addEventListener('submit', () => {
+        logEvent('aboutPage.form', 'submit')
+    })
+
+    /**
+    * Log button and link clicks.
+    */
+    document.addEventListener('click', (event) => {
+        if (event.target.tagName === 'A') {
+            logEvent('aboutPage.link', 'click', { text: event.target.textContent })
+        }
+        if (event.target.tagName === 'BUTTON') {
+            logEvent('aboutPage.button', 'click', { text: event.target.textContent })
+        }
+    })
+
+    const ANONYMOUS_USER_ID_KEY = 'sourcegraphAnonymousUid'
+
+    /**
+    * Gets the anonymous user ID of the user from cookies.
+    * If user doesn't have an anonymous user ID yet, a new one is generated.
+    */
+    let anonymousUserID = Cookies.get(ANONYMOUS_USER_ID_KEY)
+    if (!anonymousUserID) {
+        anonymousUserID = crypto.randomUUID()
+    }
+
+    Cookies.set(ANONYMOUS_USER_ID_KEY, anonymousUserID, {
+        // 365 days expiry, but renewed on activity.
+        expires: 365,
+        // Enforce HTTPS
+        secure: true,
+        // We only read the cookie with JS so we don't need to send it cross-site nor on initial page requests.
+        // However, we do need it on page redirects when users sign up via OAuth, hence using the Lax policy.
+        // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite
+        sameSite: 'Lax',
+        // Specify the Domain attribute to ensure subdomains (sourcegraph.com) can receive this cookie.
+        // https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#define_where_cookies_are_sent
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        domain: window.location.hostname,
+    })
+</script>
+
+<!-- Start HockeyStack -->
+  <script>
+    var hsscript = document.createElement("script");
+    hsscript.id = "wphs";
+    hsscript.src = "https://cdn.jsdelivr.net/npm/hockeystack@latest/hockeystack.min.js";
+    hsscript.async = 1;
+    hsscript.dataset.apikey = "7ffcacf74979022d179c7d968867a9";
+    hsscript.dataset.cookieless = 1;
+    hsscript.dataset.autoIdentify = 1;
+    document.getElementsByTagName('head')[0].append(hsscript);
+  </script>
+<!-- End HockeyStack -->
+
+<!-- Swiper Code -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+<!-- End Swiper Code -->
+
+<script id="warmly-script-loader" src="https://opps-widget.getwarmly.com/warmly.js?clientId=393e5a0eaa0f6f0799e57d88ae4afab8" defer></script> 
+<script>
+    document.addEventListener('readystatechange', function() {
+      if (document.readyState === 'complete') {
+        setTimeout(function() {
+          document.querySelectorAll('.w-richtext code').forEach(function(el) {
+            el.textContent = el.textContent;
+          });
+        }, 2000);
+      }
+    });
+  </script><style>
+  .w-richtext img {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    display: block;
+  }
+
+  .w-richtext .hljs-attr,
+  .w-richtext .hljs-number,
+  .w-richtext .hljs-meta,
+  .w-richtext .hljs-comment,
+  .w-richtext .hljs-string,
+  .w-richtext .hljs-keyword,
+  .w-richtext .hljs-section,
+  .w-richtext .hljs-symbol,
+  .w-richtext .hljs-built_in {
+    color: inherit !important;
+  }
+  </style><script src="https://cdn.prod.website-files.com/673f71b4ebbb99190437de75%2F66ba5a08efe71070f98dd10a%2F68911443242b4cb8ad84e254%2Fe82ccdyys1-1.1.1.js" type="text/javascript"></script></head><body><div class="page-wrapper"><div class="prevent-delete"><div class="cover-absolute"></div><div class="screen-reader-only"></div><div class="youtube-modal_component is-active"></div></div><div class="global-styles"><div class="gtag-script w-embed w-iframe"><!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TB4NLS7"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) --></div><div class="variable-styles w-embed"><style>
+:root {
+	/*font styles */
+  --text-transform--none: none;
+  --text-transform--uppercase: uppercase;
+  --text-transform--capitalize: capitalize;
+  --text-transform--lowercase: lowercase;
+  --text-transform--inherit: inherit;
+}
+/*section padding*/
+[data-padding-top="none"] { padding-top: var(--padding-vertical--none); }
+[data-padding-bottom="none"] { padding-bottom: var(--padding-vertical--none); }
+[data-padding-top="small"] { padding-top: var(--padding-vertical--small); }
+[data-padding-bottom="small"] { padding-bottom: var(--padding-vertical--small); }
+[data-padding-top="medium"] { padding-top: var(--padding-vertical--medium); }
+[data-padding-bottom="medium"] { padding-bottom: var(--padding-vertical--medium); }
+[data-padding-top="large"] { padding-top: var(--padding-vertical--large); }
+[data-padding-bottom="large"] { padding-bottom: var(--padding-vertical--large); }
+/* Container Sizes */
+[data-container="none"] {max-width: none;}
+[data-container="large"] {max-width: var(--container--large);}
+[data-container="medium"] {max-width: var(--container--medium);}
+[data-container="small"] {max-width: var(--container--small);}
+[data-container="xsmall"] {max-width: var(--container--xsmall);}
+[data-container="xlarge"] {max-width: var(--container--xlarge);}
+/* Background Colors */
+[data-background-color="transparent"] {background-color: transparent;}
+[data-background-color="primary"] {background-color: var(--_new-variables-dark---background-color--background-primary-2);}
+[data-background-color="secondary"] {background-color: var(--background-color--background-secondary);}
+[data-background-color="tertiary"] {background-color: var(--background-color--background-tertiary);}
+[data-background-color="special"] {background-color: #e2fff8;}
+[data-background-color="alternate"] {
+	background-color: var(--background-color--background-alternate);
+	color: var(--text-color--text-alternate);
+}
+[data-background-color="alternate"] :not([data-background-color="primary"]) .text-color-secondary{
+	color: var(--text-color--text-alternate);
+}
+[data-background-color="dark"] {
+	background-color: var(--background-color--background-dark);
+	color: var(--text-color--text-alternate);
+}
+[data-background-color="dark"] :not([data-background-color="primary"]) .text-color-secondary{
+	color: var(--text-color--text-alternate);
+}
+[data-background-color="gradient"] {
+background: linear-gradient(0deg, rgba(249, 250, 251, .5), rgba(249, 250, 251, .8), rgba(249, 250, 251, 1)),
+linear-gradient(90deg, rgba(112, 72, 232, 0.7) 0%, rgba(74, 193, 232, 0.7) 32.21%, rgba(161, 18, 255, 0.7) 65.39%, rgba(255, 85, 67, 0.7) 104.43%),
+linear-gradient(175.9deg, #F9FAFB 31.37%, rgba(249, 250, 251, 0.818127) 70.39%, rgba(249, 250, 251, 0.6) 96.66%);
+}
+[data-background-color="semi-transparent"] {
+background-color: #F8F8F80A;
+}
+</style></div><div class="structure-styles w-embed"><style>
+
+/* Ensure all elements inherit the color from its parent */
+body * {
+    color: inherit;
+    font-feature-settings: 'ss03' on, 'cv05' on, 'cv06' on, 'cv09' on, 'cv10' on;
+    font-synthesis: none;
+}
+
+a,
+.w-input,
+.w-select,
+.w-tab-link,
+.w-nav-link,
+.w-slider-arrow-left,
+.w-slider-arrow-right,
+.w-dropdown-btn,
+.w-dropdown-toggle,
+.w-dropdown-link {
+  color: inherit;
+  text-decoration: inherit;
+  font-size: inherit;
+}
+/*adds underline to links without a class or the .text-style-link class */
+:is(.text-style-link, a:not([class])), :where(.w-richtext, p) a {
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
+	text-decoration-thickness: 0.1em;
+	color: var(--link-color--link-primary);
+   text-decoration-color: var(--link-color--link-primary);
+}
+
+/* Focus state style for keyboard navigation for the focusable elements */
+*[tabindex]:focus-visible,
+  input[type="file"]:focus-visible {
+   outline: 0.125rem solid #4d65ff;
+   outline-offset: 0.125rem;
+}
+</style>
+<a href="https://www.composite.global/" 
+   style="position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden;" 
+   rel="follow" 
+   title="Site built by Composite – Webflow Agency NYC & UX Design Agency NYC">
+   UX Design & Webflow Agency NYC | Composite Global
+</a>
+<style>
+/* Get rid of top margin on first element in any rich text element */
+.w-richtext > :not(div):first-child, .w-richtext > div:first-child > :first-child {
+  margin-top: 0 !important;
+}
+
+/* Get rid of bottom margin on last element in any rich text element */
+.w-richtext>:last-child, .w-richtext ol li:last-child, .w-richtext ul li:last-child {
+	margin-bottom: 0 !important;
+}
+
+/* Prevent all click and hover interaction with an element */
+.pointer-events-off {
+	pointer-events: none;
+}
+
+/* Enables all click and hover interaction with an element */
+.pointer-events-on {
+  pointer-events: auto;
+}
+
+/* Create a class of .div-square which maintains a 1:1 dimension of a div */
+.div-square::after {
+	content: "";
+	display: block;
+	padding-bottom: 100%;
+}
+
+/* Make sure containers never lose their center alignment */
+.container-medium,.container-small, .container-large {
+	margin-right: auto !important;
+  margin-left: auto !important;
+}
+
+
+/* Apply "..." after 3 lines of text */
+.text-style-3lines {
+	display: -webkit-box;
+	overflow: hidden;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+}
+
+/* Apply "..." after 2 lines of text */
+.text-style-2lines {
+	display: -webkit-box;
+	overflow: hidden;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+}
+
+/* Adds inline flex display */
+.display-inlineflex {
+  display: inline-flex;
+}
+
+/* These classes are never overwritten */
+.hide {
+  display: none !important;
+}
+
+@media screen and (max-width: 991px) {
+    .hide, .hide-tablet {
+        display: none !important;
+    }
+}
+  @media screen and (max-width: 767px) {
+    .hide-mobile-landscape{
+      display: none !important;
+    }
+}
+  @media screen and (max-width: 479px) {
+    .hide-mobile{
+      display: none !important;
+    }
+}
+ 
+.margin-0 {
+  margin: 0rem !important;
+}
+  
+.padding-0 {
+  padding: 0rem !important;
+}
+
+.spacing-clean {
+padding: 0rem !important;
+margin: 0rem !important;
+}
+
+.margin-top {
+  margin-right: 0rem !important;
+  margin-bottom: 0rem !important;
+  margin-left: 0rem !important;
+}
+
+.padding-top {
+  padding-right: 0rem !important;
+  padding-bottom: 0rem !important;
+  padding-left: 0rem !important;
+}
+  
+.margin-right {
+  margin-top: 0rem !important;
+  margin-bottom: 0rem !important;
+  margin-left: 0rem !important;
+}
+
+.padding-right {
+  padding-top: 0rem !important;
+  padding-bottom: 0rem !important;
+  padding-left: 0rem !important;
+}
+
+.margin-bottom {
+  margin-top: 0rem !important;
+  margin-right: 0rem !important;
+  margin-left: 0rem !important;
+}
+
+.padding-bottom {
+  padding-top: 0rem !important;
+  padding-right: 0rem !important;
+  padding-left: 0rem !important;
+}
+
+.margin-left {
+  margin-top: 0rem !important;
+  margin-right: 0rem !important;
+  margin-bottom: 0rem !important;
+}
+  
+.padding-left {
+  padding-top: 0rem !important;
+  padding-right: 0rem !important;
+  padding-bottom: 0rem !important;
+}
+  
+.margin-horizontal {
+  margin-top: 0rem !important;
+  margin-bottom: 0rem !important;
+}
+
+.padding-horizontal {
+  padding-top: 0rem !important;
+  padding-bottom: 0rem !important;
+}
+
+.margin-vertical {
+  margin-right: 0rem !important;
+  margin-left: 0rem !important;
+}
+  
+.padding-vertical {
+  padding-right: 0rem !important;
+  padding-left: 0rem !important;
+}
+
+/* Apply "..." at 100% width */
+.truncate-width { 
+		width: 100%; 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+}
+/* Removes native scrollbar */
+.no-scrollbar {
+    -ms-overflow-style: none;
+    overflow: -moz-scrollbars-none; 
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+button {
+	background-color: unset;
+	padding: unset;
+	text-align: inherit;
+}
+button:not(:disabled) {
+	cursor: pointer;
+}
+.wf-design-mode .clickable_component {
+	z-index: 0;
+}
+.clickable_component a[href="#"] {
+	display: none;
+}
+.clickable_component a[href="#"] ~ button {
+	display: block;
+}
+section {position: relative;}
+</style></div><div class="responsive-styles w-embed"><style>
+/* desktop */
+:root {
+	/* custom */
+}
+/* tablet */
+@media screen and (max-width: 991px) {
+	:root {
+		/* custom */
+		--padding-horizontal--main: 2rem;
+		/* adaptive sizes */
+		--size--2rem: 1.75rem;
+		--size--2-5rem: 2.25rem;
+		--size--3rem: 2.5rem;
+		--size--3-5rem: 2.75rem;
+		--size--4rem: 3rem;
+		--size--4-5rem: 3.5rem;
+		--size--5rem: 4rem;
+		--size--5-5rem: 4.5rem;
+		--size--6rem: 5rem;
+		--size--6-5rem: 5.25rem;
+		--size--7rem: 5.5rem;
+		--size--7-5rem: 6rem;
+		--size--8rem: 6.5rem;
+		--size--8-5rem: 6.75rem;
+		--size--9rem: 7rem;
+		--size--9-5rem: 7.5rem;
+		--size--10rem: 8rem;
+		--size--11rem: 9rem;
+		--size--12rem: 10rem;
+		--size--13rem: 11rem;
+		--size--14rem: 12rem;
+		--size--15rem: 13rem;
+		--size--16rem: 14rem;
+	}
+}
+/* landscape */
+@media screen and (max-width: 767px) {
+	:root {
+		/* custom */
+		--padding-horizontal--main: 1rem;
+		/* adaptive sizes */
+		--size--2-5rem: 2rem;
+		--size--3rem: 2.25rem;
+		--size--3-5rem: 2.375rem;
+		--size--4rem: 2.5rem;
+		--size--4-5rem: 2.75rem;
+		--size--5rem: 3rem;
+		--size--5-5rem: 3.25rem;
+		--size--6rem: 3.5rem;
+		--size--6-5rem: 3.75rem;
+		--size--7rem: 4rem;
+		--size--7-5rem: 4.25rem;
+		--size--8rem: 4.5rem;
+		--size--8-5rem: 4.75rem;
+		--size--9rem: 5rem;
+		--size--9-5rem: 5.25rem;
+		--size--10rem: 5.5rem;
+		--size--11rem: 5.75rem;
+		--size--12rem: 6rem;
+		--size--13rem: 6.5rem;
+		--size--14rem: 7rem;
+		--size--15rem: 7.5rem;
+		--size--16rem: 8rem;
+	}
+}
+/* portrait */
+@media screen and (max-width: 479px) {
+	:root {
+		/* custom */
+	}
+}
+</style></div><div class="custom-styles w-embed"><!-- Keep this css code to improve the font quality-->
+<style>
+  * {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -o-font-smoothing: antialiased;
+  -webkit-appearance:none;
+}
+</style>
+<style>
+blockquote strong {
+  font-weight: 700 !important;
+}
+
+p strong {
+  font-weight: 700 !important;
+}
+
+.hljs-built_in, .hljs-link, .hljs-literal, .hljs-meta, .hljs-number, .hljs-params, .hljs-type {
+  color: inherit !important;
+}
+
+</style>
+
+<style>
+
+/* COMPONENTS CODE */
+/*Hide parent if it has no children*/
+[data-hide-if-empty]:empty,
+[data-hide-if-empty]:not(:has(> *:not(.w-condition-invisible))) {
+ display: none;
+}
+
+/* hide section if it has no cms items */
+[data-cms-check="true"]:not(:has(.w-dyn-item)) {
+	display: none;
+}
+
+[class*="balance"] {
+	text-wrap: balance;
+}
+
+/*clear styles in component rich text*/
+[data-rich-text-inherit] :is(h1, h2, h3, h4, h5, h6, p, blockquote, ul, ol, li){
+	font-weight: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+}
+[data-rich-text-inherit] :is(h1, h2, h3, h4) :is(strong){
+	background: linear-gradient(340deg,#d62687 14.97%,#820dde 30.88%,#460778 47.49%);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -webkit-background-clip: text;
+  font-weight: inherit;
+}
+
+.button_component[data-button-small="true"]{
+	padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  font-size: 0.875rem;
+}
+[data-hide-if-empty]:empty,
+[data-hide-if-empty]:not(:has(> :not(.w-condition-invisible))),
+[data-hide-if-empty-cms]:not(:has(.w-dyn-item)) {
+	display: none !important;
+}
+.button_component:hover .button_icon {transform: translateX(0rem);}
+.button_component:hover .button_icon {transform: translateX(0.25rem);}
+/*dynamic grid */
+@media screen and (min-width: 768px) {
+  .card-grid-dynamic_slot-2 > :nth-child(3n +1) {
+     grid-row-start: span 2;
+     grid-row-end: span 2;
+     grid-column-start: span 2;
+     grid-column-end: span 2;
+  }
+}
+
+</style></div><div class="hubspot-styles w-embed"><style>
+
+/* All paragraph elements inside Hubspot form */
+.hs-form>p {
+ margin-top:1rem;
+ margin-bottom:1rem;
+ }
+ 
+ /* Set margin right 0 for input wrapper */
+ .hs-form .input {
+ margin-right: 0 !important;
+ }
+
+/* Max width of fieldset element inside form */
+.hs-form>fieldset {
+ max-width: 100% !important;
+ }
+
+/* Form Input */
+.hs-input {
+ width: 100% !important;
+ }
+
+/* Radio Inputs */
+.hs-input[type=radio] {
+ width: auto !important;
+ margin-right: 0.5rem;
+ min-height: auto !important;
+}
+
+/* Checkbox Labels */
+.hs-form-checkbox>label {
+font-weight: 400 !important;
+}
+
+/* Error messages label margin */
+.hs-error-msgs>label {
+ margin-bottom: 0px !important;
+ }
+
+
+/*Custom Checkbox*/
+.hs-input[type=checkbox] {
+  width: 1rem !important;
+  height: 1rem !important;
+  margin-right: 0.5rem !important;
+  min-height: auto !important;
+}
+
+.hs-form-booleancheckbox-display>span {
+ margin-left: 0 !important;
+ }
+
+</style></div></div><nav data-wf--global-nav--variant="base" class="nav"><div class="nav-main"><div class="padding-global global-nav"><div class="w-layout-blockcontainer container-xlarge is-relative w-container"><div class="nav-main_content"><div class="nav-main_left-col"><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:a0ad88b8-2f42-7483-e091-f101a5dde2bf" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="a0ad88b8-2f42-7483-e091-f101a5dde2bf" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="/" class="nav-main_logo-link w-inline-block"><img src="https://cdn.prod.website-files.com/673f71b4ebbb99190437de75/67917518352105f18532c234_Group%203.svg" loading="eager" width="Auto" height="Auto" alt="Sourcegraph" id="regular-logo" class="nav-main_logo-img"/></a></div><div class="nav-main_center-col"><div class="nav-main_center-links"><div data-delay="0" data-hover="false" class="nav_dropdown w-dropdown"><div data-link="/amp" data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:bb3dc99e-f3fa-ee26-7d52-86f077be69f4" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="bb3dc99e-f3fa-ee26-7d52-86f077be69f4" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" class="nav_dropdown-toggle w-dropdown-toggle"><div class="nav_link-contents"><div class="nav_link-text-wrap"><div class="nav_link-text">Platform</div><div class="global-styles"><div class="gtag-script w-embed w-iframe"><!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TB4NLS7"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) --></div><div class="variable-styles w-embed"><style>
+:root {
+	/*font styles */
+  --text-transform--none: none;
+  --text-transform--uppercase: uppercase;
+  --text-transform--capitalize: capitalize;
+  --text-transform--lowercase: lowercase;
+  --text-transform--inherit: inherit;
+}
+/*section padding*/
+[data-padding-top="none"] { padding-top: var(--padding-vertical--none); }
+[data-padding-bottom="none"] { padding-bottom: var(--padding-vertical--none); }
+[data-padding-top="small"] { padding-top: var(--padding-vertical--small); }
+[data-padding-bottom="small"] { padding-bottom: var(--padding-vertical--small); }
+[data-padding-top="medium"] { padding-top: var(--padding-vertical--medium); }
+[data-padding-bottom="medium"] { padding-bottom: var(--padding-vertical--medium); }
+[data-padding-top="large"] { padding-top: var(--padding-vertical--large); }
+[data-padding-bottom="large"] { padding-bottom: var(--padding-vertical--large); }
+/* Container Sizes */
+[data-container="none"] {max-width: none;}
+[data-container="large"] {max-width: var(--container--large);}
+[data-container="medium"] {max-width: var(--container--medium);}
+[data-container="small"] {max-width: var(--container--small);}
+[data-container="xsmall"] {max-width: var(--container--xsmall);}
+[data-container="xlarge"] {max-width: var(--container--xlarge);}
+/* Background Colors */
+[data-background-color="transparent"] {background-color: transparent;}
+[data-background-color="primary"] {background-color: var(--_new-variables-dark---background-color--background-primary-2);}
+[data-background-color="secondary"] {background-color: var(--background-color--background-secondary);}
+[data-background-color="tertiary"] {background-color: var(--background-color--background-tertiary);}
+[data-background-color="special"] {background-color: #e2fff8;}
+[data-background-color="alternate"] {
+	background-color: var(--background-color--background-alternate);
+	color: var(--text-color--text-alternate);
+}
+[data-background-color="alternate"] :not([data-background-color="primary"]) .text-color-secondary{
+	color: var(--text-color--text-alternate);
+}
+[data-background-color="dark"] {
+	background-color: var(--background-color--background-dark);
+	color: var(--text-color--text-alternate);
+}
+[data-background-color="dark"] :not([data-background-color="primary"]) .text-color-secondary{
+	color: var(--text-color--text-alternate);
+}
+[data-background-color="gradient"] {
+background: linear-gradient(0deg, rgba(249, 250, 251, .5), rgba(249, 250, 251, .8), rgba(249, 250, 251, 1)),
+linear-gradient(90deg, rgba(112, 72, 232, 0.7) 0%, rgba(74, 193, 232, 0.7) 32.21%, rgba(161, 18, 255, 0.7) 65.39%, rgba(255, 85, 67, 0.7) 104.43%),
+linear-gradient(175.9deg, #F9FAFB 31.37%, rgba(249, 250, 251, 0.818127) 70.39%, rgba(249, 250, 251, 0.6) 96.66%);
+}
+[data-background-color="semi-transparent"] {
+background-color: #F8F8F80A;
+}
+</style></div><div class="structure-styles w-embed"><style>
+
+/* Ensure all elements inherit the color from its parent */
+body * {
+    color: inherit;
+    font-feature-settings: 'ss03' on, 'cv05' on, 'cv06' on, 'cv09' on, 'cv10' on;
+    font-synthesis: none;
+}
+
+a,
+.w-input,
+.w-select,
+.w-tab-link,
+.w-nav-link,
+.w-slider-arrow-left,
+.w-slider-arrow-right,
+.w-dropdown-btn,
+.w-dropdown-toggle,
+.w-dropdown-link {
+  color: inherit;
+  text-decoration: inherit;
+  font-size: inherit;
+}
+/*adds underline to links without a class or the .text-style-link class */
+:is(.text-style-link, a:not([class])), :where(.w-richtext, p) a {
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
+	text-decoration-thickness: 0.1em;
+	color: var(--link-color--link-primary);
+   text-decoration-color: var(--link-color--link-primary);
+}
+
+/* Focus state style for keyboard navigation for the focusable elements */
+*[tabindex]:focus-visible,
+  input[type="file"]:focus-visible {
+   outline: 0.125rem solid #4d65ff;
+   outline-offset: 0.125rem;
+}
+</style>
+<a href="https://www.composite.global/" 
+   style="position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden;" 
+   rel="follow" 
+   title="Site built by Composite – Webflow Agency NYC & UX Design Agency NYC">
+   UX Design & Webflow Agency NYC | Composite Global
+</a>
+<style>
+/* Get rid of top margin on first element in any rich text element */
+.w-richtext > :not(div):first-child, .w-richtext > div:first-child > :first-child {
+  margin-top: 0 !important;
+}
+
+/* Get rid of bottom margin on last element in any rich text element */
+.w-richtext>:last-child, .w-richtext ol li:last-child, .w-richtext ul li:last-child {
+	margin-bottom: 0 !important;
+}
+
+/* Prevent all click and hover interaction with an element */
+.pointer-events-off {
+	pointer-events: none;
+}
+
+/* Enables all click and hover interaction with an element */
+.pointer-events-on {
+  pointer-events: auto;
+}
+
+/* Create a class of .div-square which maintains a 1:1 dimension of a div */
+.div-square::after {
+	content: "";
+	display: block;
+	padding-bottom: 100%;
+}
+
+/* Make sure containers never lose their center alignment */
+.container-medium,.container-small, .container-large {
+	margin-right: auto !important;
+  margin-left: auto !important;
+}
+
+
+/* Apply "..." after 3 lines of text */
+.text-style-3lines {
+	display: -webkit-box;
+	overflow: hidden;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+}
+
+/* Apply "..." after 2 lines of text */
+.text-style-2lines {
+	display: -webkit-box;
+	overflow: hidden;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+}
+
+/* Adds inline flex display */
+.display-inlineflex {
+  display: inline-flex;
+}
+
+/* These classes are never overwritten */
+.hide {
+  display: none !important;
+}
+
+@media screen and (max-width: 991px) {
+    .hide, .hide-tablet {
+        display: none !important;
+    }
+}
+  @media screen and (max-width: 767px) {
+    .hide-mobile-landscape{
+      display: none !important;
+    }
+}
+  @media screen and (max-width: 479px) {
+    .hide-mobile{
+      display: none !important;
+    }
+}
+ 
+.margin-0 {
+  margin: 0rem !important;
+}
+  
+.padding-0 {
+  padding: 0rem !important;
+}
+
+.spacing-clean {
+padding: 0rem !important;
+margin: 0rem !important;
+}
+
+.margin-top {
+  margin-right: 0rem !important;
+  margin-bottom: 0rem !important;
+  margin-left: 0rem !important;
+}
+
+.padding-top {
+  padding-right: 0rem !important;
+  padding-bottom: 0rem !important;
+  padding-left: 0rem !important;
+}
+  
+.margin-right {
+  margin-top: 0rem !important;
+  margin-bottom: 0rem !important;
+  margin-left: 0rem !important;
+}
+
+.padding-right {
+  padding-top: 0rem !important;
+  padding-bottom: 0rem !important;
+  padding-left: 0rem !important;
+}
+
+.margin-bottom {
+  margin-top: 0rem !important;
+  margin-right: 0rem !important;
+  margin-left: 0rem !important;
+}
+
+.padding-bottom {
+  padding-top: 0rem !important;
+  padding-right: 0rem !important;
+  padding-left: 0rem !important;
+}
+
+.margin-left {
+  margin-top: 0rem !important;
+  margin-right: 0rem !important;
+  margin-bottom: 0rem !important;
+}
+  
+.padding-left {
+  padding-top: 0rem !important;
+  padding-right: 0rem !important;
+  padding-bottom: 0rem !important;
+}
+  
+.margin-horizontal {
+  margin-top: 0rem !important;
+  margin-bottom: 0rem !important;
+}
+
+.padding-horizontal {
+  padding-top: 0rem !important;
+  padding-bottom: 0rem !important;
+}
+
+.margin-vertical {
+  margin-right: 0rem !important;
+  margin-left: 0rem !important;
+}
+  
+.padding-vertical {
+  padding-right: 0rem !important;
+  padding-left: 0rem !important;
+}
+
+/* Apply "..." at 100% width */
+.truncate-width { 
+		width: 100%; 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+}
+/* Removes native scrollbar */
+.no-scrollbar {
+    -ms-overflow-style: none;
+    overflow: -moz-scrollbars-none; 
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+button {
+	background-color: unset;
+	padding: unset;
+	text-align: inherit;
+}
+button:not(:disabled) {
+	cursor: pointer;
+}
+.wf-design-mode .clickable_component {
+	z-index: 0;
+}
+.clickable_component a[href="#"] {
+	display: none;
+}
+.clickable_component a[href="#"] ~ button {
+	display: block;
+}
+section {position: relative;}
+</style></div><div class="responsive-styles w-embed"><style>
+/* desktop */
+:root {
+	/* custom */
+}
+/* tablet */
+@media screen and (max-width: 991px) {
+	:root {
+		/* custom */
+		--padding-horizontal--main: 2rem;
+		/* adaptive sizes */
+		--size--2rem: 1.75rem;
+		--size--2-5rem: 2.25rem;
+		--size--3rem: 2.5rem;
+		--size--3-5rem: 2.75rem;
+		--size--4rem: 3rem;
+		--size--4-5rem: 3.5rem;
+		--size--5rem: 4rem;
+		--size--5-5rem: 4.5rem;
+		--size--6rem: 5rem;
+		--size--6-5rem: 5.25rem;
+		--size--7rem: 5.5rem;
+		--size--7-5rem: 6rem;
+		--size--8rem: 6.5rem;
+		--size--8-5rem: 6.75rem;
+		--size--9rem: 7rem;
+		--size--9-5rem: 7.5rem;
+		--size--10rem: 8rem;
+		--size--11rem: 9rem;
+		--size--12rem: 10rem;
+		--size--13rem: 11rem;
+		--size--14rem: 12rem;
+		--size--15rem: 13rem;
+		--size--16rem: 14rem;
+	}
+}
+/* landscape */
+@media screen and (max-width: 767px) {
+	:root {
+		/* custom */
+		--padding-horizontal--main: 1rem;
+		/* adaptive sizes */
+		--size--2-5rem: 2rem;
+		--size--3rem: 2.25rem;
+		--size--3-5rem: 2.375rem;
+		--size--4rem: 2.5rem;
+		--size--4-5rem: 2.75rem;
+		--size--5rem: 3rem;
+		--size--5-5rem: 3.25rem;
+		--size--6rem: 3.5rem;
+		--size--6-5rem: 3.75rem;
+		--size--7rem: 4rem;
+		--size--7-5rem: 4.25rem;
+		--size--8rem: 4.5rem;
+		--size--8-5rem: 4.75rem;
+		--size--9rem: 5rem;
+		--size--9-5rem: 5.25rem;
+		--size--10rem: 5.5rem;
+		--size--11rem: 5.75rem;
+		--size--12rem: 6rem;
+		--size--13rem: 6.5rem;
+		--size--14rem: 7rem;
+		--size--15rem: 7.5rem;
+		--size--16rem: 8rem;
+	}
+}
+/* portrait */
+@media screen and (max-width: 479px) {
+	:root {
+		/* custom */
+	}
+}
+</style></div><div class="custom-styles w-embed"><!-- Keep this css code to improve the font quality-->
+<style>
+  * {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -o-font-smoothing: antialiased;
+  -webkit-appearance:none;
+}
+</style>
+<style>
+blockquote strong {
+  font-weight: 700 !important;
+}
+
+p strong {
+  font-weight: 700 !important;
+}
+
+.hljs-built_in, .hljs-link, .hljs-literal, .hljs-meta, .hljs-number, .hljs-params, .hljs-type {
+  color: inherit !important;
+}
+
+</style>
+
+<style>
+
+/* COMPONENTS CODE */
+/*Hide parent if it has no children*/
+[data-hide-if-empty]:empty,
+[data-hide-if-empty]:not(:has(> *:not(.w-condition-invisible))) {
+ display: none;
+}
+
+/* hide section if it has no cms items */
+[data-cms-check="true"]:not(:has(.w-dyn-item)) {
+	display: none;
+}
+
+[class*="balance"] {
+	text-wrap: balance;
+}
+
+/*clear styles in component rich text*/
+[data-rich-text-inherit] :is(h1, h2, h3, h4, h5, h6, p, blockquote, ul, ol, li){
+	font-weight: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+}
+[data-rich-text-inherit] :is(h1, h2, h3, h4) :is(strong){
+	background: linear-gradient(340deg,#d62687 14.97%,#820dde 30.88%,#460778 47.49%);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -webkit-background-clip: text;
+  font-weight: inherit;
+}
+
+.button_component[data-button-small="true"]{
+	padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  font-size: 0.875rem;
+}
+[data-hide-if-empty]:empty,
+[data-hide-if-empty]:not(:has(> :not(.w-condition-invisible))),
+[data-hide-if-empty-cms]:not(:has(.w-dyn-item)) {
+	display: none !important;
+}
+.button_component:hover .button_icon {transform: translateX(0rem);}
+.button_component:hover .button_icon {transform: translateX(0.25rem);}
+/*dynamic grid */
+@media screen and (min-width: 768px) {
+  .card-grid-dynamic_slot-2 > :nth-child(3n +1) {
+     grid-row-start: span 2;
+     grid-row-end: span 2;
+     grid-column-start: span 2;
+     grid-column-end: span 2;
+  }
+}
+
+</style></div><div class="hubspot-styles w-embed"><style>
+
+/* All paragraph elements inside Hubspot form */
+.hs-form>p {
+ margin-top:1rem;
+ margin-bottom:1rem;
+ }
+ 
+ /* Set margin right 0 for input wrapper */
+ .hs-form .input {
+ margin-right: 0 !important;
+ }
+
+/* Max width of fieldset element inside form */
+.hs-form>fieldset {
+ max-width: 100% !important;
+ }
+
+/* Form Input */
+.hs-input {
+ width: 100% !important;
+ }
+
+/* Radio Inputs */
+.hs-input[type=radio] {
+ width: auto !important;
+ margin-right: 0.5rem;
+ min-height: auto !important;
+}
+
+/* Checkbox Labels */
+.hs-form-checkbox>label {
+font-weight: 400 !important;
+}
+
+/* Error messages label margin */
+.hs-error-msgs>label {
+ margin-bottom: 0px !important;
+ }
+
+
+/*Custom Checkbox*/
+.hs-input[type=checkbox] {
+  width: 1rem !important;
+  height: 1rem !important;
+  margin-right: 0.5rem !important;
+  min-height: auto !important;
+}
+
+.hs-form-booleancheckbox-display>span {
+ margin-left: 0 !important;
+ }
+
+</style></div></div><svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 12 7" fill="none" class="nav_dropdown-toggle-icon"><path d="M5.85269 6.66151C5.73217 6.66151 5.62 6.64227 5.51616 6.60381C5.41231 6.56534 5.3136 6.49931 5.22001 6.40573L0.725788 1.91151C0.587322 1.77306 0.516488 1.59902 0.513288 1.38941C0.510072 1.17979 0.580905 1.00255 0.725788 0.85768C0.870655 0.712813 1.04629 0.640381 1.25269 0.640381C1.45909 0.640381 1.63472 0.712813 1.77959 0.85768L5.85269 4.93078L9.92579 0.85768C10.0642 0.71923 10.2383 0.648396 10.4479 0.64518C10.6575 0.64198 10.8347 0.712813 10.9796 0.85768C11.1245 1.00255 11.1969 1.17819 11.1969 1.38461C11.1969 1.59101 11.1245 1.76664 10.9796 1.91151L6.48536 6.40573C6.39178 6.49931 6.29306 6.56534 6.18921 6.60381C6.08538 6.64227 5.97321 6.66151 5.85269 6.66151Z" fill="currentColor"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 16 16" fill="none" class="icon-1x1-xxsmall hide"><path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"></path></svg></div></div></div><nav class="nav_dropdown-menu w-dropdown-list"><div class="nav_dropdown-card"><div class="nav_dropdown-content"><div class="nav_dropdown-vertical-col"><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:bb3dc99e-f3fa-ee26-7d52-86f077be6a01" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="bb3dc99e-f3fa-ee26-7d52-86f077be6a01" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="/deep-search" class="nav-dropdown_link-icon w-inline-block"><div class="nav_dropdown-link-svg"><div class="nav_dropdown-svg w-embed"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+<g clip-path="url(#clip0_258_704)">
+<path d="M9.99935 18.3333C14.6017 18.3333 18.3327 14.6024 18.3327 10C18.3327 5.39762 14.6017 1.66666 9.99935 1.66666C5.39698 1.66666 1.66602 5.39762 1.66602 10C1.66602 14.6024 5.39698 18.3333 9.99935 18.3333Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M9.99935 15C12.7608 15 14.9993 12.7614 14.9993 10C14.9993 7.23857 12.7608 5 9.99935 5C7.23793 5 4.99935 7.23857 4.99935 10C4.99935 12.7614 7.23793 15 9.99935 15Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M9.99935 11.6667C10.9198 11.6667 11.666 10.9205 11.666 10C11.666 9.07952 10.9198 8.33333 9.99935 8.33333C9.07887 8.33333 8.33268 9.07952 8.33268 10C8.33268 10.9205 9.07887 11.6667 9.99935 11.6667Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_258_704">
+<rect width="20" height="20" fill="white"/>
+</clipPath>
+</defs>
+</svg></div></div><div class="nav-dropdown_link-text-wrapper"><div class="nav-dropdown_top-row"><div class="text-color-white text-weight-medium">Deep Search</div></div><div class="nav_dropdown-link-text-wrap"><div class="text-style-small text-color-secondary">Agentic, natural language AI search </div></div></div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:ba332f17-726d-d143-341b-dde2292e7304" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="ba332f17-726d-d143-341b-dde2292e7304" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="/code-search" class="nav-dropdown_link-icon w-inline-block"><div class="nav_dropdown-link-svg"><div class="nav_dropdown-svg w-embed"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+<path d="M17.5 17.5002L13.9166 13.9168M15.8333 9.16667C15.8333 12.8486 12.8486 15.8333 9.16667 15.8333C5.48477 15.8333 2.5 12.8486 2.5 9.16667C2.5 5.48477 5.48477 2.5 9.16667 2.5C12.8486 2.5 15.8333 5.48477 15.8333 9.16667Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></div></div><div class="nav-dropdown_link-text-wrapper"><div class="nav-dropdown_top-row"><div class="text-color-white text-weight-medium">Code Search</div><div class="nav-dropdown_icon-wrapper"></div></div><div class="nav_dropdown-link-text-wrap"><div class="text-style-small text-color-secondary">Powerful search for complex codebases</div></div></div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:012bfe84-fe6d-31eb-faaf-7ad3f0cd8e21" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="012bfe84-fe6d-31eb-faaf-7ad3f0cd8e21" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="/batch-changes" class="nav-dropdown_link-icon w-inline-block"><div class="nav_dropdown-link-svg"><div class="nav_dropdown-svg w-embed"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+<path d="M17.5 10H10.8333M17.5 5H6.66667M17.5 15H10.8333M2.5 5V8.33333M2.5 8.33333C2.5 9.25 3.25 10 4.16667 10H6.66667M2.5 8.33333V13.3333C2.5 14.25 3.25 15 4.16667 15H6.66667" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></div></div><div class="nav-dropdown_link-text-wrapper"><div class="nav-dropdown_top-row"><div class="text-color-white text-weight-medium">Batch Changes</div><div class="nav-dropdown_icon-wrapper"></div></div><div class="nav_dropdown-link-text-wrap"><div class="text-style-small text-color-secondary">Large-scale, cross-repository changes</div></div></div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:d79341a8-7425-3d21-81d8-2d056cac880f" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="d79341a8-7425-3d21-81d8-2d056cac880f" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="/code-insights" class="nav-dropdown_link-icon w-inline-block"><div class="nav_dropdown-link-svg"><div class="nav_dropdown-svg w-embed"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+<path d="M2.5 2.5V17.5H17.5M5.83333 10V14.1667H15.8333V6.66667L11.6667 10.8333L8.33333 7.5L5.83333 10Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></div></div><div class="nav-dropdown_link-text-wrapper"><div class="nav-dropdown_top-row"><div class="text-color-white text-weight-medium">Insights</div><div class="nav-dropdown_icon-wrapper"></div></div><div class="nav_dropdown-link-text-wrap"><div class="text-style-small text-color-secondary">High-level code metrics and analytics</div></div></div></a></div><div class="nav_dropdown-vertical-col"><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:f35c2832-d872-4028-4753-17c0a7595b40" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="f35c2832-d872-4028-4753-17c0a7595b40" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="/mcp" class="nav-dropdown_link-icon w-inline-block"><div class="nav_dropdown-link-svg"><div class="nav_dropdown-svg w-embed"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+<g clip-path="url(#clip0_243_9493)">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M13.0742 1.9525C12.6715 1.56064 12.1318 1.34137 11.57 1.34137C11.0081 1.34137 10.4685 1.56064 10.0658 1.9525L2.04416 9.81917C1.90993 9.94964 1.73011 10.0226 1.54291 10.0226C1.35572 10.0226 1.1759 9.94964 1.04166 9.81917C0.975944 9.75525 0.923705 9.67881 0.888034 9.59437C0.852363 9.50992 0.833984 9.41917 0.833984 9.3275C0.833984 9.23583 0.852363 9.14508 0.888034 9.06064C0.923705 8.97619 0.975944 8.89975 1.04166 8.83583L9.06333 0.969167C9.73434 0.316161 10.6337 -0.0492172 11.57 -0.0492172C12.5063 -0.0492172 13.4057 0.316161 14.0767 0.969167C14.4649 1.34675 14.7583 1.81091 14.9326 2.32366C15.107 2.8364 15.1575 3.38316 15.08 3.91917C15.6231 3.84192 16.1767 3.89041 16.6982 4.06089C17.2196 4.23138 17.6949 4.51931 18.0875 4.9025L18.1292 4.94417C18.4578 5.26373 18.719 5.64593 18.8973 6.06818C19.0757 6.49042 19.1676 6.94413 19.1676 7.4025C19.1676 7.86087 19.0757 8.31458 18.8973 8.73682C18.719 9.15907 18.4578 9.54127 18.1292 9.86083L10.8742 16.975C10.8523 16.9963 10.8349 17.0217 10.823 17.0499C10.8111 17.078 10.805 17.1082 10.805 17.1387C10.805 17.1693 10.8111 17.1995 10.823 17.2276C10.8349 17.2558 10.8523 17.2812 10.8742 17.3025L12.3642 18.7642C12.4299 18.8281 12.4821 18.9045 12.5178 18.989C12.5535 19.0734 12.5718 19.1642 12.5718 19.2558C12.5718 19.3475 12.5535 19.4382 12.5178 19.5227C12.4821 19.6071 12.4299 19.6836 12.3642 19.7475C12.2299 19.878 12.0501 19.951 11.8629 19.951C11.6757 19.951 11.4959 19.878 11.3617 19.7475L9.87166 18.2867C9.7182 18.1375 9.5962 17.9592 9.5129 17.7621C9.42959 17.565 9.38667 17.3531 9.38667 17.1392C9.38667 16.9252 9.42959 16.7134 9.5129 16.5163C9.5962 16.3192 9.7182 16.1408 9.87166 15.9917L17.1267 8.87667C17.3237 8.68487 17.4803 8.45553 17.5873 8.20219C17.6942 7.94885 17.7493 7.67665 17.7493 7.40167C17.7493 7.12668 17.6942 6.85448 17.5873 6.60114C17.4803 6.34781 17.3237 6.11847 17.1267 5.92667L17.085 5.88583C16.6828 5.49438 16.1438 5.27514 15.5826 5.27467C15.0213 5.27421 14.482 5.49255 14.0792 5.88333L8.1025 11.745L8.10083 11.7467L8.01916 11.8275C7.88489 11.9582 7.70489 12.0314 7.5175 12.0314C7.3301 12.0314 7.1501 11.9582 7.01583 11.8275C6.95011 11.7636 6.89787 11.6871 6.8622 11.6027C6.82653 11.5182 6.80815 11.4275 6.80815 11.3358C6.80815 11.2442 6.82653 11.1534 6.8622 11.069C6.89787 10.9845 6.95011 10.9081 7.01583 10.8442L13.0767 4.9C13.2732 4.70807 13.4293 4.47876 13.5358 4.22556C13.6423 3.97236 13.697 3.70041 13.6968 3.42572C13.6966 3.15104 13.6414 2.87918 13.5344 2.62616C13.4275 2.37315 13.271 2.14409 13.0742 1.9525Z" fill="currentColor"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M12.0699 3.91917C12.1357 3.85525 12.1879 3.77881 12.2236 3.69436C12.2592 3.60992 12.2776 3.51917 12.2776 3.4275C12.2776 3.33583 12.2592 3.24508 12.2236 3.16064C12.1879 3.07619 12.1357 2.99975 12.0699 2.93583C11.9357 2.80511 11.7557 2.73196 11.5683 2.73196C11.3809 2.73196 11.2009 2.80511 11.0666 2.93583L5.1341 8.75417C4.8055 9.07373 4.54431 9.45593 4.36595 9.87818C4.1876 10.3004 4.0957 10.7541 4.0957 11.2125C4.0957 11.6709 4.1876 12.1246 4.36595 12.5468C4.54431 12.9691 4.8055 13.3513 5.1341 13.6708C5.80521 14.3236 6.70452 14.6889 7.64077 14.6889C8.57701 14.6889 9.47632 14.3236 10.1474 13.6708L16.0808 7.8525C16.1465 7.78859 16.1987 7.71215 16.2344 7.6277C16.2701 7.54325 16.2884 7.45251 16.2884 7.36083C16.2884 7.26916 16.2701 7.17842 16.2344 7.09397C16.1987 7.00952 16.1465 6.93308 16.0808 6.86917C15.9465 6.73844 15.7665 6.6653 15.5791 6.6653C15.3917 6.6653 15.2117 6.73844 15.0774 6.86917L9.14493 12.6875C8.74229 13.0794 8.20262 13.2986 7.64077 13.2986C7.07891 13.2986 6.53924 13.0794 6.1366 12.6875C5.93954 12.4957 5.78292 12.2664 5.67597 12.013C5.56902 11.7597 5.51392 11.4875 5.51392 11.2125C5.51392 10.9375 5.56902 10.6653 5.67597 10.412C5.78292 10.1586 5.93954 9.9293 6.1366 9.7375L12.0699 3.91917Z" fill="currentColor"/>
+</g>
+<defs>
+<clipPath id="clip0_243_9493">
+<rect width="20" height="20" fill="white"/>
+</clipPath>
+</defs>
+</svg></div></div><div class="nav-dropdown_link-text-wrapper"><div class="nav-dropdown_top-row"><div class="text-color-white text-weight-medium">MCP</div><div class="nav-dropdown_icon-wrapper"></div></div><div class="nav_dropdown-link-text-wrap"><div class="text-style-small text-color-secondary">Code graph knowledge for agents</div></div></div><div class="outside-icon-wrapper"><img src="https://cdn.prod.website-files.com/673f71b4ebbb99190437de75/687f97b1024104ecfc19d158_arrow-up-right.svg" loading="lazy" alt=""/></div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:4d93d1c1-35fe-ccfd-4980-90e193436777" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="4d93d1c1-35fe-ccfd-4980-90e193436777" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="https://sourcegraph.com/docs/api/graphql" target="_blank" class="nav-dropdown_link-icon w-inline-block"><div class="nav_dropdown-link-svg"><div class="nav_dropdown-svg w-embed"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+<path d="M8.33333 8.33333L6.66667 10L8.33333 11.6667M11.6667 11.6667L13.3333 10L11.6667 8.33333M4.16667 2.5H15.8333C16.7538 2.5 17.5 3.24619 17.5 4.16667V15.8333C17.5 16.7538 16.7538 17.5 15.8333 17.5H4.16667C3.24619 17.5 2.5 16.7538 2.5 15.8333V4.16667C2.5 3.24619 3.24619 2.5 4.16667 2.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></div></div><div class="nav-dropdown_link-text-wrapper"><div class="nav-dropdown_top-row"><div class="text-color-white text-weight-medium">APIs</div><div class="nav-dropdown_icon-wrapper"></div></div><div class="nav_dropdown-link-text-wrap"><div class="text-style-small text-color-secondary">GraphQL and REST APIs + webhooks</div></div></div><div class="outside-icon-wrapper"><img src="https://cdn.prod.website-files.com/673f71b4ebbb99190437de75/687f97b1024104ecfc19d158_arrow-up-right.svg" loading="lazy" alt=""/></div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:10eb5f79-18fd-b538-accd-b8e8b9c3d7d3" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="10eb5f79-18fd-b538-accd-b8e8b9c3d7d3" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="https://sourcegraph.com/docs/cli" target="_blank" class="nav-dropdown_link-icon w-inline-block"><div class="nav_dropdown-link-svg"><div class="nav_dropdown-svg w-embed"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+<path d="M5.83333 9.16667L7.5 7.5L5.83333 5.83333M9.16667 10.8333H12.5M4.16667 2.5H15.8333C16.7538 2.5 17.5 3.24619 17.5 4.16667V15.8333C17.5 16.7538 16.7538 17.5 15.8333 17.5H4.16667C3.24619 17.5 2.5 16.7538 2.5 15.8333V4.16667C2.5 3.24619 3.24619 2.5 4.16667 2.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></div></div><div class="nav-dropdown_link-text-wrapper"><div class="nav-dropdown_top-row"><div class="text-color-white text-weight-medium">CLI</div><div class="nav-dropdown_icon-wrapper"></div></div><div class="nav_dropdown-link-text-wrap"><div class="text-style-small text-color-secondary">Sourcegraph in your terminal</div></div></div><div class="outside-icon-wrapper"><img src="https://cdn.prod.website-files.com/673f71b4ebbb99190437de75/687f97b1024104ecfc19d158_arrow-up-right.svg" loading="lazy" alt=""/></div></a></div><div class="nav_dropdown-vertical-col"><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:0fb47a0b-6ff1-6c61-4687-2435820f16dd" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="0fb47a0b-6ff1-6c61-4687-2435820f16dd" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="https://sourcegraph.com/docs/cody" target="_blank" class="nav-dropdown_link-icon w-inline-block"><div class="nav_dropdown-link-svg"><div class="nav_dropdown-svg w-embed"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M14.4674 0.800003C15.3875 0.800003 16.1341 1.58452 16.1341 2.54948V6.55053C16.1341 7.51548 15.3875 8.3 14.4674 8.3C13.5474 8.3 12.8008 7.51548 12.8008 6.55053V2.54948C12.8008 1.58452 13.5474 0.800003 14.4674 0.800003Z" fill="currentColor"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M1.59961 5.66667C1.59961 4.74738 2.38366 4 3.34987 4H7.34935C8.31555 4 9.09961 4.74738 9.09961 5.66667C9.09961 6.58595 8.31555 7.33333 7.34935 7.33333H3.34987C2.38366 7.33333 1.59961 6.58595 1.59961 5.66667Z" fill="currentColor"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M3.31174 12.7241C2.70323 11.9338 1.55289 11.7805 0.735977 12.3773C-0.0809329 12.9741 -0.239313 14.1032 0.369201 14.8935C0.369201 14.8935 0.377537 14.9096 0.385872 14.9177C0.394208 14.9338 0.41088 14.9499 0.427552 14.9661C0.460895 15.0064 0.502574 15.0628 0.560925 15.1274C0.677626 15.2564 0.836006 15.4338 1.0444 15.6354C1.46119 16.0387 2.06137 16.5709 2.86161 17.0951C4.46208 18.1516 6.85446 19.2 9.99706 19.2C13.1397 19.2 15.532 18.1516 17.1325 17.0951C17.9328 16.5709 18.5329 16.0387 18.9497 15.6354C19.1581 15.4338 19.3165 15.2564 19.4332 15.1274C19.4916 15.0628 19.5332 15.0064 19.5666 14.9661C19.5832 14.9419 19.6166 14.9016 19.6333 14.8854C19.6333 14.8854 19.6333 14.8854 19.6333 14.8935V14.8854C20.2418 14.087 20.0751 12.958 19.2665 12.3612C18.4579 11.7644 17.3076 11.9257 16.6907 12.708C16.6824 12.716 16.6657 12.7402 16.6324 12.7725C16.574 12.837 16.474 12.9499 16.3406 13.0789C16.0655 13.3451 15.6404 13.7161 15.0736 14.0951C13.9482 14.837 12.2561 15.587 9.99706 15.587C7.73806 15.587 6.05422 14.837 4.92055 14.0951C4.35372 13.7241 3.92859 13.3531 3.65351 13.0789C3.52014 12.9419 3.42011 12.837 3.36176 12.7725C3.32841 12.7402 3.31174 12.716 3.30341 12.708L3.31174 12.7241Z" fill="currentColor"/>
+</svg></div></div><div class="nav-dropdown_link-text-wrapper"><div class="nav-dropdown_top-row"><div class="text-color-white text-weight-medium">Cody</div><div class="nav-dropdown_icon-wrapper"></div></div><div class="nav_dropdown-link-text-wrap"><div class="text-style-small text-color-secondary">AI coding assistant</div></div></div><div class="outside-icon-wrapper"><img src="https://cdn.prod.website-files.com/673f71b4ebbb99190437de75/687f97b1024104ecfc19d158_arrow-up-right.svg" loading="lazy" alt=""/></div></a></div></div></div></nav></div><div data-delay="0" data-hover="false" class="nav_dropdown w-dropdown"><div data-link="/code-search" data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:bb3dc99e-f3fa-ee26-7d52-86f077be6a1f" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="bb3dc99e-f3fa-ee26-7d52-86f077be6a1f" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" class="nav_dropdown-toggle w-dropdown-toggle"><div class="nav_link-contents"><div class="nav_link-text-wrap"><div class="nav_link-text">Resources</div><svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 12 7" fill="none" class="nav_dropdown-toggle-icon"><path d="M5.85269 6.66151C5.73217 6.66151 5.62 6.64227 5.51616 6.60381C5.41231 6.56534 5.3136 6.49931 5.22001 6.40573L0.725788 1.91151C0.587322 1.77306 0.516488 1.59902 0.513288 1.38941C0.510072 1.17979 0.580905 1.00255 0.725788 0.85768C0.870655 0.712813 1.04629 0.640381 1.25269 0.640381C1.45909 0.640381 1.63472 0.712813 1.77959 0.85768L5.85269 4.93078L9.92579 0.85768C10.0642 0.71923 10.2383 0.648396 10.4479 0.64518C10.6575 0.64198 10.8347 0.712813 10.9796 0.85768C11.1245 1.00255 11.1969 1.17819 11.1969 1.38461C11.1969 1.59101 11.1245 1.76664 10.9796 1.91151L6.48536 6.40573C6.39178 6.49931 6.29306 6.56534 6.18921 6.60381C6.08538 6.64227 5.97321 6.66151 5.85269 6.66151Z" fill="currentColor"></path></svg><svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 16 16" fill="none" class="icon-1x1-xxsmall hide"><path d="M4 6L8 10L12 6" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"></path></svg></div></div></div><nav class="nav_dropdown-menu w-dropdown-list"><div class="nav_dropdown-card"><div class="nav_dropdown-content"><div class="nav_dropdown-vertical-col"><div class="nav-dropdown_link-icon-nohover vertical"><div class="nav_dropdown-svg w-embed"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+<path d="M11.6673 1.66666V5C11.6673 5.44202 11.8429 5.86595 12.1555 6.17851C12.468 6.49107 12.892 6.66666 13.334 6.66666H16.6673M8.33398 7.5H6.66732M13.334 10.8333H6.66732M13.334 14.1667H6.66732M12.5007 1.66666H5.00065C4.55862 1.66666 4.1347 1.84226 3.82214 2.15482C3.50958 2.46738 3.33398 2.8913 3.33398 3.33333V16.6667C3.33398 17.1087 3.50958 17.5326 3.82214 17.8452C4.1347 18.1577 4.55862 18.3333 5.00065 18.3333H15.0007C15.4427 18.3333 15.8666 18.1577 16.1792 17.8452C16.4917 17.5326 16.6673 17.1087 16.6673 16.6667V5.83333L12.5007 1.66666Z" stroke="#606060" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></div><div class="nav-dropdown_link-text-wrapper"><div class="nav-dropdown_top-row"><div class="text-color-white text-weight-medium">Case Studies</div><div class="nav-dropdown_icon-wrapper"></div></div><div class="nav_dropdown-link-text-wrap"><div class="text-style-small text-color-secondary">Learn how engineering teams are leveraging Sourcegraph</div></div><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:d90a4249-9000-d2ea-5dc6-f158acd7db03" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="d90a4249-9000-d2ea-5dc6-f158acd7db03" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="/case-studies" class="nav_dropdown-red-text w-inline-block"><div>Explore case studies</div><img src="https://cdn.prod.website-files.com/673f71b4ebbb99190437de75/6924c68ea3d231d4db6ae898_arrow-right.svg" loading="lazy" alt=""/></a><div class="nav_dropdown-logo-list"><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:f1e65064-3a69-a51b-2a18-637bb7f04f10" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="f1e65064-3a69-a51b-2a18-637bb7f04f10" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="https://sourcegraph.com/blog/announcing-our-partnership-with-dx" class="nav_dropdown-logo-wrapper w-inline-block"><div class="nav_dropdown-logo w-embed"><svg xmlns="http://www.w3.org/2000/svg" width="88" height="15" viewBox="0 0 88 15" fill="none">
+<g clip-path="url(#clip0_295_1726)">
+<mask id="mask0_295_1726" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="88" height="15">
+<path d="M88 0H0V15H88V0Z" fill="white"/>
+</mask>
+<g mask="url(#mask0_295_1726)">
+<path d="M34.377 1.52718C34.377 1.17232 34.5173 0.831984 34.7671 0.581055C35.0169 0.330126 35.3558 0.189125 35.7091 0.189125C36.0623 0.189125 36.4012 0.330126 36.651 0.581055C36.9008 0.831984 37.0411 1.17232 37.0411 1.52718C37.0283 1.87341 36.8823 2.20116 36.6339 2.44154C36.3855 2.68191 36.054 2.81622 35.7091 2.81622C35.3642 2.81622 35.0326 2.68191 34.7842 2.44154C34.5358 2.20116 34.3898 1.87341 34.377 1.52718Z" fill="currentColor"/>
+<path d="M12.5144 9.87027C11.3679 9.87027 10.5701 8.95527 10.5701 7.64706C10.5701 6.33975 11.3679 5.42572 12.5153 5.42572C13.6684 5.42572 14.4745 6.33975 14.4745 7.64706C14.4745 8.97579 13.686 9.87027 12.5144 9.87027ZM12.5144 3.47176C10.0877 3.47176 8.32617 5.22816 8.32617 7.64706C8.32617 10.0669 10.0887 11.8224 12.5144 11.8224C14.9513 11.8224 16.7193 10.0669 16.7193 7.64797C16.7193 5.22816 14.9513 3.47176 12.5153 3.47176H12.5144ZM31.7962 7.85674C31.7118 7.69265 31.605 7.54115 31.479 7.40668L31.4047 7.32932L31.4827 7.25481C31.594 7.13647 31.7081 6.9967 31.8175 6.83454L33.9604 3.63671H31.3593L29.7499 6.13854C29.6589 6.27268 29.4753 6.33975 29.1998 6.33975H28.8334V1.6101C28.8334 0.664353 28.2462 0.535782 27.6126 0.535782H26.5272L26.53 11.6994H28.8343V8.35056H29.0504C29.3129 8.35056 29.491 8.38131 29.5736 8.52477L30.8445 10.9344C31.1997 11.5885 31.5532 11.6994 32.2192 11.6994H33.9845L32.6692 9.51525L31.7972 7.85674H31.7962ZM42.9816 3.45312C41.8092 3.45312 41.0614 3.97678 40.6421 4.41939L40.503 4.56103L40.4529 4.36817C40.3305 3.89385 39.9149 3.63392 39.2906 3.63392H38.2581L38.2646 11.6966H40.5531V7.98065C40.5531 7.61722 40.5994 7.30232 40.6959 7.01438C40.9501 6.1432 41.6607 5.60181 42.5484 5.60181C43.2627 5.60181 43.542 5.98104 43.542 6.95941V10.4713C43.542 11.3061 43.9269 11.6966 44.759 11.6966H45.848L45.8444 6.56807C45.8444 4.53119 44.8545 3.45409 42.9816 3.45409V3.45312ZM35.7359 3.63671H34.6515L34.6589 9.87123V11.6994H35.8157L35.8565 11.7012L36.3964 11.6994H36.9326V11.6966H36.9362L36.9409 4.862C36.9409 4.03737 36.5485 3.63762 35.7368 3.63762L35.7359 3.63671ZM21.5023 9.87027C20.3557 9.87027 19.557 8.95527 19.557 7.64706C19.557 6.33975 20.3557 5.42572 21.5032 5.42572C22.6535 5.42572 23.4624 6.33975 23.4624 7.64706C23.4624 8.97579 22.6739 9.87027 21.5032 9.87027H21.5023ZM21.5023 3.47176C19.0737 3.47176 17.3112 5.22816 17.3112 7.64706C17.3112 10.0669 19.0737 11.8224 21.5032 11.8224C23.9364 11.8224 25.7081 10.0669 25.7081 7.64797C25.7081 5.22816 23.9364 3.47176 21.5032 3.47176" fill="currentColor"/>
+<path d="M50.6683 9.51525C49.417 9.51525 48.9717 8.41945 48.9717 7.39173C48.9717 6.93889 49.0858 5.46386 50.5486 5.46386C51.275 5.46386 52.2425 5.67257 52.2425 7.46716C52.2425 9.16023 51.3863 9.51525 50.6683 9.51525ZM53.4306 3.61523C52.9966 3.61523 52.6627 3.78949 52.4948 4.10723L52.4317 4.23023L52.326 4.13701C51.9568 3.81649 51.2945 3.43539 50.2193 3.43539C48.0793 3.43539 46.6387 5.05019 46.6387 7.45136C46.6387 9.85163 48.1294 11.5288 50.262 11.5288C50.9902 11.5288 51.5662 11.3574 52.0226 11.0108L52.1989 10.8775V11.1011C52.1989 12.1782 51.506 12.7727 50.249 12.7727C49.6377 12.7727 49.0821 12.6236 48.7092 12.4876C48.2249 12.3404 47.9392 12.4624 47.7435 12.9516L47.5617 13.4026L47.3047 14.0623L47.4633 14.1471C48.2685 14.5757 49.3158 14.8319 50.262 14.8319C52.2101 14.8319 54.4866 13.8303 54.4866 11.0108L54.4946 3.61523H53.4306Z" fill="currentColor"/>
+<path d="M3.99346 9.77797L2.13077 9.77614V7.53986C2.13077 7.06093 2.31538 6.81306 2.72261 6.75531H3.99346C4.89976 6.75531 5.48603 7.32927 5.48693 8.25825C5.48603 9.21241 4.9146 9.77706 3.99346 9.77706V9.77797ZM2.13077 3.15493C2.13077 2.63968 2.34785 2.39459 2.82373 2.36293H3.77735C4.5946 2.36293 5.08438 2.85397 5.08438 3.67672C5.08438 4.30286 4.74857 5.03432 3.80702 5.03432H2.13077V3.15493ZM6.37195 5.97632L6.0352 5.78625L6.32923 5.53377C6.67157 5.23838 7.24395 4.57404 7.24395 3.42793C7.24395 1.67245 5.88955 0.539413 3.79219 0.539413H1.12614C0.826155 0.550396 0.541893 0.676931 0.332237 0.892717C0.12258 1.1085 0.00361255 1.39704 0 1.69854V11.6592H3.83946C6.17061 11.6592 7.67525 10.3846 7.67525 8.41013C7.67525 7.347 7.18917 6.43848 6.37195 5.97632Z" fill="currentColor"/>
+<path d="M55.3945 10.4508C55.3945 9.70811 55.9903 9.10806 56.7241 9.10806C57.0783 9.10806 57.418 9.24943 57.6687 9.50106C57.9188 9.75268 58.0596 10.094 58.0596 10.4498C58.0596 10.8057 57.9188 11.1469 57.6687 11.3986C57.418 11.6502 57.0783 11.7916 56.7241 11.7916C55.9913 11.7916 55.3945 11.1906 55.3945 10.4498" fill="currentColor"/>
+<path d="M70.5517 9.87017C69.4051 9.87017 68.6056 8.95517 68.6056 7.64695C68.6056 6.3397 69.4051 5.42561 70.5517 5.42561C71.7037 5.42561 72.5117 6.3397 72.5117 7.64695C72.5117 8.97569 71.7229 9.87017 70.5517 9.87017ZM70.5517 3.47169C68.1229 3.47169 66.3613 5.22808 66.3613 7.64695C66.3613 10.0668 68.1229 11.8223 70.5517 11.8223C72.9859 11.8223 74.7565 10.0668 74.7565 7.64792C74.7565 5.22808 72.9848 3.47169 70.5517 3.47169Z" fill="currentColor"/>
+<path d="M84.9778 3.48012C84.5052 3.48183 84.0391 3.59015 83.614 3.7971C83.189 4.00399 82.8151 4.3042 82.5212 4.67556L82.3559 4.88615L82.2263 4.65039C81.8012 3.87424 81.0722 3.48012 80.0583 3.48012C78.9943 3.48012 78.2807 4.07642 77.95 4.43053L77.733 4.66624L77.6492 4.35595C77.5287 3.90868 77.1324 3.66365 76.5335 3.66365H75.5714L75.5618 11.6956H77.7468V8.15014C77.7468 7.83895 77.7858 7.53236 77.8626 7.21093C78.0711 6.35368 78.6444 5.43214 79.6082 5.52439C80.2023 5.5822 80.4935 6.04339 80.4935 6.93418V11.6956H82.6935V8.15014C82.6935 7.76159 82.7298 7.47091 82.8172 7.18018C82.9932 6.36209 83.5927 5.52348 84.5223 5.52348C85.1954 5.52348 85.4439 5.9055 85.4439 6.93418V10.5215C85.4439 11.3322 85.8039 11.6956 86.6119 11.6956H87.6396L87.6418 6.56802C87.6418 4.51902 86.7436 3.48012 84.9778 3.48012ZM65.0946 8.90673C65.0882 8.91514 64.1484 9.91029 62.91 9.91029C61.782 9.91029 60.6428 9.21514 60.6428 7.66377C60.6428 6.32389 61.526 5.38741 62.7911 5.38741C63.2012 5.38741 63.669 5.53468 63.742 5.78341L63.7522 5.82536C63.7991 5.99662 63.901 6.14764 64.0418 6.25495C64.1826 6.36225 64.3548 6.41989 64.5314 6.41893L65.7282 6.42075V5.36973C65.7282 3.98326 63.9719 3.48012 62.7911 3.48012C60.2642 3.48012 58.4316 5.24674 58.4316 7.68054C58.4316 10.1125 60.2439 11.8773 62.7447 11.8773C64.9138 11.8773 66.0935 10.4451 66.1047 10.4312L66.1676 10.3529L65.2199 8.7735L65.0946 8.90673Z" fill="currentColor"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_295_1726">
+<rect width="88" height="15" fill="white"/>
+</clipPath>
+</defs>
+</svg></div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:51c6518b-347a-6aa7-1ece-3e4caef049f3" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="51c6518b-347a-6aa7-1ece-3e4caef049f3" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="https://aws.amazon.com/partners/success/palo-alto-networks-anthropic-sourcegraph/" target="_blank" class="nav_dropdown-logo-wrapper w-inline-block"><div class="nav_dropdown-logo w-embed"><svg xmlns="http://www.w3.org/2000/svg" width="82" height="17" viewBox="0 0 82 17" fill="none">
+<g clip-path="url(#clip0_295_1718)">
+<mask id="mask0_295_1718" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="-5" width="83" height="24">
+<path d="M0.0625 -5H82.0625V19H0.0625V-5Z" fill="white"/>
+</mask>
+<g mask="url(#mask0_295_1718)">
+<path d="M34.1229 2.752C33.0797 2.752 31.9965 3.04 30.6549 3.7696L31.4005 5.6416C32.5653 4.9808 33.5269 4.692 34.2325 4.692C35.0309 4.692 35.3837 4.9944 35.3837 5.3936V5.4208C35.3837 5.6968 35.1661 5.848 34.6381 5.9032L33.7173 5.9992C31.4133 6.2472 30.4653 7.2648 30.4653 8.668V8.764C30.4653 10.1 31.5493 11.1456 33.0797 11.1456C34.0877 11.1456 34.9637 10.7136 35.4957 9.9504L35.6677 11.008H37.7541V6.2056C37.7541 3.9352 36.4669 2.752 34.1229 2.752ZM33.9197 9.3152C33.1477 9.3152 32.7821 9.012 32.7821 8.544V8.5168C32.7821 8.104 33.0125 7.8016 33.8517 7.6776L34.2181 7.6224C34.7525 7.5472 35.0813 7.4472 35.3829 7.2616V7.8704C35.3829 8.7928 34.8141 9.3152 33.9197 9.3152ZM41.4797 0H39.1093V11.008H41.4797V0ZM26.4829 2.752C25.4045 2.752 24.5389 3.236 24.0629 3.9952L23.8813 2.8896H21.7949V13.7592H24.1661V9.9912C24.6173 10.6984 25.4701 11.1448 26.4821 11.1448C28.3789 11.1448 29.9237 9.4392 29.9237 7.0856V6.8104C29.9237 4.4576 28.3797 2.7504 26.4821 2.7504M27.4853 7.0176C27.4853 8.256 26.8485 9.1504 25.7917 9.1504C24.7349 9.1504 24.0981 8.2568 24.0981 7.0176V6.8808C24.0981 5.6416 24.7349 4.7472 25.7917 4.7472C26.8477 4.7472 27.4853 5.6416 27.4853 6.8808V7.0176ZM73.4669 2.752C71.0413 2.752 69.3341 4.4576 69.3341 6.8112V7.0864C69.3341 9.4384 71.0413 11.1456 73.4661 11.1456C75.8917 11.1456 77.5989 9.44 77.5989 7.0864V6.8112C77.5989 4.4584 75.8917 2.7512 73.4661 2.7512L73.4669 2.752ZM75.1605 7.0176C75.1605 8.2552 74.5237 9.1504 73.4661 9.1504C72.4101 9.1504 71.7733 8.256 71.7733 7.0176V6.88C71.7733 5.6416 72.4101 4.7472 73.4661 4.7472C74.5237 4.7472 75.1605 5.6416 75.1605 6.88V7.0176ZM79.8341 3.2472V3.2064C79.8341 2.972 79.6581 2.8064 79.3461 2.8064H78.8045V4.0728H79.0621V3.6464H79.3477L79.5637 4.0728H79.8477L79.5837 3.572C79.7445 3.5224 79.8341 3.4 79.8341 3.248M79.0613 3.04H79.3453C79.5085 3.04 79.5757 3.096 79.5757 3.22V3.2336C79.5757 3.344 79.5077 3.4128 79.3453 3.4128H79.0613V3.04Z" fill="currentColor"/>
+<path d="M79.2926 2.1328C78.5614 2.1328 78.0054 2.6968 78.0054 3.44C78.0054 4.1824 78.5614 4.7472 79.2934 4.7472C80.0238 4.7472 80.5798 4.1832 80.5798 3.44C80.5798 2.6968 80.0238 2.1328 79.2926 2.1328ZM79.2926 4.568C78.6558 4.568 78.195 4.1 78.195 3.44C78.195 2.7792 78.6558 2.3112 79.2926 2.3112C79.9294 2.3112 80.3902 2.7792 80.3902 3.4392C80.3902 4.1 79.9294 4.5672 79.2926 4.5672V4.568ZM62.3574 0H59.987V11.008H62.3574V0ZM67.0326 9.1504C66.3414 9.1504 66.0846 8.8064 66.0846 8.064V4.748H68.875V2.8904H66.0838V1.032L63.7126 1.3896V8.2968C63.7126 10.1824 64.6614 11.1456 66.5582 11.1456C67.3982 11.1456 68.3862 10.884 69.1998 10.416L68.523 8.7096C68.0486 8.9712 67.3846 9.1504 67.0326 9.1504ZM55.0022 2.752C53.959 2.752 52.8742 3.04 51.5342 3.7696L52.279 5.6416C53.4438 4.9808 54.4062 4.692 55.111 4.692C55.9102 4.692 56.2622 4.9944 56.2622 5.3936V5.4208C56.2622 5.6968 56.0454 5.848 55.5174 5.9032L54.5958 5.9992C52.2918 6.2472 51.3446 7.2648 51.3446 8.668V8.764C51.3446 10.1 52.4278 11.1456 53.959 11.1456C54.967 11.1456 55.843 10.7136 56.375 9.9504L56.547 11.008H58.6326V6.2056C58.6326 3.9352 57.3462 2.752 55.0022 2.752ZM54.799 9.3152C54.0262 9.3152 53.6606 9.012 53.6606 8.544V8.5168C53.6606 8.104 53.891 7.8016 54.731 7.6776L55.0966 7.6224C55.631 7.5472 55.9598 7.4472 56.2614 7.2616V7.8704C56.2614 8.7928 55.6934 9.3152 54.799 9.3152ZM46.6702 2.752C44.2462 2.752 42.5382 4.4576 42.5382 6.8112V7.0864C42.5382 9.4384 44.2454 11.1456 46.6702 11.1456C49.0958 11.1456 50.803 9.44 50.803 7.0864V6.8112C50.803 4.4584 49.0958 2.752 46.6702 2.752ZM48.3638 7.0176C48.3638 8.2552 47.727 9.1504 46.6702 9.1504C45.6134 9.1504 44.9766 8.256 44.9766 7.0176V6.88C44.9766 5.6416 45.6134 4.7472 46.6702 4.7472C47.7262 4.7472 48.3638 5.6416 48.3638 6.88V7.0176ZM56.3742 12.96H56.9822L57.8206 14.0824H57.8286V12.96H58.3862V14.9408H57.7982L56.9398 13.7888H56.9318V14.9408H56.3742V12.96ZM59.127 12.96H60.8318L60.855 13.44H59.7102V13.712H60.6094V14.1504H59.7102V14.4592H60.8878L60.8654 14.9392H59.1278L59.127 12.96ZM62.0742 13.4688H61.3918L61.4134 12.9592H63.3222L63.3446 13.4688H62.6622V14.94H62.0742V13.468V13.4688ZM63.8166 12.96H64.4406L64.7574 14.3344H64.7886L65.2006 12.9592H65.7718L66.1758 14.3344H66.207L66.519 12.9592H67.115L66.6022 14.94H65.8358L65.4798 13.7456H65.463L65.1006 14.94H64.3318L63.8166 12.9592V12.96ZM67.543 13.9504C67.543 13.3056 67.975 12.9008 68.6566 12.9008C69.3398 12.9008 69.7718 13.3048 69.7718 13.9504C69.7718 14.596 69.3398 15.0008 68.6566 15.0008C67.9742 15.0008 67.543 14.596 67.543 13.9504ZM69.1894 13.9504C69.1894 13.6088 68.9942 13.4048 68.6574 13.4048C68.3198 13.4048 68.1246 13.6088 68.1246 13.9504C68.1246 14.2928 68.3198 14.4968 68.6542 14.4968C68.9886 14.4968 69.1894 14.2928 69.1894 13.9504ZM70.4038 12.96H71.5406C72.059 12.96 72.3126 13.208 72.3126 13.6696C72.3126 13.9864 72.1846 14.2016 71.9334 14.3032L72.3966 14.94H71.7326L71.3734 14.42H70.9894V14.94H70.4038V12.96ZM71.4654 13.9552C71.6606 13.9552 71.7294 13.8448 71.7294 13.6952C71.7294 13.5448 71.6598 13.4376 71.4654 13.4376H70.9886V13.9552H71.4654ZM73.0726 12.96H73.6566V13.6896H73.8966L74.4686 12.9592H75.1254L75.1286 12.9616L74.3822 13.9096L75.1702 14.9376L75.167 14.94H74.4846L73.895 14.1784H73.6574V14.94H73.0734V12.9592L73.0726 12.96ZM75.6198 14.8104V14.2664H75.623C75.9486 14.4344 76.267 14.516 76.5414 14.516C76.751 14.516 76.8566 14.4648 76.8566 14.3656C76.8566 14.2664 76.787 14.2408 76.3686 14.1736C75.9126 14.1 75.6086 13.9608 75.6086 13.5616C75.6086 13.1912 75.9286 12.9056 76.5558 12.9056C76.8062 12.9056 77.0678 12.9592 77.311 13.064V13.6016L77.3078 13.6048C77.0655 13.4669 76.7929 13.391 76.5142 13.384C76.2902 13.384 76.2022 13.4376 76.2022 13.528C76.2022 13.644 76.3382 13.6552 76.6822 13.7152C77.1382 13.7944 77.4422 13.9248 77.4422 14.3432C77.4422 14.6688 77.2022 14.9944 76.5142 14.9944C76.207 14.9935 75.9024 14.9309 75.6198 14.8104ZM14.8198 2.7968L12.1398 0L9.46062 2.7968L10.7934 4.1888L4.07422 11.2024L6.75422 13.9992L9.43342 11.2024L8.10062 9.8104L14.8198 2.7968Z" fill="currentColor"/>
+<path d="M6.78055 0L0.0605469 7.0136L2.74055 9.8112L9.46055 2.7968L6.78055 0ZM16.1525 4.1888L9.43255 11.2032L12.1125 14L18.8325 6.9864L16.1525 4.1888Z" fill="currentColor"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_295_1718">
+<rect width="82" height="17" fill="white"/>
+</clipPath>
+</defs>
+</svg></div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:1500a1aa-0a07-b280-e521-979319e32040" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="1500a1aa-0a07-b280-e521-979319e32040" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="https://sourcegraph.com/case-studies/cody-leidos-maximizing-efficiency-heightened-security-ai-race" class="nav_dropdown-logo-wrapper w-inline-block"><div class="nav_dropdown-logo w-embed"><svg xmlns="http://www.w3.org/2000/svg" width="61" height="16" viewBox="0 0 61 16" fill="none">
+<g clip-path="url(#clip0_296_1738)">
+<mask id="mask0_296_1738" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="-4" width="60" height="26">
+<path d="M0.210938 -4H59.8644V21.9615H0.210938V-4Z" fill="white"/>
+</mask>
+<g mask="url(#mask0_296_1738)">
+<path d="M19.4737 3.06153L21.7867 2.50641V14.1967H19.4737V3.06153ZM30.2534 12.8544C29.5124 13.8318 28.2943 14.3892 27.0894 14.3892C24.7741 14.3892 22.9251 12.791 22.9251 10.3094C22.9251 7.82777 24.7764 6.23037 27.0894 6.23037C29.2517 6.23037 30.6087 7.82777 30.6087 10.3094V11.063H25.2381C25.425 11.9763 26.0884 12.5673 26.9837 12.5673C27.7387 12.5673 28.2492 12.1664 28.6333 11.622L30.2534 12.8567V12.8544ZM28.2943 9.42974C28.3098 8.63181 27.7077 7.95834 26.8736 7.95834C25.8579 7.95834 25.3009 8.67839 25.2396 9.42974H28.2957H28.2943ZM43.4407 14.1967H41.3109V13.1713H41.2799C40.9253 13.734 40.0292 14.3869 38.9809 14.3869C36.7595 14.3869 35.2946 12.7223 35.2946 10.3689C35.2946 8.20955 36.5903 6.22579 38.7201 6.22579C39.6731 6.22579 40.5722 6.49609 41.0952 7.24898H41.1247V3.05848L43.4407 2.50336V14.1967ZM39.4611 8.34012C38.3013 8.34012 37.6076 9.14035 37.6076 10.3071C37.6076 11.4746 38.302 12.2741 39.4611 12.2741C40.6209 12.2741 41.3109 11.4746 41.3109 10.3071C41.3109 9.14035 40.6165 8.34012 39.4611 8.34012ZM48.5757 6.23037C50.888 6.23037 52.7407 7.82777 52.7407 10.3094C52.7407 12.791 50.8872 14.3892 48.5757 14.3892C46.2642 14.3892 44.4085 12.791 44.4085 10.3094C44.4085 7.82777 46.2605 6.23037 48.5757 6.23037ZM48.5757 12.2764C49.7296 12.2764 50.427 11.4769 50.427 10.3094C50.427 9.14264 49.7318 8.34241 48.5757 8.34241C47.4203 8.34241 46.7229 9.14264 46.7229 10.3094C46.7229 11.4769 47.4166 12.2764 48.5757 12.2764ZM57.9563 8.70969C57.6164 8.27522 57.171 8.05302 56.6132 8.05302C56.2291 8.05302 55.7666 8.22864 55.7666 8.69289C55.7666 9.8436 59.6694 8.86852 59.6694 11.8289C59.6694 13.8127 57.8181 14.3869 56.2121 14.3869C55.1646 14.3869 54.0092 14.1173 53.2667 13.3324L54.6703 11.7151C55.1018 12.258 55.6108 12.5657 56.3059 12.5657C56.8304 12.5657 57.3557 12.4222 57.3557 12.006C57.3557 10.7568 53.4536 11.8144 53.4536 8.85172C53.4536 7.0283 55.0264 6.23037 56.6007 6.23037C57.5898 6.23037 58.6824 6.4854 59.3783 7.25356L57.9577 8.70969H57.9563ZM34.171 6.42126H31.8572V14.1983H34.171V6.42126ZM34.171 3.07299H31.8572V5.0621H34.171V3.07299ZM8.24698 8.54171L16.1552 3.5296L6.04627 6.9382L8.24698 8.54171ZM4.18833 -0.214203L3.38015 2.31399H15.7674L4.18833 -0.214203ZM1.53477 8.066L5.24769 6.81374L2.56236 4.85746L1.53477 8.066ZM0.211676 2.68738L2.37398 4.26187L2.88075 2.68662H0.210938L0.211676 2.68738ZM17.4813 2.68738L3.26047 2.68891L2.68129 4.48865L5.67616 6.67019L17.4813 2.68738Z" fill="currentColor"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_296_1738">
+<rect width="61" height="16" fill="white"/>
+</clipPath>
+</defs>
+</svg></div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:bd9f5259-9365-1c0b-9e2b-2355718aa673" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="bd9f5259-9365-1c0b-9e2b-2355718aa673" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="/case-studies/indeed-accelerates-development-velocity" class="nav_dropdown-logo-wrapper w-inline-block"><div class="nav_dropdown-logo w-embed"><svg xmlns="http://www.w3.org/2000/svg" width="53" height="14" viewBox="0 0 53 14" fill="none">
+<g clip-path="url(#clip0_296_1744)">
+<g opacity="0.8">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M52.7195 2.4177C52.5325 2.20775 52.2805 2.10455 51.9465 2.10455C51.612 2.10455 51.3495 2.21485 51.166 2.44615C50.986 2.67035 50.8925 3.0048 50.8925 3.43535V6.59515C50.4755 6.15035 50.044 5.83365 49.6015 5.62015C49.3282 5.4885 49.0045 5.39245 48.6413 5.3462C48.4291 5.3213 48.2169 5.30705 47.9795 5.30705C46.8791 5.30705 45.9872 5.68065 45.3039 6.43505C44.6278 7.18225 44.2897 8.22485 44.2897 9.55925C44.2897 10.1891 44.376 10.7798 44.5486 11.3206C44.7213 11.8579 44.9659 12.3312 45.2967 12.7368C45.6275 13.1354 46.0267 13.4449 46.4763 13.6691C46.9258 13.8862 47.4185 13.9965 47.9543 13.9965C48.1989 13.9965 48.4327 13.9751 48.6449 13.936C48.7923 13.9146 48.9218 13.8755 49.062 13.8363C49.4001 13.726 49.7166 13.5659 50.0045 13.3631C50.303 13.1531 50.594 12.8863 50.8925 12.5553V12.7653C50.8925 13.1603 50.9935 13.4592 51.191 13.6762C51.396 13.8862 51.648 13.9965 51.9465 13.9965C52.259 13.9965 52.511 13.8933 52.7015 13.694C52.892 13.4841 53 13.1816 53 12.7688V3.3215C52.989 2.9301 52.8995 2.6205 52.7195 2.4177ZM50.479 11.1391C50.2885 11.5377 50.0225 11.8401 49.7094 12.0358C49.3857 12.2315 49.0332 12.3241 48.6413 12.3241H48.6341C48.2421 12.3241 47.8933 12.2209 47.566 12.0216C47.2423 11.8117 46.9833 11.5092 46.7963 11.1036C46.6093 10.6979 46.5195 10.1997 46.5195 9.6233C46.5195 9.07175 46.6058 8.5878 46.7855 8.18215C46.9582 7.7694 47.21 7.44915 47.5264 7.22495C47.8501 6.99725 48.2097 6.8905 48.6197 6.8905H48.6413C49.0261 6.8905 49.3749 7.0008 49.7022 7.21785C50.026 7.4349 50.285 7.74805 50.4755 8.1537C50.666 8.55935 50.7595 9.0575 50.7595 9.6233C50.7665 10.2282 50.673 10.7335 50.479 11.1391ZM43.4878 11.2317C43.3475 11.1142 43.1641 11.0537 42.9304 11.0537C42.7182 11.0537 42.5671 11.1071 42.4484 11.1925C42.1715 11.4416 41.945 11.6444 41.7723 11.7903C41.5997 11.9291 41.4091 12.0643 41.1969 12.196C40.9991 12.3205 40.7797 12.4201 40.5603 12.47C40.3338 12.5304 40.0965 12.5625 39.8303 12.5625C39.7692 12.5625 39.7189 12.5625 39.6649 12.5553C39.334 12.534 39.0212 12.445 38.7442 12.2814C38.4134 12.0928 38.1545 11.8152 37.9495 11.4558C37.7589 11.0822 37.6509 10.6481 37.6437 10.1642H41.9953C42.5779 10.1642 43.0275 10.0788 43.3475 9.9293C43.6712 9.7656 43.8294 9.4169 43.8294 8.8796C43.8294 8.29605 43.6712 7.7267 43.3583 7.16805C43.0454 6.6094 42.5887 6.1539 41.9594 5.8052C41.3372 5.45295 40.5963 5.28215 39.726 5.28215H39.6613C39.0176 5.28925 38.4277 5.39245 37.9063 5.5917C37.356 5.80165 36.8993 6.097 36.5145 6.47775C36.1513 6.8656 35.86 7.32815 35.6658 7.8726C35.4716 8.417 35.3673 9.0077 35.3673 9.63395C35.3673 10.979 35.7665 12.0323 36.5541 12.8187C37.3021 13.5588 38.3342 13.9538 39.6541 13.9929C39.726 14 39.8051 14 39.8843 14C40.4993 14 41.0567 13.9217 41.5386 13.7652C42.0205 13.6086 42.4196 13.4129 42.7361 13.1745C43.0526 12.9325 43.2935 12.6834 43.4446 12.4273C43.6028 12.1711 43.6819 11.9433 43.6819 11.7512C43.7035 11.5199 43.6316 11.3455 43.4878 11.2317ZM38.3055 7.31395C38.6579 6.94745 39.1147 6.7624 39.6685 6.7624H39.6757C40.2511 6.7624 40.7222 6.9403 41.0746 7.2997C41.4271 7.6591 41.6392 8.21065 41.6824 8.94365H37.6545C37.73 8.22485 37.9422 7.68045 38.3055 7.31395ZM34.0367 11.0502C33.8173 11.0502 33.6662 11.1036 33.5476 11.189C33.2743 11.438 33.044 11.6409 32.8714 11.7868C32.6988 11.9255 32.5154 12.0607 32.3032 12.1924C32.0982 12.3169 31.886 12.4166 31.6595 12.4664C31.4401 12.5269 31.1955 12.5589 30.9294 12.5589C30.8683 12.5589 30.8179 12.5589 30.764 12.5518C30.4331 12.5304 30.1202 12.4415 29.8433 12.2778C29.5197 12.0892 29.2535 11.8117 29.063 11.4523C28.858 11.0787 28.7572 10.6445 28.7501 10.1606H33.0944C33.6698 10.1606 34.1194 10.0752 34.4467 9.92575C34.7631 9.76205 34.9249 9.41335 34.9249 8.87605C34.9249 8.29245 34.7739 7.72315 34.461 7.1645C34.1481 6.60585 33.6878 6.15035 33.062 5.80165C32.4399 5.4494 31.6919 5.2786 30.8288 5.2786H30.7568C30.1131 5.2857 29.5305 5.3889 29.0018 5.58815C28.4516 5.7981 27.9949 6.09345 27.6173 6.47415C27.2468 6.86205 26.9555 7.3246 26.7613 7.86905C26.5635 8.41345 26.4628 9.00415 26.4628 9.6304C26.4628 10.9755 26.8656 12.0287 27.6568 12.8151C28.4049 13.5552 29.4334 13.9502 30.7496 13.9894C30.8287 13.9965 30.9007 13.9965 30.9798 13.9965C31.6019 13.9965 32.1522 13.9182 32.6341 13.7616C33.116 13.6051 33.5152 13.4093 33.828 13.1709C34.1517 12.929 34.3855 12.6799 34.5438 12.4237C34.702 12.1675 34.7811 11.9398 34.7811 11.7476C34.7811 11.5306 34.7092 11.3598 34.5689 11.2423C34.4467 11.1071 34.2525 11.0502 34.0367 11.0502ZM29.3974 7.31395C29.7498 6.94745 30.2066 6.7624 30.7604 6.7624H30.7676C31.343 6.7624 31.8141 6.9403 32.1665 7.2997C32.5226 7.6591 32.7312 8.21065 32.7816 8.94365H28.7501C28.8292 8.22485 29.0485 7.68045 29.3974 7.31395ZM4.62603 12.5625V7.45625C4.77707 7.4705 4.92452 7.4776 5.0684 7.4776C5.79125 7.4776 6.46735 7.289 7.04275 6.96165V12.566C7.04275 13.0428 6.93125 13.3987 6.7047 13.6335C6.47815 13.8684 6.18685 13.9858 5.8236 13.9858C5.47115 13.9858 5.18705 13.8684 4.96409 13.6264C4.74831 13.3809 4.62603 13.0357 4.62603 12.5625ZM25.5457 2.4177C25.3587 2.20775 25.1034 2.10455 24.7761 2.10455C24.4381 2.10455 24.1791 2.21485 23.9958 2.44615C23.8088 2.67035 23.7225 3.0048 23.7225 3.43535V6.59515C23.3053 6.15035 22.8737 5.83365 22.4314 5.62015C22.1545 5.4885 21.8344 5.39245 21.4783 5.3462C21.2733 5.3213 21.054 5.30705 20.8166 5.30705C19.7162 5.30705 18.817 5.68065 18.1409 6.43505C17.4648 7.18225 17.1268 8.22485 17.1268 9.55925C17.1268 10.1891 17.2131 10.7798 17.3785 11.3206C17.5511 11.8579 17.8029 12.3312 18.1338 12.7368C18.4647 13.1354 18.8638 13.4449 19.3134 13.6691C19.7701 13.8862 20.2556 13.9965 20.7915 13.9965C21.0288 13.9965 21.2626 13.9751 21.482 13.936C21.6294 13.9146 21.7589 13.8755 21.8991 13.8363C22.2372 13.726 22.5536 13.5659 22.8414 13.3631C23.1399 13.1531 23.424 12.8863 23.7297 12.5553V12.7653C23.7297 13.1603 23.8303 13.4592 24.0281 13.6762C24.2188 13.8862 24.4848 13.9965 24.7833 13.9965C25.0819 13.9965 25.3408 13.8933 25.5314 13.694C25.722 13.4841 25.8155 13.1816 25.8155 12.7688V3.3215C25.8083 2.9301 25.722 2.6205 25.5457 2.4177ZM23.3125 11.1391C23.1219 11.5377 22.8557 11.8401 22.5392 12.0358C22.2228 12.2315 21.8631 12.3241 21.4783 12.3241H21.4711C21.0791 12.3241 20.7303 12.2209 20.403 12.0216C20.0722 11.8117 19.8204 11.5092 19.6334 11.1036C19.4464 10.6979 19.3565 10.1997 19.3565 9.6233C19.3565 9.07175 19.4429 8.5878 19.6154 8.18215C19.7952 7.7694 20.0398 7.44915 20.3635 7.22495C20.68 6.99725 21.0468 6.8905 21.4496 6.8905H21.4748C21.8596 6.8905 22.2084 7.0008 22.5285 7.21785C22.8593 7.4349 23.1182 7.74805 23.3088 8.1537C23.4958 8.55935 23.593 9.0575 23.593 9.6233C23.5965 10.2282 23.4958 10.7335 23.3125 11.1391ZM10.5959 6.46705V6.73035C10.9951 6.2322 11.4158 5.8728 11.8726 5.6344C12.3437 5.4067 12.8723 5.2857 13.4766 5.2857C14.0591 5.2857 14.5842 5.41025 15.0445 5.6522C15.5084 5.89415 15.8465 6.2429 16.0695 6.6948C16.2206 6.9581 16.314 7.2463 16.3536 7.5452C16.3932 7.84055 16.4184 8.232 16.4184 8.70525V12.6763C16.4184 13.1104 16.314 13.4307 16.1054 13.6478C15.9076 13.8719 15.6343 13.9822 15.3106 13.9822C14.9798 13.9822 14.7137 13.8719 14.5015 13.6406C14.2893 13.4165 14.1886 13.0962 14.1886 12.6763V9.118C14.1886 8.4099 14.0879 7.8726 13.8829 7.49895C13.6852 7.12535 13.2752 6.93675 12.6638 6.93675C12.2646 6.93675 11.9086 7.05415 11.5849 7.27835C11.2612 7.5061 11.0167 7.81565 10.8621 8.2213C10.7578 8.54155 10.7038 9.13225 10.7038 10.0112V12.6799C10.7038 13.1176 10.5995 13.4343 10.3873 13.6549C10.1751 13.8719 9.909 13.9822 9.57815 13.9822C9.2545 13.9822 8.99555 13.8719 8.78335 13.6406C8.5712 13.4165 8.4705 13.0962 8.4705 12.6763V6.50265C8.4705 6.097 8.564 5.7874 8.7474 5.5917C8.9272 5.3889 9.17895 5.28215 9.50265 5.28215C9.69325 5.28215 9.86585 5.3213 10.0241 5.4138C10.1824 5.5063 10.3082 5.63795 10.4089 5.8123C10.5564 6.00445 10.5959 6.21795 10.5959 6.46705ZM4.64042 0.328966C6.1365 -0.190549 7.84835 -0.162079 9.125 0.905411C9.36235 1.12247 9.6357 1.38934 9.74 1.71315C9.87305 2.1117 9.29045 1.67401 9.20415 1.61352C8.78695 1.3502 8.3698 1.12959 7.89865 0.976581C5.38125 0.229335 2.99691 1.57794 1.51523 3.68445C0.90745 4.6096 0.501065 5.5846 0.170205 6.6592C0.137838 6.77665 0.105471 6.92965 0.0371409 7.03285C-0.0275927 7.15025 0.0119667 6.7197 0.0119667 6.69835C0.0659115 6.25355 0.159415 5.82655 0.270901 5.396C0.957795 3.11155 2.46825 1.20431 4.64042 0.328966ZM7.54265 4.44235C7.54265 5.4138 6.74785 6.20375 5.76605 6.20375C4.78427 6.20375 3.98949 5.41735 3.98949 4.44235C3.98949 3.4674 4.78427 2.681 5.76605 2.681C6.74785 2.681 7.54265 3.4674 7.54265 4.44235Z" fill="currentColor"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_296_1744">
+<rect width="53" height="14" fill="white"/>
+</clipPath>
+</defs>
+</svg></div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:4d63570a-a19b-40b9-7de0-2cc1b977f659" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="4d63570a-a19b-40b9-7de0-2cc1b977f659" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="/case-studies/lyft-monolith-to-microservices" class="nav_dropdown-logo-wrapper w-inline-block"><div class="nav_dropdown-logo w-embed"><svg xmlns="http://www.w3.org/2000/svg" width="26" height="18" viewBox="0 0 26 18" fill="none">
+<g clip-path="url(#clip0_297_1718)">
+<mask id="mask0_297_1718" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="-3" width="26" height="24">
+<path d="M0.494141 -3H25.9841V21H0.494141V-3Z" fill="white"/>
+</mask>
+<g mask="url(#mask0_297_1718)">
+<path fill-rule="evenodd" clip-rule="evenodd" d="M0.494141 0.29625H4.36967V10.68C4.36967 12.3277 5.11602 13.305 5.72091 13.7175C5.09079 14.2702 3.17214 14.76 1.73067 13.575C0.881082 12.8805 0.494141 11.7225 0.494141 10.6417V0.29625ZM24.6848 8.931V7.83675H25.8701V4.01475H24.5694C24.0662 1.7115 22.0198 0 19.5736 0C16.7541 0 14.463 2.2905 14.463 5.109V14.0265C15.2606 14.1427 16.2264 14.0137 17.037 13.332C17.8874 12.6367 18.2736 11.4795 18.2736 10.398V10.0635H20.2044V6.2415H18.2736V5.0835C18.2736 4.36275 18.8524 3.78375 19.5736 3.78375C20.2947 3.78375 20.8736 4.36275 20.8736 5.08275V8.91825C20.8736 11.736 23.1654 14.0265 25.9848 14.0265V10.218C25.2637 10.218 24.6848 9.639 24.6848 8.931ZM10.0338 4.002V9.6255C10.0332 9.77921 9.97066 9.92644 9.85977 10.0351C9.74888 10.1437 9.59869 10.2049 9.44196 10.2052C9.28511 10.2051 9.13472 10.144 9.02366 10.0353C8.91261 9.92668 8.84992 9.77933 8.84932 9.6255V4.002H5.02579V10.6035C5.02579 11.7877 5.42496 13.293 7.26638 13.782C9.10702 14.271 10.1631 13.2547 10.1631 13.2547C10.0598 13.9237 9.44196 14.4127 8.42491 14.5162C7.65255 14.5927 6.67373 14.3362 6.18432 14.13V17.6302C7.43385 18.003 8.74608 18.1192 10.0468 17.862C12.3899 17.412 13.8704 15.4552 13.8704 12.843V3.9765H10.0338V4.002Z" fill="currentColor"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_297_1718">
+<rect width="26" height="18" fill="white"/>
+</clipPath>
+</defs>
+</svg></div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:0355719a-3c91-9ec3-0b4c-0208af5a41f1" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="0355719a-3c91-9ec3-0b4c-0208af5a41f1" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="https://www.reddit.com/r/RedditEng/comments/1bdtrjq/wrangling_2000_git_repos_at_reddit/" class="nav_dropdown-logo-wrapper w-inline-block"><div class="nav_dropdown-logo w-embed"><svg xmlns="http://www.w3.org/2000/svg" width="51" height="15" viewBox="0 0 51 15" fill="none">
+<g clip-path="url(#clip0_297_1724)">
+<mask id="mask0_297_1724" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="-5" width="51" height="28">
+<path d="M0.539062 -4.73684H50.5583V22.1053H0.539062V-4.73684Z" fill="white"/>
+</mask>
+<g mask="url(#mask0_297_1724)">
+<path d="M7.52606 4.63974L6.35855 7.31843C6.21105 7.24737 5.86189 7.16764 5.53079 7.16764C5.19968 7.16764 4.86857 7.24658 4.54766 7.39816C3.91291 7.70843 3.44371 8.32974 3.44371 9.22658V14.1332H0.539062V4.58685H3.36132V5.92737H3.41625C4.07846 5.07474 5.08983 4.44553 6.40406 4.44553C6.88268 4.44553 7.34246 4.53395 7.52606 4.64053V4.63974ZM6.96428 9.38685C6.96428 6.62685 8.92189 4.44474 11.8548 4.44474C14.5123 4.44474 16.4158 6.3158 16.4158 8.95264C16.419 9.39463 16.3695 9.83542 16.2682 10.2655H9.61236C9.91522 11.2682 10.816 12.049 12.1678 12.049C12.9132 12.049 13.9701 11.7916 14.5397 11.3661L15.4413 13.4597C14.6041 14.01 13.3259 14.2761 12.2047 14.2761C9.0694 14.2761 6.96428 12.3237 6.96428 9.38685ZM9.55665 8.50816H13.7402C13.7402 7.28369 12.8756 6.63553 11.8179 6.63553C10.6229 6.63553 9.814 7.38158 9.55665 8.50816ZM41.3469 0.296059C42.3214 0.296059 43.1209 1.06816 43.1209 2.00922C43.1209 2.94869 42.3214 3.72158 41.3469 3.72158C40.3724 3.72158 39.5721 2.94948 39.5721 2.00843C39.5721 1.06816 40.3724 0.296059 41.3469 0.296059ZM42.7992 14.1347H39.8946V4.58606H42.7992V14.1347ZM24.4777 0.468953L24.4683 5.49159H24.4133C23.613 4.75501 22.75 4.45264 21.6185 4.45264C18.8332 4.45264 16.9846 6.61816 16.9846 9.36001C16.9846 12.1026 18.7131 14.2761 21.5267 14.2761C22.7037 14.2761 23.8155 13.8861 24.5326 12.9987H24.6158V14.1347H27.3823V0.468953H24.4777ZM24.6158 11.8579H24.5201L23.872 11.2082C23.4498 11.614 22.8716 11.8579 22.1976 11.8579C20.7743 11.8579 19.7794 10.7716 19.7794 9.36316C19.7794 7.95316 20.7743 6.86685 22.1976 6.86685C23.6209 6.86685 24.6158 7.95316 24.6158 9.36237V11.8579ZM35.5737 0.468164L35.5651 5.4908H35.5102C34.7098 4.75422 33.846 4.45264 32.7146 4.45264C29.9292 4.45264 28.0814 6.61816 28.0814 9.36001C28.0814 12.1018 29.8091 14.2761 32.6228 14.2761C33.7997 14.2761 34.9123 13.8861 35.6294 12.9987H35.7118V14.134H38.4791V0.468164H35.5737ZM35.6993 11.8579H35.6027L34.9546 11.2074C34.5333 11.614 33.955 11.8579 33.2811 11.8579C31.8578 11.8579 30.8629 10.7716 30.8629 9.36237C30.8629 7.95237 31.8578 6.86606 33.2811 6.86606C34.7044 6.86606 35.6993 7.95316 35.6993 9.36237V11.8579ZM48.4336 4.58685H50.5583V6.97343H48.4336V14.134H45.5289V6.97343H43.4144V4.58606H45.5289V1.99106H48.4343V4.58606L48.4336 4.58685Z" fill="currentColor"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_297_1724">
+<rect width="51" height="15" fill="white"/>
+</clipPath>
+</defs>
+</svg></div></a></div></div></div></div><div class="nav_dropdown-divider"></div><div class="nav_dropdown-vertical-col"><div class="nav-dropdown_link-icon-nohover vertical"><div class="nav_dropdown-svg w-embed"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M17.5 17.5002L13.9166 13.9168M15.8333 9.16667C15.8333 12.8486 12.8486 15.8333 9.16667 15.8333C5.48477 15.8333 2.5 12.8486 2.5 9.16667C2.5 5.48477 5.48477 2.5 9.16667 2.5C12.8486 2.5 15.8333 5.48477 15.8333 9.16667Z" stroke="#606060" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></div><div class="nav-dropdown_link-text-wrapper"><div class="nav-dropdown_top-row"><div class="text-color-white text-weight-medium">Public Code Search</div><div class="nav-dropdown_icon-wrapper"></div></div><div class="nav_dropdown-link-text-wrap"><div class="text-style-small text-color-secondary">Search across 1M+ public repositories</div></div></div><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:20abbddd-bdcd-6c57-0956-2b8340eb7095" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="20abbddd-bdcd-6c57-0956-2b8340eb7095" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="https://sourcegraph.com/search" target="_blank" class="nav_dropdown-red-text w-inline-block"><div>Try Public Code Search</div><img src="https://cdn.prod.website-files.com/673f71b4ebbb99190437de75/69271af6fc7dd14885703c31_687f97b1024104ecfc19d158_arrow-up-right%201.svg" loading="lazy" alt=""/></a></div></div><div class="nav_dropdown-divider"></div><div class="nav_dropdown-vertical-col"><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:6d553d22-31fc-ea31-291d-efba7a6057df" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="6d553d22-31fc-ea31-291d-efba7a6057df" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="/changelog" class="nav-dropdown_link-icon w-inline-block"><div class="nav_dropdown-link-svg"><div class="nav_dropdown-svg w-embed"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+<path d="M3.33398 9.16668C5.32311 9.16668 7.23076 9.95685 8.63729 11.3634C10.0438 12.7699 10.834 14.6776 10.834 16.6667M3.33398 3.33334C6.8702 3.33334 10.2616 4.7381 12.7621 7.23859C15.2626 9.73907 16.6673 13.1305 16.6673 16.6667M5.00065 15.8333C5.00065 16.2936 4.62755 16.6667 4.16732 16.6667C3.70708 16.6667 3.33398 16.2936 3.33398 15.8333C3.33398 15.3731 3.70708 15 4.16732 15C4.62755 15 5.00065 15.3731 5.00065 15.8333Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></div></div><div class="nav-dropdown_link-text-wrapper"><div class="nav-dropdown_top-row"><div class="text-color-white text-weight-medium">Changelog</div><div class="nav-dropdown_icon-wrapper"></div></div><div class="nav_dropdown-link-text-wrap"><div class="text-style-small text-color-secondary">What’s changed in Sourcegraph</div></div></div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:2549cbc3-1e88-15bc-f255-191cfab987bd" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="2549cbc3-1e88-15bc-f255-191cfab987bd" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="/blog" class="nav-dropdown_link-icon w-inline-block"><div class="nav_dropdown-link-svg"><div class="nav_dropdown-svg w-embed"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+<path d="M9.66664 14C9.5791 14.3173 9.4299 14.6143 9.22756 14.874C9.02523 15.1337 8.77373 15.351 8.48741 15.5135C8.2011 15.676 7.88558 15.7806 7.55888 15.8211C7.23217 15.8617 6.90067 15.8375 6.58331 15.75C6.26595 15.6624 5.96894 15.5132 5.70924 15.3109C5.44954 15.1085 5.23223 14.857 5.06973 14.5707C4.90723 14.2844 4.80271 13.9689 4.76215 13.6422C4.72158 13.3155 4.74576 12.984 4.83331 12.6666M2.5 9.16667L17.5 5V15L2.5 11.6667V9.16667Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></div></div><div class="nav-dropdown_link-text-wrapper"><div class="nav-dropdown_top-row"><div class="text-color-white text-weight-medium">Blog</div><div class="nav-dropdown_icon-wrapper"></div></div><div class="nav_dropdown-link-text-wrap"><div class="text-style-small text-color-secondary">Product + engineering updates</div></div></div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:1b950ed9-6532-d3b9-abaa-a675b6442fd4" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="1b950ed9-6532-d3b9-abaa-a675b6442fd4" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="https://sourcegraph.com/docs" target="_blank" class="nav-dropdown_link-icon w-inline-block"><div class="nav_dropdown-link-svg"><div class="nav_dropdown-svg w-embed"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
+<path d="M9.99935 5.83333C9.99935 4.94928 9.64816 4.10143 9.02304 3.47631C8.39792 2.85119 7.55007 2.5 6.66602 2.5H1.66602V15H7.49935C8.16239 15 8.79828 15.2634 9.26712 15.7322C9.73596 16.2011 9.99935 16.837 9.99935 17.5M9.99935 5.83333V17.5M9.99935 5.83333C9.99935 4.94928 10.3505 4.10143 10.9757 3.47631C11.6008 2.85119 12.4486 2.5 13.3327 2.5H18.3327V15H12.4993C11.8363 15 11.2004 15.2634 10.7316 15.7322C10.2627 16.2011 9.99935 16.837 9.99935 17.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg></div></div><div class="nav-dropdown_link-text-wrapper"><div class="nav-dropdown_top-row"><div class="text-color-white text-weight-medium">Documentation</div></div><div class="nav_dropdown-link-text-wrap"><div class="text-style-small text-color-secondary">Get help using Sourcegraph</div></div></div><div class="outside-icon-wrapper"><img src="https://cdn.prod.website-files.com/673f71b4ebbb99190437de75/687f97b1024104ecfc19d158_arrow-up-right.svg" loading="lazy" alt=""/></div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:62a6e8f3-10c5-6910-77ab-ffc58dcc6258" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="62a6e8f3-10c5-6910-77ab-ffc58dcc6258" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="https://security.sourcegraph.com/" target="_blank" class="nav-dropdown_link-icon w-inline-block"><div class="nav_dropdown-link-svg"><div class="nav_dropdown-svg w-embed"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-lock-icon lucide-lock"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/>
+<path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div></div><div class="nav-dropdown_link-text-wrapper"><div class="nav-dropdown_top-row"><div class="text-color-white text-weight-medium">Security</div></div><div class="nav_dropdown-link-text-wrap"><div class="text-style-small text-color-secondary">Explore our security and compliance portal</div></div></div><div class="outside-icon-wrapper"><img src="https://cdn.prod.website-files.com/673f71b4ebbb99190437de75/687f97b1024104ecfc19d158_arrow-up-right.svg" loading="lazy" alt=""/></div></a></div></div></div></nav></div><a data-link="/pricing" data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:bb3dc99e-f3fa-ee26-7d52-86f077be6a74" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="bb3dc99e-f3fa-ee26-7d52-86f077be6a74" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="/pricing" class="nav_dropdown-toggle w-inline-block"><div class="nav_link-text">Pricing</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:137f057c-67f2-560d-3ca7-fef2607aceec" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="137f057c-67f2-560d-3ca7-fef2607aceec" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="https://sourcegraph.com/search" class="nav_dropdown-toggle hide w-inline-block"><div class="text-style-nowrap">Search public code</div></a></div></div><div class="nav-main_right-col"><div class="nav-main_right-links"><div data-button-small="true" data-wf--button--style="primary" class="button_component button_topnav-height button_component"><div class="clickable_component"><a data-form_submission_source="request-info" data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:f21b7d35-910a-b535-838d-bb84eea68c75:af81079c-63a6-1894-6f1c-5d821f5a35ad:9e07ea36-ee0b-4848-1f1c-488bbb788197" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="9e07ea36-ee0b-4848-1f1c-488bbb788197" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%2C%7B%22componentId%22%3A%22af81079c-63a6-1894-6f1c-5d821f5a35ac%22%2C%22instanceId%22%3A%22f21b7d35-910a-b535-838d-bb84eea68c75%22%7D%2C%7B%22componentId%22%3A%229e07ea36-ee0b-4848-1f1c-488bbb788196%22%2C%22instanceId%22%3A%22af81079c-63a6-1894-6f1c-5d821f5a35ad%22%7D%5D" href="/contact/code-search" data-wf-event-ids="157045762" class="clickable_link cover-absolute w-inline-block"><span class="clickable_text screen-reader-only">Schedule a demo</span></a><button type="button" class="clickable_btn cover-absolute"><span class="clickable_text screen-reader-only">Schedule a demo</span></button></div><div aria-hidden="true" class="button_text is-small button_text-small">Schedule a demo</div></div></div></div></div><div class="nav-main-mobile_content"><div class="padding-global"><div class="nav-main_mobile-wrapper"><div class="nav-main_left-col"><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:60d17b95-9272-b4b2-7fdd-90f311b8b760" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="60d17b95-9272-b4b2-7fdd-90f311b8b760" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="/" class="nav-main_logo-link w-inline-block"><img src="https://cdn.prod.website-files.com/673f71b4ebbb99190437de75/67917518352105f18532c234_Group%203.svg" loading="lazy" id="regular-logo" alt="" class="nav-main_logo-img"/></a></div><div class="nav-main_right-col"><div class="nav-main_right-links"><div data-w-id="e207fb93-c050-e0b5-0d3a-defec0847d50" class="hamburger-icon-wrapper"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true" class="hamburger-icon block h-6 w-6" width="100%"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"></path></svg></div></div></div></div></div></div><div class="nav-main_dropdown tablet-mobile"><div class="nav-main_dropdown-content-top"><div class="nav-main_dropdown-content-top"><div data-button-small="false" data-wf--button--style="primary" class="button_component button_topnav-height button_component"><div class="clickable_component"><a data-form_submission_source="" data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:f60562ad-d1bf-2779-b2ae-cc95f1f9a698:af81079c-63a6-1894-6f1c-5d821f5a35ad:9e07ea36-ee0b-4848-1f1c-488bbb788197" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="9e07ea36-ee0b-4848-1f1c-488bbb788197" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%2C%7B%22componentId%22%3A%22af81079c-63a6-1894-6f1c-5d821f5a35ac%22%2C%22instanceId%22%3A%22f60562ad-d1bf-2779-b2ae-cc95f1f9a698%22%7D%2C%7B%22componentId%22%3A%229e07ea36-ee0b-4848-1f1c-488bbb788196%22%2C%22instanceId%22%3A%22af81079c-63a6-1894-6f1c-5d821f5a35ad%22%7D%5D" href="/contact/code-search" data-wf-event-ids="157045762" class="clickable_link cover-absolute w-inline-block"><span class="clickable_text screen-reader-only">Sign up</span></a><button type="button" class="clickable_btn cover-absolute"><span class="clickable_text screen-reader-only">Sign up</span></button></div><div aria-hidden="true" class="button_text is-small button_text-small">Sign up</div></div></div></div><div class="nav-main_left-col tablet-mobile"><div class="nav-main_left-links tablet-mobile"><div class="nav_dropdown is-relative tablet-mobile"><div class="nav_dropdown-toggle tablet-mobile"><div class="nav_link-contents tablet-mobile"><div>Platform</div><svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-1x1-xxsmall lucide lucide-chevron-down ml-1 h-6 w-6 lg:h-3 lg:w-3"><path d="m6 9 6 6 6-6"></path></svg></div></div><div class="nav_dropdown-menu tablet-mobile"><div class="nav_dropdown-card tablet-mobile"><div class="nav_dropdown-content tablet-mobile"><div class="nav_dropdown-vertical-col"><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:c069f6ab-d481-d823-02ba-50f5c829fccc" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="c069f6ab-d481-d823-02ba-50f5c829fccc" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="/deep-search" class="nav-dropdown_link-text w-inline-block"><div class="text-color-white">Deep Search</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:df4d3fde-9771-8d06-e7dc-37bbc49a8712" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="df4d3fde-9771-8d06-e7dc-37bbc49a8712" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="/code-search" class="nav-dropdown_link-text w-inline-block"><div>Code Search</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:c069f6ab-d481-d823-02ba-50f5c829fccf" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="c069f6ab-d481-d823-02ba-50f5c829fccf" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="/batch-changes" class="nav-dropdown_link-text w-inline-block"><div>Batch Changes</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:9a0a701e-30c8-06a7-6acf-287ceaa6d42a" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="9a0a701e-30c8-06a7-6acf-287ceaa6d42a" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="/code-insights" class="nav-dropdown_link-text w-inline-block"><div>Insights</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:3aa3b487-0c9d-4c88-1bfe-f8baa58fc4a6" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="3aa3b487-0c9d-4c88-1bfe-f8baa58fc4a6" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="https://sourcegraph.com/docs/code_monitoring#code-monitoring" class="nav-dropdown_link-text w-inline-block"><div>Monitors</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:fc531e57-9009-07f8-ecc3-fa92bad60707" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="fc531e57-9009-07f8-ecc3-fa92bad60707" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="/mcp" class="nav-dropdown_link-text w-inline-block"><div>MCP</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:fb868b2a-ce1c-5321-3065-4d92af5c79e7" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="fb868b2a-ce1c-5321-3065-4d92af5c79e7" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="https://sourcegraph.com/docs/api/graphql" class="nav-dropdown_link-text w-inline-block"><div>APIs</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:5edacdad-f325-3572-ccba-6c833eefba3a" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="5edacdad-f325-3572-ccba-6c833eefba3a" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="https://sourcegraph.com/docs/cli" class="nav-dropdown_link-text w-inline-block"><div>CLI</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:15eec0de-6646-93a5-c9db-a1df0eb5ea7d" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="15eec0de-6646-93a5-c9db-a1df0eb5ea7d" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="https://sourcegraph.com/docs/integration#integrations" class="nav-dropdown_link-text w-inline-block"><div>Extensions &amp; Integrations</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:7ff920e6-c9c5-de4a-9553-57bddfe16125" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="7ff920e6-c9c5-de4a-9553-57bddfe16125" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="https://sourcegraph.com/docs/cody" class="nav-dropdown_link-text w-inline-block"><div>Cody</div></a></div></div></div></div></div><div class="nav_dropdown is-relative tablet-mobile"><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:457bb59f-18f5-659b-b916-a749fee39d72" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="457bb59f-18f5-659b-b916-a749fee39d72" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="#" class="nav_dropdown-toggle tablet-mobile w-inline-block"><div class="nav_link-contents tablet-mobile"><div>Resources</div><svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-1x1-xxsmall lucide lucide-chevron-down ml-1 h-6 w-6 lg:h-3 lg:w-3"><path d="m6 9 6 6 6-6"></path></svg></div></a><div class="nav_dropdown-menu tablet-mobile"><div class="nav_dropdown-card tablet-mobile"><div class="nav_dropdown-content tablet-mobile"><div class="nav_dropdown-vertical-col"><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:457bb59f-18f5-659b-b916-a749fee39d7b" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="457bb59f-18f5-659b-b916-a749fee39d7b" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="/case-studies" class="nav-dropdown_link-text w-inline-block"><div>Case Studies</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:e7c1be9a-2f93-2f75-5cc7-cf96e958065e" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="e7c1be9a-2f93-2f75-5cc7-cf96e958065e" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="https://sourcegraph.com/search" class="nav-dropdown_link-text w-inline-block"><div>Public Code Search</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:a6aa9e9c-869b-9d99-7fc1-6740df26742f" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="a6aa9e9c-869b-9d99-7fc1-6740df26742f" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="/blog" class="nav-dropdown_link-text w-inline-block"><div>Blog</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:a1f34585-29fb-4bf8-a02c-c13395d9637b" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="a1f34585-29fb-4bf8-a02c-c13395d9637b" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="/changelog" class="nav-dropdown_link-text w-inline-block"><div>Changelog</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:457bb59f-18f5-659b-b916-a749fee39d7e" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="457bb59f-18f5-659b-b916-a749fee39d7e" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="https://sourcegraph.com/docs" class="nav-dropdown_link-text w-inline-block"><div>Docs</div></a></div></div></div></div></div><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:3ccfeaec-22e0-7172-4e81-12fef95d42d4" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="3ccfeaec-22e0-7172-4e81-12fef95d42d4" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="/pricing" class="nav_dropdown-toggle mobile w-inline-block"><div>Pricing</div></a></div></div></div><div class="nav-link-hover-code w-embed w-script"><style>
+  /* -------------------------------------- */
+  /* ICON COLOR + HOVER COLOR LOGIC         */
+  /* -------------------------------------- */
+
+  .nav_dropdown-svg {
+    transition: color .2s ease;
+  }
+
+  .nav-dropdown_link-icon:lang(en) {
+    color: #606060;
+  }
+
+  /* Default link color */
+  .nav-dropdown_link-icon {
+    color: #606060;
+    transition: color .2s ease, background-color .2s ease;
+  }
+
+  /* Hover color */
+  .nav-dropdown_link-icon:hover {
+    color: #f34e3f;
+  }
+
+
+  /* -------------------------------------- */
+  /* MEGA MENU BASE STATE                   */
+  /* -------------------------------------- */
+
+  .nav_dropdown-menu {
+    display: block !important;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate3d(0, -1rem, 0);
+    transition: opacity .18s ease, transform .18s ease;
+
+    /* Your centering + layout */
+    left: 0 !important;
+    right: 0 !important;
+    top: 3.5rem !important;
+    margin: 0 auto;
+    width: 100%;
+    max-width: 80rem !important;
+    transform: translateY(0); /* Only vertical movement */
+  }
+
+  /* When dropdown is open */
+  .nav_dropdown.w--open .nav_dropdown-menu {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate3d(0, 0, 0);
+    max-width: 80rem !important;
+  }
+
+
+  /* -------------------------------------- */
+  /* OUTSIDE ICON WRAPPER FADE-IN           */
+  /* -------------------------------------- */
+
+  .outside-icon-wrapper {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s ease;
+  }
+
+  .nav-dropdown_link-icon:hover .outside-icon-wrapper {
+    opacity: 1;
+  }
+  
+  @media (min-width: 992px) {
+  .nav-main_dropdown.tablet-mobile {
+    display: none !important;
+  }
+}
+</style>
+
+<style>
+@media (max-width: 991px) {
+  /* Wrapper should NOT catch clicks */
+  .nav_dropdown.is-relative.tablet-mobile {
+    pointer-events: none;
+  }
+
+  /* But its actual interactive children SHOULD */
+  .nav_dropdown.is-relative.tablet-mobile .nav_dropdown-toggle,
+  .nav_dropdown.is-relative.tablet-mobile .nav_dropdown-menu,
+  .nav_dropdown.is-relative.tablet-mobile a,
+  .nav_dropdown.is-relative.tablet-mobile .nav-dropdown_link-text {
+    pointer-events: auto;
+  }
+}
+</style>
+
+<!-- DESKTOP CLICK-BLOCK SCRIPT -->
+<script>
+  window.Webflow ||= [];
+  Webflow.push(() => {
+    const eventsToBlock = ["click", "mousedown", "mouseup", "pointerdown", "pointerup"];
+
+    function isDesktop() {
+      return window.innerWidth >= 992; // Webflow desktop breakpoint
+    }
+
+    eventsToBlock.forEach(eventName => {
+      document.addEventListener(
+        eventName,
+        evt => {
+          if (!isDesktop()) return;
+
+          // Only block events that originate from inside the desktop dropdown toggle
+          const toggle = evt.target.closest(".nav_dropdown-toggle.w-dropdown-toggle");
+          if (!toggle) return;
+
+          evt.preventDefault();
+          evt.stopImmediatePropagation();
+        },
+        true // capture phase: before Webflow
+      );
+    });
+  });
+</script>
+
+<!-- DESKTOP HOVER OPEN + DELAYED CLOSE -->
+<script>
+  window.Webflow ||= [];
+  Webflow.push(() => {
+    console.log('[NAV-DD] init');
+
+    const dropdowns = document.querySelectorAll('.nav_dropdown.w-dropdown');
+    console.log('[NAV-DD] found dropdowns:', dropdowns.length);
+
+    dropdowns.forEach(dd => {
+      const toggle = dd.querySelector('.nav_dropdown-toggle.w-dropdown-toggle');
+      const menu   = dd.querySelector('.nav_dropdown-menu.w-dropdown-list');
+
+      if (!toggle || !menu) {
+        console.warn('[NAV-DD] missing parts in', dd);
+        return;
+      }
+
+      let closeTimer;
+
+      function openMenu() {
+        clearTimeout(closeTimer);
+        dd.classList.add('w--open');
+      }
+
+      function scheduleClose() {
+        closeTimer = setTimeout(() => {
+          dd.classList.remove('w--open');
+        }, 150);
+      }
+
+      dd.addEventListener('mouseenter', openMenu);
+      dd.addEventListener('mouseleave', scheduleClose);
+    });
+  });
+</script></div><div class="mobile-dropdown-gsap w-embed w-script"><script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+<script>
+  window.Webflow ||= [];
+  Webflow.push(() => {
+    const mq = window.matchMedia("(max-width: 991px)"); // tablet + mobile
+
+    function initMobileDropdowns() {
+      if (!mq.matches || !window.gsap) return;
+
+      document.querySelectorAll(".nav_dropdown").forEach(dd => {
+        if (dd.dataset.gsaptoggleInit === "1") return;
+        dd.dataset.gsaptoggleInit = "1";
+
+        const toggle = dd.querySelector(".nav_dropdown-toggle");  // 👈 ONLY the real toggle
+        const menu   = dd.querySelector(".nav_dropdown-menu");
+        const icon   = dd.querySelector(".icon-1x1-xxsmall");
+
+        if (!toggle || !menu) return;
+
+        // Start collapsed
+        gsap.set(menu, {
+          height: 0,
+          overflow: "hidden",
+          autoAlpha: 0,
+          display: "block"
+        });
+
+        if (icon) {
+          gsap.set(icon, {
+            rotate: 0,
+            transformOrigin: "50% 50%"
+          });
+        }
+
+        let isOpen = false;
+
+        const tl = gsap.timeline({ paused: true });
+
+        tl.to(menu, {
+          height: "auto",
+          autoAlpha: 1,
+          duration: 0.38,
+          ease: "cubic-bezier(0.25, 0.1, 0.25, 1)" // Webflow-ish ease
+        });
+
+        if (icon) {
+          tl.to(icon, {
+            rotate: 180,
+            duration: 0.38,
+            ease: "cubic-bezier(0.25, 0.1, 0.25, 1)"
+          }, 0);
+        }
+
+        toggle.addEventListener("click", evt => {
+          evt.preventDefault();
+          evt.stopImmediatePropagation();
+
+          isOpen ? tl.reverse() : tl.play();
+          isOpen = !isOpen;
+        });
+      });
+    }
+
+    // Run once on load
+    initMobileDropdowns();
+
+    // Re-init if viewport crosses into tablet/mobile
+    mq.addEventListener("change", e => {
+      if (e.matches) initMobileDropdowns();
+    });
+  });
+</script></div></div></div></div><div class="modal1_wrapper"><a data-w-id="322633ce-8381-ba7c-49e3-21133fcc3943" data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:322633ce-8381-ba7c-49e3-21133fcc3943" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="322633ce-8381-ba7c-49e3-21133fcc3943" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="#" class="button modal-hide w-button">Open Modal</a><div class="modal1_component"><div class="modal1_content-wrapper"><div class="margin-bottom margin-medium"><div class="text-align-left"><div class="max-width-large align-center"><div class="margin-bottom"><h2 class="heading-style-h5">Sign up to get access</h2></div></div></div></div><div class="modal-content_wrapper"><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:322633ce-8381-ba7c-49e3-21133fcc394e" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="322633ce-8381-ba7c-49e3-21133fcc394e" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="https://accounts.sourcegraph.com/sign-in?prompt=login&amp;prompt_auth=github&amp;redirect_to=https://workspaces.sourcegraph.com/plan" class="modal-content_button w-inline-block"><div class="modal-content_button-content"><img src="https://cdn.prod.website-files.com/673f71b4ebbb99190437de75/676a53f14af65168bcd4a95a_github.svg" loading="lazy" alt="" class="modal-content_button-icon"/><div class="text-size-small">Continue With GitHub</div></div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:322633ce-8381-ba7c-49e3-21133fcc3953" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="322633ce-8381-ba7c-49e3-21133fcc3953" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="https://accounts.sourcegraph.com/sign-in?prompt=login&amp;prompt_auth=gitlab&amp;redirect_to=https://workspaces.sourcegraph.com/plan" class="modal-content_button w-inline-block"><div class="modal-content_button-content"><img src="https://cdn.prod.website-files.com/673f71b4ebbb99190437de75/676a53f15a73fb803790dec2_gitlab.svg" loading="lazy" alt="" class="modal-content_button-icon"/><div class="text-size-small">Continue With GitLab</div></div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:322633ce-8381-ba7c-49e3-21133fcc3958" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="322633ce-8381-ba7c-49e3-21133fcc3958" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="https://accounts.sourcegraph.com/sign-in?prompt=login&amp;prompt_auth=google&amp;redirect_to=https://workspaces.sourcegraph.com/plan" class="modal-content_button w-inline-block"><div class="modal-content_button-content"><img src="https://cdn.prod.website-files.com/673f71b4ebbb99190437de75/67783d9a67085a9c71f8ebd7_Frame%20(1).svg" loading="lazy" alt="" class="modal-content_button-icon"/><div class="text-size-small">Continue With Google</div></div></a><div class="modal-content_disclaimer-text margin-top margin-small"><div class="text-size-small">By registering, you agree to our <a href="/terms" data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:322633ce-8381-ba7c-49e3-21133fcc3960" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="322633ce-8381-ba7c-49e3-21133fcc3960" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D">Terms of Service</a> and <a href="/terms/privacy" data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:322633ce-8381-ba7c-49e3-21133fcc3963" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="322633ce-8381-ba7c-49e3-21133fcc3963" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D">Privacy Policy.</a></div></div><div class="modal-content_sign-in-text margin-top margin-small"><div class="text-size-small">Already have an account? <a href="https://sourcegraph.com/sign-in?returnTo=/cody/manage" data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:322633ce-8381-ba7c-49e3-21133fcc3968" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="322633ce-8381-ba7c-49e3-21133fcc3968" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D">Sign in.</a></div></div></div><a data-w-id="322633ce-8381-ba7c-49e3-21133fcc396a" data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5:322633ce-8381-ba7c-49e3-21133fcc396a" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="322633ce-8381-ba7c-49e3-21133fcc396a" data-wf-component-context="%5B%7B%22componentId%22%3A%228f13c42a-41f5-1099-0225-4d33cbcd0731%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5bc5%22%7D%5D" href="#" class="modal1_close-button w-inline-block"><div class="icon-embed-small w-embed"><svg width="100%" height="100%" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M24.056 23.5004L23.5004 24.056C23.1935 24.3628 22.696 24.3628 22.3892 24.056L16 17.6668L9.61078 24.056C9.30394 24.3628 8.80645 24.3628 8.49961 24.056L7.94403 23.5004C7.63719 23.1936 7.63719 22.6961 7.94403 22.3892L14.3332 16L7.94403 9.61081C7.63719 9.30397 7.63719 8.80648 7.94403 8.49964L8.49961 7.94406C8.80645 7.63721 9.30394 7.63721 9.61078 7.94406L16 14.3333L22.3892 7.94404C22.6961 7.6372 23.1935 7.6372 23.5004 7.94404L24.056 8.49963C24.3628 8.80647 24.3628 9.30395 24.056 9.61079L17.6667 16L24.056 22.3892C24.3628 22.6961 24.3628 23.1936 24.056 23.5004Z" fill="currentColor"/>
+</svg></div></a></div><div data-w-id="322633ce-8381-ba7c-49e3-21133fcc396c" class="modal1_background-overlay"></div></div></div></nav><main class="main-wrapper"><section data-background-color="secondary" class="section_blog-post background-color-secondary base-2-column"><div class="padding-global base-2-column-2"><div data-container="large" class="container-large base-2-column-3"><div data-padding-bottom="small" data-padding-top="small" class="padding-section-medium base-2-column-4"><div class="blog-card-grid_component base-2-column-5"><div class="blog-wrapper"><div class="blog-post_content"><div class="margin-bottom margin-medium flex-h"><a data-wf-native-id-path="1a95ec00-0b50-5ee7-e687-8c639aad7e68" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="1a95ec00-0b50-5ee7-e687-8c639aad7e68" href="/blog" class="blog-back-link w-inline-block"><div class="back-arrow w-embed"><svg class="mdi-icon inline h-3 transition-transform group-hover:-translate-x-1" width="16" height="16" fill="currentColor" viewBox="0 0 24 18"><path d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z"></path></svg></div><div class="text-style-main text-color-secondary">Back to blog</div></a></div><div class="margin-bottom"><h1 class="heading-style-h2">How Cody understands your codebase</h1></div><div class="company-date-wrapper"><div class="blog_author-list w-dyn-list"><div role="list" class="blog_author-collection w-dyn-items"><div role="listitem" class="blog_author-list w-dyn-item"><div class="blog-author text-size-tiny text-weight-semibold">Alex Isken</div></div></div></div><div class="blog-date text-size-tiny text-color-secondary">February 15, 2024</div></div><div class="text-rich-text w-richtext"><p>We often say that <a href="https://sourcegraph.com/cody" data-wf-native-id-path="0043b182-b8b0-a501-c397-34bfe5aea9b6" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="0043b182-b8b0-a501-c397-34bfe5aea9b6"><strong>Cody</strong></a> uses a deep understanding of your codebase to help you write and understand code faster. Meanwhile, we’re frequently asked: How does Cody understand <em>my</em> codebase? And what exactly does that mean?</p><p>In building Cody, we found that Large Language Models (LLMs), when applied to specific use cases, are only as good as the context they’re given. For Cody, those use cases are writing, understanding, and answering questions about code. Cody needs the context of a user’s codebase to do those things effectively.</p><p>This blog unpacks why context matters and how we’ve built Cody Enterprise to use the right context to help you write and understand code.</p><h3>Why does context matter?</h3><p>When it comes to AI chat and asking questions of an LLM, you can think of questions loosely falling into two categories as they relate to context:</p><ul role="list"><li>General coding questions that <em>are not</em> dependent on a user’s context</li><li>Specific questions that <em>are</em> dependent on a user’s existing code/context</li></ul><p>General questions that aren’t context-dependent can be answered purely based on the LLM’s training data. LLMs are typically trained on a huge corpus of text, code, and other data and can answer questions by drawing information from that data.</p><p>For example, you might ask ChatGPT, “In what year was COBOL invented?” or “What food is the state of Wisconsin best known for?” ChatGPT can answer these questions easily. They aren’t dependent on any context that isn’t included in the query itself or any information the model hasn’t been exposed to.</p><p>Similarly, you might ask Cody all sorts of general knowledge coding questions, like:</p><ul role="list"><li>“How do I build a Flask application?”</li><li>“Can you give me a hashing algorithm?”</li><li>“What are some best practices to prevent SQL injection?”</li></ul><p>Cody can answer all of these questions easily; all of the information required to answer them is incorporated in the underlying model’s training data, so no outside context is needed for Cody to provide an answer.</p><p>Context-dependent questions are trickier. For example, you can’t ask ChatGPT, “What color is my dog?” since ChatGPT has never seen your dog. You could ask ChatGPT to critique your resume, but only if you include that outside context, i.e., the actual content of your resume, alongside the question. Put simply, asking LLMs about things they’ve never seen before confuses them.</p><p>You might ask Cody, “What does this <em>piece of code</em> do?” For this question, you need to provide context for Cody to understand and answer the question entirely. For this relatively simple question, you could ask ChatGPT and paste in a snippet of your code as context, or you could highlight a piece of code in your editor and ask this question.</p><p>A more specific and challenging question is, <em>“How can I fix this error where the user object is null when accessing the &#x27;username&#x27; field?”</em> You probably can’t paste in a single snippet of code to answer this question, and even if you could, a good coding assistant shouldn’t require a developer to find all the authentication code themselves.</p><p>This is where context retrieval comes in. Instead of making you find the relevant pieces of code and paste them in alongside your query, Cody can search your codebase to retrieve the context that is relevant to your question (even if that context entails multiple files from around a codebase, including those that are not even open in your editor).</p><p>In short, context and context retrieval take Cody from being able to answer only general questions to also being able to answer context-dependent questions, which are very common in a developer&#x27;s day-to-day work. After all, most software development is just about building on top of existing context.</p><h3>Methods of using context: RAG vs fine-tuning</h3><p>To use the context of your codebase, Cody uses a technique called RAG: Retrieval-Augmented Generation. RAG is a technique where an LLM generates a response using additional context that is included alongside a user request. In our case, Cody programmatically retrieves context when a user submits a request. Then, it uses RAG to submit that context alongside the user request to the underlying model.</p><p>We’re often asked about fine-tuning as a way to use context with AI, too. Fine-tuning is a method of extending a model with additional training data beyond the data used during its primary training cycle. Since models are fine-tuned with a point-in-time snapshot of data, they’re typically fine-tuned on information that doesn’t change quickly; otherwise, the fine-tuning quickly becomes outdated. This is especially important to consider for dynamic data sources like codebases.</p><p><strong>RAG and fine-tuning are different tools for different jobs, so neither is strictly better than the other.</strong> Fine-tuning is typically used to teach a model about a desired <em>form</em>, e.g., how users want the model to act. For example, developers might want a model to always return responses in a given format (e.g., preferring a given programming convention, like arrow functions) or to be exceptionally good at answering a style of question not seen in the original training data. RAG is more relevant for teaching a model about <em>content</em>, especially content that changes over time, like code, since fresh content is retrieved at the time of invocation.</p><p>Today, we use RAG to power Cody’s responses. It suits that purpose well because it can use up-to-date, relevant code that is retrieved at the time Cody is invoked. This doesn’t mean Cody will never use fine-tuning in the future, but for code retrieval specifically, we find RAG to be the more appropriate tool for the job.</p><h3>How context is used in a prompt</h3><p>When a user queries Cody (either via a chat message or a command), the first thing that happens is Cody compiles a prompt. Cody takes the user’s input and molds it into a prompt designed to get the best response back from the LLM. The prompt can be divided into three parts:</p><ul role="list"><li><strong>Prefix</strong>: An optional description of the desired output. Cody uses prefixes often, and one example is when a developer is triggering a command, which is a predefined task intended to return a specific output format. For instance, for the “Test” command, Cody is looking for an output in the format of a unit test and will use a prefix to define this.</li><li><strong>User input</strong>: The query provided by the user.</li><li><strong>Context</strong>: The additional information that Cody finds and retrieves to help the LLM provide a relevant answer.</li></ul><p>For example, when a user triggers the “Explain” command in Cody, the resulting prompt that Cody generates to send to the LLM may look like this:</p><p><em>Prefix:</em></p><p><code>Explain the following Go code at a high level. Only include details that are essential to an overall understanding of what&#x27;s happening in the code.</code></p><p><em>User input:</em></p><p><code>zoekt.QueryToZoektQuery(b.query, b.resultTypes, b.features, typ)</code></p><p><em>Context:</em></p><p><code>[Contents of sourcegraph/sourcegraph/internal/search/zoekt/query.go]</code></p><p>This full prompt, containing all three parts, is then sent to the LLM. The LLM works off of the information contained in the prompt along with the information contained in its baseline model. Any questions pertaining to the user’s codebase will only be answerable if the context (sent as part of the prompt) gives the LLM enough information to address the question.</p><figure style="max-width:1614px" class="w-richtext-align-fullwidth w-richtext-figure-type-image"><div><img loading="lazy" alt="How Cody constructs a prompt" src="https://cdn.prod.website-files.com/6750d0c3f154999a486dade7/6787f4c91cf74810942008ac_prompt-construction.avif"/></div></figure><h3>How Cody finds context from your codebase</h3><p>Knowing how critical context is to an LLM prompt, we still have an open question: how does Cody select the right context to send along to the LLM? We have diverse context sources available between the user’s IDE and code that is remotely stored on Sourcegraph (more on that in a second). For each of Cody’s features, we need to consider the most appropriate approach for both accuracy and speed.</p><h3>Chat and commands</h3><p>For chat and commands, it’s important that Cody has access to broad context. In an ideal case, this means context that spans the entire surface area of a codebase that a user might want to ask a question about.</p><p>This is where Sourcegraph’s Code Intelligence Platform comes in. Sourcegraph’s underlying platform functions as an engine that <em>understands code</em>. Our customers have codebases ranging from ~100 repositories on a single code host (like Bitbucket or GitLab) to 100,000+ repositories living across a spectrum of code hosts. In all of these cases, Sourcegraph indexes and <em>understands</em> all of this code.</p><p>We use this platform to power search experiences through our product <a href="https://sourcegraph.com/code-search" data-wf-native-id-path="8dbf0bc9-1b7b-264c-651c-1560511d20c6" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="8dbf0bc9-1b7b-264c-651c-1560511d20c6"><strong>Code Search</strong></a>. Code Search uses a high-performance search engine to help developers search and navigate broad codebases in one place.</p><p>Now, we’re using this same underlying platform to power Cody, and we’re able to pass information from the platform to Cody’s LLM as context for understanding your codebase.</p><p>When a user invokes Cody, they’re able to select repositories they’d like to pull context from (as of this post, users can select up to 10 repositories at a time). Cody will contact the Sourcegraph instance and run a search over the selected repositories.</p><p>The search request pre-processes the user query, splitting the text into tokens and applying a series of cleansing steps so that we are left with a standardized representation without any extraneous information. That list of tokens is then processed by the Sourcegraph search engine, which scans the user-selected repositories and ranks file snippets (a snippet is a subset of the overall file) according to their relevance to the search query.</p><p>To compute relevance, Cody incorporates an adapted form of the <a href="https://en.wikipedia.org/wiki/Okapi_BM25" data-wf-native-id-path="4f11024f-b05d-1a12-e099-a732ba362e67" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="4f11024f-b05d-1a12-e099-a732ba362e67"><strong>BM25</strong></a> ranking function alongside other signals learned and tuned to the specific task at hand. Ranking the <em>right</em> context at this phase is a critical piece of the process for users to get relevant answers from Cody, so we’re constantly tuning our approach to this ranking. Once snippets are ranked, the most relevant ones are sent back to the Cody client for use in the prompt context.</p><p>On top of the file snippets returned by Sourcegraph search, Cody also has access to local context (the project that is open in the user’s IDE). Cody pulls snippets from open files in the IDE to add to the remotely retrieved context.</p><p>Cody then looks at the relevance of all the snippets provided by each context provider and creates a global ranking. From this global ranking, Cody takes the first <em>N</em> snippets returned (<em>N</em> being a function of the length of each snippet) and packages them into the ‘context’ of the prompt it is building. This context, alongside the prefix and user input, completes the full prompt that Cody will then send to the LLM. The LLM will then read and consider the full text of the context it receives when building a response to return to the user.</p><figure style="max-width:1533px" class="w-richtext-align-fullwidth w-richtext-figure-type-image"><div><img loading="lazy" alt="Dataflow of a Cody chat message" src="https://cdn.prod.website-files.com/6750d0c3f154999a486dade7/6787f4c9ac74aa553d0b62d1_cody-chat-dataflow.avif"/></div></figure><h3>What about autocomplete?</h3><p>Autocomplete, both inline and multi-line, uses different methods of context retrieval. Since autocomplete has to be extremely fast to be most useful (helpfully interjecting while users are typing), Cody uses algorithms that prioritize searching local context for autocomplete rather than running remote searches on an enterprise Sourcegraph instance. Autocomplete also uses different LLMs, favoring options that are tuned for code completion tasks and for low latency.</p><p>As a user is typing, Cody is constantly evaluating the intent of the actions a user is taking. Using a parsing library called <a href="https://tree-sitter.github.io/tree-sitter/" data-wf-native-id-path="17946577-e62b-ac3e-b951-2772f5d8153a" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="17946577-e62b-ac3e-b951-2772f5d8153a"><strong>Tree-Sitter</strong></a>, Cody can quickly identify what type of completion experience will fit best into the active workflow, e.g., filling in the body of a function, writing a docstring, or implementing a method call. This identified intent helps Cody understand what context will best suit the task at hand.</p><p>Once intent is classified, Cody reaches out to various local context sources, including the contents of the active file, other open tabs, recently closed tabs, and more. Cody identifies similar or relevant sections of code from these context streams that are useful reference examples to guide the completion. Like context selection for chat, Cody then packages the most relevant snippets into a prompt and sends that to our completions-tuned LLM. The response from the LLM is then parsed and rendered as ghost text ahead of the user’s cursor.</p><p>Of course, this is an overly simplistic summary of completions, which is a space rich with ongoing research and development. If you are interested in learning more, we encourage you to check out our <a href="https://sourcegraph.com/blog/the-lifecycle-of-a-code-ai-completion" data-wf-native-id-path="21991953-41ad-f077-2743-bed3a564dc68" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="21991953-41ad-f077-2743-bed3a564dc68"><strong>recent deep dive into the lifecycle of a completion</strong></a>.</p><figure style="max-width:1077px" class="w-richtext-align-fullwidth w-richtext-figure-type-image"><div><img loading="lazy" alt="Dataflow of Cody autocomplete" src="https://cdn.prod.website-files.com/6750d0c3f154999a486dade7/6787f4c93e2d8ae049370015_cody-autocomplete-dataflow.avif"/></div></figure><h3>So what happened to embeddings?</h3><p>Embeddings have been at the backbone of Cody’s retrieval stack since we launched the product in beta, and now that Cody Enterprise is generally available, we’re leaving them behind (for now). So why the change?</p><p>First, as background, it’s important to understand embeddings at a high level. Succinctly, embeddings are a dense vector representation of high-dimensional data. We previously used an embedding model (text-embedding-ada-002 from OpenAI) to collapse tokens (source code) into a vector. We could then run a vector-based retrieval system for context. When a user queried Cody, the query would be converted into a vector, and that vector would be compared against the vectors representing the user’s codebase. This comparison would yield files and code snippets that we’d use as context for Cody.</p><p>While embeddings worked for retrieving context, they had some drawbacks for our purposes. Embeddings require all of your code to be represented in the vector space and to do this, we need to send source code to an OpenAI API for embedding. Then, those vectors need to be stored, maintained, and updated. This isn’t ideal for three reasons:</p><ul role="list"><li>Your code has to be sent to a 3rd party (OpenAI) for processing, and not everyone wants their code to be relayed in this way.</li><li>The process of creating embeddings and keeping them up-to-date introduces complexity that Sourcegraph admins have to manage.</li><li>As the size of a codebase increases, so does the respective vector database, and searching vector databases for codebases with &gt;100,000 repositories is complex and resource-intensive. This complexity was limiting our ability to build our new multi-repository context feature.</li></ul><p>We’re committed to Cody having the <em>best</em> context of any coding assistant on the market, which pushed us to find a solution for these issues. We were able to replace embeddings for context retrieval with Sourcegraph’s native platform, as described in the preceding sections. This new solution doesn’t require sending code to an embedding processor, it requires zero additional config, and it scales to massive codebases.</p><p>Although we’re excited about the improvements coming from this change, we believe there are likely opportunities to leverage embeddings in some form in the future as we continue to improve context even further. This is an active area of research for us, and we are excited to share more in the future.</p><h3>The future of context</h3><p>TL;DR, Cody Enterprise has two main ways of retrieving context today:</p><ul role="list"><li>For chat and commands, Cody uses a combination of local context + remote Sourcegraph search to find context from a user’s entire codebase</li><li>For autocomplete, Cody identifies a user’s intent and then pulls local context from the IDE to generate a response extremely quickly</li></ul><p>However, we’re constantly experimenting with new ways to improve Cody’s context retrieval in various dimensions:</p><ul role="list"><li>Making context retrieval faster</li><li>Making context retrieval more accurate (e.g., finding the most relevant files to bring to the LLM)</li><li>Bringing in new sources of context</li></ul><p>It’s likely that the methods of context retrieval outlined in this post evolve over time just as they’ve evolved since we first announced Cody last year. In the future, we see an opportunity to expand Cody’s total domain of knowledge by bringing in entirely new sources of context like wikis, docs, and engineering tickets. More context will open up Cody to answer more, broader questions for users about parts of their work adjacent to their actual code.</p><p>If you’d like to try Cody yourself, you can <a href="https://sourcegraph.com/cody" data-wf-native-id-path="a7cf6e99-a068-0cf6-ee8a-fd33d84fb980" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="a7cf6e99-a068-0cf6-ee8a-fd33d84fb980"><strong>sign up for free</strong></a>. You can also <a href="https://sourcegraph.com/contact/request-info" data-wf-native-id-path="830a9acc-3814-a7ee-33d3-557d2260cd9c" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="830a9acc-3814-a7ee-33d3-557d2260cd9c"><strong>contact us</strong></a> to learn more about Cody Enterprise.</p><p>‍</p></div></div></div><div class="sidebar2_menu-bottom base-2-column-71"><div class="sidebar2_card base-2-column-72"><div class="margin-bottom margin-xxsmall base-2-column-73"><div>Subscribe for the latest code AI news and product updates</div></div><div class="w-embed w-script"><script charset="utf-8" type="text/javascript" src="//js.hsforms.net/forms/embed/v2.js"></script>
+<script>
+  hbspt.forms.create({
+    portalId: "2762526",
+    formId: "ab908b80-d1ed-44fd-968c-505c85ed72ac"
+  });
+</script>
+
+<style>
+/* Checkbox Styles */
+  .hs-input[type="checkbox"] {
+    width: 1.25rem;             
+    height: 1.25rem;
+    min-height: 1.25rem;
+    min-width: 1.25rem;
+    border: 1px solid #e4e9f4;   
+    background-color: #fff;   
+    cursor: pointer;         
+    position: relative;   
+    border-radius: .25rem !important;
+  }
+
+  /* Checkmark styling when checked */
+  .hs-input[type="checkbox"]:checked {
+    background-color: #fff; 
+    border-color: #fff;
+  }
+
+  .hs-input[type="checkbox"]:checked::before {
+    content: '\2713'; /* Unicode checkmark symbol */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    color: #0e0e0e;
+    background-color: transparent;
+  }
+  
+  .hs-input {
+  background-color: transparent;
+  font-family: var(--font--secondary-family), sans-serif;
+  font-size: 12px;
+	}
+  fieldset.form-columns-1 .input {
+    margin-right: 0 !important;
+	}
+
+
+	.hs-form {
+		display: block;
+	}
+  
+  .hs_firstname,
+	.hs_lastname,
+	.hs_phone,
+	.hs_jobtitle {
+  	width: 100% !important;
+	}
+
+  .hs_firstname .input,
+  .hs_lastname .input,
+  .hs_phone .input,
+  .hs_jobtitle .input {
+    width: 100% !important;
+  }
+
+  .hs_firstname .hs-input,
+  .hs_lastname .hs-input,
+  .hs_phone .hs-input,
+  .hs_jobtitle .hs-input {
+    width: 100% !important;
+  }
+	.hs-form-field label {
+    margin-top: 0rem !important;
+	}
+</style></div></div></div></div></div></div></div></section><section data-background-color="transparent" data-wf--section-cta-main--variant="image-left" data-w-id="1036dde2-ffae-a6b8-6efe-ef3be91498f2" class="section_cta-main"><div class="padding-global"><div data-container="large" class="container-large w-variant-c62e846b-4e9e-5cbc-1ff7-76a2fbf4da3c"><div data-padding-bottom="small" data-padding-top="small" class="padding-section-medium"><div class="cta-main_component w-variant-c62e846b-4e9e-5cbc-1ff7-76a2fbf4da3c"><div class="cta-main_content w-variant-c62e846b-4e9e-5cbc-1ff7-76a2fbf4da3c"><h2 class="cta-main_heading w-variant-c62e846b-4e9e-5cbc-1ff7-76a2fbf4da3c heading-style-h2">Ready to accelerate <br/>how you build software?</h2><div class="cta-main_paragraph w-richtext text-style-large text-color-secondary"><p>Use Sourcegraph to industrialize your software development</p></div><div data-hide-if-empty="" class="button-group is-no-padding w-variant-c62e846b-4e9e-5cbc-1ff7-76a2fbf4da3c"><div data-button-small="false" data-wf--button--style="alternate-white" class="button_component w-variant-3badcb20-cc04-892b-39fa-69011fb2a0a3 button_topnav-height"><div class="clickable_component"><a data-form_submission_source="" data-wf-native-id-path="30beb1b3-c810-2fd1-492f-3b9159311b4f:1036dde2-ffae-a6b8-6efe-ef3be91498fb:af81079c-63a6-1894-6f1c-5d821f5a35ad:9e07ea36-ee0b-4848-1f1c-488bbb788197" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="9e07ea36-ee0b-4848-1f1c-488bbb788197" data-wf-component-context="%5B%7B%22componentId%22%3A%221036dde2-ffae-a6b8-6efe-ef3be91498f2%22%2C%22instanceId%22%3A%2230beb1b3-c810-2fd1-492f-3b9159311b4f%22%7D%2C%7B%22componentId%22%3A%22af81079c-63a6-1894-6f1c-5d821f5a35ac%22%2C%22instanceId%22%3A%221036dde2-ffae-a6b8-6efe-ef3be91498fb%22%7D%2C%7B%22componentId%22%3A%229e07ea36-ee0b-4848-1f1c-488bbb788196%22%2C%22instanceId%22%3A%22af81079c-63a6-1894-6f1c-5d821f5a35ad%22%7D%5D" href="https://workspaces.sourcegraph.com/" data-wf-event-ids="157045762" class="clickable_link cover-absolute w-inline-block"><span class="clickable_text screen-reader-only">Get started</span></a><button type="button" class="clickable_btn cover-absolute"><span class="clickable_text screen-reader-only">Get started</span></button></div><div aria-hidden="true" class="button_text is-small button_text-small w-variant-3badcb20-cc04-892b-39fa-69011fb2a0a3">Get started</div></div><div data-button-small="false" data-wf--button--style="alternate-primary" class="button_component w-variant-5dfbc89c-9056-ca90-3afd-412dc53260b4 button_topnav-height"><div class="clickable_component"><a data-form_submission_source="request-info" data-wf-native-id-path="30beb1b3-c810-2fd1-492f-3b9159311b4f:1036dde2-ffae-a6b8-6efe-ef3be91498fc:af81079c-63a6-1894-6f1c-5d821f5a35ad:9e07ea36-ee0b-4848-1f1c-488bbb788197" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="9e07ea36-ee0b-4848-1f1c-488bbb788197" data-wf-component-context="%5B%7B%22componentId%22%3A%221036dde2-ffae-a6b8-6efe-ef3be91498f2%22%2C%22instanceId%22%3A%2230beb1b3-c810-2fd1-492f-3b9159311b4f%22%7D%2C%7B%22componentId%22%3A%22af81079c-63a6-1894-6f1c-5d821f5a35ac%22%2C%22instanceId%22%3A%221036dde2-ffae-a6b8-6efe-ef3be91498fc%22%7D%2C%7B%22componentId%22%3A%229e07ea36-ee0b-4848-1f1c-488bbb788196%22%2C%22instanceId%22%3A%22af81079c-63a6-1894-6f1c-5d821f5a35ad%22%7D%5D" href="/contact/code-search" data-wf-event-ids="157045762" class="clickable_link cover-absolute w-inline-block"><span class="clickable_text screen-reader-only">Book a demo</span></a><button type="button" class="clickable_btn cover-absolute"><span class="clickable_text screen-reader-only">Book a demo</span></button></div><div aria-hidden="true" class="button_text is-small button_text-small w-variant-5dfbc89c-9056-ca90-3afd-412dc53260b4">Book a demo</div></div></div></div><div class="cta-main_visual w-variant-c62e846b-4e9e-5cbc-1ff7-76a2fbf4da3c"><img src="https://cdn.prod.website-files.com/673f71b4ebbb99190437de75/6791add6d110f44f28586149_Simple%20CTA%20(1).avif" loading="lazy" alt="" class="cta-main_image image-cover"/></div></div></div></div></div></section><section data-wf--footer--variant="base" class="footer"><div class="padding-global"><div class="w-layout-blockcontainer container-xlarge w-container"><div class="padding-section-medium"><div class="footer_content-wrapper"><div class="footer_content-col-brand"><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:3b308a5c-1a75-e5c7-aa24-856b2328bb92" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="3b308a5c-1a75-e5c7-aa24-856b2328bb92" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="/" class="footer_logo-link w-inline-block"><img src="https://cdn.prod.website-files.com/673f71b4ebbb99190437de75/67917518352105f18532c234_Group%203.svg" loading="lazy" alt="" class="footer_logo-img light"/><img src="https://cdn.prod.website-files.com/673f71b4ebbb99190437de75/677493511c41a960b820bd88_sourcegraph-reverse-logo.svg" loading="lazy" alt="" class="footer_logo-img dark"/></a><div class="heading-style-h6 text-color-secondary footer_tagline">Code understanding for humans and agents</div><div class="footer_content-social-wrap"><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:7f4d85bc-b644-bba2-0da2-67d3db6f1d60" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="7f4d85bc-b644-bba2-0da2-67d3db6f1d60" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="https://github.com/sourcegraph" class="footer_image-link w-inline-block"><svg class="footer_icon mdi-icon h-[24px] w-[24px]" width="100%" fill="currentColor" viewBox="0 0 24 24"><path d="M12,2A10,10 0 0,0 2,12C2,16.42 4.87,20.17 8.84,21.5C9.34,21.58 9.5,21.27 9.5,21C9.5,20.77 9.5,20.14 9.5,19.31C6.73,19.91 6.14,17.97 6.14,17.97C5.68,16.81 5.03,16.5 5.03,16.5C4.12,15.88 5.1,15.9 5.1,15.9C6.1,15.97 6.63,16.93 6.63,16.93C7.5,18.45 8.97,18 9.54,17.76C9.63,17.11 9.89,16.67 10.17,16.42C7.95,16.17 5.62,15.31 5.62,11.5C5.62,10.39 6,9.5 6.65,8.79C6.55,8.54 6.2,7.5 6.75,6.15C6.75,6.15 7.59,5.88 9.5,7.17C10.29,6.95 11.15,6.84 12,6.84C12.85,6.84 13.71,6.95 14.5,7.17C16.41,5.88 17.25,6.15 17.25,6.15C17.8,7.5 17.45,8.54 17.35,8.79C18,9.5 18.38,10.39 18.38,11.5C18.38,15.32 16.04,16.16 13.81,16.41C14.17,16.72 14.5,17.33 14.5,18.26C14.5,19.6 14.5,20.68 14.5,21C14.5,21.27 14.66,21.59 15.17,21.5C19.14,20.16 22,16.42 22,12A10,10 0 0,0 12,2Z"></path></svg></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:a24367ac-26a8-179e-f55c-7933e8173712" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="a24367ac-26a8-179e-f55c-7933e8173712" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="https://x.com/Sourcegraph" class="footer_image-link w-inline-block"><svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 24 24" fill="currentColor" stroke="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="footer_icon lucide text-gray-400 hover:text-black"><svg viewBox="0 0" fill="currentColor"></svg><path d="M18.2439 2.25H21.5519L14.3249 10.51L22.8269 21.75H16.1699L10.9559 14.933L4.98991 21.75H1.67991L9.40991 12.915L1.25391 2.25H8.07991L12.7929 8.481L18.2439 2.25ZM17.0829 19.77H18.9159L7.08391 4.126H5.11691L17.0829 19.77Z"></path></svg></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:7046adef-cfbb-a333-ece8-a9ac5bfaaa31" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="7046adef-cfbb-a333-ece8-a9ac5bfaaa31" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="https://www.linkedin.com/company/4803356/" class="footer_image-link w-inline-block"><svg class="footer_icon mdi-icon h-[24px] w-[24px]" width="100%" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3A2 2 0 0 1 21 5V19A2 2 0 0 1 19 21H5A2 2 0 0 1 3 19V5A2 2 0 0 1 5 3H19M18.5 18.5V13.2A3.26 3.26 0 0 0 15.24 9.94C14.39 9.94 13.4 10.46 12.92 11.24V10.13H10.13V18.5H12.92V13.57C12.92 12.8 13.54 12.17 14.31 12.17A1.4 1.4 0 0 1 15.71 13.57V18.5H18.5M6.88 8.56A1.68 1.68 0 0 0 8.56 6.88C8.56 5.95 7.81 5.19 6.88 5.19A1.69 1.69 0 0 0 5.19 6.88C5.19 7.81 5.95 8.56 6.88 8.56M8.27 18.5V10.13H5.5V18.5H8.27Z"></path></svg></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:f5b4dfc6-2c63-c5a7-b6df-ef65dc6471cd" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="f5b4dfc6-2c63-c5a7-b6df-ef65dc6471cd" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="https://www.youtube.com/c/Sourcegraph" class="footer_image-link w-inline-block"><svg class="footer_icon mdi-icon h-[24px] w-[24px]" width="100%" fill="currentColor" viewBox="0 0 24 24"><path d="M10,15L15.19,12L10,9V15M21.56,7.17C21.69,7.64 21.78,8.27 21.84,9.07C21.91,9.87 21.94,10.56 21.94,11.16L22,12C22,14.19 21.84,15.8 21.56,16.83C21.31,17.73 20.73,18.31 19.83,18.56C19.36,18.69 18.5,18.78 17.18,18.84C15.88,18.91 14.69,18.94 13.59,18.94L12,19C7.81,19 5.2,18.84 4.17,18.56C3.27,18.31 2.69,17.73 2.44,16.83C2.31,16.36 2.22,15.73 2.16,14.93C2.09,14.13 2.06,13.44 2.06,12.84L2,12C2,9.81 2.16,8.2 2.44,7.17C2.69,6.27 3.27,5.69 4.17,5.44C4.64,5.31 5.5,5.22 6.82,5.16C8.12,5.09 9.31,5.06 10.41,5.06L12,5C16.19,5 18.8,5.16 19.83,5.44C20.73,5.69 21.31,6.27 21.56,7.17Z"></path></svg></a></div></div><div class="footer_content-col-grid"><div class="footer_content-col"><div class="footer_col-heading heading-style-h6 text-color-secondary">Platform</div><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:4af835a7-2cbb-7013-258d-2526b435d226" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="4af835a7-2cbb-7013-258d-2526b435d226" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="/deep-search" class="text-link footer_text-link w-inline-block"><div class="text-block-10">Deep Search</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:bff18b8d-c174-bd5c-cb1c-6d33e37335ab" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="bff18b8d-c174-bd5c-cb1c-6d33e37335ab" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="/code-search" class="text-link footer_text-link w-inline-block"><div class="text-block-11">Code Search</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:e15df035-bf44-2803-642a-965d954b9e6c" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="e15df035-bf44-2803-642a-965d954b9e6c" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="/mcp" class="text-link footer_text-link w-inline-block"><div class="text-block-11">MCP server</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:5819804c-12cd-b9ea-d2a2-411bbe0bbfaa" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="5819804c-12cd-b9ea-d2a2-411bbe0bbfaa" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="/batch-changes" class="text-link footer_text-link w-inline-block"><div class="text-block-12">Batch Changes</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:703c22fb-579e-2e7c-7a43-6478581c72ed" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="703c22fb-579e-2e7c-7a43-6478581c72ed" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="https://sourcegraph.com/search" target="_blank" class="text-link footer_text-link w-inline-block"><div class="text-block-13">Search public code</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:0734e825-8d00-a923-fc89-d765856c0644" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="0734e825-8d00-a923-fc89-d765856c0644" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="/pricing" class="text-link footer_text-link w-inline-block"><div>Pricing</div></a></div><div class="footer_content-col"><div class="footer_col-heading heading-style-h6 text-color-secondary">Resources</div><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:d6fcdd89-b33b-4531-28ee-cdc8fcd23f88" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="d6fcdd89-b33b-4531-28ee-cdc8fcd23f88" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="https://sourcegraph.com/docs" class="text-link footer_text-link w-inline-block"><div>Documentation</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:d6fcdd89-b33b-4531-28ee-cdc8fcd23f8b" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="d6fcdd89-b33b-4531-28ee-cdc8fcd23f8b" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="/resources" class="text-link footer_text-link w-inline-block"><div>Resource library</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:d6fcdd89-b33b-4531-28ee-cdc8fcd23f8e" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="d6fcdd89-b33b-4531-28ee-cdc8fcd23f8e" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="/blog" class="text-link footer_text-link w-inline-block"><div>Blog</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:d6fcdd89-b33b-4531-28ee-cdc8fcd23f91" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="d6fcdd89-b33b-4531-28ee-cdc8fcd23f91" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="/changelog" class="text-link footer_text-link w-inline-block"><div>Changelog</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:132afc2c-0a23-0ac0-1fdc-70543a852fc4" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="132afc2c-0a23-0ac0-1fdc-70543a852fc4" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="/case-studies" class="text-link footer_text-link w-inline-block"><div>Case studies</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:d6fcdd89-b33b-4531-28ee-cdc8fcd23f94" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="d6fcdd89-b33b-4531-28ee-cdc8fcd23f94" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="/community" class="text-link footer_text-link w-inline-block"><div>Community</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:8977179f-5288-f052-7a94-d814bff2d171" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="8977179f-5288-f052-7a94-d814bff2d171" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="https://security.sourcegraph.com/" class="text-link footer_text-link w-inline-block"><div>Security portal</div></a></div><div class="footer_content-col"><div class="footer_col-heading heading-style-h6 text-color-secondary">Company</div><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:bd400334-aaef-2d12-363e-b9da319fa49b" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="bd400334-aaef-2d12-363e-b9da319fa49b" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="/about" class="text-link footer_text-link w-inline-block"><div>About<br/></div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:bd400334-aaef-2d12-363e-b9da319fa49e" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="bd400334-aaef-2d12-363e-b9da319fa49e" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="/jobs" class="text-link footer_text-link w-inline-block"><div>Careers</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:bd400334-aaef-2d12-363e-b9da319fa4a1" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="bd400334-aaef-2d12-363e-b9da319fa4a1" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="/contact" class="text-link footer_text-link w-inline-block"><div>Contact</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:bd400334-aaef-2d12-363e-b9da319fa4a4" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="bd400334-aaef-2d12-363e-b9da319fa4a4" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="https://sourcegraph.notion.site/d7614e3e9dc04c09ac2d42d57f1816e6?v=2a6d426dbae14390b155120b0c029ce0" class="text-link footer_text-link w-inline-block"><div>Handbook</div></a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:18cfb713-77b4-b216-552d-d7bcfff34aed" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="18cfb713-77b4-b216-552d-d7bcfff34aed" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="https://sourcegraph.notion.site/Brand-guide-15aa8e11265880a6baecf35d6d3617ac" class="text-link footer_text-link w-inline-block"><div>Brand Guide</div></a></div></div></div></div><div class="footer_privacy-links"><div class="footer_copyright-text text-size-tiny hide">© 2025 Sourcegraph, Inc.</div><div class="privacy-links-wrapper"><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:025201ef-124f-9dc2-f52b-6dc7c55cff95" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="025201ef-124f-9dc2-f52b-6dc7c55cff95" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="https://sourcegraphstatus.com/" class="footer_privacy-link">System status</a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:f081860e-3468-cd43-5eab-a5ce8375c047" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="f081860e-3468-cd43-5eab-a5ce8375c047" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="/terms" class="footer_privacy-link">Terms of service</a><a data-wf-native-id-path="98f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49:bb7f8281-19fd-1abe-46b2-7994af837eba" data-wf-ao-click-engagement-tracking="true" data-wf-element-id="bb7f8281-19fd-1abe-46b2-7994af837eba" data-wf-component-context="%5B%7B%22componentId%22%3A%2224bb1700-b153-76a3-5c29-2e45c30c787e%22%2C%22instanceId%22%3A%2298f3bd27-a0cd-8f9d-ee1e-0c00aa1f5c49%22%7D%5D" href="/terms/privacy" class="footer_privacy-link">Privacy policy</a></div></div></div></div><div class="hide"></div></section></main></div><script src="https://d3e54v103j8qbb.cloudfront.net/js/jquery-3.5.1.min.dc5e7f18c8.js?site=673f71b4ebbb99190437de75" type="text/javascript" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script><script src="https://cdn.prod.website-files.com/673f71b4ebbb99190437de75/js/sourcegraph-staging.schunk.e0c428ff9737f919.js" type="text/javascript" integrity="sha384-ar82P9eriV3WGOD8Lkag3kPxxkFE9GSaSPalaC0MRlR/5aACGoFQNfyqt0dNuYvt" crossorigin="anonymous"></script><script src="https://cdn.prod.website-files.com/673f71b4ebbb99190437de75/js/sourcegraph-staging.4843e002.04431cdd8abfb4f4.js" type="text/javascript" integrity="sha384-/Le148U9OjBsywuOToHcYWhYNgYzEh7NqOwaYG/yU2Eq5Kqz3n6iCW5FLHFx36Kp" crossorigin="anonymous"></script><script>
+    var origHighlightAll = null;
+    var checkHljs = setInterval(function() {
+      if (window.hljs && !origHighlightAll) {
+        origHighlightAll = window.hljs.highlightAll;
+        window.hljs.highlightAll = function() {};
+        window.hljs.highlightElement = function() {};
+        document.querySelectorAll('.w-richtext code').forEach(function(el) {
+          el.textContent = el.textContent;
+          el.classList.remove('hljs');
+          el.removeAttribute('data-highlighted');
+        });
+      }
+    }, 100);
+    setTimeout(function() { clearInterval(checkHljs); }, 15000);
+  </script>
+
+<!-- Start of HubSpot Embed Code -->
+<script type="text/javascript" id="hs-script-loader" async defer src="//js.hs-scripts.com/2762526.js"></script>
+<!-- End of HubSpot Embed Code -->
+
+<script>
+  // Sourcegraph lightbox modal
+// v1.0
+document.addEventListener('DOMContentLoaded', function () {
+  // Select all elements with [data-lightbox="wrap"]
+  const wrappers = Array.from(document.querySelectorAll('[data-lightbox="wrap"]'));
+  const ACTIVE_CLASS = 'is-active';
+
+  // Loop through each wrapper
+  wrappers.forEach((wrap) => {
+    //elements
+    const trigger = wrap.querySelector('[data-lightbox="trigger"]');
+    const lightbox = wrap.querySelector('[data-lightbox="lightbox"]');
+    const videoContainer = wrap.querySelector('[data-lightbox="video"]');
+    const closeBtn = wrap.querySelector('[data-lightbox="close"]');
+    const videoSource = videoContainer.getAttribute('data-lightbox-source');
+    //return if trigger or video source isn't found
+    if (!lightbox || !videoSource) return;
+
+    let iframe; // To store the YouTube iframe reference
+
+    // Handle trigger click
+    trigger.addEventListener('click', () => {
+      //show lightbox
+      lightbox.classList.add(ACTIVE_CLASS);
+      //if iframe doesn't exist, create one
+      if (!iframe) {
+        iframe = document.createElement('iframe');
+        iframe.src = `https://www.youtube.com/embed/${videoSource}?autoplay=0&enablejsapi=1`;
+        iframe.setAttribute('allow', 'autoplay; encrypted-media');
+        iframe.setAttribute('allowfullscreen', '');
+        iframe.style.width = '100%';
+        iframe.style.height = '100%';
+        videoContainer.appendChild(iframe);
+      }
+    });
+
+    // Handle close click
+    closeBtn.addEventListener('click', () => {
+      //hide lightbox
+      lightbox.classList.remove(ACTIVE_CLASS);
+      if (iframe) {
+        // Use postMessage to pause the video
+        iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+      }
+    });
+  });
+});
+
+  
+  //form submission handler
+  document.addEventListener('DOMContentLoaded', function () {
+    // Select all links with the data attribute `data-form_submission_source`
+    const links = document.querySelectorAll('[data-form_submission_source]');
+
+    if (links.length === 0) {
+      console.warn('No links with data-form_submission_source found on the page.');
+    }
+
+    links.forEach(link => {
+      link.addEventListener('click', function (event) {
+        // Get the value of the data-form_submission_source attribute
+        const sourceValue = link.getAttribute('data-form_submission_source');
+        const destinationUrl = link.getAttribute('href');
+
+        if (!destinationUrl) {
+          console.error('Error: href attribute is missing on the link.');
+          return; // Stop execution if href is missing
+        }
+
+        if (!sourceValue) {
+          // If sourceValue is empty, allow the link to work as normal
+          console.warn('Source value is empty. Navigating to the original destination without appending.');
+          return; // Do not append query parameters, let the default link behavior proceed
+        }
+
+        // Prevent the default link action temporarily
+        event.preventDefault();
+
+        // Check if the URL already contains query parameters
+        const separator = destinationUrl.includes('?') ? '&' : '?';
+
+        // Append the source value as a query parameter
+        const updatedUrl = `${destinationUrl}${separator}form_submission_source=${encodeURIComponent(sourceValue)}`;
+
+        console.log('Redirecting to:', updatedUrl);
+
+        // Redirect to the updated URL
+        window.location.href = updatedUrl;
+      });
+    });
+  });
+</script>
+
+<script>
+//Swiper JS for Video Slider
+Webflow.push(function() {
+  const container = document.querySelector('.video-slider_slider.swiper');
+  if (!container) {
+    console.error('❌ Video slider not found');
+    return;
+  }
+  // Find nav buttons: first inside, then anywhere in parent
+  let nextBtn = container.querySelector('.slider_btn.next');
+  let prevBtn = container.querySelector('.slider_btn.prev');
+  if (!nextBtn || !prevBtn) {
+    nextBtn = container.parentNode.querySelector('.slider_btn.next');
+    prevBtn = container.parentNode.querySelector('.slider_btn.prev');
+  }
+  if (!nextBtn || !prevBtn) {
+    console.error('❌ Nav buttons not found for video slider');
+    return;
+  }
+
+  // Initialize Swiper without pagination
+  const swiper = new Swiper(container, {
+    slidesPerView: 1.5,
+    centeredSlides: true,
+    loop: true,
+    speed: 600,
+    spaceBetween: 32,
+    watchSlidesProgress: true,
+    observer: true,
+    observeSlideChildren: true,
+    observeParents: true,
+    navigation: {
+      nextEl: nextBtn,
+      prevEl: prevBtn
+    },
+    // No pagination configuration at all
+    on: {
+      afterInit: function() {
+        console.log('✅ Video Slider initialized - Total slides (with clones):', this.slides.length);
+      },
+      // Add this event to stop videos when changing slides
+      slideChange: function() {
+        try {
+          // Pause any YouTube videos in all slides
+          const youtubePlayerElements = container.querySelectorAll('.html5-video-player');
+
+          youtubePlayerElements.forEach(function(playerElement) {
+            // Check if the player is in playing state (not paused)
+            if (playerElement.classList.contains('playing-mode') && 
+                !playerElement.classList.contains('paused-mode')) {
+
+              // Find the video element inside the player
+              const videoElement = playerElement.querySelector('video.html5-main-video');
+              if (videoElement && !videoElement.paused) {
+                videoElement.pause();
+                console.log('🎬 YouTube video paused');
+              }
+
+              // Alternative method: click on the video to trigger pause
+              // This is a fallback in case direct pause() doesn't work
+              const pauseArea = playerElement.querySelector('.ytp-play-button');
+              if (pauseArea) {
+                pauseArea.click();
+                console.log('🎬 YouTube video paused via play button click');
+              }
+            }
+          });
+        } catch (e) {
+          console.error('Error pausing videos:', e);
+        }
+      }
+    }
+  });
+});
+</script>
+
+<!-- Start of PostHog<>HubSpot Contact form submission Code -->
+<script>
+(function () {
+  var seen = {};
+  var formSubmissionSource =
+    new URLSearchParams(window.location.search).get('form_submission_source') || 'direct';
+
+  function track(key, props) {
+    var now = Date.now();
+    if (seen[key] && now - seen[key] < 2000) return;
+    seen[key] = now;
+
+    if (window.posthog && typeof window.posthog.capture === 'function') {
+      window.posthog.capture('hubspot_form_submitted', props);
+    }
+  }
+
+  window.addEventListener('message', function (event) {
+    var d = event.data;
+    if (!d || typeof d !== 'object') return;
+    if (d.type !== 'hsFormCallback' || d.eventName !== 'onFormSubmitted') return;
+
+    track('legacy:' + (d.id || ''), {
+      form_id: d.id || null,
+      hubspot_api: 'legacy',
+      page: window.location.pathname,
+      form_submission_source: formSubmissionSource,
+      redirect_url: d.data && d.data.redirectUrl || null
+    });
+  });
+
+  window.addEventListener('hs-form-event:on-submission:success', function (event) {
+    var d = event.detail;
+    if (!d) return;
+
+    track('new:' + (d.formId || '') + ':' + (d.instanceId || ''), {
+      form_id: d.formId || null,
+      hubspot_instance_id: d.instanceId || null,
+      hubspot_api: 'new',
+      page: window.location.pathname,
+      form_submission_source: formSubmissionSource
+    });
+  });
+})();
+</script>
+<!-- End of PostHog<>HubSpot Contact form submission Code --></body></html>

@@ -12,6 +12,14 @@ export interface Post {
 
 const posts: Post[] = [
   {
+    title: 'Write Code That AI Agents Love',
+    slug: 'write-code-that-ai-agents-love',
+    description: 'A technical talk on making codebases easier for AI agents and humans to work in.',
+    publishedAt: '2026-06-09',
+    tags: ['ai', 'agents', 'software'],
+    readTime: '20 min read',
+  },
+  {
     title: 'Recruiting engineers as a startup',
     slug: 'recruiting-engineers-as-a-startup',
     description:

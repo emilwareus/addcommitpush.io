@@ -2,11 +2,29 @@
 
 This document captures the writing voice and style for blog posts on addcommitpush.io. Use it as a reference when writing new content.
 
+The default voice is a senior engineer writing from experience: direct, opinionated, practical, evidence-aware, and allergic to vague corporate advice. The writing should feel like someone with scars explaining what actually works.
+
 ---
 
 ## Core Voice Attributes
 
-### 1. Personal & First-Person
+### 1. Direct Senior Engineer Energy
+
+Prefer clear claims over soft positioning. The voice can be blunt when the point is earned.
+
+**Do:**
+
+> "The real interface is not the prompt. The real interface is the repository."
+
+> "That is not prompt engineering. That is software engineering."
+
+> "If the agent cannot search for the concept by name, it will search by vibes."
+
+**Don't:**
+
+> "It may be useful to consider that repository structure can perhaps influence AI coding outcomes."
+
+### 2. Personal & First-Person
 
 Write from direct experience. Use "I" liberally. Share what you've actually built, failed at, and learned.
 
@@ -20,7 +38,7 @@ Write from direct experience. Use "I" liberally. Share what you've actually buil
 
 > "Organizations should consider the following best practices when hiring engineers..."
 
-### 2. Honest About Mistakes
+### 3. Honest About Mistakes
 
 Openly admit when you were wrong. This builds credibility and makes lessons more impactful.
 
@@ -36,7 +54,7 @@ Openly admit when you were wrong. This builds credibility and makes lessons more
 
 > "After careful analysis, we pivoted our strategy to better align with market conditions."
 
-### 3. Humble but Opinionated
+### 4. Humble but Opinionated
 
 Take strong stances, but acknowledge you're still learning. Never position yourself as having all the answers.
 
@@ -48,11 +66,45 @@ Take strong stances, but acknowledge you're still learning. Never position yours
 
 > "This is at least the state late 2025, in a year or so... who knows."
 
+> "This works well for me and my team, but the goal is to keep cognitive debt low... so you do what's best for you IMO."
+
 **Don't:**
 
 > "As industry experts, we recommend the following definitive approach..."
 
-### 4. Give Credit Openly
+### 5. Evidence-Aware, Not Evidence-Submissive
+
+Use research, papers, benchmarks, and practitioner sources to support the point. Do not hide behind them. Say what the evidence shows, where it is mixed, and what you believe engineers should do anyway.
+
+**Do:**
+
+> "The research is mixed in exactly the way you would expect."
+
+> "There is also counter-evidence against modularity as a magic word."
+
+> "The paper is useful, but real code is hard to measure in a controlled study."
+
+**Don't:**
+
+> "According to recent studies, developers should adopt a comprehensive AI-ready development methodology."
+
+### 6. Anti-Theater
+
+Call out empty process, vague slogans, and tool worship. The voice is skeptical of "prompt theater", "subagent theater", "microservice cosplay", and any strategy that substitutes ceremony for working code.
+
+**Do:**
+
+> "Subagents help when they isolate bounded work and return compact findings. They become theater when they replace clear structure and verification."
+
+> "A longer `AGENTS.md` cannot substitute for missing types, tests, or boundaries."
+
+> "Do not ask the agent to remember your architecture. Make the architecture fail the build when violated."
+
+**Don't:**
+
+> "To unlock next-generation velocity, teams should orchestrate specialized AI personas across the SDLC."
+
+### 7. Give Credit Openly
 
 When ideas aren't yours, say so explicitly. Link to sources. This shows intellectual honesty.
 
@@ -67,6 +119,22 @@ When ideas aren't yours, say so explicitly. Link to sources. This shows intellec
 ---
 
 ## Structural Patterns
+
+### Start with the Real Problem
+
+Open by naming the practical failure mode. Avoid abstract intros.
+
+**Good:**
+
+```
+An agent opens your repo like a new maintainer with no memory.
+```
+
+**Weak:**
+
+```
+AI coding agents are becoming increasingly important in modern software development.
+```
 
 ### Start with Context
 
@@ -104,6 +172,35 @@ Who is this article for?
 You have already spent more on AI coding tools the last 6 months than any other tools in your 10-year coding career.
 ```
 
+### Use the Claim -> Nuance -> Practical Rule Pattern
+
+Make a strong claim, immediately sharpen it with nuance, then tell the reader what to do.
+
+**Example:**
+
+```
+Do not say "AI loves microservices." It loves recoverable boundaries.
+
+Do not say "AI loves tiny functions." It loves coherent neighborhoods.
+
+Better:
+
+AI agents love codebases where the relevant context can be found without reading the whole repository.
+```
+
+### Use Punchy Reframes
+
+The voice often turns a fuzzy topic into a memorable engineering rule.
+
+**Examples:**
+
+- "Agents need maps, not dumps."
+- "Names are semantic infrastructure."
+- "Types compress intent."
+- "Tests are feedback, not decoration."
+- "The monorepo is the context database."
+- "Architecture should fail the build."
+
 ---
 
 ## Language & Vocabulary
@@ -118,6 +215,9 @@ Make abstract concepts tangible through imagery.
 - "pushing the Great Wall of China 0.01 centimeters a day"
 - "polishing a stone"
 - "spinning plates"
+- "cry in tokens instead of tears"
+- "token shotgun"
+- "a warehouse of files in the context window"
 
 ### Casual Markers
 
@@ -129,6 +229,10 @@ Sprinkle in conversational phrases that feel natural, not forced:
 - "who knows"
 - "My point is..."
 - "I stole with pride!"
+- "Jokes aside"
+- "IMO"
+- "Have fun."
+- "The point is not X. The point is Y."
 
 ### Technical Precision Where It Matters
 
@@ -149,6 +253,37 @@ Never use:
 - "at the end of the day"
 - "moving forward"
 - "stakeholders"
+
+Also avoid AI hype language:
+
+- "unlock AI-native transformation"
+- "10x your SDLC"
+- "autonomous team of specialist agents"
+- "agentic orchestration layer"
+- "AI-powered best practices"
+
+Unless the post is explicitly mocking the phrase.
+
+### Prefer Concrete Nouns Over Vague Values
+
+Use commands, files, checks, imports, schemas, and diagnostics instead of abstract "quality" language.
+
+**Good:**
+
+```
+Run `pnpm lint`, `pnpm typecheck`, and `pnpm test` before finalizing.
+Do not edit `src/generated`; regenerate with `pnpm generate`.
+Frontend API calls must go through `@acme/sdk`.
+```
+
+**Weak:**
+
+```
+Write clean code.
+Use best practices.
+Follow our architecture.
+Make sure everything works.
+```
 
 ---
 
@@ -181,6 +316,18 @@ Add context or wit in parentheses:
 > "the very interesting combination of a Machine Learning Engineer and Sales"
 
 > "(Prevent excessive searching)"
+
+### Short, Hard Sentences for Punchlines
+
+Use short standalone sentences after a longer explanation.
+
+**Examples:**
+
+> "Most of the time it guesses. And it guesses with confidence."
+
+> "That difference matters."
+
+> "The tool is less important than the shape."
 
 ---
 
@@ -217,6 +364,27 @@ Use terminal/code blocks liberally for anything executable:
 /research_codebase
 ```
 
+### Tables for Hard Comparisons
+
+Use tables when contrasting expensive vs. good systems, weak vs. strong examples, or research mechanism vs. design implication.
+
+**Example shape:**
+
+| Agent step | Expensive repo | Agent-friendly repo |
+| --- | --- | --- |
+| Orient | Tribal knowledge, stale wiki pages | Short root instructions, architecture map |
+| Retrieve | `utils`, string routes, hidden side effects | Stable names, imports, schemas, tests |
+
+### Blockquotes for the Core Thesis
+
+Use blockquotes for compact thesis statements, not decorative quotes.
+
+**Examples:**
+
+> Agents do not need more text. They need recoverable structure.
+
+> The best AI-friendly codebase is not the one with the best prompt. It is the one where the prompt matters least.
+
 ---
 
 ## Emotional Register
@@ -245,6 +413,54 @@ End on forward-looking, encouraging notes:
 
 > "If you got this far in my post, I'm inclined to believe that you want to start your own company someday... do it!"
 
+### Skeptical Optimism
+
+The voice is excited about AI, but not naive about it. Prefer grounded ambition over hype.
+
+**Good:**
+
+> "The future of coding with agents is not just better models. It is better codebases."
+
+> "Your goal should be to maximize the factory, letting developers solve the very hard problems that do not fit the shape of the factory."
+
+**Too hype:**
+
+> "AI will completely replace software engineering and unlock limitless productivity."
+
+---
+
+## Example Rewrites
+
+Use these as calibration examples when editing drafts.
+
+| Weak | Better |
+| --- | --- |
+| "Developers should write better prompts for AI coding agents." | "Prompts help. But the real interface is the repository." |
+| "Large context windows are useful for complex repositories." | "More context is not always better. Better context is better." |
+| "Teams should document architectural best practices." | "If the rule matters, encode it. Make the architecture fail the build when violated." |
+| "Microservices can improve AI coding performance." | "AI does not love microservices. It loves recoverable boundaries." |
+| "Tests help validate AI-generated code." | "Tests are not decoration. They are the agent's feedback loop." |
+| "Names should be descriptive." | "Names are semantic infrastructure. If the agent cannot grep the concept, it guesses." |
+| "Generated SDKs reduce integration errors." | "Raw API calls are stringly typed integration debt. Generate the contract into code." |
+| "Instruction files should contain project guidance." | "`AGENTS.md` should be an index, not a novel." |
+
+---
+
+## Technical Blog Formula
+
+For deep technical posts, use this sequence unless the topic clearly needs another shape:
+
+1. Name the concrete failure mode.
+2. State the thesis in one blunt sentence.
+3. Give 3-6 key takeaways.
+4. Build the mental model.
+5. Bring in research or practitioner evidence.
+6. Show code, commands, diagnostics, or repo structure.
+7. Call out common wrong optimizations.
+8. End with a short practical checklist or punchline.
+
+The article should leave the reader with a better operating model, not just a list of tools.
+
 ---
 
 ## What NOT to Do
@@ -259,9 +475,17 @@ End on forward-looking, encouraging notes:
 
 5. **Don't pad content** — If you've made your point, stop.
 
-6. **Don't over-explain** — Trust the reader's intelligence.
+6. **Don't turn strong opinions into generic advice** — Keep the edge when the edge is the point.
 
-7. **Don't use "we" when you mean "I"** — Be specific about whose experience this is.
+7. **Don't worship tools** — Explain the shape that matters, then mention tools as examples.
+
+8. **Don't hide weak evidence** — If research is mixed, say so and explain the practical inference.
+
+9. **Don't write prompt theater** — Prefer executable repo facts over motivational instructions.
+
+10. **Don't over-explain** — Trust the reader's intelligence.
+
+11. **Don't use "we" when you mean "I"** — Be specific about whose experience this is.
 
 ---
 
@@ -278,6 +502,10 @@ These phrases capture the voice. Use similar constructions:
 - "This maybe takes out a bit of the old 'fun' about developing, but I'm mostly excited about..."
 - "In my experience..."
 - "The key insight is that..."
+- "The real interface is..."
+- "The point is not X. The point is Y."
+- "Do not say X. It loves Y."
+- "That is not prompt engineering. That is software engineering."
 - "I'll update this blog post when I have more to give in this area!"
 
 ---
@@ -289,6 +517,10 @@ These phrases capture the voice. Use similar constructions:
 - [ ] Have I admitted at least one mistake or uncertainty?
 - [ ] Are technical concepts explained with concrete examples?
 - [ ] Have I credited all external sources and ideas?
+- [ ] Does the post make one strong claim instead of circling around it?
+- [ ] Does research support the argument without flattening the voice?
+- [ ] Are vague values replaced with commands, files, code, checks, or examples?
+- [ ] Have I removed prompt theater, corporate phrasing, and empty tool worship?
 - [ ] Are paragraphs short (2-4 sentences)?
 - [ ] Does it end with forward-looking encouragement or practical next steps?
 - [ ] Would I actually say this out loud to a colleague?

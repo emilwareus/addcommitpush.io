@@ -18,9 +18,16 @@ interface AboutSlideProps {
   initials: string;
   tagline: string;
   cards: AboutCard[];
+  contentOffsetY?: number;
 }
 
-export function AboutSlide({ name, initials, tagline, cards }: AboutSlideProps) {
+export function AboutSlide({
+  name,
+  initials,
+  tagline,
+  cards,
+  contentOffsetY = 0,
+}: AboutSlideProps) {
   return (
     <div className="relative flex items-center justify-center h-full w-full overflow-hidden">
       {/* Center identity */}
@@ -29,14 +36,13 @@ export function AboutSlide({ name, initials, tagline, cards }: AboutSlideProps) 
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
         className="flex flex-col items-center gap-3 z-10"
+        style={{ y: contentOffsetY }}
       >
         <div className="w-28 h-28 rounded-full bg-primary/10 border-2 border-primary/40 flex items-center justify-center text-5xl font-bold text-primary neon-glow">
           {initials}
         </div>
         <h2 className="text-5xl font-bold text-primary">{name}</h2>
-        <p className="text-lg text-muted-foreground max-w-md text-center">
-          {tagline}
-        </p>
+        <p className="text-lg text-muted-foreground max-w-md text-center">{tagline}</p>
       </motion.div>
 
       {/* Scattered cards */}
@@ -55,7 +61,7 @@ export function AboutSlide({ name, initials, tagline, cards }: AboutSlideProps) 
           className={`absolute ${card.width} ${card.bg} border ${card.border} rounded-lg p-5 flex flex-col items-center shadow-lg shadow-black/30`}
           style={{
             left: `calc(50% + ${card.x}px)`,
-            top: `calc(50% + ${card.y}px)`,
+            top: `calc(50% + ${card.y + contentOffsetY}px)`,
             transform: `translate(-50%, -50%) rotate(${card.rotate}deg)`,
           }}
         >

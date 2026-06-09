@@ -1,0 +1,2867 @@
+arXiv:2504.09246v2 [cs.LG] 8 May 2025
+
+Type-Constrained Code Generation with Language Models
+NIELS MÜNDLER∗ , ETH Zurich, Switzerland
+JINGXUAN HE∗ , UC Berkeley, USA
+HAO WANG, UC Berkeley, USA
+KOUSHIK SEN, UC Berkeley, USA
+DAWN SONG, UC Berkeley, USA
+MARTIN VECHEV, ETH Zurich, Switzerland
+Large language models (LLMs) have achieved notable success in code generation. However, they still frequently
+produce uncompilable output because their next-token inference procedure does not model formal aspects
+of code. Although constrained decoding is a promising approach to alleviate this issue, it has only been
+applied to handle either domain-specific languages or syntactic features of general-purpose programming
+languages. However, LLMs frequently generate code with typing errors, which are beyond the domain of
+syntax and generally hard to adequately constrain. To address this challenge, we introduce a type-constrained
+decoding approach that leverages type systems to guide code generation. For this purpose, we develop novel
+prefix automata and a search over inhabitable types, forming a sound approach to enforce well-typedness
+on LLM-generated code. We formalize our approach on a foundational simply-typed language and extend it
+to TypeScript to demonstrate practicality. Our evaluation on the HumanEval and MBPP datasets shows that
+our approach reduces compilation errors by more than half and significantly increases functional correctness
+in code synthesis, translation, and repair tasks across LLMs of various sizes and model families, including
+state-of-the-art open-weight models with more than 30B parameters. The results demonstrate the generality
+and effectiveness of our approach in constraining LLM code generation with formal rules of type systems.
+CCS Concepts: • Theory of computation → Formal languages and automata theory; • Software and its
+engineering → General programming languages; • Computing methodologies → Machine learning.
+Additional Key Words and Phrases: Code Generation, Language Model, Type System, Program Synthesis,
+Program Translation, Program Repair, Constrained Decoding
+
+1
+
+Introduction
+
+Large language models (LLMs) are remarkably successful in diverse fields [12, 27, 49] and increasingly used in everyday coding tasks [25, 68]. They show promising capabilities at synthesizing
+code from natural language descriptions [37, 59], translating between programming languages [59],
+and repairing incorrect programs [44, 74]. Despite these achievements, LLM-generated code often
+contains compilation errors, logic flaws, or security vulnerabilities [20, 53, 55]. These issues arise
+because LLMs generate code by iteratively sampling the next token from a vocabulary of tokens –
+a probabilistic process that does not provide any formal guarantees.
+A promising technique to address this limitation is constrained decoding, which enforces the
+formal rules of programming languages during LLMs’ code generation process, rejecting invalid
+tokens and ensuring only valid tokens are considered as generation candidates. Previous studies
+have shown that constrained decoding improves adherence to program syntax [8, 41, 57, 66].
+∗ Both authors co-lead this project.
+
+Authors’ Contact Information: Niels Mündler, niels.muendler@inf.ethz.ch, ETH Zurich, Switzerland; Jingxuan He, jingxuan.
+he@berkeley.edu, UC Berkeley, USA; Hao Wang, hwang628@berkeley.edu, UC Berkeley, USA; Koushik Sen, ksen@berkeley.
+edu, UC Berkeley, USA; Dawn Song, dawnsong@berkeley.edu, UC Berkeley, USA; Martin Vechev, martin.vechev@inf.ethz.ch,
+ETH Zurich, Switzerland.
+
+This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License.
+
+171:2
+
+Niels Mündler*, Jingxuan He*, Hao Wang, Koushik Sen, Dawn Song, Martin Vechev
+
+However, these improvements are limited, as syntax accounts for only a small part of overall
+program correctness. For instance, in our evaluation of state-of-the-art open-weight LLMs (§5),
+syntactic errors make up on average 6% of all compilation errors in generated TypeScript code.
+Key Challenge: Generating Well-Typed Code. Beyond program syntax, type systems detect
+and reject bugs at compile time [40, 43] and are therefore enforced in many popular programming
+languages [4, 10, 19]. We observe that LLMs struggle to generate well-typed code [20, 29, 63], as
+typing rules significantly complicate the generation of valid code [62]. In our evaluation of LLMs
+(§5), on average 94% of compilation errors result from failing type checks. This suggests a promising
+direction: guiding LLMs’ code generation process by incorporating the formal rules of type systems.
+However, implementing this approach is challenging because type systems can in general not be
+captured by context-free grammars [43], prohibiting the application of prior constrained decoding
+methods developed for program syntax [8, 66]. Furthermore, besides deriving and maintaining a
+type environment for completed expressions during generation (similar to classic type systems), we
+need to accurately assess and handle partial expressions. Specifically, for each currently generated
+partial expression, we must decide whether the partial expression can be completed to match
+a required type. Determining this would allow us to constrain the LLM to provably generate
+well-typed expressions upon termination, but involves solving the challenging problem of type
+inhabitation [30, 67] in the novel context of LLM-based code generation.
+This Work: Type-Constrained Decoding. In this work, we introduce type-constrained decoding1 , addressing the challenge of generating well-typed code using LLMs . We develop a sound
+algorithm to determine if a partial program can be completed into a well-typed program. This
+algorithm is based on a novel non-deterministic automaton we construct. The automaton incrementally builds abstract syntax trees described by the partial program and annotates them with
+type-relevant context, e.g., declared identifiers and expression types. It leverages such information
+to maintain a prefix property, ensuring that parsing a program prefix only results in a non-empty
+set of states when it can be completed into a well-typed program. To guarantee the prefix property,
+we design a sound type search algorithm that determines whether a partial expression can inhabit a
+given type. We construct our automaton for a generic, simply-typed Turing-complete calculus [10].
+To demonstrate its practical effectiveness, we instantiate our approach on a non-trivial subset
+of TypeScript. We choose TypeScript for three key reasons: (i) it is currently one of the most
+actively used languages, e.g., in open-source projects on GitHub [26, 38]; (ii) as we show, stateof-the-art LLMs fail to reliably generate well-typed TypeScript code; (iii) its core type system is
+simple enough [10] to be suitable for developing the first prototype of our approach. We perform
+a comprehensive evaluation on TypeScript versions of the widely-used HumanEval and MBPP
+benchmarks [5, 13, 14], focusing on three common coding tasks: synthesis, translation, and repair.
+Our experimental results show that type-constrained decoding significantly enhances code generation for LLMs of various sizes (2B-34B parameters). For synthesis and translation, it reduces
+compilation errors by more than half and increases functional correctness relatively by 3.5% to 5.5%.
+Additionally, it enhances functionally correct repair of non-compiling code relatively by 37% on
+average. We further investigate our approach in depth through a runtime analyses and case studies.
+We highlight that our type constraining approach is broadly applicable to any language derivable from the core calculus, any code generation task in these languages, and any LLM utilizing
+next-token generation. In §6, we envision how our approach can benefit other production-ready
+languages and closed-weight LLMs.
+1 Our code implementation is publicly available at https://github.com/eth-sri/type-constrained-code-generation.
+
+Type-Constrained Code Generation with Language Models
+
+171:3
+
+Main Contributions. Our main contributions can be summarized as follows:
+• A prefix automaton and a type search algorithm to enable type constraining for LLM-based
+code generation, demonstrated on a generic, simply-typed core calculus (§3).
+• An instantiation and extension of our approach to the popular TypeScript language (§4).
+• An extensive evaluation across various LLMs and coding tasks, showing the significant benefit
+of our approach in reducing compilation errors and increasing functional correctness (§5).
+2
+
+Background and Overview
+
+In this section, we first provide relevant background on LLM-based code generation and constrained
+decoding. Then, we motivate our type constraining approach using an illustrative example and
+present a high-level overview of its construction.
+2.1
+
+Background on LLM-based Code Generation and Constrained Decoding
+
+LLM-based Code Generation. LLMs generate code incrementally by sampling one token Algorithm 1 Vanilla LLM-based code generation
+at a time in an iterative manner, as depicted (without the blue highlights) vs. constrained dein Algorithm 1 (without the blue highlights). coding (with the blue highlights)
+A user prompt 𝑥 specifies a code generation Input: LLM, prompt 𝑥, completion engine 𝐶𝐸𝐿
+task for a trained LLM. At Line 1, the output
+for language 𝐿
+program 𝑠 is initialized to an empty string or Output: Program 𝑠 such that 𝑠 ∈ 𝐿
+a program prefix provided in 𝑥, e.g., a function
+1: initialize 𝑠
+signature. At the beginning of each generation
+2: while true do
+iteration (Line 3), the LLM takes as input a con- 3:
+𝒗 ≔ LLM(𝑥 ◦ 𝑠)
+catenation 𝑥 ◦𝑠 of the prompt 𝑥 and the current
+4:
+while true do
+partial program 𝑠. It then predicts a probability
+5:
+𝑡 ∼𝒗
+distribution 𝒗 over a fixed, finite set of tokens,
+6:
+if 𝐶𝐸𝐿 (𝑠 ◦ 𝑡) then break
+the vocabulary, where each token may be a sin- 7:
+elif 𝑡 = 𝐸𝑂𝑆 and 𝑠 ∈ 𝐿 then break
+gle Unicode character or a string of multiple
+8:
+else 𝒗 [𝑡] ≔ 0; normalize 𝒗
+characters. All common singleton characters
+9:
+if 𝑡 = 𝐸𝑂𝑆 then break
+are included in LLMs’ vocabulary, ensuring that 10:
+𝑠 ≔𝑠 ◦𝑡
+any standard program can be produced by con- 11: return 𝑠
+catenating tokens [60]. Next, based on distribution 𝒗, a token 𝑡 is sampled (Line 5) and appended to the program 𝑠 (Line 10). This process is
+repeated until we encounter the special token 𝐸𝑂𝑆 which signifies the end of the sequence (Line 9).
+LLMs learn to predict adequate probability distributions from extensive training on natural and
+programming languages [12, 59, 73]. These distributions implicitly encode language rules, allowing
+LLMs to successfully solve code generation tasks [13, 28, 59]. However, LLMs may fail to infer
+complex rules [9, 21, 72], derive incomplete rules for less common languages [13, 51], and, due to
+the probabilistic nature of its generation procedure, not consistently follow formal language rules.
+Constrained Decoding. The aforementioned shortcoming of LLMs can be mitigated by employing constrained decoding, which analyzes the intermediate model outputs 𝑠 during the generation
+process and enforces that only valid tokens are incorporated. Specifically, constrained decoding
+leverages a completion engine 𝐶𝐸𝐿 , specific to a language 𝐿. Computing 𝐶𝐸𝐿 (𝑠) returns whether
+partial program 𝑠 can be completed to a well-formed program in 𝐿, meaning whether there exists a
+(possibly empty) string 𝑠 ′ such that 𝑠 ◦ 𝑠 ′ ∈ 𝐿. Equivalently, 𝐶𝐸𝐿 (𝑠) determines whether 𝑠 belongs
+to the prefix language 𝐿𝑝 of 𝐿, i.e., whether 𝑠 ∈ 𝐿𝑝 . 𝐿𝑝 is formally defined as follows:
+Definition 1. For a given language 𝐿, its prefix language is 𝐿𝑝 ≔ {𝑠 | ∃𝑠 ′ : 𝑠 ◦ 𝑠 ′ ∈ 𝐿}.
+
+171:4
+
+Niels Mündler*, Jingxuan He*, Hao Wang, Koushik Sen, Dawn Song, Martin Vechev
+
+function is_int(text: string): boolean {
+const num = Number(text);
+return !isNaN(num) &&
+parseInt(num <completion>
+
+(1)
+(2)
+(3)
+(4)
+(5)
+
+<completion>
+
+Vanilla Syntax Types
+
+;
+
+accept
+accept
+accept
+accept
+accept
+
+ber
+()
+, 10)
+.toString()
+
+reject
+accept
+accept
+accept
+accept
+
+Description
+
+reject
+Syntactically invalid
+reject Undeclared identifier
+reject
+Disallowed operator
+reject Invalid argument type
+accept
+Well-formed option
+
+Figure 1. Left is a partial TypeScript program derived from instance #113 of the MBPP benchmark [5], awaiting
+completion. Right are five completion options: (1)-(4) are invalid and (5) is well-formed. Our type-constrained
+decoding is the only approach capable of correctly rejecting invalid completions and accepting the valid one.
+
+As illustrated in blue highlights of Algorithm 1, constrained decoding differs from vanilla LLMbased code generation by adding an additional sample-and-check loop at Line 4 around the token
+sampling process at Line 5. A sampled token 𝑡 is considered further only if 𝑠 ◦ 𝑡 can be completed
+to a well-formed program (Line 6) or 𝑡 is 𝐸𝑂𝑆 and 𝑠 is already well-formed in 𝐿 (Line 7). Otherwise,
+the probability of 𝑡 is set to zero at Line 8, and the sample-and-check loop repeats. Note that a token
+𝑡 satisfying either Line 6 or Line 7 always exists, because 𝑠 is in 𝐿𝑝 and LLMs’ vocabulary contains
+all common characters. Therefore, the number of iterations of the loop at Line 4 is bounded by the
+fixed LLM vocabulary size. In practice, only few iterations are needed (§5.3) and do not require
+additional LLM inference, ensuring a reasonable runtime overhead compared to vanilla decoding.
+The token-level guarantees extend inductively to guarantee the final program’s validity with
+respect to 𝐿. At Line 1, we start with a valid prefix in 𝐿𝑝 , i.e., either an empty string or a valid prefix
+provided in the user prompt. The check at Line 6 ensures that all intermediate outputs 𝑠 are prefixes
+in 𝐿𝑝 . Additionally, Line 7 and Line 9 ensure that the return statement in Line 11 is reached only
+if 𝑠 ∈ 𝐿. As an additional benefit, by steering previously ill-formed generations into well-formed
+ones, constrained decoding also increases the likelihood of generating functionally correct code.
+Note that commonly used grammar and type checkers can not be used as a completion engine
+for constrained decoding. They judge whether a program string 𝑠 is well-formed according to the
+language 𝐿, i.e., whether 𝑠 ∈ 𝐿. When 𝑠 is not a complete program in 𝐿, but a valid prefix in 𝐿𝑝 ,
+they return a different output than 𝐶𝐸𝐿 (𝑠), which is not suitable for use in Algorithm 1.
+2.2
+
+Overview of Our Type Constraining Approach
+
+Inadequacy of Syntax-Only Constraining. To apply the constrained decoding algorithm
+described in §2, one needs to choose a language 𝐿 and implement the completion engine 𝐶𝐸𝐿 .
+Recent work has explored defining 𝐿 as the set of syntactically valid programs, thus leveraging
+the syntactic rules of programming languages for constrained decoding [8, 66, 71]. However, the
+benefits of this approach are limited, because syntax accounts for only a small portion of overall
+program correctness. For instance, across our evaluations (§5), only 3.5% of the functional errors
+and 6% of the compilation errors in LLM-generated code are due to syntactic errors.
+We illustrate this limitation using the example in Figure 1. It presents five completion candidates
+for a partial program: (1)-(4) will lead to compilation errors and only (5) can result in a well-formed
+program. Based on syntax, completions that contain line terminations or invalid characters (e.g., $)
+could be rejected (1). However, many other cases, including (2)-(4), do not break syntactic rules
+but still cause compilation errors. For instance, candidate (2) results in accessing an undeclared
+identifier. In candidate (3), the function call operator will fail at execution time, as num is a number
+and can not be called. Candidate (4) passes a value of unexpected format to parseInt, which
+expects the first argument to be a string. In this example, (4) is generated by CodeLlama 34B [59].
+Syntax-only constraining accepts this invalid completion, leading to a non-compilable final output.
+
+Type-Constrained Code Generation with Language Models
+
+171:5
+
+Our Approach: Leveraging the Type System. We require stronger constraints to effectively
+guide the model generation. Beyond syntax, type systems are commonly utilized in compilers,
+enforcing semantic rules to detect and reject bugs at compile time [23]. For Figure 1, the TypeScript
+type system would correctly reject code containing erroneous completions (2)-(4). Therefore, in
+this work, we propose leveraging type systems in constrained decoding to guide code generation.
+Our method accurately detects that only candidate (5) is a valid completion, guiding CodeLlama
+34B to adopt this option and complete the program correctly. As detailed in §5, our experimental
+results demonstrate that our approach more than halves compiler errors in generated code and
+consistently increases the proportion of functionally correct programs.
+Incorporating typing rules into code generation offers substantial potential but presents a
+significant challenge. Previous research has focused primarily on constrained decoding for contextfree languages, for which prefixes can be efficiently determined [8, 66, 71]. Type systems, however,
+require language specifications that exceed the capabilities of context-free grammars [43], inhibiting
+the direct application of prior techniques to type-constrained decoding. Moreover, determining
+whether a partially generated expression can be completed to be a well-typed full expression
+involves not only type checking and inference, as done in traditional compilers, but also addressing
+type inhabitation [39, 67].
+To address these challenges, we design and implement a practical approach to determine whether
+a string can be completed to a well-typed program. We begin by developing a specialized kind of
+non-deterministic automaton that maintains a prefix property, formally defined in §3.2. This property
+ensures that every reachable state can lead to an accepting state. We leverage this property to build
+a completion engine for constrained decoding as in Algorithm 1. We construct such a completion
+engine to enforce well-typedness for a simply-typed language 𝐿𝐵 in §3.3–§3.5 and extend it to a core
+subset of TypeScript in §4. At a high level, the automaton acts as a syntactic parser, additionally
+maintaining information about initialized variables, enclosing function declarations, and other
+type-related aspects of the partially parsed syntax tree. This is possible through dynamically created
+annotated states that track the additional information.
+num
+In Figure 2, we provide a concrete example for our prefix au.isFinite member
+identiﬁer
+tomata. Every state represents the currently parsed syntactic
+access
+()
+component and additionally tracks the surrounding typing in- .toString
+member
+function
+formation. For example, after parsing the partial program in Figaccess
+call
+ure 1, the automaton currently parses an expression as the first
+.toString
+()
+argument to function parseInt. Transitions are annotated with
+function
+member
+further code completions that are deemed admissable based on
+call
+access
+the syntax and typing information. In the first state, the automa...
+...
+ton has parsed num, inferring from previous declarations that it
+Figure
+2.
+An
+example
+of
+a prefix
+represents an identifier of type number. Based on the signature
+automaton.
+of the parseInt function call, the required type of the completed
+argument is string. The automaton now determines the admissable transitions from the identifier
+state. State transitions corresponding to completions (1)-(4) from Figure 1 are disallowed, as they
+are determined to violate type rules based on the tracked type information. Further, the automaton
+needs to determine which operations on the current expression num of type number can be applied
+to obtain an expression of type string. To achieve this, we develop a type reachability search algorithm, which finds string-typed expressions num.toString() and num.isFinite().toString().
+Therefore, it returns that accesses to members .toString and .isFinite are admissible, resulting
+in the two depicted transitions with the corresponding labels. In our experiment, CodeLlama 34B
+chooses to transition along .toString(), the more likely completion based on its training data.
+Note that in our actual automaton formalism, as described at the end of §3.2, state transitions are
+
+171:6
+
+Niels Mündler*, Jingxuan He*, Hao Wang, Koushik Sen, Dawn Song, Martin Vechev
+
+on a character level. Figure 2 condenses character-level transitions into string-level transitions for
+presentation purposes.
+The type reachability algorithm seeks to identify sequences of
+number
+operators applied to a given expression such that the resulting
+member access
+member access
+expression possesses a required type. Conceptually, it performs
+.isFinite
+.toString
+a search over an abstracted type graph, whose nodes are types,
+() =>
+() =>
+me
+and edges represent well-typed operations connecting the inmb
+boolean
+string
+.t er a
+oS
+put and output types. An example of such a (partial) graph is
+tr cces
+in
+g s
+call ()
+call ()
+shown in Figure 3, with a valid path highlighted in green color.
+addition +
+Starting from the derived number type of num, the search first
+boolean
+string
+comparison
+traverses a member access edge to reach the nullary function
+==
+type () => string. Then, it traverses an edge representing a
+function call to reach the goal type string, concluding that the Figure 3. An example of a partial
+type search graph.
+combination of traversed operators .toString() is a well-formed
+completion for Figure 1. The path for num.isFinite().toString() is analogously valid but omitted
+in Figure 3 for brevity. This type reachability search is invoked every time a partial expression is
+parsed, in order to determine valid transitions in the prefix automaton.
+We implement our approach for a significant subset of TypeScript (§4) and experimentally
+evaluate it for various LLMs and three important code generation tasks: synthesis, translation,
+and repair (§5). The results demonstrate that our approach provides significant benefits in both
+reducing compilation errors for LLM-generated code and increasing their functional correctness.
+3
+
+Our Type Constraining Approach
+
+In this section, we first present a generic, simply-typed language 𝐿𝐵 (§3.1). Then, we present our
+type constraining approach using 𝐿𝐵 . Specifically, we introduce our prefix automaton formalism
+(§3.2) and define increasingly complex automata for parsing well-typed fragments of 𝐿𝐵 , beginning
+with identifiers, literals, and types (§3.3), continuing to expressions, including type search for
+type-restricted expressions (§3.4), and concluding with statements (§3.5).
+3.1
+
+A Simply Typed Language
+
+We define a simply typed, Turing-complete language, 𝐿𝐵 . Its grammar and type system are generic,
+resembling the principles found in popular statically typed languages, such as TypeScript, Java, and
+Go. However, there may be a slight bias towards TypeScript, as our implementation is based on it.
+Syntax. The syntax of 𝐿𝐵 is shown in Figure 4. The language includes expressions, type-annotated
+variable and function definitions, and control flows. Overall, it is based on a core subset of TypeScript [10] but can be adapted for other statically typed languages. Similar to Bierman et al. [10], we
+represent Kleene-Star repetitions using an overline, e.g., 𝑠 represents a sequence of statements 𝑠, and
+adhere to the TypeScript documentation to annotate parameter types in function signatures with
+argument names [17]. We make a distinction between base and extension expressions. The latter
+applies operators to previous expressions, leading to more complex expressions. This differentiation
+is useful later in §3.4 for constructing the prefix automaton for parsing expressions.
+Expression Typing Rules. The typing rules for 𝐿𝐵 ’s expressions are detailed in Figure 5. These
+rules form a subset of safeFTS, a type-safe portion of TypeScript described by Bierman et al. [10],
+allowing us to leverage their soundness results. The type rules for 𝐿𝐵 use the standard concept of a
+type environment, denoted as Γ, which is a collection of pairs (𝑥 : 𝑇 ) of identifiers 𝑥 and types 𝑇 .
+We write Γ ⊢ 𝑒 : 𝑇 if the expression 𝑒 has type 𝑇 in the type environment Γ. An expression 𝑒 is
+considered valid if its type can be derived by applying the given typing rules.
+
+Type-Constrained Code Generation with Language Models
+
+𝑙 ::=
+\d+
+"\w ∗ ”
+true | false
+
+Literal
+Numeric Literal
+String Literal
+Boolean Literal
+
+𝑝 ::= 𝑥 : 𝑇
+
+Typed Identifier
+
+𝑇 ::=
+
+Type
+Numeric Type
+String Type
+Boolean Type
+Function Type
+
+number
+string
+
+𝑥 ::= \w+
+
+Identifier
+
+𝑒 ::= 𝑒 0 | 𝑒 1
+𝑒 0 ::=
+𝑙
+𝑥
+(𝑝 ) => 𝑒
+(𝑒 )
+𝑒 1 ::=
+𝑒 ⊙𝑒
+𝑒 (𝑒 )
+𝑒 .𝑛
+
+Expression
+Base Expression
+Literal
+Identifier
+Function Expression
+Grouped Expression
+Extension Expression
+Binary Operator
+Function Call
+Member Access
+
+171:7
+
+boolean
+(𝑝 ) => 𝑇
+
+𝑠 ::=
+let 𝑥 : 𝑇 ;
+
+𝑒;
+return 𝑒 ;
+{𝑠 }
+function 𝑥 (𝑝 ) : 𝑇 { 𝑠 }
+if (𝑒 ) 𝑠 else 𝑠
+
+𝑀 ::= 𝑠
+
+Statement
+Variable Declaration
+Expression Statement
+Return Statement
+Statement Block
+Function Definition
+If-Then-Else Statement
+Program
+
+Figure 4. The syntax of 𝐿𝐵 . Expressions are categorized into base and extension expressions. The later extends
+a given expression with suffix operators to form more complicated expressions.
+
+Literals are evaluated to their respective types (lit−{num, str, bool}). Identifiers 𝑥 are evaluated
+based on the corresponding type in the type environment (ident). Anonymous functions are typed
+according to their annotated parameter types, with the return type determined by the returned
+expression (anon). Grouping preserves the type of the inner expression (group).
+Binary operators have predefined signatures 𝑆 1 ⊙ 𝑆 2 : 𝑇 , such as number + number : number for
+addition and 𝑇 = 𝑇 : 𝑇 for assignments. These signatures must be satisfied in well-typed expressions
+(op). Function calls require parameters to match the function signature (call). The type of member
+accesses 𝑒 .𝑛 is determined using an auxiliary function lookup(𝑆, 𝑛), which fetches the type of
+member 𝑛 for type 𝑆. An instantiation of lookup for TypeScript is provided by Bierman et al. [10].
+Statements and Type Environments. The typing rules for statements are presented in Figure 6.
+Type environments are modified by statements, in particular variable declarations and function
+definitions. We use the notation Γ 1 ⊢ 𝑠 ↣ Γ 2 to indicate that after executing statement 𝑠 in type
+environment Γ 1 , the new environment is Γ 2 .
+Variable declarations introduce the identifier with declared type into the type environment,
+provided the identifier is not already defined (decl). The type environment defines the context to
+evaluate expressions (expr) and return statements (ret). Return statements are only well-typed
+inside function bodies. The statements inside statement blocks and if-then-else statements must
+maintain valid type environments, but do not have an external effect (block, ite). This also applies to
+function definitions; however, the defined function is finally added to the external type environment
+(fun). Lastly, empty statements do not alter the type environment (nop), while statement sequences
+propagate the type environment along the execution (seq).
+Return Types. The rules for checking return types are presented in Figure 7. Firstly, return
+statements must contain expressions matching the function’s declared return type. Secondly, such
+an expression must be returned on every execution path. We use the notation Γ ⊢ 𝑠 : 𝑅 to indicate
+the sequence of statements 𝑠 ensures a return value of type 𝑅.
+For variable declarations and expression statements, the return type of the subsequent statements
+is considered (r-decl, r-expr). The return type of a return statement directly corresponds to the
+
+171:8
+
+Niels Mündler*, Jingxuan He*, Hao Wang, Koushik Sen, Dawn Song, Martin Vechev
+
+[lit-num]
+
+[lit-str]
+
+Γ ⊢ \d+ : number
+
+[ident]
+
+(𝑥 : 𝑇 ) ∈ Γ
+Γ ⊢𝑥 :𝑇
+
+[group]
+
+Γ ⊢𝑒 :𝑇
+Γ ⊢ (𝑒 ) : 𝑇
+
+Γ ∪𝑝 ⊢𝑒 :𝑇
+
+[anon]
+
+Γ ⊢ (𝑝 ) => 𝑒 : (𝑝) => 𝑇
+
+Γ ⊢ 𝑒1 : 𝑆1
+
+[op]
+
+[lit-bool]
+
+Γ ⊢ "\w*" : string
+
+[call]
+
+Γ ⊢ 𝑒2 : 𝑆2 𝑆1 ⊙ 𝑆2 : 𝑇
+Γ ⊢ 𝑒1 ⊙ 𝑒2 : 𝑇
+
+Γ ⊢ true, false : boolean
+
+Γ ⊢ 𝑓 : (𝑥 : 𝑆) => 𝑇
+
+Γ ⊢𝑒 :𝑆
+
+Γ ⊢ 𝑓 (𝑒 ) : 𝑇
+
+[mem]
+
+Γ ⊢𝑒 :𝑆
+
+lookup(𝑆, 𝑛) = 𝑇
+Γ ⊢ 𝑒 .𝑛 : 𝑇
+
+Figure 5. Typing rules for 𝐿𝐵 ’s expressions.
+
+[decl]
+
+𝑥∉Γ
+Γ ⊢ let 𝑥 : 𝑇 ; ↣ Γ ∪ (𝑥 : 𝑇 )
+Γ ⊢ 𝑠𝐵 ↣ Γ𝐵
+
+[block]
+
+[ite]
+
+[fun]
+
+Γ ⊢ { 𝑠𝐵 } ↣ Γ
+
+Γ ⊢ 𝑠𝑖 𝑓 ↣ Γ 𝑖 𝑓
+
+Γ ⊢𝑒 :𝑇
+Γ ⊢ 𝑒; ↣ Γ
+
+[expr]
+
+Γ ⊢ 𝑠𝑒𝑙𝑠𝑒 ↣ Γ𝑒𝑙𝑠𝑒
+
+Γ ⊢ if (𝑒 ) 𝑠𝑖 𝑓 else 𝑠𝑒𝑙𝑠𝑒 ↣ Γ
+
+𝑥∉Γ
+
+inside function body Γ ⊢ 𝑒 : 𝑇
+Γ ⊢ return 𝑒 ; ↣ Γ
+
+[ret]
+
+Γ ∪ (𝑥 : (𝑝) => 𝑇 ) ∪ (𝑝) ⊢ 𝑠𝑥 ↣ Γ𝑥
+
+Γ 1 ⊢ function 𝑥 (𝑝 ) : 𝑇 { 𝑠𝑥 } ↣ Γ ∪ (𝑥 : (𝑝) => 𝑇 )
+[nop]
+
+Γ⊢•↣Γ
+
+[seq]
+
+Γ1 ⊢ 𝑠 ↣ Γ2 Γ2 ⊢ 𝑠 ↣ Γ3
+Γ1 ⊢ 𝑠 𝑠 ↣ Γ3
+
+Figure 6. Type environment extension rules for sequences of statements in 𝐿𝐵 .
+
+[r-decl]
+
+Γ ⊢𝑠 :𝑅
+Γ ⊢ let 𝑥 : 𝑇 ;𝑠 : 𝑅
+
+[r-block-self]
+
+[r-fun]
+
+[r-ite-self]
+
+[r-expr]
+
+Γ ⊢ 𝑠𝐵 : 𝑅
+
+Γ ⊢𝑠
+
+Γ ⊢ { 𝑠𝐵 } 𝑠 : 𝑅
+
+Γ ∪ (𝑥 : (𝑝 => 𝑅)) ⊢ 𝑠 : 𝑅 ′
+
+Γ ⊢𝑠 :𝑅
+Γ ⊢ 𝑒 ;𝑠 : 𝑅
+
+[r-ret]
+
+[r-block-next]
+
+Γ ⊢𝑒 :𝑅
+Γ ⊢ return 𝑒 ;𝑠 : 𝑅
+
+Γ ⊢ 𝑠𝐵
+
+Γ ⊢𝑠 :𝑅
+
+Γ ⊢ { 𝑠𝐵 } 𝑠 : 𝑅
+
+Γ ∪ (𝑥 : (𝑝) => 𝑅) ∪ (𝑝) ⊢ 𝑠𝑥 : 𝑅
+
+Γ ⊢ function 𝑥 (𝑝 ) : 𝑅 { 𝑠𝑥 } 𝑠 : 𝑅 ′
+
+Γ ⊢ 𝑠𝑖 𝑓 : 𝑅
+
+Γ ⊢ 𝑠𝑒𝑙𝑠𝑒 : 𝑅
+
+Γ ⊢ if (𝑒 ) 𝑠𝑖 𝑓 else 𝑠𝑒𝑙𝑠𝑒 𝑠 : 𝑅
+
+[r-ite-next]
+
+Γ ⊢𝑠 :𝑅
+Γ ⊢ if (𝑒 ) 𝑠𝑖 𝑓 else 𝑠𝑒𝑙𝑠𝑒 𝑠 : 𝑅
+
+Figure 7. 𝐿𝐵 ’s typing rules for function returns.
+
+type of the returned expression (r-ret). For statement blocks, the return type is decided by either the
+block itself or the subsequent statements (r-block-self, r-block-next). In function definitions, the
+return type is determined by the type of the subsequent statements, similar to expression statements.
+It is additionally required that the function body returns a type matching the declared return type
+(r-fun). For if-then-else statements, both branches must return the same type (r-ite-self), or the
+return type is determined by the following statements (r-ite-next).
+Language Definition. In summary, a program 𝑠 is in language 𝐿𝐵 if both (i) 𝑠 conforms to the
+grammar in Figure 4 and (ii) 𝑠 is well-typed according to the typing rules in Figures 5–7.
+
+Type-Constrained Code Generation with Language Models
+
+3.2
+
+171:9
+
+Prefix Automaton Definition
+
+We introduce a general definition of prefix automata, beginning with basic automata concepts.
+Prefix automata are standard automata that ensure a special prefix property 2 . This property enables
+us to use a prefix automaton to decide whether some string is in the prefix language 𝐿𝑝 of a given
+language 𝐿. That is, the prefix automaton can function as a completion engine 𝐶𝐸𝐿 to facilitate
+constrained decoding, as described in §2.
+We consider an automaton 𝐴 ≔ ⟨Σ, 𝑄, 𝛿, 𝐼, 𝐹 ⟩, a tuple of the five following elements: (i) Σ is
+an alphabet of input symbols; (ii) 𝑄 is a set of states; (iii) 𝛿 : 𝑄 × Σ ↦→ P (𝑄) is a computable
+transition function that maps a state and an input symbol to a finite set of next states; (iv) 𝐼 ⊆ 𝑄 is
+a finite set of initial states; and (v) 𝐹 ⊆ 𝑄 is a decidable set of accepting states. As a convention, we
+denote a symbol in Σ as 𝑐, a string of symbols in Σ∗ as 𝑠, the empty string as 𝜀 and an operator for
+concatenating symbols and strings as ◦. The transition function 𝛿 maps a given state to all possible
+subsequent states. When
+Ð 𝛿 is applied on a set of states q ⊆ 𝑄, we take the union of the results as
+output, i.e., 𝛿 (q, 𝑐) ≔ 𝑞 ∈q 𝛿 (𝑞, 𝑐). The transition function defines a directed graph 𝐺 over 𝑄, where
+every state is a node and there is an edge annotated with 𝑐 from 𝑞 to 𝑞 ′ if 𝑞 ′ ∈ 𝛿 (𝑞, 𝑐). The language
+parsed by 𝐴 comprises all strings 𝑠 such that traversing 𝐺 from some initial state in 𝐼 along the edges
+annotated with 𝑐 𝑖 for 𝑐 1 ◦ 𝑐 2 ◦ . . . ◦ 𝑐 𝑛 = 𝑠, it is possible to reach some accepting state in 𝐹 . Formally,
+we define recursively a traversal function 𝛾 for states q as 𝛾 (q, 𝜀) ≔ q and 𝛾 (q, 𝑠 ◦ 𝑐) ≔ 𝛿 (𝛾 (q, 𝑠), 𝑐).
+The language accepted by 𝐴 is then defined as 𝐿(𝐴) ≔ {𝑠 | 𝛾 (𝐼, 𝑠) ∩ 𝐹 ≠ ∅}. The traversal function
+has two intuitive properties concerning reachability that can be shown inductively:
+(P1) A path along the graph can be split arbitrarily, i.e., 𝛾 (q, 𝑠 ◦ 𝑠 ′ ) = 𝛾 (𝛾 (q, 𝑠), 𝑠 ′ ).
+(P2) If a state is reached by 𝑠 ◦𝑠 ′ , some state is reachable by 𝑠, i.e., 𝛾 (q, 𝑠 ◦𝑠 ′ ) ≠ ∅ =⇒ 𝛾 (q, 𝑠) ≠ ∅.
+An automaton satisfies the prefix property or is a prefix automaton, if there is a path from every
+reachable state to some accepting state, or formally:
+Definition 2. For an automaton 𝐴, the prefix property holds iff ∀𝑞 ∈ 𝛾 (𝐼, 𝑠) : ∃𝑠 ′ : 𝛾 (𝑞, 𝑠 ′ ) ∩𝐹 ≠ ∅.
+The automaton is a prefix automaton if it satisfies the prefix property.
+Intuitively, for such automata, reaching some state by consuming string 𝑠 implies that 𝑠 is a
+prefix to some member of 𝐿(𝐴). We define the reachable language of 𝐴, all inputs that result in
+some state, as 𝐿𝑟 (𝐴) ≔ {𝑠 | 𝛾 (𝐼, 𝑠) ≠ ∅}. Below, we establish the equivalence of 𝐿𝑟 (𝐴) and 𝐿(𝐴) 𝑝 ,
+the prefix language of 𝐿(𝐴) as defined in Definition 1.
+Lemma 1. If 𝐴 is a prefix automaton, then 𝐿(𝐴) 𝑝 = 𝐿𝑟 (𝐴).
+Proof. For any 𝑠 ∈ 𝐿(𝐴) 𝑝 there exists 𝑠 ′ such that 𝑠 ◦ 𝑠 ′ ∈ 𝐿(𝐴), by the definition of prefix
+languages. By the definition of 𝐿(𝐴), this implies 𝛾 (𝐼, 𝑠 ◦ 𝑠 ′ ) ≠ ∅. Then, using (P2), we further
+derive 𝛾 (𝐼, 𝑠) ≠ ∅, i.e., 𝑠 ∈ 𝐿𝑟 (𝐴). Therefore, 𝐿(𝐴) 𝑝 ⊆ 𝐿𝑟 (𝐴) holds. The other direction also holds.
+We first see that 𝑠 ∈ 𝐿𝑟 (𝐴) =⇒ 𝛾 (𝐼, 𝑠) ≠ ∅. Then applying Definition 2 and (P1), we find
+∃𝑠 ′ : 𝛾 (𝐼, 𝑠 ◦ 𝑠 ′ ) ∩ 𝐹 ≠ ∅, implying 𝑠 ◦ 𝑠 ′ ∈ 𝐿(𝐴) and thus 𝑠 ∈ 𝐿(𝐴) 𝑝 .
+□
+Note that 𝐿(𝐴) 𝑝 ⊆ 𝐿𝑟 (𝐴) holds generally for automata, since the first half of the proof does not
+require the prefix property.
+From Prefix Automata to Completion Engines. With Lemma 1, given a prefix automaton
+𝐴, we can define a convenient-to-compute completion engine for the underlying language 𝐿(𝐴):
+𝐶𝐸𝐿 (𝐴) (𝑠) ≔ 𝛾 (𝐼, 𝑠) ≠ ∅. Since our target language is 𝐿 and not 𝐿(𝐴), we now need to determine the
+relationship between 𝐿(𝐴) and 𝐿. If we construct 𝐴 such that it parses a subset of 𝐿, i.e., 𝐿(𝐴) ⊆ 𝐿,
+we are guaranteed that all LLM generations constrained by 𝐶𝐸𝐿 (𝐴) lie in 𝐿. Conversely, if 𝐿(𝐴) ⊇ 𝐿,
+2 Note that the prefix property defined in our work differs from the one discussed in classical texts, e.g., [31]
+
+171:10
+
+Niels Mündler*, Jingxuan He*, Hao Wang, Koushik Sen, Dawn Song, Martin Vechev
+
+we are guaranteed that every string in 𝐿 can be expressed under constrained decoding, but not that
+every generation is valid. For example, if 𝐴 permits all syntactically correct programs, it guarantees
+that all well-typed programs can be generated, but permits ill-typed programs as well. Therefore,
+𝐿(𝐴) ⊆ 𝐿 is required to achieve our goal of enforcing well-typedness on LLM-generated code.
+Ideally, 𝐴 would parse 𝐿 exactly, i.e., 𝐿(𝐴) = 𝐿, which in our setting additionally guarantees that
+every well-typed program can be expressed under the constraints of the completion engine. If this
+is not achieved, it is important for 𝐴 to capture a large subset of 𝐿 to be practically useful.
+Building a Prefix Automaton for 𝐿𝐵 : Warming up. In the next sections, we will construct
+a prefix automaton for soundly parsing well-typed programs in 𝐿𝐵 , by presenting various prefix
+automata for well-typed fragments of 𝐿𝐵 . Our final automaton will cover a significant but incomplete
+subset of 𝐿𝐵 . Incompleteness exists because to ensure that our algorithms terminate, we do not
+cover high-order types that are less likely to occur in practice. This is discussed in more detail in
+§3.4. Our evaluation in §5 empirically demonstrates that our approach sufficiently covers practical
+use cases to significantly improve the correctness of LLM-generated code.
+We choose Σ to be the set of Unicode characters. This makes our completion engine agnostic to
+LLM vocabularies. Even though LLMs’ vocabularies differ, their tokens are always a string of single
+or multiple characters. When our completion engine for 𝐿𝐵 is called during constrained decoding,
+i.e., at Line 6 of Algorithm 1, it processes the sampled token character by character.
+Before proceeding, we briefly introduce several base prefix automata below, with their precise
+definitions detailed in Appendix A.1. These automata are later combined, with parts of the transition
+function being overwritten, to construct more complex automata that capture elements of 𝐿𝐵 .
+• Union 𝐴𝑋 ∪ 𝐴𝑌 parses the language {𝑠 | 𝑠 ∈ 𝐿(𝐴𝑋 ) ∪ 𝐿(𝐴𝑌 )}. It is a prefix automaton if both
+𝐴𝑋 and 𝐴𝑌 are prefix automata.
+• Concatenation 𝐴𝑋𝑌 parses the language {𝑠 ◦ 𝑠 ′ | 𝑠 ∈ 𝐿(𝐴𝑋 ), 𝑠 ′ ∈ 𝐿(𝐴𝑌 )}. It is a prefix
+automaton if 𝐴𝑋 and 𝐴𝑌 are both prefix automata, and 𝐿(𝐴𝑌 ) ≠ ∅.
+• Kleene-Star 𝐴𝑋 parses the language {𝑠 | 𝑠 ∈ 𝐿(𝐴𝑋 )}. It is a prefix automaton if 𝐴𝑋 is a prefix
+automaton.
+• Terminal 𝐴S parses the language {S}, where S is a fixed, non-empty string.
+• Empty 𝐴∅ parses the empty language ∅ and is always a prefix automaton.
+3.3
+
+Prefix Automata for Identifiers, Literals, and Types
+
+We now introduce prefix automata for basic syntactic elements of 𝐿𝐵 : identifiers, literals, and type
+annotations. The languages parsed by these automata exactly match their counterparts in 𝐿𝐵 .
+Literals. The prefix automaton for literals 𝐴𝑙 ≔ 𝐴num ∪ 𝐴str ∪ 𝐴bool accepts number, string,
+and boolean literals as defined in Figure 4. The automata 𝐴num , 𝐴str , and 𝐴bool are defined by the
+deterministic finite automaton representation of the corresponding regular expression of the literal.
+To ensure the prefix property on the finite automata of the regular expression, we prune states
+from which accepting states can not be reached.
+Identifiers. During parsing, we maintain the current type environment Γ, as detailed in §3.5. We
+define the identifier automaton
+𝐴𝑥 as the union of the terminal automata for identifiers defined in
+Ð
+Γ. In other words, 𝐴𝑥 ≔ 𝑦 ∈Γ 𝐴y .
+Types. The type automaton 𝐴𝑇 accepts type annotations as defined in the grammar of 𝐿𝐵 (Figure 4).
+It is defined as 𝐴𝑇 ≔ 𝐴type-lit ∪𝐴type-fun . This includes type literal automaton 𝐴type-lit ≔ 𝐴string ∪
+𝐴number ∪ 𝐴boolean and function type automaton 𝐴type-fun ≔ 𝐴(𝑝 ) => 𝑇 . The latter is a concatenation
+of multiple prefix automata, with the parameter and return types recursing on 𝐴𝑇 . This recursive
+
+Type-Constrained Code Generation with Language Models
+
+171:11
+
+definition is valid, since it ensures a finite set of initial states, defines a decidable accepting set, and
+preserves the prefix property.
+3.4
+
+Prefix Automaton for Expressions
+
+We introduce prefix automata to parse well-typed expressions in 𝐿𝐵 . We begin by describing an
+automaton 𝐴𝑒 to parse expressions whose types are unrestricted, e.g., any expression 𝑒 in an
+expression statement 𝑒 ;. Then, we present an automaton 𝐴𝑒 ↓ 𝑇 for expressions whose type is
+constrained to 𝑇 , e.g., for parameters of function calls. The type-constrained version accepts a
+string only if the inhabited type of the represented expression matches 𝑇 . To preserve the prefix
+property, we need to ensure that partial expressions can be completed to inhabit the constrained
+type. Completions may involve arbitrarily many applications of operators, which may modify the
+expression type. We therefore introduce a type search algorithm that soundly determines which
+types an expression can inhabit, and use it to prune transitions that violate the prefix property.
+Unrestricted Expressions. To handle the recursive syntactic structure of expressions, we differentiate two kinds as shown in Figure 4: base expressions, including identifiers, literals, grouped
+expressions, and anonymous functions, and extension expressions, which are operator applications
+(binary operator, member access, or function call) that lead to extending a given expression.
+The expression automaton 𝐴𝑒 is thus defined as the union of base expression automata 𝐴𝑥 , 𝐴𝑙 ,
+𝐴(𝑒 ) , and 𝐴(𝑝 ) => 𝑒 , with potential extensions 𝐴 ⊙𝑒 , 𝐴.𝑛 , and 𝐴(𝑒 ) . The individual base and extension
+automata are constructed by concatenating the respective terminal automata and recursively 𝐴𝑒 .
+Additionally, we restrict the type of the recursive 𝐴𝑒 if the restriction is required by the type system,
+e.g., for parsing call parameters with a fixed type. We provide additional details on this restriction in
+Appendix A.2. Since an expression can end after either base or extensions, accepting states of both
+base and extending automata are accepting states of 𝐴𝑒 . To implement extensions, we start from
+the base expression automata and recursively adjust 𝐴𝑒 ’s transition function 𝛿 𝑒 by adding outgoing
+edges from the accepting states of the current automaton to the initial states of the extending
+automata, or formally:
+(
+𝛿 𝑌 (𝑞𝑌𝑋 , 𝑐) ∪ 𝛿 𝑒 (𝐼 𝑋(𝑒 ), 𝑐) ∪ 𝛿 𝑒 (𝐼 𝑋⊙𝑒 , 𝑐) ∪ 𝛿 𝑒 (𝐼 𝑋.𝑛 , 𝑐) if 𝑞𝑌𝑋 ∈ 𝐹 𝑌
+𝑋
+∀𝑋, 𝑌 : 𝛿 𝑒 (𝑞𝑌 , 𝑐) ≔
+𝛿 𝑌 (𝑞𝑌𝑋 , 𝑐)
+otherwise,
+where the labels 𝑋 and 𝑌 for a state 𝑞𝑌𝑋 represent that a string 𝑋 has been parsed, and currently the
+active automaton is 𝐴𝑌 , which can be one of the following: 𝐴𝑥 , 𝐴𝑙 , 𝐴(𝑒 ) , 𝐴(𝑝 ) => 𝑒 , 𝐴 ⊙𝑒 , 𝐴.𝑛 , and
+𝐴(𝑒 ) . The superscripts are useful for tracking the currently expressed type, enabling us to determine
+the validity of extensions and transition to type-restricted expressions based on 𝐿𝐵 ’s typing rules.
+For instance, for state 𝑞 42 , the addition operator extension +𝑒 and function call extension (𝑒) are
+syntactically applicable to 42 of type number. While the addition operator with type signature
+number + number :number is allowed, we can not apply a function call on number. In general, we set
+𝐼𝑌𝑋 ≔ ∅ when 𝑌 is an invalid extension to 𝑋 . Moreover, for the extension +𝑒 to be valid, 𝑒 must
+be of type number. To this end, we transition to a type-restricted expression automaton by setting
+𝐼 +42𝑒 to the set of initial states for 𝐴+ ◦ (𝐴𝑒 ↓ number). Similar to the recursive type automaton, our
+definition of 𝐴𝑒 ensures a finite set of initial states and a decidable accepting set.
+Type-Constrained Expressions. To implement 𝐴𝑒 ↓ 𝑇 , we must determine whether a partial
+expression 𝑠 can be completed to inhabit type 𝑇 . Completing 𝑠 without any extension can lead to
+a possible set of types and repeated extensions can further alter the result type, but we are not
+guaranteed that the desired type can be reached. Moreover, extensions can be applied indefinitely,
+prohibiting an exhaustive search of possible completions.
+
+171:12
+
+Niels Mündler*, Jingxuan He*, Hao Wang, Koushik Sen, Dawn Song, Martin Vechev
+
+We therefore develop a two-tiered algorithm, which we describe in the following paragraphs.
+This algorithm first identifies the derivable types derivable(𝑞𝑠 ) of 𝑠 based on its current state 𝑞𝑠 .
+derivable(𝑞𝑠 ) refers to the set of inhabitable types for all possible expressions completed from 𝑠
+without extension. Second, a type reachability search reachable(derivable(𝑞𝑒 ),𝑇 ) is performed
+to determine if 𝑇 can be inhabited by extending from the derivable types of 𝑠.
+We prune automaton transitions when this type search returns a negative result. To ensure
+the prefix property, the performed search is sound, i.e., it only returns a positive result if 𝑇 can
+be expressed by a valid sequence of extensions. This also aligns with our goal of generating
+only well-typed programs, ensuring that our expression automata accept a subset of all welltyped expressions of 𝐿𝐵 . To ensure termination, the search is incomplete, i.e., there may be a
+valid sequence of transitions to express 𝑇 which is not found by the search and we may end up
+disallowing generation of a well-typed expression. However, it only avoids traversing types of high
+complexity that are less likely to occur in practice. We further empirically ensure that our approach
+is practically effective (§5).
+Derivable Types. For the first part Table 1. Definition of derivable(𝑥) for partial expressions inof the algorithm, we determine all troduced in Figure 4. 𝑠 ≤ 𝑠 ′ expresses that 𝑠 is a prefix of 𝑠 ′ .
+types inhabitable by the currently pmatch(𝑠,𝑇 ) determines whether a prefix 𝑠 partially matches
+parsed expression 𝑠 without exten- the regular expression of literals of type 𝑇 .
+sion, i.e., derivable(𝑞𝑠 ). For example, 𝑠
+derivable(𝑞𝑠 )
+while parsing partial identifier 𝑥 in
+{𝑇 | pmatch(𝑙,𝑇 ),𝑇 ∈ {number, string, boolean}}
+the type environment Γ ≔ {(𝑥 : 𝑙
+𝑥
+{𝑇 | 𝑥 ≤ 𝑛, (𝑛 : 𝑇 ) ∈ Γ}
+number), (𝑥𝑦 : string)}, we have
+{(𝑝 ) => 𝑇 | reachable(derivable(𝑞𝑒 ),𝑇 )}
+(𝑝 ) => 𝑒
+derivable(𝑞 x ) = {number, string} and (𝑒
+{𝑇 | reachable(derivable(𝑞𝑒 ),𝑇 )}
+derivable(𝑞 xy ) = {string}. For a fi- 𝑒 ⊙
+{𝑇 | ∃𝑆 ′ : Γ ⊢ 𝑒 : 𝑆 ∧ 𝑆 ⊙ 𝑆 ′ : 𝑇 }
+nal state 𝑞 of expression 𝑒, we define 𝑒 (
+{𝑅 | Γ ⊢ 𝑒 : (𝑝 ) => 𝑅}
+derivable(𝑞) ≔ 𝑇 , where Γ ⊢ 𝑒 : 𝑇 . 𝑒 .𝑎
+{𝑆 | 𝑎 ≤ 𝑛, Γ ⊢ 𝑒 : 𝑇 , lookup(𝑇 , 𝑛) = 𝑆 }
+Different expressions impose different
+rules on derivability, and we present the detailed rules in Table 1. Note that for grouped expressions
+and function literals, we need to enumerate reachable types by recursively contained expressions.
+To avoid explicitly enumerating all reachable types, we integrate the derivability and reachability
+algorithms. This optimization is discussed in more detail in Appendix A.4.
+Lemma 2. For state 𝑞 ∈ 𝛾 (𝐼 𝑒 , 𝑠) of partial expression 𝑠, derivable(𝑞) returns all 𝑇 s.t. exists some
+suffix 𝑠 ′ with Γ ⊢ 𝑠 ◦ 𝑠 ′ : 𝑇 and 𝑠 ′ does not involve an extension (operator, call, or member access).
+Proof. By case distinction on the possible states of partial expressions.
+
+□
+
+Type Reachability. To determine which types are inhabitable by extending a base expression 𝑒
+of a given type 𝑇 (with binary operator, function call, or member access), we analyze sequences
+of single extension steps with compatible signatures. This process is conceptualized as a search
+over a graph where types are nodes and extension steps are edges. For every binary operator ⊙
+with the signature 𝑇 ⊙ 𝑋 : 𝑆, an edge is created from type 𝑇 to type 𝑆. As an example, the operator
+for numerical addition + has the signature number + number : number, thereby forming an edge
+from number to itself. Furthermore, for every member n of type 𝑇 , we create an edge from 𝑇 to
+lookup(𝑇 , n), e.g., from number to () => string for the member toString of number type. Finally,
+we connect each function type (𝑝 ) => 𝑅 and with its return type 𝑅. For instance, () => string is
+connected with string. Examples of type graphs can be found in §2.2 and Figure 3. Note that these
+extension steps are abstract, in the sense that they focus on the type of the expression being extended
+and the resulting type after extension, not considering textual representation and parameters.
+
+Type-Constrained Code Generation with Language Models
+
+171:13
+
+Algorithm 2 Our type reachability search algorithm
+Input: Current type 𝑇 of some expression 𝑒, goal type 𝐺
+Output: Whether 𝐺 can be reached by extending 𝑒
+1: function reachable(𝑇 , 𝐺)
+2:
+if 𝑇 = 𝐺 then return true
+3:
+if 𝑇 is marked then return false else mark 𝑇
+4:
+for each valid extension step ♢ from 𝑇 do
+5:
+𝑆 ≔ the resulting type of applying ♢ on 𝑇
+6:
+if pruneSearch(𝑇 , 𝐺, 𝑆) continue
+7:
+if reachable(𝑆, 𝐺) return true
+8:
+return false
+
+⊲ The goal type is successfully found
+⊲ Type 𝑇 is marked to avoid cycles
+
+⊲ Prune the search to ensure termination
+⊲ Recurse to the next round of extension
+⊲ No suitable extension is found
+
+The type reachability algorithm, Algorithm 2, implements a depth-first search over this type
+graph, starting from the current type 𝑇 , succeeding upon finding goal type 𝐺 (Line 2), marking
+any visited types to prevent cycles (Line 3). Then, it proceeds to iterate over all valid extension
+steps from 𝑇 (Line 4) and computes the resulting type 𝑆 after the extension step is applied (Line 5).
+In the conceptualized type graph, as described in the previous paragraph, this is equivalent to
+exploring all outgoing edges from 𝑇 . At Line 7, we proceed to recursively search if 𝑆 can reach 𝐺.
+If all recursive calls are unsuccessful, the goal type can not be reached (Line 8).
+Some programming languages define self-referential default members, e.g., clone in Java or
+valueOf in TypeScript, which are nullary functions that return a value of the same type as the
+callee, () ⇒ 𝑇 for type 𝑇 . When these members are accessed in functions, higher-order functions
+can be derived indefinitely. For instance, for a function 𝑓 with type () => 𝑆, 𝑓 .valueOf has the
+type () => () => 𝑆. We therefore need to restrict the type search to a finite set of types to ensure
+termination. At Line 6 of Algorithm 2, we add a heuristic pruneSearch into the search, which
+decides where to prune the search process. We develop a simple heuristic based on the results from
+Gvero et al. [30]. This heuristic prunes exploration of types with higher complexity than goal or
+source type if they do not contain yet unexplored primitive types, thus preventing exploration
+of arbitrarily complex types. The details of this heuristic are presented in Appendix A.3. While
+ensuring termination, our heuristic leads to incompleteness and the potential rejection of well-typed
+expressions. However, this effect is less pronounced in practical usage, as only highly complex
+(thus less realistically used) types are avoided.
+We proceed to prove the soundness of Algorithm 2 below.
+Lemma 3. The type search in Algorithm 2 is sound, i.e., for any expression 𝑒 with Γ ⊢ 𝑒 : 𝑇 , if
+reachable(𝑇 , 𝐺) holds, then there exists a sequence of extensions 𝑦 such that Γ ⊢ 𝑒 ◦ 𝑦 : 𝐺.
+Proof. By the design of Algorithm 2, if reachable(𝑇 , 𝐺) returns true, there is a sequence of 𝑛
+recursive calls to reachable(𝑇𝑖 , 𝐺), with 𝑇0 = 𝑇 and reachable(𝑇𝑛 , 𝐺) = true. Each 𝑇𝑖 (𝑖 > 0) is
+derived because some extension ♢𝑖 is applicable to 𝑇𝑖 −1 based on the typing rules of 𝐿𝐵 . We then
+convert each ♢𝑖 to its concrete, textual version ♦𝑖 . This representation includes the required welltyped parameters of ♦𝑖 (i.e., for binary operators and non-nullary functions), which are constructed
+using literals. Finally, we construct 𝑦 as ♦1 ◦ . . . ◦ ♦𝑛 .
+□
+Note that using any pruning heuristic at Line 6 of Algorithm 2 preserves soundness, which
+in turn is sufficient to preserve the required prefix property, as defined in Definition 2. We can
+conclude that the two-tiered search algorithm soundly determines whether the desired target type
+can be derived from some partial input. Therefore, we conclude that 𝐴𝑒 ↓ 𝑇 and 𝐴𝑒 are prefix
+automata that parse a subset of well-typed expressions in 𝐿𝐵 .
+
+171:14
+
+Niels Mündler*, Jingxuan He*, Hao Wang, Koushik Sen, Dawn Song, Martin Vechev
+
+Corollary 4. If reachable(derivable(𝑞), 𝐺) holds for any 𝑞 ∈ 𝛾 (𝐼 𝑒 , 𝑠) of a partial expression 𝑠,
+then there exists a suffix 𝑠 ′ such that Γ ⊢ 𝑠 ◦ 𝑠 ′ : 𝐺.
+Proof. This conclusion follows directly from Lemmas 2 and 3.
+
+□
+
+Lemma 5. The language parsed by 𝐴𝑒 ↓ 𝑇 is thus a subset of the expressions of 𝐿𝐵 of type 𝑇 , i.e.,
+𝐿(𝐴𝑒 ↓ 𝑇 ) ⊆ {𝑠 | Γ ⊢ 𝑠 : 𝑇 }. Since 𝐴𝑒 recursively involves 𝐴𝑒 ↓ 𝑇 , the language parsed by 𝐴𝑒 is also a
+subset of well-typed expressions of 𝐿𝐵 , i.e., 𝐿(𝐴𝑒 ) ⊆ {𝑠 | ∃𝑇 : Γ ⊢ 𝑠 : 𝑇 }.
+3.5
+
+Prefix Automata for Statements
+
+We define the remaining automata to capture the complete language 𝐿𝐵 . The statement automaton
+is defined recursively as 𝐴𝑠 ≔ 𝐴decl ∪𝐴expr ∪𝐴ret ∪𝐴block ∪𝐴fun ∪𝐴ite . The declaration automaton
+𝐴decl ≔ 𝐴let 𝑥 : 𝑇 ; captures undefined variable names 𝑥 by accepting all strings, except for existing
+identifiers. This automaton is a prefix automaton since an accepting state can always be reached
+by appending characters to the declared identifier. The return statement automaton is 𝐴∅ when
+outside a function and restricts the parsed expression to the return type of the surrounding function
+otherwise. The remaining automata are mainly concatenations of previously defined automata and
+recursive invocations of 𝐴𝑠 , with small variations detailed in Appendix A.5.
+Tracking Type Environments. Generally, we follow the typing rules in Figure 6. Identifiers
+are passed on through all state transitions, matching the rule seq, where the type environment
+of consecutive statements needs to be compatible. However, in the cases of block, ite and fun,
+we discard the local type environment after parsing, matching the respective typing rules. In fun
+additionally, the function signature and parameters are added into the type environment of the
+function body automaton, and the function signature in the environment of subsequent statements.
+Guaranteeing Return Types. When parsing the body of a function, the transition function of the
+function automata 𝐴fun maintains information about the declared return type and the encountered
+return statements (if any). 𝐴fun only accepts states where all return values match the declared
+return type and all execution paths inside the function body return, following 𝐿𝐵 ’s typing rules in
+Figure 7. If the current generated statements do not return in all execution paths, another statement
+is forced to be generated. Since we can always express the requested type through literals, a correct
+return statement can always be generated and the prefix automaton property is not violated.
+The described rules are straightforward to implement without violating the prefix property as all
+restrictions are derived only from already parsed input, e.g., the already defined identifiers or the
+previously declared function return type. We can therefore deduce that the statement automaton is
+a prefix automaton. Moreover, the automaton accepts all valid statements of 𝐿𝐵 , with the exception
+of well-typed expressions rejected by 𝐴𝑒 . Therefore the parsed language is a subset of 𝐿𝐵 .
+Lemma 6. With 𝐴𝑀 ≔ 𝐴𝑠 it holds that 𝐴𝑀 is a prefix automaton and 𝐿(𝐴𝑀 ) ⊆ 𝐿𝐵
+4
+
+Extension to TypeScript
+
+We extend our completion engine described in §3 to handle a core subset of modern TypeScript. In
+this section, we selectively discuss the implementation of several interesting TypeScript features.
+We provide a comprehensive list of supported and unsupported TypeScript features in Appendix B.
+Constant Variable Declarations. In addition to variable declaration using let, TypeScript
+supports constant declarations using const. This defines immutable identifiers. We thus additionally
+track mutability of each identifier in the type environment and disallow applying the assignment
+operator to immutable identifiers.
+
+Type-Constrained Code Generation with Language Models
+
+171:15
+
+Arrays. We add support for array type annotation, parsing array expressions, and reading from
+and assigning to array fields. In array expressions, we enforce that all array elements have the same
+type. Moreover, array types introduce another dimension of type nesting. Therefore we adapt the
+type reachability pruning heuristic to handle this additional dimension to ensure termination.
+Loops. TypeScript supports various loop constructs, including for, while, do-while, and for..of
+loops. These are implemented mostly as variations of the statement block parser. The for..of loop
+uniquely constrains the right-hand side of the ..of operator to an array of any type. To adapt the
+type search, we introduce a generic array type •[], which matches any array type. For example,
+both types number[] and string[] match •[] in Line 2 of Algorithm 2.
+Additional Operators and Types. We add several arithmetic and logic operators, such as modulo
+%, exact equality ===, logical or ||, and the ternary operator ?:. To handle these operators, we add
+
+additional edges to the type search graph. Moreover, we add support for post- and prefix operators
+such as -- and ++, which are only valid extensions to mutable expressions.
+Operator Precedence. TypeScript defines an operator precedence, which determines the implicit
+grouping of expressions. For example 1 + 2.toString() is parsed as 1 + (2.toString()). We
+adapt our expression parsing algorithm in two places to handle operator precedences. First, in the
+expression automaton, we leverage the knowledge about previously parsed extensions to determine
+the implicit grouping and thus where the next operator is applied. For example, for state 𝑞 1 + 2 ,
+the member access extension .𝑛 is applied to 2, as opposed to 1 + 2. Second, we adapt the type
+search in Algorithm 2. Concretely, we ensure that only extensions that can be validly applied
+based on operator precedence are iterated over. For this, we track the operator precedence of
+previously parsed extensions and extensions considered during the traversal of the type graph and
+omit operators in Line 5 that violate operator precedence.
+Global Identifiers and Imports. In TypeScript, many identifiers are defined globally and available in any execution. These global identifiers are incorporated by initializing the type environment
+of the program automaton accordingly. Identifiers such as Math introduce additional types, which
+we additionally implement. We also model the import of the crypto library using require.
+Polymorphic Built-In Members. The TypeScript lookup implementation defines a few polymorphic members for built-in types. For example, for array x of type T[], x.map(f) takes a callback
+function f and returns a new array [f(x[0]), f(x[1]), ...]. If f has type (T) => P, the returned
+array has type P[]. Here P is a type parameter, which is instantiated by matching the type of the
+passed function to the type pattern.
+We support such polymorphisms by adapting the type search. We track type patterns and enforce
+that type parameters are instantiated before the goal type is reached. We then continue the search
+from the instantiated version. In the map example, when searching completions of x.map, we first
+search for functions that instantiate the type parameter, and then continue the search from the
+instantiated type. When anonymous functions are generated as call parameters, we enforce that
+the function matches the searched type pattern.
+Type Annotations. TypeScript is designed to be flexible, allowing many type annotations to
+be omitted when they can be automatically inferred. We generally support this, such as inferring
+types from initial values. However, it can lead to unexpected types when annotations are omitted,
+often confusing even experienced developers [47, 48]. Moreover, in the context of LLM-based code
+generation, having more type annotations can provide valuable information for both the model
+and our type-constraining algorithms. We have identified three situations where generated code
+often fails to compile without type annotations, prompting us to enforce them. First, we require
+
+171:16
+
+Niels Mündler*, Jingxuan He*, Hao Wang, Koushik Sen, Dawn Song, Martin Vechev
+
+annotations for all function parameters and return types. Second, all variable declarations must
+either have a type annotation or be initialized with a value. Third, we enforce type annotations for
+the first parameter of anonymous functions used as callbacks in the polymorphic built-in member
+reduce. These constraints trade off practical correctness with theoretical language completeness.
+5
+
+Experimental Evaluation
+
+We present an extensive evaluation of our type constraining approach on a variety of tasks and
+models. We outline our experimental setup (§5.1), evaluate the impact on compilation errors and
+functional correctness (§5.2), perform runtime analysis (§5.3), and present case studies (§5.4).
+5.1
+
+Experimental Setup
+
+We now outline our main evaluation setup, covering implementation, evaluated tasks, considered
+models, compared methods, and metrics. We provide further setup details and hyperparameter
+choices in Appendix B.
+Implementation. Our implementation is written in Python and contains 11249 lines of code. To
+ensure robust implementation, we built a large set of around four hundred unit tests and frequently
+compared the behaviors of our implementation with the official TypeScript compiler [42].
+Tasks and Benchmarks. We evaluate three relevant tasks of code generation:
+• Synthesis: Given a natural language task description and a function header, the task is to
+generate a solution from scratch.
+• Translation: Given a function written in Python and the header of an equivalent TypeScript
+function, the task is to generate the body of the equivalent function in TypeScript.
+• Repair: Given a natural language task description, a non-compilable solution, the corresponding
+compiler error, and the function header, the task is to restore functionality of the flawed solution
+by resolving the compilation error.
+The benchmarks for these tasks are based on TypeScript-translated tasks from HumanEval [12] and
+MBPP [5], contained in the MultiPL-E dataset [13], with 159 and 384 instances each. We observe
+that success in generating valid code for the same sample can vary depending on the random seed
+used. To obtain more comprehensive results on the small HumanEval dataset, we generate each
+sample 4 times with different seeds and aggregate the outcomes. In MBPP, we generate each sample
+once. For Repair, we collect all non-compiling programs from the unconstrained synthesis task for
+all models, resulting in 292 and 248 instances for HumanEval and MBPP each.
+Models. We use 6 different open-weight LLMs, covering 3 LLMs of varying parameter sizes from
+the same model family and 4 models of a similar size from different model families: the Gemma
+2 model family with 2B/9B/27B parameters [64], DeepSeek Coder 33B (abbreviated as DS Coder
+33B) [28], CodeLlama 34B [59], and Qwen2.5 32B [73]. For all evaluated LLMs we choose the
+instruction-tuned variants, which are fine-tuned to follow instructions in a chat-style interaction,
+such that they adequately attempt to resolve the presented tasks.
+Compared Methods. We run unconstrained LLM sampling, reported as Vanilla. We measure
+the upper bound improvement of prior syntactic constraining methods [8, 57, 66] by assuming
+that all syntactically incorrect instances generated by Vanilla could be compiled under syntactic
+constraining. We refer to this improvement as idealized Syntax. We separately sample using typeconstrained decoding based on our completion engine introduced in §3 and §4, and report it as
+Types. Due to the size and complexity of the full TypeScript compiler, featuring over 427,105 lines
+of code in 698 files [42], our extension does not cover all features of TypeScript. We therefore
+
+Type-Constrained Code Generation with Language Models
+
+171:17
+
+Table 2. Number of instances with compiler errors in unconstrained generation (Vanilla), idealized syntax-only
+constraining (Syntax), and our proposed type constraining (Types). Type constraining reduces compiler errors
+by 74.8% and 56.0% in the synthesis of HumanEval and MBPP problems respectively, compared to only 9.0%
+and 4.8% ideal improvement on the two datasets respectively through syntax-only constraining.
+Synthesis
+Types
+
+Vanilla
+
+Syntax
+
+Types
+
+Vanilla
+
+Syntax
+
+Types
+
+HumanEval
+
+Vanilla Syntax
+
+Repair
+
+Gemma 2 2B
+Gemma 2 9B
+Gemma 2 27B
+DS Coder 33B
+CodeLlama 34B
+Qwen2.5 32B
+
+103
+45
+15
+26
+86
+17
+
+92↓10.7% 44↓57.3%
+41↓8.9% 13↓71.1%
+13↓13.3% 2↓86.7%
+25↓3.8%
+5↓80.8%
+71↓17.4% 28↓67.4%
+17↓0.0%
+2↓88.2%
+
+177
+75
+20
+18
+158
+24
+
+149↓15.8% 80↓54.8%
+63↓16.0% 16↓78.7%
+20↓0.0%
+3↓85.0%
+17↓5.6%
+7↓61.1%
+124↓21.5% 59↓62.7%
+21↓12.5% 5↓79.2%
+
+194
+113
+45
+36
+153
+36
+
+181↓6.7% 103↓46.9%
+108↓4.4%
+52↓54.0%
+40↓11.1% 22↓51.1%
+36↓0.0%
+15↓58.3%
+142↓7.2%
+48↓68.6%
+34↓5.6%
+13↓63.9%
+
+MBPP
+
+Model
+
+Translation
+
+Gemma 2 2B
+Gemma 2 9B
+Gemma 2 27B
+DS Coder 33B
+CodeLlama 34B
+Qwen2.5 32B
+
+67
+30
+20
+32
+80
+19
+
+64↓4.5%
+29↓3.3%
+19↓5.0%
+32↓0.0%
+71↓11.2%
+18↓5.3%
+
+27↓59.7%
+10↓66.7%
+7↓65.0%
+19↓40.6%
+41↓48.8%
+13↓31.6%
+
+126
+67
+37
+29
+126
+22
+
+111↓11.9%
+61↓9.0%
+36↓2.7%
+27↓6.9%
+114↓9.5%
+22↓0.0%
+
+79↓37.3%
+33↓50.7%
+22↓40.5%
+13↓55.2%
+54↓57.1%
+16↓27.3%
+
+194
+129
+71
+90
+157
+55
+
+184↓5.2%
+124↓3.9%
+69↓2.8%
+90↓0.0%
+148↓5.7%
+52↓5.5%
+
+108↓44.3%
+63↓51.2%
+32↓54.9%
+43↓52.2%
+76↓51.6%
+29↓47.3%
+
+emulate a type constraining that supports the entire TypeScript feature set. Concretely, if a sample
+compiles correctly without any constraining, we report it as-is. Otherwise, we report the result of a
+constrained resample. For all methods, if generation takes more than 300 seconds, we report the
+partial program generated until the timeout.
+Metrics. We compute two main metrics to assess the effectiveness of the compared methods. First,
+we determine the number of compiler errors in model-generated outputs. We count as a compiler
+error any case in which the TypeScript compiler [42] reports an issue during compilation. To
+measure functional correctness, we leverage the pass@1 metric [14], which measures the percentage
+of code generations that pass the provided unit tests given only one trial.
+5.2
+
+Results on Compilation and Functional Correctness
+
+In this section, we present our experimental results, showing that on all three code-generationrelated tasks, our type constraining approach significantly improves the considered LLMs in
+generating both compilable and functionally correct code. It also substantially outperforms syntaxonly constraining.
+Reduction of Compilation Errors. In Table 2, we present the number of compilation errors
+produced by each compared method. For synthesis and translation, in the unconstrained setting
+(Vanilla), on average only 9.0% and 4.9% of the non-compiling instances in HumanEval and MBPP
+respectively are due to syntactic errors (Syntax), with Qwen2.5 32B even making no syntax errors
+at all for HumanEval synthesis and MBPP translation. In contrast, type constraining reduces
+compilation errors by more than half, i.e., by 75.3% and 52.1% on HumanEval and MBPP respectively.
+We observe that models across all sizes and families benefit similarly from our constraining, with a
+minimum error reduction of 54.8% and 27.3% on HumanEval and MBPP respectively, highlighting
+the general effectiveness of our approach.
+A straightforward way to improve successful compilation of LLM-generated code is to feed the
+erroneous code and the error message back to an LLM for correction — our repair task. Thanks
+
+171:18
+
+Niels Mündler*, Jingxuan He*, Hao Wang, Koushik Sen, Dawn Song, Martin Vechev
+
+Table 3. pass@1 of unconstrained generation (Vanilla) and type constraining (Types). The benefit of our
+type-constraining approach transfers from reduced compilation errors to improved functional correctness.
+Repair
+
+Model
+
+Vanilla
+
+Types
+
+Vanilla
+
+Types
+
+Vanilla
+
+Types
+
+HumanEval
+
+Translation
+
+Gemma 2 2B
+Gemma 2 9B
+Gemma 2 27B
+DS Coder 33B
+CodeLlama 34B
+Qwen2.5 32B
+
+29.1
+56.6
+69.5
+68.9
+41.0
+79.6
+
+30.2↑3.8%
+58.3↑3.1%
+71.2↑2.5%
+71.1↑3.2%
+43.4↑5.7%
+81.8↑2.8%
+
+50.2
+73.7
+86.6
+88.7
+58.6
+92.1
+
+53.9↑7.5%
+78.3↑6.2%
+87.7↑1.3%
+90.1↑1.6%
+63.5↑8.3%
+93.9↑1.9%
+
+11.6
+24.0
+38.4
+47.6
+17.5
+65.4
+
+20.9↑79.4%
+34.9↑45.7%
+41.1↑7.1%
+50.7↑6.5%
+27.4↑56.9%
+71.2↑8.9%
+
+MBPP
+
+Synthesis
+
+Gemma 2 2B
+Gemma 2 9B
+Gemma 2 27B
+DS Coder 33B
+CodeLlama 34B
+Qwen2.5 32B
+
+40.4
+65.4
+70.6
+65.4
+42.2
+76.3
+
+42.4↑5.2%
+67.4↑3.2%
+72.1↑2.2%
+67.2↑2.8%
+45.6↑8.0%
+76.6↑0.3%
+
+52.3
+71.4
+83.1
+85.9
+55.7
+89.6
+
+56.0↑7.0%
+75.8↑6.2%
+84.4↑1.6%
+89.1↑3.6%
+63.3↑13.6%
+90.4↑0.9%
+
+12.1
+24.2
+39.1
+35.1
+15.7
+48.0
+
+22.6↑86.7%
+31.9↑31.7%
+45.2↑15.5%
+43.1↑23.0%
+26.6↑69.2%
+54.0↑12.6%
+
+to its general applicability, our type constraining approach can also enhance this process. Our
+experimental results in the setting of code repair are also depicted in Table 2. We find that, in the
+vanilla setting, many models struggle to correctly localize and resolve compilation errors, with
+Gemma 2 2B for example repairing only 33.5% and 25.8% of the non-compiling HumanEval and
+MBPP instances, respectively. This is substantially increased to 56.4% and 58.4% through type
+constraining. On average, using type-constrained sampling, 53.7% more compilation errors are
+resolved than using vanilla LLM decoding.
+Improving Functional Correctness. Programs that do not compile are always functionally
+incorrect. With our type constraining method, non-compilable generations can be turned into
+well-formed ones, offering the possibility of achieving functional correctness. In Table 3, we
+experimentally show that type constraining universally improves the functional correctness of
+LLM-generated code. On the three tasks considered, employing type constraining improves LLMs’
+pass@1 rate, achieving an average increase by 3.5% in synthesis, 5.0% in translation, and 37.0%
+in repair tasks. The larger improvement in the latter is due to vanilla LLMs generally struggling
+to generate functionally correct code. One interesting phenomenon is that, for stronger models,
+constraints more likely lead to recovering functionally Table 4. Median time per synthesis instance
+correct code. For example on the synthesis task, for in seconds spent by our type-constrained
+Gemma 2 27B, out of the 26 instances that required re- decoding and its relative increase compared
+sampling to compile successfully, 17 are also functionally with unconstrained decoding (Vanilla).
+correct. For Qwen2.5 32B, 15 out of 21 such instances
+Model
+HumanEval
+MBPP
+were correct.
+5.3
+
+Runtime Analysis
+
+Gemma 2 2B
+Gemma 2 9B
+Gemma 2 27B
+DS Coder 33B
+CodeLlama 34B
+Qwen2.5 32B
+
+6.7↑38.3%
+8.3↑29.2%
+11.7↑19.9%
+11.5↑36.2%
+7.6↑40.8%
+7.3↑39.6%
+
+6.3↑35.4%
+9.5↑46.8%
+11.7↑32.8%
+9.4↑59.5%
+7.0↑37.6%
+4.9↑54.8%
+
+As discussed in §2, compared with vanilla LLM decoding,
+our constrained decoding algorithm runs an additional
+loop (Line 4 of Algorithm 1), where tokens are sampled
+from an LLM-produced next-token probability distribution and checked against the completion engine. In this section, we investigate how this process
+introduces additional runtime overhead for our type constraining. Note that for each selected token,
+
+Type-Constrained Code Generation with Language Models
+
+171:19
+
+vanilla and constrained decoding both run LLM inference only once, meaning that there is no extra
+overhead from LLM inference in constrained decoding.
+Overhead of Type Constraining. For an application of our method in practice, the effective
+runtime increase due to constrained decoding is highly relevant. To assess it, we measure the runtime
+per synthesis instance in HumanEval and MBPP for both unconstrained and type-constrained
+decoding. We report the median runtime per instance for type constraining and its relative increase
+to unconstrained decoding in Table 4. On average over the evaluated models, we observe a relative
+increase of 39.1% and 52.1% in HumanEval and MBPP respectively. We consider this impact to be
+bearable for the observed significant decrease in compilation errors. Moreover, this is measured
+on an unoptimized, Python-based implementation and could be significantly improved by a more
+system-oriented implementation, such as the one proposed by Dong et al. [18].
+
+Count
+
+Number of Sample-and-Check Loop Iterations. To
+105
+provide an in-depth analysis of the overhead of our type
+constraining method, we measure the number of iterations spent by the sample-and-check loop to find an
+103
+admissible token. The results are provided in Figure 8.
+We observe that the number of loop iterations follows a
+101
+long-tail distribution. For 99.4% of cases, only one loop iteration is needed. This number is even higher for stronger
+100
+101
+102
+103
+104
+105
+models, with Gemma 2 9B and 27B requiring one iteration
+Number of loop iterations
+in 99.6% and 99.9% of cases, respectively. This means that, Figure 8. Histogram on the number of iterin most instances, LLMs can generate a valid token on ations consumed by the sample-and-check
+the first attempt, which is then verified by the completion loop at Line 4 of Algorithm 1 to find a valid
+engine. In cases where more than one iteration is needed, token, measured with Gemma 2 2B for Huthe completion engine intervenes to guide the selection manEval synthesis.
+of valid tokens. These interventions help resolve errors in many instances in our benchmarks,
+providing significant benefit, as discussed in §5.2.
+Prior work [8, 57, 66] implemented constrained decoding differently than Algorithm 1. Instead of
+running the sample-and-check loop, they execute the completion engine for all tokens in the LLM’s
+vocabulary, mask out all invalid tokens, and sample once from the remaining valid tokens based
+on their normalized likelihoods. This implementation is less efficient than ours, especially when
+calling the completion engine is costly. Based on the long-tail distribution depicted in Figure 8,
+our implementation requires only a single invocation to the completion engine for most cases,
+whereas their implementation calls it for every token in the LLM’s vocabulary for all cases. In our
+experiments, their implementation results in timeouts for all benchmark instances, with a timeout
+of 5 minutes per instance. This justifies our choice of using the sample-and-check loop.
+5.4
+
+Case Study
+
+For a qualitative evaluation, we manually inspect instances where unconstrained decoding fails and
+our type constraining approach successfully corrects errors. We find that our technique effectively
+amends various types of compilation errors. We showcase three such examples in Figure 9.
+Wrong Parameter Count. In Figure 9a, the task is to find all words in a string that contain a
+number of consonants. When Gemma 2 2B attempts to solve this problem, translating from the
+Python version to TypeScript, it calls split without arguments. This is allowed in Python, but not
+in TypeScript, where a single string argument is required. Type constraining correctly detects
+this and guides the generation to sample a space character as parameter.
+
+171:20
+
+(a)
+
+Niels Mündler*, Jingxuan He*, Hao Wang, Koushik Sen, Dawn Song, Martin Vechev
+
+Vanilla
+
+Types
+
+// find all words with consonants
+function select_words(s: string): string[] {
+
+// find all words with consonants
+function select_words(s: string): string[] {
+
+for (const word of s. split()
+
+(b)
+
+function largest_divisor(n: number): number {
+for(let i = n - 1; i > 0; i--) {
+if(n % i === 0) return i;
+}
+
+for (const word of s. split(' ')
+function largest_divisor(n: number): number {
+for(let i = n - 1; i > 0; i--) {
+if(n % i === 0) return i;
+}
+return 1;
+
+// No return
+
+(c)
+
+}
+
+}
+
+// insert a delimiter between every element
+return numbs.reduce(
+
+// insert a delimiter between every element
+return numbs.reduce(
+
+( acc , curr, index) => {
+acc.push(curr);
+return acc;
+}, []);
+
+( acc: number[] , num, index) => {
+acc.push(curr);
+return acc;
+}, []);
+
+Figure 9. Three examples illustrating the effect of type-constrained sampling. Left are unconstrained generations with problematic tokens highlighted in red , and right are type-constrained results with corrected
+tokens highlighted in green , adapted for clarity. In (a), Gemma 2 2B attempts to call split, missing required
+arguments. In (b), DeepSeek Coder 33B attempts to complete a function without a guaranteed return. The
+issue is resolved by forcing generation of another statement after the main loop. In (c), Gemma 2 9B calls
+reduce with an anonymous function without type annotation. This leads to an incorrect type inference for
+the first parameter. The issue is solved by guiding the model to add type annotation.
+
+Missing Return Statement. In Figure 9b, to complete function largest_divisor, the model must
+compute a straightforward divisor loop. DeepSeek Coder 33B Instruct [28] implements a correct
+loop, but does not guarantee returning a value in every execution path. When the return statement
+in the loop is never executed, e.g., for negative inputs, the function thus returns undefined, violating
+the type rules. Our method detects this issue and forces the generation of another statement in the
+function body, resulting in a correct fallback return statement.
+Incorrect Type Inference. In Figure 9c, the task is to insert a delimiter between every element
+in an array. Gemma 2 9B solves this with the reduce function. This generic function accepts two
+arguments; first, a callback function that is called consecutively for every element in the array and
+accumulates a result, second, an initial value for the callback function. The type of the accumulator
+of the callback is derived implicitly from the second argument, which is an empty array in the given
+example. TypeScript infers special type never[] for the empty array, disallowing inserting curr
+of type number through push. Therefore, the program fails to compile. This issue is a well-known
+limitation of the TypeScript compiler, often confusing even expert developers [47, 48]. Our method
+resolves it by enforcing adequate type annotation on the first argument of the callback function.
+6
+
+Discussion
+
+Our general type constraining approach, backed by strong experimental results, opens exciting
+avenues for future research, which we discuss below.
+Implementation Effort. Developing a completion engine for a target programming language
+currently requires manual efforts. However, we expect that the involved effort to adopt our method
+to other languages will be reduced significantly, as many features transfer from our implementation
+for 𝐿𝐵 and TypeScript. Moreover, we believe that, due to the huge impact on LLM’s code generation,
+the effort will pay off. Future programming language developers may consider generally writing
+
+Type-Constrained Code Generation with Language Models
+
+171:21
+
+1 function sort_third(l: number[], r: number[]): number[] {
+2
+
+for (let i = 0; i < l.length; i++) {
+
+3
+
+r.push(l[i] .toString ().slice(0, 3).concat(l[i].toString().slice(3).split('').reverse()
+
+4
+
+.join('')).split('').reverse().join('').toString() + l[i].toString().slice(3).split('') ...
+
+Figure 10. Compilations errors remain when the model does not terminate after a corrected token. In this
+example for synthesis on the HumanEval task #33, CodeLlama 34B is steered away from accessing non-existing
+member .sort and instead accesses .toString .
+
+their compilers as an incremental completion engine, which additionally enables automatic adoption
+for constrained code generation, besides conventional grammar parsing and type checking.
+Broader Application to More Complex Tasks and Stronger LLMs. Stronger LLMs, such
+as the latest OpenAI models [33], may make fewer typing errors on the HumanEval and MBPP
+datasets. Our evaluation results in Table 2 also demonstrate that compilation errors decrease with
+increasing model size for the Gemma family. However, recent findings showed that currently,
+even the strongest LLMs struggle with generating compilable code for more complex coding tasks,
+stricter typing rules, and low-resource languages (e.g., new DSLs). Gusanidas [29] evaluated various
+state-of-the-art LLMs on difficult code synthesis tasks in Rust, reporting compilation error rates of
+18% for OpenAI o1-mini [33], 39% for DeepSeek R1 [15] and 27% for Anthropic’s Claude 3.5 Sonnet
+[2]. For OCaml and Haskell, which are sparsely represented in LLMs’ training data, the error rate
+is even higher at 40% − 60% for all models, matching a trend of worse performance on low-resource
+languages [24, 36]. Pan et al. [54] compiled a large dataset of code translation and found 44.3% of
+GPT-4-generated code to contain compilation errors. Similarly, Shetty et al. [61] report around
+25% compilation errors for C-to-Rust translation using OpenAI o1 models. Our type constraining
+approach is broadly applicable to all these scenarios and our work presents a promising proof of
+concept. Future work can consider building upon our approach to address these challenges.
+Constrained decoding in general requires access to the next-token probability distributions
+produced by LLMs. Currently, commercially available black-box LLM APIs only return sampled
+tokens and do not offer complete next-token distributions. A possible solution is to integrate
+our method into the backend of model providers, as was recently implemented for guaranteeing
+adherence to JSON Schemas [3, 50].
+Remaining Compiler Errors. We observe that, even though constrained decoding guarantees
+a valid result upon termination, a considerable amount of compilation errors remain due to nontermination within the token or time limit. We find this to be caused by generation loops, entered
+when generation is amended by constraints and the LLM is unable to recover. An example is depicted
+in Figure 10, where CodeLlama 34B tries to access the invalid member sort on an expression of
+type number. Future work may add additional constraints to force stopping such unconstructive
+loops and steer the model more strictly, e.g., by limiting the complexity of generated expressions.
+7 Related Work
+Code Language Models. Recently, LLMs have gained traction for diverse coding tasks such as
+code synthesis, repair, or translation [35]. These models are typically trained on datasets containing
+billions to trillions of tokens and have billions of parameters, with both factors contributing to
+improved performance in code-related benchmarks [28, 46, 59, 64]. Meanwhile, LLMs are well
+known to frequently make mistakes [32, 58], and, as we show in this work, even state-of-the-art
+open-weight models with over 30 billion parameters frequently make errors in code generation.
+
+171:22
+
+Niels Mündler*, Jingxuan He*, Hao Wang, Koushik Sen, Dawn Song, Martin Vechev
+
+Improving Language Model Accuracy. Apart from constrained decoding, three primary approaches have been proposed to enhance the accuracy of language models on code tasks: fine-tuning,
+retrieval augmentation (RAG), and compiler or execution feedback. Fine-tuning adapts the model
+weights based on specifically collected training data. This process is highly resource intensive
+[65, 70]. RAG provides the model with additional context based on a database or related code
+snippets [6, 57]. Compiler and execution feedback is only available after completing the model
+generation and requires resampling [16, 34, 69]. However, constrained decoding is orthogonal
+to these methods and, as indicated by Poesia et al. [57] and our experimental results, combining
+constrained decoding with RAG or compiler feedback additionally improves model performance.
+Constrained Decoding. Prior work on constrained decoding failed to achieve strong results due
+to its limitation to syntactic language features. Constraining to context-free languages has been
+explored extensively in recent work [7, 8, 57, 71]. Simple context-sensitive syntactic features, such
+as the space indentation in Python and the scope markers in Go have also been implemented [41, 66].
+As demonstrated in §5, however, syntax errors on average account for only 6% of compilation errors
+in recent code models. The rarity of syntax errors significantly reduces the potential of leveraging
+them for improvements in code correctness. Meanwhile, our type-constrained decoding more than
+halved compilation errors.
+Type Systems for Code Synthesis. Previous work that leveraged type systems for code synthesis
+was confined to specialized settings and unable to constrain general, complex program generation.
+Poesia et al. [57] proposed using known column names to guide SQL query generation. Gvero
+et al. [30] employed a search on the type graph for function call completion. Agrawal et al. [1]
+leverage language-server-generated type annotations for object member accesses. Blinn et al. [11]
+use language-server-derived type information to provide additional context to the LLM, but not to
+enforce hard constraints. Additionally, type constraints have been used to direct code synthesis
+based on specialized search procedures [22, 56, 69]. However, these methods are not compatible
+with LLM-based code generation. This limits their ability to exploit the powerful natural language
+and general-purpose capabilities of LLMs.
+8
+
+Conclusion
+
+In this work, we explored how type systems in programming languages can be used to guide language models during decoding. Concretely, we design and implement prefix automata to perform
+type constraining for a foundational simply typed language and then extend it to the popular language TypeScript. We extensively evaluate the impact of using such constraints for code synthesis,
+translation, and repair and observe that we more than halve compilation errors on a diverse set of
+models and consistently increase functional correctness. We further explore qualitatively how the
+constraining positively impacts code generation. We conclude that such type constraining should
+be implemented for more programming languages, and has the potential to generally improve code
+generation in many domains.
+
+Type-Constrained Code Generation with Language Models
+
+171:23
+
+Artifact Availability
+The artifact for this paper, including source code, datasets, and reproductions scripts, is available
+on GitHub (https://github.com/eth-sri/type-constrained-code-generation) and Zenodo [45].
+Acknowledgements
+We would like to thank the anonymous reviewers for their in-depth and constructive feedback, and
+the artifact reviewers for their feedback on our artifact accessibility.
+References
+[1] Lakshya Agrawal, Aditya Kanade, Navin Goyal, Shuvendu K Lahiri, and Sriram Rajamani. 2023. Monitor-Guided
+Decoding of Code LMs with Static Analysis of Repository Context. In NeurIPS. https://openreview.net/forum?id=
+qPUbKxKvXq
+[2] Anthropic. [n. d.]. Claude 3 Model Card. https://assets.anthropic.com/m/61e7d27f8c8f5919/original/Claude-3-ModelCard.pdf Accessed: March 10, 2025.
+[3] Anthropic. 2025. JSON Mode. https://docs.anthropic.com/en/docs/build-with-claude/tool-use#json-mode Accessed:
+March 10, 2025.
+[4] Ken Arnold and James Gosling. 1996. The Java Programming Language.
+[5] Jacob Austin, Augustus Odena, Maxwell I. Nye, Maarten Bosma, Henryk Michalewski, David Dohan, Ellen Jiang,
+Carrie J. Cai, Michael Terry, Quoc V. Le, et al. 2021. Program Synthesis with Large Language Models. arXiv Preprint
+(2021). https://arxiv.org/abs/2108.07732
+[6] Nastaran Bassamzadeh and Chhaya Methani. 2024. A Comparative Study of DSL Code Generation: Fine-Tuning vs.
+Optimized Retrieval Augmentation. arXiv Preprint (2024). https://doi.org/10.48550/arXiv.2407.02742
+[7] Luca Beurer-Kellner, Marc Fischer, and Martin Vechev. 2023. Prompting Is Programming: A Query Language for Large
+Language Models. PLDI (2023). https://doi.org/10.1145/3591300
+[8] Luca Beurer-Kellner, Marc Fischer, and Martin Vechev. 2024. Guiding LLMs The Right Way: Fast, Non-Invasive
+Constrained Generation. In ICML. https://openreview.net/forum?id=pXaEYzrFae
+[9] Satwik Bhattamishra, Kabir Ahuja, and Navin Goyal. 2020. On the Ability and Limitations of Transformers to Recognize
+Formal Languages. In EMNLP. https://doi.org/10.18653/v1/2020.emnlp-main.576
+[10] Gavin M. Bierman, Martín Abadi, and Mads Torgersen. 2014. Understanding TypeScript. In ECOOP.
+[11] Andrew Blinn, Xiang Li, June Hyung Kim, and Cyrus Omar. 2024. Statically Contextualizing Large Language Models
+with Typed Holes. OOPSLA (2024). https://doi.org/10.1145/3689728
+[12] Tom B. Brown, Benjamin Mann, Nick Ryder, Melanie Subbiah, Jared Kaplan, Prafulla Dhariwal, Arvind Neelakantan,
+Pranav Shyam, Girish Sastry, Amanda Askell, et al. 2020. Language Models are Few-Shot Learners. In NeurIPS.
+https://proceedings.neurips.cc/paper/2020/hash/1457c0d6bfcb4967418bfb8ac142f64a-Abstract.html
+[13] Federico Cassano, John Gouwar, Daniel Nguyen, Sydney Nguyen, Luna Phipps-Costin, Donald Pinckney, Ming-Ho
+Yee, Yangtian Zi, Carolyn Jane Anderson, Molly Q. Feldman, et al. 2023. MultiPL-E: A Scalable and Polyglot Approach
+to Benchmarking Neural Code Generation. IEEE Trans. Software Eng. (2023).
+[14] Mark Chen, Jerry Tworek, Heewoo Jun, Qiming Yuan, Henrique Pondé de Oliveira Pinto, Jared Kaplan, Harri Edwards,
+Yuri Burda, Nicholas Joseph, Greg Brockman, et al. 2021. Evaluating Large Language Models Trained on Code. arXiv
+Preprint (2021). https://arxiv.org/abs/2107.03374
+[15] DeepSeek-AI, Daya Guo, Dejian Yang, Haowei Zhang, Junxiao Song, Ruoyu Zhang, Runxin Xu, Qihao Zhu, Shirong
+Ma, Peiyi Wang, et al. 2025. DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning.
+arXiv Preprint (2025). https://doi.org/10.48550/arXiv.2501.12948
+[16] Pantazis Deligiannis, Akash Lal, Nikita Mehrotra, Rishi Poddar, and Aseem Rastogi. 2025. RustAssistant: Using LLMs
+to Fix Compilation Errors in Rust Code. In ICSE. https://www.microsoft.com/en-us/research/publication/rustassistantusing-llms-to-fix-compilation-errors-in-rust-code/
+[17] TypeScript Developers. [n. d.]. TypeScript: Documentation – More on Functions. https://www.typescriptlang.org/
+docs/handbook/2/functions.html#function-type-expressions Accessed: March 10, 2025.
+[18] Yixin Dong, Charlie F. Ruan, Yaxing Cai, Ruihang Lai, Ziyi Xu, Yilong Zhao, and Tianqi Chen. 2024. XGrammar:
+Flexible and Efficient Structured Generation Engine for Large Language Models. arXiv Preprint (2024). https:
+//doi.org/10.48550/arXiv.2411.15100
+[19] Alan AA Donovan and Brian W Kernighan. 2015. The Go programming language.
+[20] Shihan Dou, Haoxiang Jia, Shenxi Wu, Huiyuan Zheng, Weikang Zhou, Muling Wu, Mingxu Chai, Jessica Fan,
+Caishuang Huang, Yunbo Tao, et al. 2024. What’s Wrong with Your Code Generated by Large Language Models? An
+Extensive Study. arXiv Preprint (2024). https://doi.org/10.48550/arXiv.2407.06153
+
+171:24
+
+Niels Mündler*, Jingxuan He*, Hao Wang, Koushik Sen, Dawn Song, Martin Vechev
+
+[21] Javid Ebrahimi, Dhruv Gelda, and Wei Zhang. 2020. How Can Self-Attention Networks Recognize Dyck-n Languages?.
+In EMNLP. https://aclanthology.org/2020.findings-emnlp.384/
+[22] Jonás Fiala, Shachar Itzhaky, Peter Müller, Nadia Polikarpova, and Ilya Sergey. 2023. Leveraging Rust Types for
+Program Synthesis. PLDI (2023). https://doi.org/10.1145/3591278
+[23] Zheng Gao, Christian Bird, and Earl T. Barr. 2017. To type or not to type: quantifying detectable bugs in JavaScript. In
+ICSE. https://doi.org/10.1109/ICSE.2017.75
+[24] Alessandro Giagnorio, Alberto Martin-Lopez, and Gabriele Bavota. 2025. Enhancing Code Generation for Low-Resource
+Languages: No Silver Bullet. arXiv Preprint (2025). https://doi.org/10.48550/arXiv.2501.19085
+[25] GitHub. [n. d.]. https://github.com/features/copilot
+[26] GitHub. 2022. The top programming languages. https://octoverse.github.com/2022/top-programming-languages
+[27] Aaron Grattafiori, Abhimanyu Dubey, Abhinav Jauhri, Abhinav Pandey, Abhishek Kadian, Ahmad Al-Dahle, Aiesha
+Letman, Akhil Mathur, Alan Schelten, Alex Vaughan, et al. 2024. The Llama 3 Herd of Models. ArXiv Preprint (2024).
+https://arxiv.org/abs/2407.21783
+[28] Daya Guo, Qihao Zhu, Dejian Yang, Zhenda Xie, Kai Dong, Wentao Zhang, Guanting Chen, Xiao Bi, Y. Wu, Y. K. Li,
+et al. 2024. DeepSeek-Coder: When the Large Language Model Meets Programming - The Rise of Code Intelligence.
+arXiv Preprint (2024). https://doi.org/10.48550/arXiv.2401.14196
+[29] Gusanidas. [n. d.]. Compilation Benchmark. https://github.com/Gusanidas/compilation-benchmark Accessed: March
+10, 2025.
+[30] Tihomir Gvero, Viktor Kuncak, Ivan Kuraj, and Ruzica Piskac. 2013. Complete completion using types and weights. In
+PLDI. https://doi.org/10.1145/2491956.2462192
+[31] John E. Hopcroft and Jeffrey D. Ullman. 1979. Introduction to Automata Theory, Languages and Computation.
+[32] Lei Huang, Weijiang Yu, Weitao Ma, Weihong Zhong, Zhangyin Feng, Haotian Wang, Qianglong Chen, Weihua Peng,
+Xiaocheng Feng, Bing Qin, et al. 2023. A Survey on Hallucination in Large Language Models: Principles, Taxonomy,
+Challenges, and Open Questions. arXiv Preprint (2023). https://doi.org/10.48550/arXiv.2311.05232
+[33] Aaron Jaech, Adam Kalai, Adam Lerer, Adam Richardson, Ahmed El-Kishky, Aiden Low, Alec Helyar, Aleksander
+Madry, Alex Beutel, Alex Carney, et al. 2024. OpenAI o1 System Card. arXiv Preprint (2024). https://doi.org/10.48550/
+arXiv.2412.16720
+[34] Prithwish Jana, Piyush Jha, Haoyang Ju, Gautham Kishore, Aryan Mahajan, and Vijay Ganesh. 2024. CoTran: An
+LLM-Based Code Translator Using Reinforcement Learning with Feedback from Compiler and Symbolic Execution. In
+ECAI (Frontiers in Artificial Intelligence and Applications). https://doi.org/10.3233/FAIA240968
+[35] Juyong Jiang, Fan Wang, Jiasi Shen, Sungju Kim, and Sunghun Kim. 2024. A Survey on Large Language Models for
+Code Generation. arXiv Preprint (2024). https://doi.org/10.48550/arXiv.2406.00515
+[36] Sathvik Joel, Jie JW Wu, and Fatemeh H. Fard. 2024. Survey on Code Generation for Low resource and Domain Specific
+Programming Languages. arXiv Preprint (2024). https://doi.org/10.48550/arXiv.2410.03981
+[37] Anton Lozhkov, Raymond Li, Loubna Ben Allal, Federico Cassano, Joel Lamy-Poirier, Nouamane Tazi, Ao Tang,
+Dmytro Pykhtar, Jiawei Liu, Yuxiang Wei, et al. 2024. StarCoder 2 and The Stack v2: The Next Generation. arXiv
+Preprint (2024). https://doi.org/10.48550/arXiv.2402.19173
+[38] Madnight. 2024. GitHut 2.0. https://madnight.github.io/githut/#/pull_requests/2024/1
+[39] Harry G. Mairson. 2004. Linear lambda calculus and PTIME-completeness. J. Funct. Program. (2004). https:
+//doi.org/10.1017/S0956796804005131
+[40] Nicholas D Matsakis and Felix S Klock. 2014. The rust language. ACM SIGAda Ada Letters (2014).
+[41] Daniel Melcer, Nathan Fulton, Sanjay Krishna Gouda, and Haifeng Qian. 2024. Constrained Decoding for Fill-inthe-Middle Code Language Models via Efficient Left and Right Quotienting of Context-Sensitive Grammars. (2024).
+https://arxiv.org/abs/2402.17988
+[42] Microsoft. 2024. TypeScript. https://github.com/microsoft/TypeScript. Accessed on November 9, 2024, commit
+#ef802b1.
+[43] John C. MITCHELL. 1990. Type Systems for Programming Languages. In Formal Models and Semantics. https:
+//www.sciencedirect.com/science/article/pii/B9780444880741500135
+[44] Niklas Muennighoff, Qian Liu, Armel Randy Zebaze, Qinkai Zheng, Binyuan Hui, Terry Yue Zhuo, Swayam Singh,
+Xiangru Tang, Leandro von Werra, and Shayne Longpre. 2024. OctoPack: Instruction Tuning Code Large Language
+Models. In ICLR. https://openreview.net/forum?id=mw1PWNSWZP
+[45] Niels Mündler, Jingxuan He, Hao Wang, Koushik Sen, Dawn Song, and Martin Vechev. 2025. Reproduction Package for
+"Type-Constrained Code Generation with Language Models". doi:10.5281/zenodo.15355889
+[46] Niels Mündler, Mark Niklas Müller, Jingxuan He, and Martin Vechev. 2024. SWT-Bench: Testing and Validating Real-World Bug-Fixes with Code Agents. In NeurIPS.
+http://papers.nips.cc/paper_files/paper/2024/hash/
+94f093b41fc2666376fb1f667fe282f3-Abstract-Conference.html
+
+Type-Constrained Code Generation with Language Models
+
+171:25
+
+[47] nielstron. 2024. Incorrect type deducted for accumulator in reduce. https://github.com/microsoft/TypeScript/issues/
+59999.
+[48] nop33. 2024. Wrong inferred initial value in reduce. https://github.com/microsoft/TypeScript/issues/59863.
+[49] OpenAI. 2023. GPT-4 Technical Report. arXiv Preprint (2023). https://doi.org/10.48550/arXiv.2303.08774
+[50] OpenAI. 2025. Structured Outputs. https://platform.openai.com/docs/guides/structured-outputs Accessed: March 10,
+2025.
+[51] Gabriel Orlanski, Kefan Xiao, Xavier Garcia, Jeffrey Hui, Joshua Howland, Jonathan Malmaud, Jacob Austin, Rishabh
+Singh, and Michele Catasta. 2023. Measuring the Impact of Programming Language Distribution. In ICML. https:
+//proceedings.mlr.press/v202/orlanski23a.html
+[52] oxc project. 2024. oxc - The Javascript Oxidation Compiler. https://github.com/oxc-project/oxc.
+[53] Rangeet Pan, Ali Reza Ibrahimzada, Rahul Krishna, Divya Sankar, Lambert Pouguem Wassi, Michele Merler, Boris
+Sobolev, Raju Pavuluri, Saurabh Sinha, and Reyhaneh Jabbarvand. 2024. Lost in Translation: A Study of Bugs Introduced
+by Large Language Models while Translating Code. In ICSE. https://doi.org/10.1145/3597503.3639226
+[54] Rangeet Pan, Ali Reza Ibrahimzada, Rahul Krishna, Divya Sankar, Lambert Pouguem Wassi, Michele Merler, Boris
+Sobolev, Raju Pavuluri, Saurabh Sinha, and Reyhaneh Jabbarvand. 2024. Lost in Translation: A Study of Bugs Introduced
+by Large Language Models while Translating Code. In ICSE. https://doi.org/10.1145/3597503.3639226
+[55] Hammond Pearce, Baleegh Ahmad, Benjamin Tan, Brendan Dolan-Gavitt, and Ramesh Karri. 2022. Asleep at the
+Keyboard? Assessing the Security of GitHub Copilot’s Code Contributions. In S&P. https://doi.org/10.1109/SP46214.
+2022.9833571
+[56] Daniel Perelman, Sumit Gulwani, Thomas Ball, and Dan Grossman. 2012. Type-directed completion of partial
+expressions. In PLDI. https://doi.org/10.1145/2254064.2254098
+[57] Gabriel Poesia, Alex Polozov, Vu Le, Ashish Tiwari, Gustavo Soares, Christopher Meek, and Sumit Gulwani. 2022.
+Synchromesh: Reliable Code Generation from Pre-trained Language Models. In ICLR. https://openreview.net/forum?
+id=KmtVD97J43e
+[58] Vipula Rawte, Amit P. Sheth, and Amitava Das. 2023. A Survey of Hallucination in Large Foundation Models. arXiv
+Preprint (2023). https://doi.org/10.48550/arXiv.2309.05922
+[59] Baptiste Rozière, Jonas Gehring, Fabian Gloeckle, Sten Sootla, Itai Gat, Xiaoqing Ellen Tan, Yossi Adi, Jingyu Liu,
+Tal Remez, Jérémy Rapin, et al. 2023. Code Llama: Open Foundation Models for Code. arXiv Preprint (2023).
+https://doi.org/10.48550/arXiv.2308.12950
+[60] Rico Sennrich, Barry Haddow, and Alexandra Birch. 2016. Neural Machine Translation of Rare Words with Subword
+Units. In ACL. https://doi.org/10.18653/v1/p16-1162
+[61] Manish Shetty, Naman Jain, Adwait Godbole, Sanjit A. Seshia, and Koushik Sen. 2024. Syzygy: Dual Code-Test C to (safe)
+Rust Translation using LLMs and Dynamic Analysis. arXiv Preprint (2024). https://doi.org/10.48550/arXiv.2412.14234
+[62] Vince Szabo, Dominik Winterer, and Zhendong Su. 2024. Compilation Quotient (CQ): A Metric for the Compilation
+Hardness of Programming Languages. arXiv Preprint (2024). https://doi.org/10.48550/arXiv.2406.04778
+[63] Florian Tambon, Arghavan Moradi Dakhel, Amin Nikanjam, Foutse Khomh, Michel C. Desmarais, and Giuliano
+Antoniol. 2025. Bugs in large language models generated code: an empirical study. Empir. Softw. Eng. (2025).
+https://doi.org/10.1007/s10664-025-10614-4
+[64] Gemma Team, Morgane Riviere, Shreya Pathak, Pier Giuseppe Sessa, Cassidy Hardin, Surya Bhupatiraju, Léonard
+Hussenot, Thomas Mesnard, Bobak Shahriari, Alexandre Ramé, et al. 2024. Gemma 2: Improving Open Language
+Models at a Practical Size. arXiv Preprint (2024). https://arxiv.org/abs/2408.00118
+[65] Yun-Da Tsai, Mingjie Liu, and Haoxing Ren. 2024. Code Less, Align More: Efficient LLM Fine-tuning for Code
+Generation with Data Pruning. (2024). https://doi.org/10.48550/arXiv.2407.05040
+[66] Shubham Ugare, Tarun Suresh, Hangoo Kang, Sasa Misailovic, and Gagandeep Singh. 2024. SynCode: LLM Generation
+with Grammar Augmentation. ArXiv Preprint (2024). https://arxiv.org/abs/2403.01632
+[67] Pawel Urzyczyn. 1997. Inhabitation in Typed Lambda-Calculi (A Syntactic Approach). In TLCA (Lecture Notes in
+Computer Science). https://doi.org/10.1007/3-540-62688-3_47
+[68] Heidi Vella. 2024. Google turns to AI to write new code; Workforce reduced. https://aibusiness.com/data/googleturns-to-ai-to-write-new-code-workforce-reduced
+[69] Yuxiang Wei, Chunqiu Steven Xia, and Lingming Zhang. 2023. Copiloting the Copilots: Fusing Large Language Models
+with Completion Engines for Automated Program Repair. In ESEC/FSE. https://doi.org/10.1145/3611643.3616271
+[70] Martin Weyssow, Xin Zhou, Kisub Kim, David Lo, and Houari A. Sahraoui. 2023. Exploring Parameter-Efficient
+Fine-Tuning Techniques for Code Generation with Large Language Models. arXiv Preprint (2023). https://doi.org/10.
+48550/arXiv.2308.10462
+[71] Brandon T. Willard and Rémi Louf. 2023. Efficient Guided Generation for Large Language Models. arXiv Preprint
+(2023). https://doi.org/10.48550/arXiv.2307.09702
+
+171:26
+
+Niels Mündler*, Jingxuan He*, Hao Wang, Koushik Sen, Dawn Song, Martin Vechev
+
+[72] Andy Yang, David Chiang, and Dana Angluin. 2024. Masked Hard-Attention Transformers Recognize Exactly the StarFree Languages. In NeurIPS. http://papers.nips.cc/paper_files/paper/2024/hash/13d7f172259b11b230cc5da8768abc5fAbstract-Conference.html
+[73] An Yang, Baosong Yang, Beichen Zhang, Binyuan Hui, Bo Zheng, Bowen Yu, Chengyuan Li, Dayiheng Liu, Fei Huang,
+Haoran Wei, et al. 2024. Qwen2.5 Technical Report. arXiv Preprint (2024). https://doi.org/10.48550/arXiv.2412.15115
+[74] Quanjun Zhang, Chunrong Fang, Yang Xie, Yuxiang Ma, Weisong Sun, Yun Yang, and Zhenyu Chen. 2024. A
+Systematic Literature Review on Large Language Models for Automated Program Repair. arXiv Preprint (2024).
+https://doi.org/10.48550/arXiv.2405.01466
+
+A
+
+Detailed Prefix Automaton Definitions
+
+In this section, we provide more detailed definitions and analysis of the various automata for 𝐿𝐵 .
+A.1
+
+Base Automata
+
+We now provide detailed definitions for the base prefix automata introduced at the end of §3.2:
+union, concatenation, Kleene-Star, and terminal.
+Union. For the union 𝐴𝑋 ∪ 𝐴𝑌 , we define the resulting sets of initial states and accepting states
+as 𝐼 ≔ 𝐼 𝑋 ∪ 𝐼 𝑌 and 𝐹 ≔ 𝐹 𝑋 ∪ 𝐹 𝑌 , respectively. The transition function is defined as follows:
+(
+𝛿 𝑋 (𝑞, 𝑐) if 𝑞 ∈ 𝑄 𝑋
+𝛿 (𝑞, 𝑐) ≔
+𝛿 𝑌 (𝑞, 𝑐) if 𝑞 ∈ 𝑄 𝑌 .
+To show that the language parsed by this automaton is indeed the union 𝐿(𝐴𝑋 ∪ 𝐴𝑌 ) = 𝐿(𝐴𝑋 ) ∪
+𝐿(𝐴𝑌 ), we employ a short helper lemma, which can be shown inductively.
+Lemma 7. The set of the reachable states
+Ð from a set of states q is equal to the union of reachable
+states from each state in q, i.e., 𝛾 (q, 𝑠) = 𝑞 ∈q 𝛾 (𝑞, 𝑠).
+Since the states are distinct and we merely combine the transition functions of both automata,
+using the lemma, we can quickly see that the language parsed is indeed the union. Moreover, if
+both 𝐴𝑋 and 𝐴𝑌 are prefix automata, this also holds for 𝐴𝑋 ∪ 𝐴𝑌 .
+Concatenation. For the concatenation automaton 𝐴𝑋𝑌 , we define 𝐼 ≔ 𝐼 𝑋 , 𝐹 ≔ 𝐹 𝑌 , and the
+transition function as follows:
+
+
+𝛿 (𝑞, 𝑐)
+if 𝑞 ∈ 𝑄 𝑋 \𝐹 𝑋
+
+ 𝑋
+
+𝛿 𝑋𝑌 (𝑞, 𝑐) ≔ 𝛿 𝑋 (𝑞, 𝑐) ∪ 𝛿 𝑌 (𝐼 𝑌 , 𝑐) if 𝑞 ∈ 𝐹 𝑋
+
+
+𝛿 𝑌 (𝑞, 𝑐)
+if 𝑞 ∈ 𝑄 𝑌 .
+
+Informally, concatenation preserves the parsing behavior of both 𝐴𝑋 and 𝐴𝑌 in their respective
+states. When 𝐴𝑋𝑌 reaches an accepting state of 𝐴𝑋 and receives another input character, it either
+remains in 𝐴𝑋 or transitions to 𝐴𝑌 , as defined in the second case of 𝛿 𝑋𝑌 . Essentially, this maintains
+outgoing edges from accepting states in 𝐴𝑋 while adding edges from these accepting states to
+initial states of 𝐴𝑌 .
+It follows from a similar argument that 𝐿(𝐴𝑋𝑌 ) = 𝐿(𝐴𝑋 ) ◦𝐿(𝐴𝑌 ), where 𝐿(𝐴𝑋 ) ◦𝐿(𝐴𝑌 ) is defined
+as {𝑠 𝑋 ◦ 𝑠 𝑌 | 𝑠 𝑋 ∈ 𝐿(𝐴𝑋 ), 𝑠 𝑌 ∈ 𝐿(𝐴𝑌 )}. We first show 𝐿(𝐴𝑋𝑌 ) ⊆ 𝐿(𝐴𝑋 ) ◦ 𝐿(𝐴𝑌 ). Due to (P1), we
+can always split any 𝑠 ∈ 𝐿(𝐴𝑋𝑌 ) into 𝑠 𝑋 that extends from 𝐼 𝑋 to 𝐹 𝑋 and 𝑠 𝑌 that extends from 𝐼 𝑌
+to 𝐹 𝑌 . Then 𝑠 𝑋 ∈ 𝐿(𝐴𝑋 ) and 𝑠 𝑌 ∈ 𝐿(𝐴𝑌 ). For 𝐿(𝐴𝑋 ) ◦ 𝐿(𝐴𝑌 ) ⊆ 𝐿(𝐴𝑋 ◦ 𝐴𝑌 ), we pick any 𝑠 𝑋 ◦ 𝑠 𝑌
+from 𝐿(𝐴𝑋 ) ◦ 𝐿(𝐴𝑌 ) and parse it using 𝐴𝑋𝑌 . We observe that it will first traverse from 𝐼 𝑋 to 𝐹 𝑋
+consuming 𝑠 𝑋 , and then transition through 𝐼 𝑌 to 𝐹 𝑌 by consuming 𝑠 𝑌 .
+Moreover 𝐴𝑋𝑌 is a prefix automaton, if 𝐴𝑋 and 𝐴𝑌 are prefix automata and 𝐿(𝐴𝑌 ) ≠ ∅. Since
+𝐴𝑋 is a prefix automaton, we can reach 𝐹 𝑋 from any state in 𝑄 𝑋 . From 𝐹 𝑋 we additionally reach
+
+Type-Constrained Code Generation with Language Models
+
+171:27
+
+𝐼 𝑌 ⊆ 𝑄 𝑌 . Since 𝐴𝑌 is a prefix automaton, we can reach 𝐹 𝑌 for any state in 𝑄 𝑌 . This construction is
+a prefix automaton only if 𝐼 𝑌 ≠ ∅, which, due to the prefix property, is equivalent to 𝐿(𝐴𝑌 ) ≠ ∅.
+Kleene-Star. We define the Kleene-Star automaton 𝐴𝑋 that parses indefinite repetitions of words
+accepted by 𝑋 . First, we consider all initial states as final states, i.e., we ensure 𝐼 𝑋 ⊆ 𝐹 𝑋 . Then we
+add transitions to the transition function 𝛿 𝑋 from the final states 𝐹 𝑋 back to the initial states 𝐼 𝑋 .
+(
+𝛿 𝑋 (𝑞𝑋 , 𝑐)
+if 𝑞 ∉ 𝐹 𝑋
+𝛿 𝑋 (𝑞𝑋 , 𝑐) ≔
+𝛿 𝑋 (𝑞𝑋 , 𝑐) ∪ 𝛿 (𝐼 𝑋 , 𝑐) if 𝑞𝑋 ∈ 𝐹 𝑋 .
+We can quickly see that 𝐿(𝐴𝑋 ) = {𝑠 | 𝑠 ∈ 𝐿(𝐴𝑋 )}, with the same argument as the concatenation
+automaton. Additionally, because the initial states are accepting, the empty word (zero repetitions)
+is in 𝐿(𝐴𝑋 ). We similarly see that this is prefix automaton if 𝐴𝑋 is a prefix automaton. Note that
+here 𝐿(𝐴𝑋 ) ≠ ∅ is not required. This is because if 𝐿(𝐴𝑋 ) ≠ ∅, then 𝐴𝑋 = 𝐴𝑋 = 𝐴∅ , which is still a
+prefix automaton.
+Terminals. The terminal automaton 𝐴S parses exactly the terminal S. They accept the usual
+alphabet Σ and feature the states 𝑄 ≔ {𝑞 s | s is a suffix of S}, 𝐹 ≔ {𝑞𝜀 }, 𝐼 ≔ {𝑞 S }. The transition
+function 𝛿 is defined as follows:
+(
+{𝑞 s' } if 𝑐 ◦ s' = s
+𝛿 (𝑞 s, 𝑐) ≔
+∅
+otherwise.
+Clearly 𝐴S is a prefix automaton. We can show inductively that for any s: 𝛾 (𝑞 s, s') = {𝑞𝜀 } ⇐⇒
+s = s', and thus 𝐿(𝐴S ) = { S }. With a simple modification, we introduce 𝐴𝑊
+s , where 𝑊 denotes
+𝑊
+whitespace characters. The transition function is defined as 𝛿 (𝑞𝑊
+s , 𝑐) ≔ {𝑞 s } if 𝑐 ∈ 𝑊 ; otherwise,
+𝑊
+𝑊
+𝛿 (𝑞𝑐◦s, 𝑡) ≔ {𝑞 s }. This allows arbitrary whitespaces before parsing s. This is how we implement
+syntactic indifference to whitespace between terminals.
+
+A.2
+
+Expressions
+
+Expressions are parsed using recursive automatons as introduced in §3.4. In this part of the Appendix,
+we describe in more detail how information is passed between states.
+Notation. In the following, we will implicitly assume that 𝛿 (𝑞, 𝑐) = ∅ if not explicitly defined
+otherwise, making notation more concise. For any state, we access the following information
+through dot notation or the special notation on the state, which we assume is passed to subsequent
+states through the transition function (unless otherwise stated). This information is alternatively
+passed through to entire automata in composite automata, e.g., in 𝐴𝑋𝑌 from 𝐴𝑋 to 𝐴𝑌 .
+• 𝑞 ∈ 𝐹 𝑋 : Whether state 𝑞 is an accepting state of the automaton 𝐴𝑋 .
+• 𝑞.Γ: The type environment based on state 𝑞 currently being parsed.
+• 𝑞.lhs: The left-hand side expression of an extending expression represented by state 𝑞, i.e.,
+when extending 𝑋 with 𝑌 and currently parsing 𝑞𝑌 , then 𝑞𝑌 .lhs = 𝑋 .
+• 𝑞.typ: The described type of the last coherent expression that this state belongs to. This is only
+defined for accepting states. Generally, we ensure that when some expression 𝑒 was parsed,
+the corresponding state 𝑞𝑒 has attribute 𝑞𝑒 .typ such that 𝑞𝑒 .Γ ⊢ 𝑒 : 𝑞𝑒 .typ.
+• 𝑞 ↓ 𝑇 : Type 𝑇 to which state 𝑞 is constrained.
+When accessing the properties of 𝐴, we access the property of the current state of the automaton
+𝑞 ∈ 𝑄, e.g., 𝐴.lhs = 𝑞.lhs. For parsed automata, the current state is the final, accepting state. The
+typ attribute expresses the type of the expression parsed so far. In expression states 𝑞, we leverage
+the lhs to accurately determine 𝑞.typ.
+
+171:28
+
+Niels Mündler*, Jingxuan He*, Hao Wang, Koushik Sen, Dawn Song, Martin Vechev
+
+𝑞 str .typ ≔ string
+𝑞 num .typ ≔ number
+𝑞 bool .typ ≔ boolean
+𝑞𝑥 .typ ≔ 𝑇 where 𝑞𝑥 .Γ ⊢ 𝑥 : 𝑇
+𝑞 (𝑝 )=>𝑒 .typ ≔ (𝐴𝑝 .typ) => 𝐴𝑒 .typ
+
+𝑞 (𝑒 ) .typ ≔ 𝐴𝑒 .typ
+𝑞 ⊙𝑒 .typ ≔ 𝑅, for 𝑞 ⊙𝑒 .lhs.typ = 𝑆, 𝐴𝑒 .typ = 𝑇 and 𝑆 ⊙ 𝑇 : 𝑅
+𝑞 (𝑒 ) .typ ≔ 𝑇 , for 𝑞 (𝑒 ) .lhs.typ = (𝑝 ) => 𝑇
+𝑞 .𝑛 .typ ≔ 𝑇 , for lookup(𝑞 .𝑛 .lhs.typ, 𝑛) = 𝑇
+
+Unrestricted Expressions. The left-hand side of the currently parsed expression is used in
+the definition of automata for three extending expressions; arithmetic operators, function call,
+and member access. The arithmetic operator automaton constrains its states to those with valid
+operators, i.e.:
+Ø
+𝐴 ⊙𝑒 ≔
+𝐴 ⊙ (◦𝐴𝑒 ↓ 𝑇 ).
+∃𝑅:𝐴 ⊙𝑒 .lhs.typ⊙𝑇 =𝑅
+
+For function call, the automaton is only valid if the left-hand side is a function, and accepts only
+the valid signature.
+(
+𝐴( ◦ (𝐴𝑒 ↓ 𝐴𝑝 .typ) ◦ 𝐴) if 𝐴 (𝑒 ) .lhs.typ = (𝑝 ) => 𝑇
+𝐴 (𝑒 ) ≔
+𝐴∅
+otherwise.
+Finally, the member access automaton is a union of the automata that parses the attributes of the
+left-hand side expression. Or formally,
+Ø
+𝐴.𝑛 ≔
+𝐴.m .
+∃𝑇 :lookup(𝐴.𝑛 .lhs.typ,𝑚)=𝑇
+
+Type-Restricted Expressions. The type-restricted versions of the automata are covered by the
+definitions presented in §3.4. We therefore do not separately list them here.
+A.3
+
+Pruning the Type Search
+
+We now present our heuristic for pruning the type search recursion from the prefix automaton
+for type-constrained expressions in §3.4, i.e., our implementation of pruneSearch at Line 6 of
+Algorithm 2. The heuristic is based on the complexity and novelty of candidate types to explore.
+Based on the assumptions about the lookup function and the extension expressions in §3.1,
+we observe a restriction in the reachable types by extensions: from any given type, we reach
+itself, result types of arithmetic operators via op, return types through call, and member types
+through member. A higher-order type () => 𝑇 does not allow access to types not reachable from 𝑇 .
+Consequently, we avoid exploring such higher-order types unless the target type is of higher order,
+or the higher-order type offers novel, yet unexplored types. For instance, in Figure 11, the type
+() => number is not explored, because it is more complex than both the initial and goal types, number
+and string, and does not contain any unexplored type. Meanwhile, () => string is explored, as it
+contains a novel string type.
+To formalize this understanding, we introduce the concepts about the depth and root types of a
+given type, denoted as depth and root, respectively. depth measures the complexity of a type,
+specifically the order of a function, while root returns all types of minimal depth (e.g., string,
+number, and boolean) that constitute a higher-order type. They are defined as follows:
+(
+(
+depth(𝑆) + 1 if 𝑇 = (𝑝 ) => 𝑆,
+root(𝑆) if 𝑇 = (𝑝 ) => 𝑆,
+depth(𝑇 ) ≔
+root(𝑇 ) ≔
+0
+otherwise.
+{𝑇 }
+otherwise.
+We leverage depth and root to implement pruneSearch(𝑇 , 𝐺, 𝑆) for a current type 𝑇 , a goal
+type 𝐺, and a type 𝑆 after an extension is applied on 𝑇 . In general, if 𝐺 is not directly accessible
+
+Type-Constrained Code Generation with Language Models
+
+171:29
+call ()
+
+.toString
+
+operator +
+
+() =>
+string
+
+number
+cal
+l (
+)
+
+.va
+lue
+Of
+
+() =>
+number
+
+ope
+rat
+or
+
+.toString
+
+string
+
+.length
+==
+
+boolean
+
+Figure 11. An example search through the graph for type reachability, starting from 𝑇 = number with the
+goal string, e.g., after parsing let x : string; x = 1. States and edges along the final path are marked in
+green and explored nodes in blue . The () => number node is not explored, as complex types are avoided by
+our heuristic. The node () => string is explored as it enables reaching new type string.
+
+from 𝑇 , it will also not be accessible from expressions with the same root types but greater depth,
+such as () ⇒ 𝑇 . When 𝐺 is of higher order, exploring up to the depth of 𝐺 can be required,
+such as when 𝐺 = () => (() => number). Based on these two ideas, we stop exploring 𝑆 when
+depth(𝑆) > max(depth(𝐺), depth(𝑇 )).
+Further, if a higher-depth function returns an unexplored type, we need to explore it. Sticking to
+the example in Figure 11, type number has the member toString of type () => string. The type
+string can only be reached by exploring the member access at depth 1. On the contrary, we do not
+explore a higher-depth function if it does not introduce novel types other than those explored. To
+achieve this, we adapt Algorithm 2 to additionally define a set of root types 𝑅, which is initialized
+to an empty set and is updated by 𝑅 ≔ 𝑅 ∪ root(𝑇 ). We do not explore 𝑆 if root(𝑆) ⊆ 𝑅.
+Taking the conjunction of the aforementioned two aspects, our pruning heuristic is implemented
+as pruneSearch(𝑇 , 𝐺, 𝑆) ≔ depth(𝑆) > max(depth(𝑇 ), depth(𝑆)) ∧ root(𝑆) ⊆ 𝑅. The restrictions based on depth and root types are based on the results of the rigorously analyzed search over
+succinct types by Gvero et al. [30]. This provides a robust heuristic for exploring as many relevant
+inhabitable types as possible. However, due to the additional complexity introduced by the lookup
+function, we can not guarantee completeness and instead refer to the strong empirical results in
+our evaluation in §5 as evidence of the search’s high coverage.
+A.4
+
+Implementation of derivable
+
+Recall that in Table 1, derivable for function expressions are defined as: derivable(𝑞 (𝑝 ) => 𝑒 ) ≔
+{(𝑝 ) => 𝑇 | reachable(derivable(𝑞𝑒 ),𝑇 )}. This involves constructing a type reachability graph
+and collecting all types 𝑇 reachable from derivable(𝑞𝑒 ). However, this process is intractable
+because 𝑇 can be of arbitrarily high-order, as such there are infinitely many 𝑇 to explore. A similar
+issue exists for grouped expressions, as their derivable function is also defined to enumerate
+reachable types. We introduce two optimization heuristics to address this problem.
+We first observe that derivable is always called within the context of an invocation of reachable
+with target type 𝐺, e.g., reachable(derivable(𝑞 (𝑝 ) => 𝑒 ), 𝐺) for function expressions. To compute derivable(𝑞 (𝑝 ) => 𝑒 ), we enumerate all types present on the type graph represented by
+reachable(derivable(𝑞𝑒 ), 𝐺), which is finite due to application of the pruning heuristics in
+Appendix A.3. In other words, we bound the maximum complexity of considered types 𝑇 using the
+pruning heuristic for reachability of target type 𝐺. This leads to a sound but potentially incomplete
+version of derivable. However, since the final goal is to reach 𝐺, this heuristic provides a practically
+useful set of all relevant derivable types.
+
+171:30
+
+Niels Mündler*, Jingxuan He*, Hao Wang, Koushik Sen, Dawn Song, Martin Vechev
+
+Second, we observe that the resulting two-tiered call reachable(derivable(𝑞 (𝑝 ) => 𝑒 ), 𝐺) can
+be integrated into a single call to further reduce the amount of explored types. Concretely, when
+discovering some type 𝑀 in reachable(derivable(𝑞𝑒 ), 𝐺), as per the previous heuristic, we allow
+transitioning directly to reachable( (𝑝 ) => 𝑀, 𝐺) to allow a depth-prioritizing exploration of the
+search graph. This allows us to efficiently discover a path to 𝐺 if it exists.
+A.5
+
+Statements
+
+We define the remaining automata to capture the complete language from §3.1. To correctly handle
+function return types, we pass on related information when entering function bodies:
+• 𝑞.𝑅: The expected return type of the current state 𝑞.
+• 𝑞.returned: Whether the currently parsed program block has returned in all branches.
+• 𝑞.mustReturn: Whether the currently parsed program block must return (i.e., If-Then-Else
+branches do not need to contain return statements even if a return type is expected of the
+surrounding code block).
+The single statement automaton is another recursive definition, since some statements, e.g.,
+If-Then-Else, can themselves contain statements. The statement automaton is defined recursively
+as 𝐴𝑠 ≔ 𝐴decl ∪ 𝐴expr ∪ 𝐴ret ∪ 𝐴block ∪ 𝐴fun ∪ 𝐴ite . The expression statement automaton and
+block automaton are simply defined as 𝐴expr ≔ 𝐴𝑒; and 𝐴block ≔ 𝐴 {𝑠 } . The declaration automaton
+𝐴decl ≔ 𝐴let 𝑥 :𝑇 ; captures variable names 𝑥 using an automaton for non-existing identifiers, which
+works the same way as 𝐴𝑥 except that it rejects terminals that match an existing variable. This
+automaton is a prefix automaton as well, since indefinite additional characters can be added to the
+variable name and there are only finitely many defined variables. The If-Then-Else automaton is
+defined using standard concatenation: 𝐴ite ≔ 𝐴if(𝑒 ) 𝑠 else 𝑠 . The statements automaton 𝐴𝑠 , based
+on the Kleene-Star automaton definition and the single statement automaton. Return statements
+are only non-empty when the expected return type is set, i.e. when parsing inside a function:
+(
+𝐴return ◦ 𝐴𝑒 ↓ 𝑇 if 𝐴ret .𝑅 = 𝑇
+𝐴ret ≔
+𝐴∅
+otherwise.
+For functions, the automaton is based on the standard concatenation 𝐴fun ≔ 𝐴function 𝑥 (𝑝 ) : 𝑇 {𝑠 } .
+However, the transition function updates the states of the statement automata inside the function:
+• 𝑞.𝑅 ≔ 𝑇 , i.e., the return type of these statements is set to the return type of the function. This
+value is propagated recursively to all sub-automata.
+• 𝑞.mustReturn ≔ true, for the outermost statement block automaton. It is set to false for
+deeper nested statement blocks and as soon as a parsed statement 𝑋 has 𝑞𝑋 .returned set to
+true - i.e. one of the main body statements returned in every branch.
+• 𝑞.returned ≔ false, per default in every statement, except a) in return automata, b) inside
+a multi-statement automaton where the previous statement has returned = true and c) in
+ITE-automata where both branching statements have returned = true.
+As long as a state 𝑞 in a multi-statement automaton has 𝑋 .returned = false and 𝑞.mustReturn =
+true, it can not accept but instead forces the generation of another statement. Since we can always
+
+express the requested type through literals and can always generate a return statement to fulfill
+this requirement, the prefix automaton property is not violated.
+B
+
+Details about Experimental Evaluation
+
+In this section, we detail how executable code is extracted from the model responses and a slight
+modification to the decoding algorithm used, that increases throughput heuristically.
+
+Type-Constrained Code Generation with Language Models
+
+171:31
+
+Implementation Details. We have two main external dependencies. To implement the regularexpression-based literal automata, we leverage the regex library,3 as it allows checking if the
+current string can be completed to match a regular expression. To implement LLM inference, we
+leverage the transformers library.4 We provide an exhaustive list of supported and unsupported
+features of the TypeScript language in our final implementation in Tables 5 and 6, respectively.
+Hyperparameters. We run the models on A100 NVidia GPUs with 80 GB of VRAM and CUDA
+version 12.4. We set the sampling temperature to 1. We set seeds to 0 to 4 on the four HumanEval
+runs and 0 on the one MBPP run, respectively. We limit the completions to 1000 tokens and time
+out after 300 seconds. We compute syntactic correctness using the Oxidation toolchain [52] as the
+official TypeScript compiler does not clearly distinguish between syntactic and semantic errors.
+Excluded MBPP Instances. We discovered that a number of TypeScript translations in the
+MultiPL-E dataset [13] contained invalidly generated nested tuples. After reporting them to the
+developers, they have been resolved in the latest version of MBPP and we include them in our
+evaluation. Still, we find that the TypeScript translation of a number of MBPP instances contains
+too broad type annotation, annotating elements as any or array of any. We therefore exclude the
+following 6 instances from the evaluation:
+• mbpp_405_check_tuplex
+• mbpp_563_extract_values
+• mbpp_580_extract_even
+
+• mbpp_612_merge
+• mbpp_725_extract_quotation
+• mbpp_791_remove_nested
+
+Complete Prompts. We provide the complete LLM prompts for our evaluated tasks (synthesis,
+translation, and repair) in Figures 12–14. The prompts are templates, instantiated with instructions
+specific to each task and problem instance. If system prompts are not available for a given LLM, we
+prepend the system prompt to the first user prompt. The model completion starts from a pre-filled
+function signature, enabling unified unit testing. For the repair prompt, we add the non-compilable
+model output as assistant output and use a second turn to pass back compiler outputs. Compiler
+errors contain line numbers for localization, so we annotate the output with line numbers. We find
+that Qwen2.5 32B tends to always generate test cases, which leads to errors during compilation.
+We therefore append the sentence Do not include test cases in the code. to its prompt.
+Extracting Output Code. Given our prompts, LLMs are expected to output the resulting programs. However, they often produce additional outputs, such as generated test cases and explanations. Now we describe our heuristics for extracting the generated code. We first extract the
+corresponding TypeScript code block (i.e., ```typescript...```), or do not cut off if the block is
+not closed. Inside the code block, we cut off after the closing curly brace of the last balanced pair of
+curly braces, if it is followed by a newline or semicolon. This determines the last statement block
+generated, and avoids cutting off, e.g., inside a template literal. Again, if no such case is found, we
+do not prune the output. We demonstrate the operation of our cutoff heuristics in Figure 15.
+C
+
+Case Study Full Outputs
+
+In §5.4, we present the shortened versions of three qualitative examples showcasing the effectiveness
+of our approach. In Figures 16–18, we provide the full code outputs of these examples, with detailed
+descriptions in the respective captions.
+
+3 https://pypi.org/project/regex/
+4 https://huggingface.co/docs/transformers
+
+171:32
+
+Niels Mündler*, Jingxuan He*, Hao Wang, Koushik Sen, Dawn Song, Martin Vechev
+
+Table 5. Supported TypeScript features.
+Supported TypeScript Features
+
+Examples
+
+Expressions, Statements, Function Declarations
+Additional Literals: BigInt, Regex, Template Strings
+Additional Types: void, null, undefined
+Index Signature Types and Literals
+Anonymous Functions
+Lambda Functions with and without Function Bodies
+Ternary and LogicOperators
+Arithmetic and Boolean Operations
+Assigning Pre-and Postfix Operators
+Arrays
+Access and Assignment to Computed Members
+Constructors and "new" Calls
+Calls with Optional and Rest Parameters
+Sets and Maps
+Parameterized Constructor Calls
+Tuples
+Optional Chaining
+Spread Operator
+Type Assertions
+For Loops
+For Of Loops
+For Of Loops with Tuple Destructuring
+Do-While and While Loops
+Typed and Untyped Variable Declarations
+Comments, Multiline Comments
+Returning without Expressions
+Try-Catch Statements with a Fixed Exception Type
+Throw Statements
+Importing the crypto Library
+Global Scope Objects
+Automatic Semicolon Insertion
+
+(𝐿𝐵 as introduced in §3)
+10n, /\d*/, ‘hello ${user}‘
+void, undefined, null
+let x: {[y: number]: string} = 1: "hi";
+function (): bool {return true}
+x => {return y}, x => y
+? :, ||, &&
++, -, **, &, !
+++, -[1, 2, 3]
+x[10] = y[i];
+let x = new Number(1);
+
+function foo(x?: number, y...: string)
+Map<string, number>()
+new Set<string>()
+let x : [int, string] = [1, "hello"];
+x.get("hi")?.get("world")
+[...xs]
+"hello" as any
+for(int x = 0; i < 10; i++)
+for(x of xs)
+for([x, y] of xys)
+while (true) {...}
+let x: number = 1; let y = 100;
+// Comment
+return;
+try { ... } catch (e) { ... }
+throw new Error("...")
+require("crypto")
+Math, parseInt
+
+Table 6. Unsupported TypeScript features.
+Missing Features
+
+Examples
+
+General Library Imports
+Use of Functions Before Declaration
+For In Loops
+Type Declaration
+User-Defined Classes
+Declaration and Parameterized Call of General Parameterized Functions
+Destructuring Assignment
+Uninitialized, Unannotated Variable Declarations
+Return Type Inference
+Literal Types
+Enums
+Symbols
+
+require("example")
+for(x in y)
+
+[x, y] = z
+let x;
+
+Type-Constrained Code Generation with Language Models
+
+171:33
+
+System:
+You are an expert in TypeScript programming. Solve the given problem by writing solution code
+in TypeScript. When answering, insert the solution code in a ```typescript...``` block.
+Do not include test cases in the code.
+User:
+Check if in given array of numbers, are any two numbers closer to each other than
+given threshold.
+>>> has_close_elements([1.0, 2.0, 3.0], 0.5)
+false
+>>> has_close_elements([1.0, 2.8, 3.0, 4.0, 5.0, 2.0], 0.3)
+true function
+Assistant:
+
+```typescript
+function has_close_elements(numbers: number[], threshold: number): boolean {
+
+Figure 12. The full prompt for the synthesis task. Text in green is based on the problem instance, in this
+case HumanEval #0. The red sentence is only added for Qwen2.5 32B due to its tendency to generate
+non-compiling test cases.
+System:
+You are a helpful and expert programmer in Python and TypeScript. You will be given an input
+program in Python and your task is to translate this program into TypeScript. You may assume
+that the input program is correct and that the translation should be semantically equivalent.
+When answering, insert the solution code in a ```typescript...``` block.
+Do not include test cases in the code.
+User:
+The following is the source program in Python:
+
+```python
+from typing import List
+def has_close_elements(numbers: List[float], threshold: float) -> bool:
+for idx, elem in enumerate(numbers):
+for idx2, elem2 in enumerate(numbers):
+if idx != idx2:
+distance = abs(elem - elem2)
+if distance < threshold:
+return True
+return False
+
+```
+Please translate the source program to TypeScript.
+Assistant:
+
+```typescript
+function has_close_elements(numbers: number[], threshold: number): boolean {
+
+Figure 13. The full prompt for the translation task. Text in green is based on the problem instance, blue
+is the original Python canonical solution, in this case HumanEval #0. The red sentence is only added for
+Qwen2.5 32B due to its tendency to generate non-compiling test cases.
+
+171:34
+
+Niels Mündler*, Jingxuan He*, Hao Wang, Koushik Sen, Dawn Song, Martin Vechev
+
+System:
+You are an expert in TypeScript programming. Solve the given problem by writing solution code
+in TypeScript. When answering, insert the solution code in a ```typescript...``` block.
+User:
+Given an array of positive integers x. return a sorted array of all
+elements that hasn’t any even digit.
+Note: Returned array should be sorted in increasing order.
+For example:
+»> unique_digits([15, 33, 1422, 1])
+[1, 15, 33]
+»> unique_digits([152, 323, 1422, 10])
+[]
+Assistant:
+
+```
+001: function unique_digits(x: number[]): number[] {
+002:
+
+const filteredArray: number[] = []; // initialize empty array
+
+003:
+
+for (let i = 0; i < x.length; i++) {
+
+004:
+
+let strx = "" + x[i];
+
+005:
+
+let filteredStr = strx
+
+006:
+
+.toString()
+
+007:
+
+.split("")
+
+008:
+
+.filter((digit) => parseInt(digit) % 2 !== 0);
+
+009:
+
+if (filteredStr.length > 0) {
+
+010:
+
+filteredArray.push(...filteredStr);
+
+011:
+
+}
+
+012:
+
+}
+
+013:
+
+return filteredArray.sort((a, b) => a - b);
+
+014: }
+
+```
+User:
+This output produced an error:
+../../../../../tmp/tmpaewlckfv.ts(10,26): error TS2345: Argument of type ’string’ is not
+assignable to parameter of type ’number’.
+Write the program again, and make sure to fix the error this time.
+Assistant:
+
+```typescript
+function unique_digits(x: number[]): number[] {
+
+Figure 14. The full prompt for the repair task, where we simulate a multi-turn interaction. Text in green
+is based on the problem instance. blue is non-compilable model output from the synthesis step, in this
+case HumanEval #104 and Gemma 2 2B. red is compiler feedback. Generations from the synthesis step are
+annotated with line numbers to aid localizing the compiler error.
+
+Type-Constrained Code Generation with Language Models
+
+1
+
+171:35
+
+```typescript
+
+2 function next_smallest_palindrome(num: number): number {
+3 const numStr = num.toString();
+4 const reversedNumStr = numStr.split('').reverse().join('');
+5 let min = Math.min(Number(numStr), Number(reversedNumStr));
+6
+7 if (min === Number(numStr)) {
+
+return Number(numStr);
+
+8
+
+9 } else {
+
+return parseInt(min.toString() + 1);
+
+10
+11 }
+12
+
+}
+
+13
+14 const findNextSmallestPalindrome = next_smallest_palindrome(12321);
+15 console.log(findNextSmallestPalindrome); // Output: 12322
+16
+
+```
+
+17
+18 **Explanation**
+19
+20 1. **Input:**
+
+The function takes a number as input (`num`) in the given criteria.
+
+21 ...
+
+Figure 15. The code generated by Gemma 2 2B for MBPP #0. The cutoff algorithm first extracts the fenced
+code, last line marked in blue . To avoid the usage of the console object from the browser extension of
+TypeScript in the generated examples, we further cut off after the last code block, marked in red .
+
+171:36
+
+Niels Mündler*, Jingxuan He*, Hao Wang, Koushik Sen, Dawn Song, Martin Vechev
+
+1 function select_words(s: string, n: number): string[] {
+2
+
+const result: string[] = [];
+
+3
+
+for (const word of s. split() ) {
+
+4
+
+let nConsonants = 0;
+
+5
+
+for (let i = 0; i < word.length; i++) {
+
+6
+
+const char = word[i].toLowerCase();
+
+7
+
+if (!['a', 'e', 'i', 'o', 'u'].includes(char)) {
+nConsonants++;
+
+8
+
+}
+
+9
+10
+
+}
+
+11
+
+if (nConsonants === n) {
+result.push(word);
+
+12
+
+}
+
+13
+14
+
+}
+
+15
+
+return result;
+
+16 }
+
+(a) The code generated by the unconstrained Gemma 2 2B when translating a Python solution. The model
+tries to call the split member of a string object without parameters. This is legal in Python but not allowed
+in TypeScript.
+1 function select_words(s: string, n: number): string[] {
+2
+
+const result: string[] = [];
+
+3
+
+for (const word of s. split(' ') ) {
+
+4
+
+let nConsonants = 0;
+
+5
+
+for (let i = 0; i < word.length; i++) {
+
+6
+
+const letter = word[i].toLowerCase();
+
+7
+
+if (!['a', 'e', 'i', 'o', 'u'].includes(letter)) {
+nConsonants++;
+
+8
+
+}
+
+9
+10
+
+}
+
+11
+
+if (nConsonants === n) {
+result.push(word);
+
+12
+
+}
+
+13
+14
+
+}
+
+15
+
+return result;
+
+16 }
+
+(b) The code generated by Gemma 2 2B with type constraints. The constraints guide the model and help it
+generate the required argument to split, which determines the characters around which to split the string.
+Figure 16. Comparison between the function generated by unconstrained Gemma 2 2B [64] and the code
+generated with the guidance of type constraints on the problem select_words in HumanEval [14]. This
+problem requires a function that selects words from a given list that contain a specified number of consonants.
+
+Type-Constrained Code Generation with Language Models
+
+171:37
+
+1 function largest_divisor(n: number): number {
+
+for(let i = n - 1; i > 0; i--) {
+
+2
+
+if(n % i === 0) {
+
+3
+
+return i;
+
+4
+
+}
+
+5
+
+}
+
+6
+7
+
+}
+
+(a) The code generated by the unconstrained Deepseek Coder 33B Instruct. The function loops over all numbers
+smaller than n to determine the largest divisor. Even though functionally correct for positive numbers, this
+function returns undefined when the return statement in the loop is never called (e.g., for negative inputs),
+violating the type system rules.
+1 function largest_divisor(n: number): number {
+
+for(let i = n - 1; i > 0; i--) {
+
+2
+
+if(n % i === 0) {
+
+3
+
+return i;
+
+4
+
+}
+
+5
+
+}
+
+6
+
+return 1; // Return 1 if no such divisor found
+
+7
+8
+
+}
+
+(b) The code generated by Deepseek Coder 33B Instruct with type constraints. The system ensures that every
+path returns a value matching the annotated type. This forces the LLM to generate another line after the
+loop, and the model correctly chooses to generate a fallback return statement.
+
+Figure 17. Comparison between the function generated by the unconstrained DeepSeek Coder 33B Instruct
+[28] and the code generated with the guidance of type constraints on the problem largest_divisor in
+HumanEval [14]. The problem asks to compute the largest divisor of a given number.
+
+171:38
+
+Niels Mündler*, Jingxuan He*, Hao Wang, Koushik Sen, Dawn Song, Martin Vechev
+
+1 function intersperse(numbers: number[], delimeter: number): number[] {
+2
+
+return numbers.reduce(( acc , curr, index) => {
+
+3
+
+acc.push(curr);
+
+4
+
+if (index < numbers.length - 1) {
+acc.push(delimeter);
+
+5
+6
+7
+8
+
+}
+return acc;
+}, []);
+
+9 }
+
+(a) The code generated by the unconstrained Gemma 2 9B. The code uses the reduce member of arrays in
+TypeScript. The reduce member is a generic function that accepts a callback as first argument. This callback
+has three parameters: an accumulator, a current value and an index. The types of the second and third
+parameter are fixed to the element type of the callee array and number. The first argument type of the callback
+function is automatically inferred from the type of the second argument to the reduce function, in this case
+an empty array. The type of this array is never [], a special type denoting arrays without members. Since we
+can assign this type to the callee type number [], the accumulator paramter obtains type never []. However,
+calling push on this type results in a type violation as the pushed value of type number is not compatible
+with the inferred element type never. This issue is well known in TypeScript and even human developers
+frequently stumble upon this issue [47, 48].
+1 function intersperse(numbers: number[], delimeter: number): number[] {
+2
+3
+
+return numbers.reduce(( acc: number[] , num: number, index: number) => {
+if (index > 0) {
+acc.push(delimeter);
+
+4
+5
+
+}
+
+6
+
+acc.push(num);
+
+7
+
+return acc;
+
+8
+
+}, []);
+
+9 }
+
+(b) The code generated by Gemma 2 9B [64] with type constraints. We force the model to generate type
+annotations for the callback function in reduce and thus enable the model to generate the correct type
+annotation and avoid the issue in the unconstrained code.
+
+Figure 18. Comparison between the function generated by the unconstrained Gemma 2 9B [73] and the code
+generated with the guidance of type constraints on the problem intersperse in HumanEval [14]. The task in
+this problem is to insert a delimiter number between consecutive elements of an input list.
+
+

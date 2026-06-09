@@ -1,0 +1,35 @@
+chart_id,source,metric,series,value,unit,note,local_ref
+rig_roi,Repository Intelligence Graph,Mean accuracy improvement,RIG vs baseline,12.2,percent,"Mean across Claude Code, Cursor, and Codex on 8 repos.",paper-text/repository-intelligence-graph-2601.10112.txt
+rig_roi,Repository Intelligence Graph,Completion time reduction,RIG vs baseline,53.9,percent,"Mean completion-time reduction.",paper-text/repository-intelligence-graph-2601.10112.txt
+rig_roi,Repository Intelligence Graph,Seconds per correct answer reduction,RIG vs baseline,57.8,percent,"Efficiency measured as seconds per correct answer.",paper-text/repository-intelligence-graph-2601.10112.txt
+rig_complexity,Repository Intelligence Graph,Accuracy gain,Low complexity,1.1,percent,"Benefit rises with repository complexity.",paper-text/repository-intelligence-graph-2601.10112.txt
+rig_complexity,Repository Intelligence Graph,Accuracy gain,Medium complexity,11.0,percent,"Benefit rises with repository complexity.",paper-text/repository-intelligence-graph-2601.10112.txt
+rig_complexity,Repository Intelligence Graph,Accuracy gain,High complexity,17.4,percent,"Benefit rises with repository complexity.",paper-text/repository-intelligence-graph-2601.10112.txt
+rig_complexity,Repository Intelligence Graph,Time reduction,Low complexity,20.8,percent,"Benefit rises with repository complexity.",paper-text/repository-intelligence-graph-2601.10112.txt
+rig_complexity,Repository Intelligence Graph,Time reduction,Medium complexity,54.6,percent,"Benefit rises with repository complexity.",paper-text/repository-intelligence-graph-2601.10112.txt
+rig_complexity,Repository Intelligence Graph,Time reduction,High complexity,64.0,percent,"Benefit rises with repository complexity.",paper-text/repository-intelligence-graph-2601.10112.txt
+rig_language,Repository Intelligence Graph,Accuracy gain,Single-language repos,6.6,percent,"Single-language aggregate.",paper-text/repository-intelligence-graph-2601.10112.txt
+rig_language,Repository Intelligence Graph,Accuracy gain,Multilingual repos,17.7,percent,"Multilingual aggregate.",paper-text/repository-intelligence-graph-2601.10112.txt
+rig_language,Repository Intelligence Graph,Efficiency gain,Single-language repos,46.4,percent,"Single-language aggregate.",paper-text/repository-intelligence-graph-2601.10112.txt
+rig_language,Repository Intelligence Graph,Efficiency gain,Multilingual repos,70.3,percent,"Multilingual aggregate.",paper-text/repository-intelligence-graph-2601.10112.txt
+graphcodeagent_rel,GraphCodeAgent,Relative Pass@1 improvement,DevEval GPT-4o,43.81,percent,"GraphCodeAgent over best baseline.",paper-text/graphcodeagent-2504.10046.txt
+graphcodeagent_rel,GraphCodeAgent,Relative Pass@1 improvement,DevEval Gemini-1.5-Pro,39.15,percent,"GraphCodeAgent over best baseline.",paper-text/graphcodeagent-2504.10046.txt
+graphcodeagent_rel,GraphCodeAgent,Relative Pass@1 improvement,CoderEval GPT-4o,31.91,percent,"GraphCodeAgent over best baseline.",paper-text/graphcodeagent-2504.10046.txt
+graphcodeagent_rel,GraphCodeAgent,Relative Pass@1 improvement,CoderEval Gemini-1.5-Pro,8.25,percent,"GraphCodeAgent over best baseline.",paper-text/graphcodeagent-2504.10046.txt
+graphcodeagent_cross_file,GraphCodeAgent,Relative Pass@1 improvement,Cross-file dependency slice,94.30,percent,"Largest reported dependency-slice gain over best baseline.",paper-text/graphcodeagent-2504.10046.txt
+graphcodeagent_ablation,GraphCodeAgent,Pass@1,Full GraphCodeAgent,58.14,percent,"DevEval GPT-4o.",paper-text/graphcodeagent-2504.10046.txt
+graphcodeagent_ablation,GraphCodeAgent,Pass@1,Without SSCGTraverse,51.83,percent,"Removing dynamic graph traversal caused the largest ablation drop.",paper-text/graphcodeagent-2504.10046.txt
+repograph_resolve,RepoGraph,Resolve rate,RAG baseline,2.67,percent,"SWE-bench-Lite resolve rate.",paper-text/repograph-2410.14684.txt
+repograph_resolve,RepoGraph,Resolve rate,RAG + RepoGraph,5.33,percent,"SWE-bench-Lite resolve rate.",paper-text/repograph-2410.14684.txt
+repograph_resolve,RepoGraph,Resolve rate,Agentless baseline,27.33,percent,"SWE-bench-Lite resolve rate.",paper-text/repograph-2410.14684.txt
+repograph_resolve,RepoGraph,Resolve rate,Agentless + RepoGraph,29.67,percent,"SWE-bench-Lite resolve rate.",paper-text/repograph-2410.14684.txt
+repograph_context_size,RepoGraph,Resolve rate,1-hop flat context,29.67,percent,"11.6 nodes, 37.1 edges, 2310.7 tokens.",paper-text/repograph-2410.14684.txt
+repograph_context_size,RepoGraph,Resolve rate,2-hop flat context,26.00,percent,"54.5 nodes, 89.9 edges, 10505.3 tokens; more graph context hurt.",paper-text/repograph-2410.14684.txt
+repograph_context_size,RepoGraph,Resolve rate,2-hop summary context,28.67,percent,"1229.2 tokens; compact summaries recovered some value.",paper-text/repograph-2410.14684.txt
+contextbench_context_quality,ContextBench,Line F1,mini-SWE-Agent GPT-5,0.312,fraction,"ContextBench Lite; strong pass rate did not imply perfect fine-grained context.",paper-text/contextbench-2602.05892.txt
+contextbench_context_quality,ContextBench,Line F1,Prometheus GPT-5,0.231,fraction,"Higher recall but low precision.",paper-text/contextbench-2602.05892.txt
+swe_contextbench_reuse,SWE Context Bench,Resolved rate,No context,26.26,percent,"SWE-ContextBench Lite.",paper-text/swe-contextbench-2602.08316.txt
+swe_contextbench_reuse,SWE Context Bench,Resolved rate,Oracle Summary Learning,34.34,percent,"Compact relevant summaries helped.",paper-text/swe-contextbench-2602.08316.txt
+swe_contextbench_reuse,SWE Context Bench,Resolved rate,Free Summary Learning,22.22,percent,"Autonomous summary retrieval hurt when selection quality dropped.",paper-text/swe-contextbench-2602.08316.txt
+swe_contextbench_tokens,SWE Context Bench,Retrieved context tokens,Full trajectories,25633.7,tokens,"Average trajectory size.",paper-text/swe-contextbench-2602.08316.txt
+swe_contextbench_tokens,SWE Context Bench,Retrieved context tokens,Summaries,217.1,tokens,"Average summary size.",paper-text/swe-contextbench-2602.08316.txt

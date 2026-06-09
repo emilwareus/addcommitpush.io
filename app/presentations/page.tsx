@@ -29,6 +29,14 @@ interface PresentationEntry {
 
 const presentations: PresentationEntry[] = [
   {
+    title: 'Write Code That AI Agents Love',
+    description:
+      'A practical talk on shaping repositories for AI coding agents: instructions, architecture, SDKs, tests, and custom rules.',
+    href: '/presentations/write-code-ai-agents-love',
+    venue: 'Working draft',
+    date: '2026',
+  },
+  {
     title: 'Building Real-Time Voice Agents',
     description:
       'Explore STT, TTS, VAD, and WebSockets — and meet Jarvis, the AI co-presenter built with Whisper, Kokoro, and Groq.',

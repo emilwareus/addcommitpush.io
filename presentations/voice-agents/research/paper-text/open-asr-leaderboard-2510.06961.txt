@@ -1,0 +1,416 @@
+                                                    Open ASR Leaderboard: Towards Reproducible and Transparent
+                                                      Multilingual and Long-Form Speech Recognition Evaluation
+
+                                               Vaibhav Srivastav1,5,∗ , Steven Zheng1,∗ , Eric Bezzam ID 1 , Eustache Le Bihan1 , Nithin Rao
+                                            Koluguri ID 2 , Piotr Żelasko ID 2 , Somshubra Majumdar ID 2 , Adel Moumen ID 3 , Sanchit Gandhi4
+                                                                                           1
+                                                                                         Hugging Face, Inc., France
+                                                                                     2
+                                                                                      NVIDIA, United States of America
+                                                                                3
+                                                                                  University of Cambridge, United Kingdom
+                                                                                            4
+                                                                                              Mistral AI, France
+                                                                                    5
+                                                                                      OpenAI, United States of America
+                                                                          steven@huggingface.co, eric.bezzam@huggingface.co
+
+
+
+
+arXiv:2510.06961v4 [cs.CL] 30 Mar 2026
+                                                                   Abstract                                     no “catch-all” model, (2) no single dataset is sufficient for eval-
+                                                                                                                uation, and (3) a single metric, i.e., word error rate (WER), is
+                                         We present the Open ASR Leaderboard, a reproducible bench-             not enough.
+                                         marking platform with community contributions from academia                 To address these challenges, we introduce the Open ASR
+                                         and industry. It compares 86 open-source and proprietary sys-          Leaderboard. Our contributions include:
+                                         tems across 12 datasets, with English short- and long-form
+                                                                                                               1. An interactive leaderboard that compares 86 open-source
+                                         and multilingual short-form tracks. We standardize word er-
+                                                                                                                   and proprietary models from 26 organizations, with evalu-
+                                         ror rate (WER) and inverse real-time factor (RTFx) evaluation
+                                                                                                                   ations over 12 datasets.1 Our comparison standardizes the
+                                         for consistent accuracy-efficiency comparisons across model
+                                                                                                                   evaluation across multiple open-source toolkits (ESPNet [9],
+                                         architectures and toolkits (e.g., ESPNet, NeMo, SpeechBrain,
+                                                                                                                   NeMo [10], SpeechBrain [11], Transformers [12]), commer-
+                                         Transformers). We observe that Conformer-based encoders
+                                                                                                                   cial APIs (AssemblyAI, Aqua Voice, Google, ElevenLabs,
+                                         paired with transformer-based decoders achieve the best aver-
+                                                                                                                   Rev AI, Speechmatics, Zoom), and model-specific reposito-
+                                         age WER, while connectionist temporal classification (CTC)
+                                                                                                                   ries.
+                                         and token-and-duration transducer (TDT) decoders offer supe-
+                                         rior RTFx, making them better suited for long-form and batched        2. A multilingual benchmark covering German, French, Italian,
+                                         processing. All code and dataset loaders are open-sourced to              Spanish, and Portuguese.
+                                         support transparent, extensible evaluation. We present our eval-      3. A dedicated evaluation for long-form transcription.
+                                         uation methodology to facilitate community-driven benchmark-                For transparency and to facilitate the addition of new mod-
+                                         ing in ASR and other tasks.                                            els and datasets, the evaluation scripts for the leaderboard are
+                                         Index Terms: benchmarking, automatic speech recognition, re-           open-sourced.2 The presented model, dataset, and languages
+                                         producible, multilingual, long-form                                    count are as of 27 March 2026, and continue to increase with
+                                                                                                                new additions to the leaderboard.
+                                                              1. Introduction
+                                         Automatic speech recognition (ASR) has seen remarkable
+                                                                                                                            2. Open ASR Leaderboard
+                                         progress in recent years, fueled in part by open-source contri-       2.1. Overview
+                                         butions. Publicly-available datasets [1, 2] and pre-trained mod-
+                                                                                                                The Open ASR Leaderboard contains evaluations on three tasks:
+                                         els [3, 4, 5] have enabled researchers across academia and in-
+                                         dustry to build on existing work. Yet, as the number of datasets      1. Leaderboard, which evaluates short-form English transcrip-
+                                         and models grows, it becomes increasingly difficult for develop-          tion. We define short-form as audio less than 30 s, namely the
+                                         ers of new models to know which baselines to compare against              receptive field of Whisper [3].
+                                         and how. Similarly, users focused on inference may find it chal-      2. Multilingual, which currently evaluates German, French,
+                                         lenging to identify which model, whether open-source or pro-              Italian, Spanish, and Portuguese transcription.
+                                         prietary, best meets their needs in terms of application and/or ef-   3. Long-form, which evaluates English transcription on audio
+                                         ficiency. Moreover, most existing benchmarks and evaluations              longer than 30 s.
+                                         overwhelmingly emphasize English and short-form transcrip-                  A separate Long-form evaluation is necessary because
+                                         tion.                                                                  many recent models are derived from the pretrained encoder
+                                              Several efforts have sought to address parts of this prob-        and/or architecture of Whisper (32 % of open models in our
+                                         lem, including benchmarks across multiple accents and diverse          leaderboard; see Table 2). Additionally, models may adopt dif-
+                                         contexts in the French language [6], under noise and reverber-         ferent chunking strategies to reduce inference latency or employ
+                                         ation in far-field settings [7], and comparing commercial and          different context window sizes during training (particularly for
+                                         open-source models in English and Chinese [8]. Some com-
+                                         mon observations can be drawn from these efforts: (1) there is          1 https://hf.co/spaces/hf-audio/open_asr_
+                                                                                                               leaderboard
+                                            * VB and SZ contributed equally. VB and SG conducted this work       2 https://github.com/huggingface/open_asr_
+                                         while at Hugging Face.                                                leaderboard
+Table 1: Datasets used for the Open ASR Leaderboard. The Task(s) column indicates which tasks (as denoted in Section 2.1) the dataset
+is used for. The duration is of the test-split. The Multilingual datasets indicate the range of durations for the evaluated languages. Note
+that for Earnings22 a subset of 5 h is used for short-form English (Leaderboard) comparison.
+
+         Dataset                     Task(s)                Duration [h]       License                 Source                       Style                 Transcriptions
+ AMI Meeting Corpus [13]           Leaderboard                    9           CC-BY-4.0                Meetings                 Spontaneous        Punctuated, cased, disfluencies
+      CoVoST-2 [14]         Multilingual (de/fr/it/es/pt)     5.3–23        CC-BY-NC-4.0            Open domain                     Read                 Punctuated, cased
+      CORAAL [15]                   Long-form                   159         CC-BY-NC-4.0      Sociolinguistic interviews        Spontaneous        Punctuated, cased, disfluencies
+     Earnings21 [16]                Long-form                    39         CC-BY-SA-4.0            Earnings calls          Oratory, spontaneous   Punctuated, cased, disfluencies
+     Earnings22 [17]        Leaderboard, Long-form              119         CC-BY-SA-4.0            Earnings calls          Oratory, spontaneous   Punctuated, cased, disfluencies
+      FLEURS [18]           Multilingual (de/fr/it/es/pt)     2.0–3.5         CC-BY-4.0               Wikipedia                     Read                 Punctuated, cased
+      GigaSpeech [2]               Leaderboard                   40           apache-2.0     Audiobook, podcast, YouTube     Read, spontaneous        Punctuated, disfluencies
+  LibriSpeech (clean) [1]          Leaderboard                  5.4           CC-BY-4.0              Audiobooks                     Read                    Normalized
+  LibriSpeech (other) [1]          Leaderboard                  5.1           CC-BY-4.0         Audiobooks (noisier)                Read                    Normalized
+        MLS [19]             Multilingual (fr/it/es/pt)       0.8–6.3         CC-BY-4.0              Audiobooks                     Read                    Normalized
+     SPGISpeech [20]               Leaderboard                  100         User Agreement        Financial meetings        Oratory, spontaneous         Punctuated, cased
+   TED-LIUM v3 [21]         Leaderboard, Long-form                3        CC-BY-NC-ND 3.0            TED Talks                   Oratory                  Disfluencies
+      VoxPopuli [22]               Leaderboard                    5              CC0             European Parliament              Oratory                   Punctuated
+
+
+
+
+audio LLMs), both of which can impact long-form transcription                                Table 2: Distribution of encoder and decoder architectures for
+quality.                                                                                     the open-source models in the Open ASR Leaderboard. Some
+    The datasets used for evaluation are presented in Sec-                                   models use hybrid architectures for the encoder or decoder, and
+tion 2.2, while evaluation metrics are described in Section 2.3.                             are counted twice. See Section 2.4 for the distinction between
+Section 2.4 provides an overview of the models evaluated within                              the encoder and decoder architectures.
+the Open ASR Leaderboard, while Section 2.5 outlines the
+community-based process for contributing new models.                                          Enc ↓ / Dec →        Transformer       CTC      RNN-T/TDT         LLM       Total
+                                                                                              Conformer-based              6          9             8             5         28
+2.2. Datasets                                                                                 Whisper                      18          3            0             4         25
+                                                                                              Self-supervised              1          14            0             0         15
+Table 1 summarizes the datasets used for the Open ASR Leader-                                 Custom                       7           0            0             3         10
+board. For the short-form evaluation (Leaderboard), we seg-                                   Total                        32         26            8             12        78
+ment the original audio into chunks of at most 30 s, with a small
+number of exceptions. For normalized transcriptions, punctua-
+tion and casing is removed, as well as disfluencies such as fillers
+(e.g., “ah”, “uh”, “um”), repetitions, and repairs. Some datasets                            audio_sample = ds[0]
+retain a subset of these features in their provided transcriptions
+(as indicated in the last column of Table 1).
+     While it is not possible to fully guarantee the absence of                              2.3. Metrics
+test-set contamination, namely that a given model has not been
+trained on a specific evaluation set [23], the use of multiple eval-                         We report results on two metrics: word error rate (WER) for
+uation datasets per track enables us to identify anomalous per-                              comparing transcription quality, and inverse real-time factor
+formance on any single dataset relative to the others. In addi-                              (RTFx) for comparing inference speed.
+tion, each track includes at least one evaluation dataset released                               Not all models produce transcripts with punctuation, cas-
+under a non-commercial license, which helps mitigate the risk                                ing, or disfluencies; in particular, some models explicitly re-
+of test-set contamination for commercial APIs and open-source                                move the latter. To account for discrepancies between model
+models with commercial-friendly licenses: TED-LIUM v3 for                                    outputs and dataset transcriptions (last column of Table 1), we
+Leaderboard, CoVoST-2 for Multilingual, and TED-LIUM v3                                      normalize all text prior to computing WER. This normalization
+and CORAAL for Long-form.                                                                    removes punctuation and casing, and applies an English text
+     Dataset retrieval and usage is enabled through the datasets                             normalization pipeline closely following that of Whisper [3].
+library [24]. The datasets themselves are hosted on the Hug-                                 The pipeline includes number normalization (e.g., “zero” to
+ging Face Hub,3 which enables interactive exploration directly                               “0”), spelling standardization, and the removal of filler words.
+in the browser, including listening to individual audio, inspect-                            On the leaderboard, models are sorted according to average
+ing metadata, and running SQL queries, all without download-                                 WER across all datasets of a corresponding task.
+ing the datasets. The datasets can be conveniently downloaded                                    We define RTFx as:
+and used in Python as such:
+                                                                                                                            Total duration of audio
+              Listing 1: Example of loading dataset.                                                           RTFx =                               .                         (1)
+                                                                                                                              Transcription time
+from datasets import load_dataset
+
+ds = load_dataset("hf-audio/esb-datasets-test-                                               Higher values indicate faster inference (i.e., lower latency). We
+    only-sorted", "ami", split="test")                                                       report the inverse real-time factor, rather than real-time factor
+                                                                                             (), so that “higher is better” and relative speedups are easy to
+   3 Leaderboard:   https://hf.co/datasets/hf-audio/                                         interpret (e.g., 10× or 100× faster). RTFx can be computed
+esb-datasets-test-only-sorted;                                                               for a single utterance or over a batch of audio. RTFx (and
+Multilingual:     https://hf.co/datasets/nithinraok/
+asr-leaderboard-datasets;
+                                                                                             related variants) is commonly used to quantify a model’s effi-
+Long-form:          https://hf.co/datasets/hf-audio/                                         ciency on long-form audio [25]. From the leaderboard page,
+asr-leaderboard-longform;       https://huggingface.                                         models can be dynamically sorted by WER-performance on a
+co/datasets/bezzam/coraal                                                                    particular dataset, or by RTFx.
+Table 3: Subset of Open ASR Leaderboard results on short-form English. WER is averaged over datasets corresponding to the Leader-
+board in Table 1. Whisper-FT stands for Whisper-finetuned. The top 10 are displayed along with additional models to comments on
+various architectures. The full and latest table can be found on Hugging Face.
+
+                        Model                                 Open   Avg. WER ↓   RTFx ↑       Encoder           Decoder      # Lang.
+                        Cohere Labs Transcribe                Yes       5.42        525    FastConformer [26]   Transformer     14
+                        Zoom Scribe v1                        No        5.47         -             -                 -           1
+                        IBM Granite Speech 4.0 1B             Yes       5.52        280      Conformer [27]        LLM           6
+                        NVIDIA Canary Qwen 2.5B               Yes       5.63        418    FastConformer [26]      LLM           1
+                        IBM Granite Speech 3.3 8B             Yes       5.76        145      Conformer [27]        LLM           5
+                        Qwen3 ASR 1.7B                        Yes       5.76        148       Custom [28]          LLM          52
+                        ElevenLabs Scribe v2                  No        5.83         –             –                 –         90+
+                        IBM Granite Speech 3.3 2B             Yes       6.00        271      Conformer [27]        LLM           5
+                        Microsoft Phi 4 Multimodal Instruct   Yes       6.02        151      Conformer [27]        LLM           8
+                        NVIDIA Parakeet TDT 0.6B v2           Yes       6.05       3390    FastConformer [26]    TDT [29]        1
+                        AssemblyAI Universal 3 Pro            No        6.21         –             –                 –          99
+                        NVIDIA Parakeet TDT 0.6B v3           Yes       6.32       3330    FastConformer [26]    TDT [29]       25
+                        Google Chirp v2                       No        6.42         -             -                 -         468
+                        NVIDIA Canary 1B                      Yes       6.50        235    FastConformer [26]   Transformer      4
+                        Mistral AI Voxtral Small 24B          Yes       6.62       54.1     Whisper-FT [30]        LLM           8
+                        Nyra Health CrisperWhisper            Yes       6.67       84.1     Whisper-FT [31]     Whisper-FT       1
+                        Speechmatic Enhanced                  No        6.91         –             –                 -          55
+                        RevAI Fusion                          No        7.12         –             –                 –           1
+                        NVIDIA Canary 1B v2                   Yes       7.15        749    FastConformer [26]   Transformer     25
+                        Distil-Whisper Large v3.5             Yes       7.21        202        Whisper [3]      Transformer      1
+                        NVIDIA Parakeet CTC 1.1B              Yes       7.40       2730    FastConformer [26]      CTC          1
+                        OpenAI Whisper Large v3               Yes       7.44        146        Whisper [3]        Whisper       99
+                        OpenAI Whisper Large v3 Turbo         Yes       7.83        200        Whisper [3]        Whisper       99
+                        Meta Omnilingual ASR LLM 7B v2        Yes       8.14       66.0       wav2vec2 [4]      Transformer    1676
+                        NVIDIA FastConformer CTC Large        Yes       8.96       6400    FastConformer [26]      CTC          1
+
+
+
+
+2.4. Current models                                                                2.5. Adding a new model
+Of the 86 models currently listed in the Open ASR Leaderboard                      External contributors can add a new model to the leaderboard
+(as of 27 March 2026), 74 are open-source. The models come                         by opening a pull request (PR) that includes:
+from 26 organizations: NVIDIA (18), Meta/Facebook (14),                           1. A Python script for evaluation on a specific dataset, option-
+OpenAI (8), Hugging Face (5), Useful Sensors (5), University                         ally specifying a model version.5
+of Washington (4), ESPNet (3), Google (3), IBM (3), Mistral
+AI (3), Alibaba Cloud (2), ElevenLabs (2), Microsoft (2), Rev                     2. A Bash script that calls the Python script for each dataset and
+AI (2), SpeechBrain (2), Applied Brain Research (1), Assem-                          model combination.6
+blyAI (1), Aqua Voice (1), AssemblyAI (1), Cohere Labs (1),                       3. Self-reported metrics.
+Kyutai (1), Nyra Health (1), Speechmatics (1), Ultravox (1),                            We verify these scripts in our environment to ensure consis-
+Z.ai (1), and Zoom (1).                                                            tent evaluation across models before updating the leaderboard.
+     A significant effort of this leaderboard has been to stan-                    To date, 29 PRs have been merged to add 56 models follow-
+dardize the usage across several libraries: four commonly-used                     ing this process, and an additional 34 PRs have been merged to
+open-source toolkits (ESPNet, NeMo, SpeechBrain, Trans-                            address other aspects and fixes.
+formers), seven commercial APIs (AssemblyAI, Aqua Voice,
+Google, ElevenLabs, Rev AI, Speechmatics, Zoom), and
+model-specific repositories. The evaluation scripts for each
+                                                                                                                 3. Results
+model are open-sourced.4                                                           The evaluation scripts for each model were run on an NVIDIA
+     Table 2 summarizes the encoder and decoder architectures                      A100-SXM4-80GB GPU (driver 560.28.03, CUDA 12.6), us-
+used by the open-source models in the leaderboard. The fol-                        ing a batch size of 64 whenever memory allowed, and reduced
+lowing encoder architectures are represented: Conformer-based                      adaptively (48, 32, 16, . . . ) when necessary to fit in device
+encoders [26, 27], Whisper-based encoders [3], self-supervised                     memory. Although the absolute RTFx values depend on the un-
+encoders (i.e., wav2vec2 [4], HuBERT [5], data2vec [32]), and                      derlying hardware and can vary substantially across systems, all
+custom approaches [33, 34, 35, 36, 37]. Whisper-based en-                          measurements reported here are obtained under the same setup.
+coders either use the encoder model without modification [38],                     As such, they provide a meaningful basis for comparing the rel-
+apply low-rank adaptation [39], fine-tune it [30, 31], or train                    ative efficiency of models, even if the absolute numbers may not
+from scratch [40].                                                                 directly transfer to other hardware configurations.
+     The evaluated decoder architectures include transformer-                          Since the full results are continuously updated on the
+based, CTC (Connectionist Temporal Classification), Recur-                         Open ASR Leaderboard and are too extensive to fully in-
+rent Neural Network Transducer (RNN-T), Token-and-Duration                         clude here, we present a condensed versions of the English
+Transducer (TDT) [29], and LLM (Large Language Model)-                             leaderboard in Table 3, the multilingual results in Table 4,
+based approaches. Although both transformer-based and LLM-                         and the long-form results in Table 5. The full leaderabords
+based decoders rely on the same underlying architecture and op-
+erate autoregressively, LLM-based decoders are pretrained on                          5 Example      scripts     for    each   task   can   be
+large-scale text corpora and can function as standalone text lan-                  found        in:                  transformers/run eval.py,
+guage models.                                                                      transformers/run eval ml.py,
+                                                                                   transformers/run whisper longform.py
+  4 https://github.com/huggingface/open_asr_                                          6 An example can be found in:
+leaderboard                                                                        transformers/run whisper.sh
+                  (a) Average WER (%) vs. RTFx                                          (b) Average WER (%) vs. Model Size (M)
+
+Figure 1: (a) Average word error rate (WER) vs. inverse real time factor (RTFx) and (b) WER vs. model size trade-off plots for the
+open-source ASR models, on short-form English transcription. See Table 3 for metrics.
+
+
+can be found on Hugging Face: https://hf.co/spaces/                 Table 4: Average WERs for each language (German/French/I-
+hf-audio/open_asr_leaderboard                                       talian/Spanish/Portuguese) and across all languages on the
+                                                                    Multilingual datasets in Table 1. The full and latest table on
+3.1. Short-form (English)                                           Hugging Face.
+
+Models that combine a Conformer-based encoder [26, 27] with           Model                                 Open
+                                                                                                                   Avg.
+                                                                                                                          RTFx   DE     FR     IT     ES     PT
+                                                                                                                   WER
+a transformer-based decoder (either custom or LLM-based)
+                                                                      ElevenLabs Scribe v2                  No     2.67     –    2.27   3.28   2.58   2.33   2.83
+achieve the best average WER. However, these models are               Assembly AI Universal 3 Pro           No     3.23     –    2.34   3.74   3.94   2.34   3.63
+                                                                      Mistral AI Voxtral Small 24B          Yes    3.70   42.0   3.01   4.13   3.91   3.04   4.40
+significantly slower than those using TDT or CTC decoders.            Cohere Labs Transcribe                Yes    3.83    491   3.84   4.05   3.44   2.81   5.60
+While TDT/CTC approaches offer substantially better RTFx,             Speechmatic Enhanced                  No     4.29     –    2.84   5.04   5.58   2.78   4.97
+                                                                      Meta Omnilingual ASR LLM 7B v2        Yes    4.39   21.2   4.55   5.34   3.75   3.44   5.18
+this speed advantage comes at the expense of accuracy: the            Microsoft Phi 4 Multimodal Instruct   Yes    4.41   78.2   3.96   5.20   4.15   3.71   5.12
+                                                                      NVIDIA Canary 1B v2                   Yes    4.60    634   4.10   4.83   4.88   3.25   6.33
+highest-ranking TDT model (NVIDIA Parakeet TDT 0.6B v2)               Meta Omnilingual ASR LLM 7B           Yes    4.68   21.8   4.58   5.46   3.80   3.73   6.36
+places 10th, while the best CTC model (NVIDIA Parakeet CTC            OpenAI Whisper Large v3               Yes    4.81    111   4.26   6.36   4.69   3.65   4.96
+                                                                      NVIDIA Parakeet TDT 0.6B v3           Yes    4.81   1720   4.20   5.42   4.81   3.73   6.16
+1.1B) ranks 34th.                                                     Qwen3 ASR 1.7B                        Yes    5.11    113   4.12   5.74   5.61   3.87   6.29
+                                                                      Meta Omnilingual ASR CTC 7B v2        Yes    5.84    155   6.05   7.63   4.79   4.49   6.57
+     As shown in Table 2, Conformer-based encoders are the
+most widely adopted. Restricting the comparison to models
+with transformer/LLM-based decoders (10 Conformer-based
+and 22 Whisper-based), Conformer-based systems are on av-           1B v2 expands from 4 to 25 languages. In both cases, broader
+erage 3.77× faster, with an average RTFx of 758 compared to         language coverage comes at the cost of English transcription
+201 for Whisper-based models.                                       accuracy. Similarly, Meta Omnilingual ASR LLM 7B v2 ranks
+     Despite this, Whisper-based encoders remain popular due        higher on the multilingual benchmarks, outperforming several
+to pretraining on large-scale multilingual data, enabling sup-      models that ranked higher on the short-form English bench-
+port for up to 99 languages. Models that fine-tune Whisper’s        mark. Fig. 2a plots all open-source models with a WER below
+encoder for specific languages (e.g., Nyra Health CrisperWhis-      8 % against RTFx.
+per [31] and Mistral AI Voxtral Small 24B [30]), or that train a
+new decoder (Distil-Whisper Large v3.5 [38]) can achieve better     3.3. Long-form (English)
+average WER than OpenAI Whisper Large v3. Self-supervised
+encoders make up 19 % of the approaches in the benchmark.           Closed-source models also deliver the strongest results on long-
+While they enable systems for 1600+ languages [41], the best        form English, with a distinct gap over open-source alternatives
+approach ranks only 53rd (Meta Omnilingual ASR LLM 7B v2).          (Table 5). Although the exact reasons are not known, this may
+     The scatter plots in Fig. 1 show all open-source models with   be due to domain-specific fine-tuning. Moreover, differences
+a WER below 15 % plotted against RTFx and model size. The           between short-form and long-form performance may also arise
+Pareto front is overlaid to illustrate the trade-offs between WER   from factors such as model context size, audio chunking strate-
+and each of these criteria.                                         gies, and the handling of disfluencies, which tend to occur more
+                                                                    frequently in long-form recordings (e.g., meetings, presenta-
+3.2. Multilingual                                                   tions, and interviews). Fig. 2b plots all open-source models with
+                                                                    a WER below 18 % against RTFx.
+Closed-source models achieve the best results on the multilin-
+gual datasets (see Table 4). Among open-source models, we ob-                                        4. Conclusions
+serve a trade-off between specialization and broad multilingual
+coverage. With a large and diverse set of models, NVIDIA’s          We present the Open ASR Leaderboard, a reproducible bench-
+systems provide a clear example of this trade-off: Parakeet TDT     mark covering 86 systems and 12 datasets, including multi-
+0.6B v3 adds multilingual support compared to v2, and Canary        lingual and long-form speech. Our comparison standardizes
+            (a) Multilingual: Average WER (%) vs. RTFx                              (b) Average WER (%) vs. Model Size (M)
+
+Figure 2: Average word error rate (WER) vs. inverse real time factor (RTFx) for(a) multilingual and (b) longform. See Table 4 and
+Table 5 respectively for metrics.
+
+
+Table 5: Subset of results on the Long-form datasets of Table 1.                        5. Acknowledgments
+The full and latest table is on Hugging Face.
+                                                                      The authors would like to thank all the contributors to the Open
+        Model                           Open   Avg. WER   RTFx        ASR Leaderboard.
+        ElevenLabs Scribe v2            No       7.32       –
+        AssemblyAI Universal 3 Pro
+        Speechmatics Enhanced
+                                        No
+                                        No
+                                                 8.34
+                                                 8.80
+                                                            –
+                                                            –
+                                                                                              6. References
+        RevAI Fusion                    No       9.54       –          [1] V. Panayotov, G. Chen, D. Povey, and S. Khudanpur, “Lib-
+        Cohere Labs Transcribe          Yes      9.73     418
+        NVIDIA Parakeet TDT 0.6B v3     Yes      10.7     1000             rispeech: An ASR corpus based on public domain audio books,”
+        OpenAI Whisper Large v3 Turbo   Yes      11.0      148             in IEEE International Conference on Acoustics, Speech and Sig-
+        NVIDIA Canary Qwen 2.5B         Yes      11.2     16.1             nal Processing, 2015, pp. 5206–5210.
+        OpenAI Whisper Large v3         Yes      11.2     68.6
+        Distil-Whisper Large v3.5       Yes      11.7      156         [2] G. Chen et al., “GigaSpeech: An Evolving, Multi-domain ASR
+        NVIDIA Parakeet CTC 1.1B        Yes      12.9     2790             Corpus with 10,000 Hours of Transcribed Audio,” in Proc. Inter-
+        Google Chirp                    No       13.0       –              speech, 2021.
+        NVIDIA Parakeet CTC 0.6B        Yes      13.7     4383
+                                                                       [3] A. Radford, J. W. Kim, T. Xu, G. Brockman, C. McLeavey, and
+                                                                           I. Sutskever, “Robust speech recognition via large-scale weak su-
+                                                                           pervision,” in Proc. International Conference on Machine Learn-
+                                                                           ing, 2023.
+                                                                       [4] A. Baevski, Y. Zhou, A. Mohamed, and M. Auli, “wav2vec 2.0:
+                                                                           A Framework for Self-Supervised Learning of Speech Represen-
+the evaluation across multiple open-source toolkits (ESPNet,               tations,” in Advances in Neural Information Processing Systems,
+NeMo, SpeechBrain, Transformers), commercial APIs, and                     vol. 33, 2020, pp. 12 449–12 460.
+model-specific repositories. Standardized text normalization           [5] W.-N. Hsu, B. Bolte, Y.-H. H. Tsai, K. Lakhotia, R. Salakhutdi-
+enables a unified basis for comparing WER performance ac-                  nov, and A. Mohamed, “HuBERT: Self-Supervised Speech Rep-
+curacy, and our RTFx evaluation allows for efficiency com-                 resentation Learning by Masked Prediction of Hidden Units,”
+parisons. Conformer-based encoders paired with transformer-                IEEE/ACM Transactions on Audio, Speech, and Language Pro-
+                                                                           cessing, vol. 29, pp. 3451–3460, 2021.
+based decoders achieve the strongest English WER but at the
+cost of higher latency. In contrast, CTC- and TDT-based de-            [6] S. Evain et al., “Task Agnostic and Task Specific Self-Supervised
+                                                                           Learning from Speech with LeBenchmark,” in Conference on
+coders offer faster inference with only modest accuracy trade-             Neural Information Processing Systems (Datasets and Bench-
+offs, making them attractive for long-form transcription. Code             marks Track), 2021.
+and datasets are open-sourced to support transparent and exten-        [7] J. Barker, R. Marxer, E. Vincent, and S. Watanabe, “The third
+sible evaluation.                                                          ‘CHiME’ speech separation and recognition challenge: Dataset,
+                                                                           task and baselines,” in 2015 IEEE Workshop on Automatic Speech
+                                                                           Recognition and Understanding, 2015, pp. 504–511.
+     Future work includes expanding evaluations across lan-
+guages and domains (e.g., far-field speech), incorporating ad-         [8] J. Du, J. Li, G. Chen, and W.-Q. Zhang, “SpeechColab leader-
+                                                                           board: An open-source platform for automatic speech recognition
+ditional metrics (e.g., token error rate [8]), and exploring under-
+                                                                           evaluation,” Computer Speech & Language, vol. 94, 2025.
+represented encoder-decoder combinations (Table 2). With the
+rise of LLMs and their demonstrated strength in ASR, we an-            [9] S. Watanabe, T. Hori, S. Karita, T. Hayashi, J. Nishitoba, Y. Unno,
+                                                                           N. E. Y. Soplin, J. Heymann, M. Wiesner, N. Chen et al.,
+ticipate more approaches leveraging them. To further improve               “Espnet: End-to-end speech processing toolkit,” arXiv preprint
+benchmark reliability, private evaluation sets could help mini-            arXiv:1804.00015, 2018.
+mize the risk of test-set contamination. Additionally, because        [10] O. Kuchaiev, J. Li, H. Nguyen, O. Hrinchuk, R. Leary, B. Gins-
+models vary in how they handle disfluencies, it may be valuable            burg, S. Kriman, S. Beliaev, V. Lavrukhin, J. Cook et al., “Nemo:
+to differentiate tasks based on whether disfluencies are explic-           a toolkit for building ai applications using neural modules,” arXiv
+itly modeled or whether verbatim transcription is required.                preprint arXiv:1909.09577, 2019.
+[11] M. Ravanelli, T. Parcollet, A. Moumen, S. De Langen, C. Sub-         [31] L. Wagner, B. Thallinger, and M. Zusag, “CrisperWhis-
+     akan, P. Plantinga, Y. Wang, P. Mousavi, L. Della Libera, A. Plou-        per: Accurate Timestamps on Verbatim Speech Transcriptions,”
+     jnikov et al., “Open-source conversational ai with speechbrain            arXiv:2408.16589, 2024.
+     1.0,” Journal of Machine Learning Research, vol. 25, no. 333,        [32] A. Baevski, W.-N. Hsu, Q. Xu, A. Babu, J. Gu, and M. Auli,
+     pp. 1–11, 2024.
+                                                                               “data2vec: A general framework for self-supervised learning in
+[12] T. Wolf, L. Debut, V. Sanh, J. Chaumond, C. Delangue, A. Moi,             speech, vision and language,” in Proc. International Conference
+     P. Cistac, T. Rault, R. Louf, M. Funtowicz et al., “Huggingface’s         on Machine Learning, vol. 162, 2022, pp. 1298–1312.
+     transformers: State-of-the-art natural language processing,” arXiv   [33] N. Zeghidour et al., “Streaming sequence-to-sequence learning
+     preprint arXiv:1910.03771, 2019.                                          with delayed streams modeling,” arXiv:2509.08753, 2025.
+[13] J. Carletta et al., “The AMI Meeting Corpus: A Pre-                  [34] N. Jeffries, E. King, M. Kudlur, G. Nicholson, J. Wang, and
+     Announcement,” in Proc. International Conference on Machine               P. Warden, “Moonshine: Speech recognition for live transcription
+     Learning for Multimodal Interaction, 2005, pp. 28–39.                     and voice commands,” arXiv:2410.15608, 2024.
+[14] C. Wang, A. Wu, and J. Pino, “CoVoST 2: A Massively Mul-             [35] X. Shi et al., “Qwen3-asr technical report,” arXiv preprint
+     tilingual Speech-to-Text Translation Corpus,” arXiv:2007.10310,           arXiv:2601.21337, 2026.
+     2020.
+                                                                          [36] A. H. Liu, A. Ehrenberg, A. Lo, C.-Y. Sun, G. Lample,
+[15] T. Kendall and C. Farrington, “The Corpus of Regional African             J.-M. Delignon, K. R. Chandu, P. von Platen, P. R. Mud-
+     American Language,” Eugene, OR, 2023, dataset.                            direddy, R. Arora et al., “Voxtral realtime,” arXiv preprint
+[16] M. D. Rio et al., “Earnings-21: A Practical Benchmark for ASR             arXiv:2602.11298, 2026.
+     in the Wild,” arXiv:2104.11348, 2021.                                [37] Z. Peng, J. Yu, Y. Chang, Z. Wang, L. Dong, Y. Hao, Y. Tu,
+[17] M. Del Rio, P. Ha, Q. McNamara, C. Miller, and S. Chandra,                C. Yang, W. Wang, S. Xu et al., “Vibevoice-asr technical report,”
+     “Earnings-22: A Practical Benchmark for Accents in the Wild,”             arXiv preprint arXiv:2601.18184, 2026.
+     arXiv:2203.15591, 2022.                                              [38] S. Gandhi, P. von Platen, and A. M. Rush, “Distil-Whisper: Ro-
+[18] A. Conneau et al., “FLEURS: Few-Shot Learning Evaluation of               bust Knowledge Distillation via Large-Scale Pseudo Labelling,”
+     Universal Representations of Speech,” in IEEE Spoken Language             arXiv:2311.00430, 2023.
+     Technology Workshop, 2023, pp. 798–805.                              [39] K. Kamahori, J. Kasai, N. Kojima, and B. Kasikci, “LiteASR:
+[19] V. Pratap, Q. Xu, A. Sriram, G. Synnaeve, and R. Collobert,               Efficient Automatic Speech Recognition with Low-Rank Approx-
+     “MLS: A Large-Scale Multilingual Dataset for Speech Research,”            imation,” arXiv:2502.20583, 2025.
+     arXiv:2012.03411, 2020.                                              [40] Y. Peng, M. Shakeel, Y. Sudo, W. Chen, J. Tian, C.-J. Lin,
+[20] P. K. O’Neill et al., “SPGISpeech: 5,000 hours of transcribed fi-         and S. Watanabe, “OWSM v4: Improving Open Whisper-Style
+     nancial audio for fully formatted end-to-end speech recognition,”         Speech Models via Data Scaling and Cleaning,” in Proc. Inter-
+     arXiv:2104.02014, 2021.                                                   speech, 2025, pp. 2225–2229.
+[21] F. Hernandez, V. Nguyen, S. Ghannay, N. Tomashenko, and              [41] G. Keren et al., “Omnilingual ASR: Open-Source Multilingual
+     Y. Estève, “TED-LIUM 3: twice as much data and corpus reparti-           Speech Recognition for 1600+ Languages,” arXiv:2511.09690,
+     tion for experiments on speaker adaptation,” in International Con-        2025.
+     ference on Speech and Computer, 2018, pp. 198–208.
+[22] C. Wang et al., “VoxPopuli: A large-scale multilingual speech
+     corpus for representation learning, semi-supervised learning and
+     interpretation,” in Proc. Annual Meeting of the Association for
+     Computational Linguistics and the International Joint Conference
+     on Natural Language Processing, 2021, pp. 993–1003.
+[23] Y. Tseng, T. Parcollet, R. van Dalen, S. Zhang, and
+     S. Bhattacharya, “Evaluation of llms in speech is often
+     flawed: Test set contamination in large language models
+     for speech recognition,” 2025. [Online]. Available: https:
+     //arxiv.org/abs/2505.22251
+[24] Q. Lhoest et al., “Datasets: A community library for natural lan-
+     guage processing,” in Proc. Conference on Empirical Methods in
+     Natural Language Processing: System Demonstrations, 2021, pp.
+     175–184.
+[25] N. R. Koluguri et al., “Investigating End-to-End ASR Architec-
+     tures for Long Form Audio Transcription,” in IEEE International
+     Conference on Acoustics, Speech and Signal Processing, 2024,
+     pp. 13 366–13 370.
+[26] D. Rekesh et al., “Fast conformer with linearly scalable atten-
+     tion for efficient speech recognition,” in IEEE Automatic Speech
+     Recognition and Understanding Workshop, 2023, pp. 1–8.
+[27] A. Gulati et al., “Conformer: Convolution-augmented transformer
+     for speech recognition,” arXiv:2005.08100, 2020.
+[28] X. Shi et al., “Qwen3-asr technical report,” arXiv preprint
+     arXiv:2601.21337, 2026.
+[29] H. Xu, F. Jia, S. Majumdar, H. Huang, S. Watanabe, and B. Gins-
+     burg, “Efficient sequence transduction by jointly predicting to-
+     kens and durations,” in Proc. International Conference on Ma-
+     chine Learning, 2023.
+[30] A. H. Liu et al., “Voxtral,” arXiv:2507.13264, 2025.
+

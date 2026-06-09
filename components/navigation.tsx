@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Activity, Cpu, Earth, Menu, Presentation, X } from 'lucide-react';
+import { Activity, Brain, Cpu, Earth, Menu, Presentation, X } from 'lucide-react';
 import { useState } from 'react';
 import Image from 'next/image';
 import { ThemeSelector } from '@/components/theme-selector';
@@ -14,13 +14,13 @@ export function Navigation() {
 
   const links = [
     { href: '/', label: 'Blog', icon: Earth },
+    { href: '/brain', label: 'Brain', icon: Brain },
     { href: '/presentations', label: 'Presentations', icon: Presentation },
     { href: '/about', label: 'About', icon: Cpu },
     { href: '/status', label: 'Status', icon: Activity },
   ];
 
-  const isActive = (href: string) =>
-    href === '/' ? pathname === '/' : pathname.startsWith(href);
+  const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
 
   return (
     <nav
@@ -50,7 +50,7 @@ export function Navigation() {
             </span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden lg:flex items-center gap-8">
             {links.map((link) => {
               const Icon = link.icon;
               return (
@@ -62,8 +62,9 @@ export function Navigation() {
                     isActive(link.href) ? '' : ''
                   )}
                   style={{
-                    color:
-                      isActive(link.href) ? 'var(--navbar-active)' : 'var(--navbar-foreground)',
+                    color: isActive(link.href)
+                      ? 'var(--navbar-active)'
+                      : 'var(--navbar-foreground)',
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive(link.href)) {
@@ -85,7 +86,7 @@ export function Navigation() {
           </div>
 
           <button
-            className="md:hidden transition-colors"
+            className="lg:hidden transition-colors"
             style={{ color: 'var(--navbar-foreground)' }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = 'var(--navbar-hover)';
@@ -102,7 +103,7 @@ export function Navigation() {
 
         {mobileMenuOpen && (
           <div
-            className="md:hidden mt-4 pb-4 space-y-3 border-t pt-4"
+            className="lg:hidden mt-4 pb-4 space-y-3 border-t pt-4"
             style={{ borderColor: 'var(--navbar-border)' }}
           >
             {links.map((link) => {
@@ -116,8 +117,9 @@ export function Navigation() {
                     'flex items-center gap-3 text-base font-medium transition-colors py-2'
                   )}
                   style={{
-                    color:
-                      isActive(link.href) ? 'var(--navbar-active)' : 'var(--navbar-foreground)',
+                    color: isActive(link.href)
+                      ? 'var(--navbar-active)'
+                      : 'var(--navbar-foreground)',
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive(link.href)) {

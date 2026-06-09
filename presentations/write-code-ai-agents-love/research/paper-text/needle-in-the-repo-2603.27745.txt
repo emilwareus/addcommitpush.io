@@ -1,0 +1,2238 @@
+2026-03-31
+
+Needle in the Repo: A Benchmark for Maintainability in
+AI-Generated Repository Edits
+Haichao Zhu2,† , Qian Zhang1,† , Jiyuan Wang3 , Zhaorui Yang1 , Yuxin Qiu1
+1 UC Riverside
+2 Independent Researcher
+3 Tulane University
+
+arXiv:2603.27745v1 [cs.SE] 29 Mar 2026
+
+Abstract
+AI coding agents can now complete complex programming tasks, but existing evaluations largely
+emphasize behavioral correctness and often overlook maintainability risks such as weak modularity
+or testability. Automation without accountability shifts invisible cost downstream because hidden
+maintainability failures incurred today are deferred to the developers who must extend, debug,
+and sustain these systems tomorrow, raising significant technical and organizational concerns
+for software engineering. We present Needle in the Repo (NITR), a diagnostic, probe-and-oracle
+framework for evaluating whether behaviorally correct repository edits preserve maintainable
+structure. The key idea is to distill recurring software engineering wisdom into controlled probes
+embedded in small, realistic multi-file codebases, with each probe designed so that success depends
+primarily on one targeted maintainability dimension. Each probe is paired with a hidden evaluation
+harness that combines (i) functional tests for required behavior, and (ii) structural oracles that
+encode the targeted maintainability constraint and return interpretable diagnoses.
+Using NITR, we extensively evaluate 23 coding configurations across GPT, Claude, Gemini, and
+Qwen families in both direct-inference and agent-based settings. We find that current AI coding
+systems remain far from robust. On average, all AI coding configurations solve only 36.2% of cases,
+the best reaches 57.1%, and performance drops from 53.5% on micro cases to 20.6% on multi-step
+cases. The hardest pressures are architectural rather than local edits, especially dependency control
+(4.3%) and responsibility decomposition (15.2%). Moreover, 64/483 outcomes (13.3%) pass all
+functional tests yet fail the structural oracle. Under our harness, agent-mode configurations improve
+average performance from 28.2% to 45.0%, but does not eliminate the architectural failures. These
+results show that progress in code generation is not yet progress in maintainable code evolution,
+and that NITR exposes a critical failure surface largely missed by conventional evaluation.
+Repo
+WebPage
+
+Existing Evaluation
+
+Correctness Hide Debts
+Tangled
+Dependency
+
+LLMs/Agents solve tasks
+
+Test pass rate
+
+Capability
+Leaderboards
+
+Duplicated
+Logic
+Low
+Modularity
+
+NITR: SE Wisdom Guided Probes
+1. Each maintainability
+pressure as a probe.
+2. Dual oracles include tests
+and structural oracles.
+Actionable Guides
+
+Systematic Evaluation
+
+…
+High capability does not
+imply low structural debt.
+
+Figure 1: Existing evaluations rank models by behavioral success, but leaderboard performance says
+little about maintainability risk. NITR uses curated probes and structural oracles to expose failure modes
+beyond test passing.
+† Equal contribution.
+∗ Corresponding authors: lszhuhaichao@gmail.com; qzhang@cs.ucr.edu.
+
+1
+
+1
+
+Introduction
+
+Artificial intelligence (AI) is rapidly reshaping software development, demonstrating strong capabilities
+in code understanding, generation, execution, and iterative debugging Jimenez et al. (2024); Yang et al.
+(2024); Wang et al. (2025). We use the term coding agents to refer to large language model (LLM)-based
+systems equipped with scaffolding such as repository navigation Yang et al. (2024); Ouyang et al. (2025),
+code editing Yang et al. (2024); Wang et al. (2025), program execution Wang et al. (2024), and feedbackdriven repair Shinn et al. (2023); Bouzenia et al. (2025). These agents now operate directly inside real
+development environments, making their evaluation increasingly important for understanding what
+kinds of software engineering (SE) work they can actually support.
+The Gap: Completion is Not Construction. Recent benchmarks have made substantial progress by
+moving beyond single-file completion toward repository-level tasks Liu et al. (2024); Jimenez et al. (2024);
+Li et al. (2024a). For example, SWE-bench and its variants Jimenez et al. (2024); Yang et al. (2025) evaluate
+LLMs on issue resolution across 12 GitHub repositories. However, these evaluations still define success
+primarily in terms of behavioral correctness, operationalized as pass/fail performance on predefined test
+cases. This leaves a fundamental gap between what current benchmarks measure and what SE practice
+actually requires, illustrated in Figure 1.
+First, test pass/fail is a narrow view of software quality. A patch may satisfy the target tests while
+still duplicating logic, bypassing an existing abstraction, or spreading a small feature across unrelated
+modules, thereby making the repository harder to extend and maintain over time. Recent studies of
+non-functional quality in LLM-generated code likewise find that behavioral success does not guarantee
+maintainability, reliability, or broader quality attributes Sun et al. (2025); Molison et al. (2025). This
+concern also appears in practitioner discussion. For example, one recent Reddit comment red (2026)
+observed that “The real failure mode I keep seeing is maintenance.”
+Second, test-centric evaluations provide weak diagnostic insight. They indicate whether agents completed
+a task, but not which maintainability capabilities they handled well or failed to preserve. Previous work
+has shown that correctness-based benchmarks often miss specific failure modes and overlook code-quality
+concerns that matter in practice Hu et al. (2024); Zheng et al. (2024); Chen et al. (2026). As a result, they
+rank models by outcome, but reveal little about where current LLMs still fall short.
+This Work. This work addresses a core limitation of current code-agent evaluation: passing repository
+tasks does not tell us whether the resulting code remains maintainable, or which maintainability capabilities current LLMs fail to preserve. We present N EEDLE IN THE R EPO (NITR), a probe-and-oracle
+framework for evaluating maintainability preservation in AI-generated repository edits. Throughout this
+paper, we use maintainability failure to refer to code that is behaviorally correct for the current task but
+makes future evolution harder to extend, test, or reason about safely.
+Our central insight is that software engineering wisdom can be distilled into small, repository-grounded
+probes with explicit design boundaries and executable structural checks. NITR operationalizes 9 maintainability dimensions through targeted C++ repository probes: Change Locality, Reuse and Repo
+Awareness, Responsibility Decomposition, Extension Structure, Interface and Substitutability Discipline,
+Dependency Control, Testability and Determinism, State Ownership and Lifecycle, and Side-Effect
+Isolation.
+NITR comprises 21 curated C++ repository probes spanning nine maintainability dimensions. Each case
+encodes one primary repository-evolution pressure through a natural multi-file change request and is
+paired with hidden functional tests and structural probes, enabling diagnosis beyond test passing.
+Key Findings. Using NITR, we evaluate 23 coding configurations spanning GPT, Claude, Gemini, and
+Qwen families in both direct-inference and agent-mode settings.
+We present, to our knowledge, the first probe-and-oracle study focused on maintainability preservation
+in AI-generated repository edits and report three findings. First, current coding systems remain far from
+robust at maintainability-preserving repository evolution: the average configuration solves only 36.2%
+of cases, the best reaches 57.1%, and five probes are unsolved by all configurations. Second, current
+systems struggle most not with isolated edits, but with changes that must preserve deeper repository
+structure, including dependency control (4.3% pass rate), responsibility decomposition (15.2%), and
+abstraction-respecting extension (26.1%). Third, test passing is an unreliable proxy for maintainability:
+64/483 outcomes (13.3%) are behaviorally correct yet structurally wrong, and although agent-mode configurations under our harness raises average performance from 28.2% to 45.0%, it does not eliminate these
+core failures. Together, these results show that NITR reveals hidden structural debt that conventional
+evaluations largely miss.
+This work makes three contributions:
+2
+
+// Non-maintainable: submitted by 17/23 agents. Each new type
+// requires duplicating a definition (change amplification).
+3 namespace solid::case001 {
+4
+int
+add(int a,
+int b)
+{ return a + b; }
+5
+float
+add(float a,
+float b)
+{ return a + b; }
+6
+double
+add(double a,
+double b)
+{ return a + b; }
+7
+long long add(long long a, long long b) { return a + b; }
+8 }
+1
+2
+
+9
+
+// Maintainable: a single generic definition handles all types.
+// Adding support for a new type requires zero code change.
+12 namespace solid::case001 {
+13
+template <typename T>
+14
+T add(T a, T b) { return a + b; }
+15 }
+10
+11
+
+Listing 1: Two implementations of a multi-type add function. Both pass all unit tests, but the overloaded
+version (top) fails the structural probe because it introduces a new definition for each type added,
+amplifying change across the codebase. The template version (bottom) passes both unit tests and the
+structural probe.
+• NITR turns maintainability-preserving repository edit evaluation into a controlled object of study by
+pairing curated repository probes with hidden structural oracles.
+• We provide the first probe-and-oracle empirical study of maintainability preservation in AI-generated
+repository edits, showing that test-passing often misses structural failure and that the hardest pressures
+are architectural rather than local.
+• We release NITR as an open-source suite to support future research on maintainability-aware coding
+agents and repository-level software engineering evaluation.
+NITR is not intended as a universal taxonomy or a naturalistic sample of all software tasks; it is a diagnostic suite designed to make specific maintainability pressures observable, executable, and comparable.
+In other words, it does not attempt to cover all maintainability phenomena, but to make a set of recurring,
+practically important repository-evolution pressures precise enough to evaluate, compare, and analyze.
+
+2
+
+Motivating Example
+
+Coding agents are often evaluated as if passing tests were sufficient evidence of code quality. The
+motivating example in case 001 of NITR shows why this assumption is too weak. In this task, a small
+utility function add is widely used across a codebase. The agent is asked, over three incremental steps,
+to extend it to support additional numeric types: first int, then float and double, and finally long long.
+Throughout all steps, the call sites in app/main.cc remain fixed and must not be modified.
+Listing 1 shows two representative implementations submitted by agents. The overloaded implementation
+(lines 2–8) is the approach taken by 17 of 23 evaluated configurations. It introduces a separate, copypasted definition for every numeric type. Functionally, both implementations are equivalent: all unit tests
+pass. The tests check correct addition output for each required type; they do not inspect the structure of
+the implementation.
+The structural probe in NITR, however, evaluates a different criterion. It checks that the implementation
+provides a centralized reusable core (detected via generic-function patterns such as a template) and that no
+more than one explicit per-type overload definition is present. The overloaded implementation (lines
+2–8) violates both conditions and is therefore marked as failing, even though every functional test passes.
+This failure has direct maintenance consequences. If the codebase later needs to support unsigned int
+or float128, the overloaded design requires adding another specialized definition and modifying the
+library interface. In a multi-step tasks, the problem becomes worse. Once an agent has introduced the
+overload pattern, later steps may continue extending that pattern rather than repairing the abstraction,
+compounding the original design mistake.
+This example illustrates the exact failure mode that NITR is designed to expose: code can be behaviorally
+correct yet structurally poor to evolve.
+
+3
+
+Maintainability
+Pressure
+
+Change
+Spread
+
+Reuse
+Bypase
+
+Dependency
+Creep
+
+Side-eﬀect
+Intrusion
+
+Probe Instantiation
+
+Hidden Oracle
+
+maintainable
+path
+
+Starter
+repo
+
+Functional
+tests
+
+tempting
+shortcut
+
+TASK.md
+
+One primary diemsnion
+
+Pass if
+both
+succeed
+
+Structural
+probes
+
+Figure 2: From maintainability pressure to diagnostic probe. NITR summarizes SE practices into 9
+recurring repository-evolution pressures, instantiates each target pressure as a compact probe with starter
+code and an agent-facing task, and pairs the probe with functional and structural oracles.
+
+3
+
+Maintainability Probe Design
+
+We construct NITR in three parts as shown in Figure 2. First, we define a maintainability design space
+grounded in recurring software-evolution pressures (Section 3.1). Second, we instantiate each target
+pressure as a compact repository probe with starter code and an agent-facing task (Section 3.2). Third, we
+package each probe with hidden functional tests and structural oracles that distinguish maintainable
+solutions from tempting shortcut solutions (Section 3.3).
+NITR is organized as a collection of expert-curated maintainability probes rather than generic coding
+tasks mined from GitHub that may already be familiar to LLMs. Each probe is a small repository-level
+scenario designed to expose one primary maintainability pressure under realistic software evolution. The
+evaluation target is whether AI’s chosen implementation strategy preserves maintainable structure. The
+resulting suite contains 21 C++ probes spanning 9 software engineering dimensions, including 10 micro
+probes and 11 multi-step probes detailed below.
+3.1
+
+From Principles to Maintainability Dimensions
+
+Our starting point is that software engineering wisdom already provides a practical basis for judging
+whether code will remain easy to extend, modify, test, and integrate over time. Accordingly, NITR begins
+from the design principles and engineering practices that developers use to assess code quality in real
+repositories.
+To define the construction design space of NITR, we reviewed established software engineering principles,
+including SOLID Martin (2003), together with maintainability practices such as code reuse Haefliger et al.
+(2008); Krueger (1992) and testability Freedman (1991); Parker (1982).
+From this author-driven consolidation, we derived the nine dimensions by consolidating recurrent
+repository-evolution pressures rather than by starting from a fixed taxonomy alone. Concretely, we first
+enumerated common structural failure pressures that arise during repository change, such as change
+amplification, duplicate-path introduction, responsibility leakage, dependency creep, test-seam erosion,
+lifecycle scattering, and side-effect intrusion. We then grouped these pressures into broader, reusable
+construction axes, using classical software-design principles such as SOLID as an organizing lens where
+appropriate. The resulting nine dimensions are therefore best understood as probe-construction axes for
+maintainability-relevant repository evolution, not as an exhaustive ontology of maintainability.
+The nine dimensions include: (D1) Change Locality, whether a requested change remains localized rather
+than forcing scattered edits; (D2) Reuse and Repo Awareness, whether the solution reuses and adapts
+existing repository logic instead of re-implementing it in parallel; (D3) Responsibility Decomposition,
+whether distinct concerns remain separated rather than collapsing into one component; (D4) Extension
+Structure, whether new behavior is added through clean extension rather than ad hoc special cases;
+(D5) Interface and Substitutability Discipline, whether interfaces remain narrow, coherent, and safe for
+interchangeable implementations; (D6) Dependency Control, whether modules avoid unnecessary coupling
+and depend only on what they need; (D7) Testability and Determinism, whether the design preserves clean
+test seams and avoids hidden nondeterminism; (D8) State Ownership and Lifecycle, whether mutable state
+has clear ownership and lifetime boundaries and (D9) Side-Effect Isolation, whether effects such as I/O,
+
+4
+
+logging, and global mutation are kept separate from core logic. Table 1 reports coverage at the dimension
+level, while the design matrix records the concrete failure pressures each dimension was designed to
+capture.
+Each case declares exactly one primary_dimension, defined as the main maintainability pressure the
+case is designed to isolate. Optional secondary_dimensions record supporting pressures when needed.
+Assigning one primary dimension keeps each probe interpretable and supports balanced coverage across
+the design space, while still allowing secondary pressures to appear as context.
+3.2
+
+Instantiating Maintainability Probes
+
+Given a target dimension, we instantiate it
+as a small, self-contained C++ repository
+probe. A probe is a jointly designed artifact
+consisting of a repository scenario, starter
+code, an agent-visible task, and hidden evaluation logic, as illustrated in Figure 3. Each
+probe is constructed so that the target maintainability pressure arises naturally, a shortcut solution remains plausible, and the difference between the two can be diagnosed
+automatically. Please note that this curation is deliberate rather than incidental. In
+mined tasks, the intended design boundary
+is often implicit, underspecified, or entangled with unrelated repository history, making maintainability judgment difficult to operationalize. NITR instead uses compact, authored repository scenarios where the maintainable path and the tempting shortcut are
+both behaviorally plausible, but structurally
+distinguishable. This enables interpretable
+diagnosis of edit strategy rather than only
+outcome success.
+
+NITR Case
+
+Outcome
+
+Visible to agent/API
+
+Model output /
+generated ﬁles
+
+Starter
+Code
+
+Integrate into
+workspace
+
+TASK.md
+
+Hidden from agent/API
+
+Functional tests
+Structural probes
+
+SPEC.md
+
+Evaluator
+
+Pass only if both succeed
+
+Figure 3: Anatomy of a maintainability probe. Each probe
+contains starter code, an agent-visible task (TASK.md), an
+author-facing specification (SPEC.md), and a hidden evaluator. During evaluation, the model sees only the starter code
+and TASK.md; the probe passes only if the generated edits
+satisfy both the functional tests and the structural probes.
+
+Step 1: Repository Scenario Selection. We
+first select a compact engineering change that naturally exposes the target maintainability pressure. The
+scenario should be realistic and narrow in scope, while still admitting two plausible implementation
+paths: one that preserves repository structure and one that satisfies the required behavior through a
+shortcut.
+For example, the curated Case 021 targets D2: Reuse and Repo Awareness. The requested change is to
+add support for an inline filter form such as status=open,priority=3. The repository already supports
+filtering through an existing structured pipeline, so the core question is whether the new inline entry point
+reuses that pipeline or introduces a second parsing-and-validation path. Listing 2 shows the associated
+structural oracle.
+Step 2: Starter-Code Shaping. We then shape the starter repository so that the intended maintainable
+path already exists in the codebase. In Case 021, the starter code already contains a repository-native filter
+representation, an existing parse/validate pipeline, and a designated validation module. This creates
+two clear solution paths. A maintainable solution parses the inline string only far enough to construct the
+existing internal representation and then delegates to the current pipeline. A shortcut solution instead
+introduces inline-only logic for numeric parsing, field interpretation, or error classification. These shortcut
+patterns are encoded directly in the hidden oracle checks in Listing 2, including checks for std::stoi,
+std::isdigit, duplicated field literals, and duplicated error literals.
+Step 3: Agent-Facing Task Design. For each probe, we write a concise TASK.md as a natural engineering
+request. It specifies the required behavior, but does not reveal the maintainability dimension, the intended
+design move, or the hidden oracle logic.
+In Case 021, the visible task asks the agent to add support for the inline filter form while preserving
+existing behavior. It does not say “reuse the validation module,” does not mention D2, and does not warn
+against introducing a helper such as ParseInlineFilter with its own integer parsing and field checks.
+Step 4: Micro versus Multi-Step Probes. We use a micro probe when the targeted maintainability
+
+5
+
+Starter
+Codebase
+
+Codebase
+after
+step 1
+
+Codebase
+after
+step 2
+
+Final
+Codebase
+
+Hiden
+Evaluator
+Functional
+tests
+Structural
+probes
+
+TASK1.md
+
+TASK3.md
+
+TASK2.md
+
+Figure 4: Multi-step probe execution. Each step is applied to the codebase produced by the previous step,
+so early design choices persist across later changes. The final codebase is then evaluated with tests and
+structural oracles.
+# Check 1: The inline entrypoint should not perform its own
+# numeric parsing. In the intended design, integer validation
+3 # stays in the existing filter-validation path rather than being
+4 # reimplemented inline.
+5 has_stoi = "std::stoi" in content
+6 has_isdigit = "std::isdigit" in content
+1
+2
+
+7
+8
+9
+
+if has_stoi or has_isdigit:
+fail("Suspicious duplicate numeric validation")
+
+10
+
+# Check 2: Repeating field and error literals outside the
+# designated validation files often signals a shadow parser with
+13 # its own lookup tables and error mapping logic.
+14 has_inline_parser = "ParseInlineFilter" in content
+15 field_hits = sum(literal in content for literal in FIELD_LITERALS)
+16 error_hits = sum(literal in content for literal in ERROR_LITERALS)
+11
+12
+
+17
+18
+19
+
+if has_inline_parser and field_hits > 0 and error_hits > 1:
+fail("Suspicious duplicated error classification")
+
+Listing 2: Excerpt of the hidden structural oracle for Case 021. The individual string-level checks shown
+here are not used as standalone maintainability judgments; they function only as case-specific signals
+within a jointly designed repository context.
+pressure can be exposed by a single localized change, and a multi-step probe when it only becomes
+visible under continued evolution. In a multi-step probe, the model receives a sequence of task files, each
+applied to the code produced at the previous step, as illustrated in Figure 4. This makes early design
+decisions persistent across later changes.
+Case 021 is a micro probe because the D2 failure is visible after one change. Once the agent adds the
+inline entry point, the solution either routes it through the existing pipeline or introduces inline-only
+parsing and validation logic. The hidden oracle can detect that shortcut immediately through patterns
+such as std::stoi, std::isdigit, duplicated field handling, or duplicated error classification, so no
+further evolution is needed to expose the difference. By contrast, dimensions such as Dependency Control
+or Responsibility Decomposition often require multi-step probes, because a design that looks acceptable at
+step 1 may only fail later when added features force one component to absorb logging, provider-specific
+logic, or extra dependencies.
+3.3
+
+Packaging Dual Oracles
+
+Each probe is paired with two hidden evaluators: functional tests, which check the requested behavior,
+and structural oracles, which check whether the implementation preserves the intended maintainability
+constraint. A probe passes only if both succeed.
+The structural oracle is probe-specific, but its design follows recurring patterns aligned with the nine
+dimensions. For Change Locality (D1), it checks whether a small requirement change remains localized.
+For Reuse and Repo Awareness (D2), it checks reuse of existing repository affordances and rejects duplicate
+implementation. For Responsibility Decomposition (D3), Extension Structure (D4), and Dependency Control
+(D6), it checks whether new behavior stays within the intended module boundaries rather than expanding
+6
+
+003
+
+004
+
+005
+
+006
+
+007
+
+008
+
+009
+
+010
+
+011
+
+012
+
+013
+
+015
+
+016
+
+017
+
+018
+
+019
+
+020
+
+021
+
+D1
+m
+5
+13
+
+D2
+m
+0
+0
+
+D2
+m
+22
+0
+
+D3
+m
+0
+0
+
+D4
+m
+0
+0
+
+D5
+µ
+2
+4
+
+D5 D6
+m
+µ
+10
+2
+0
+4
+
+D7
+µ
+21
+0
+
+D9
+µ
+21
+0
+
+D1
+µ
+10
+0
+
+D8
+µ
+23
+0
+
+D1 D4 D6
+µ
+µ
+m
+18 19
+0
+0
+0
+0
+
+D7
+m
+8
+0
+
+D8
+m
+4
+0
+
+D7
+m
+2
+0
+
+D9
+m
+1
+0
+
+D3
+µ
+7
+11
+
+D2
+µ
+0
+0
+
+m = multi-step;
+
+µ = micro;
+
+014
+
+002
+
+Dim.
+Type
+Pass
+S
+
+001
+
+Table 2: All 21 repositories in NITR with their dimension, granularity, and aggregate outcomes across 23
+evaluated configurations. S counts are bolded where ≥ 4, highlighting probes where functionally correct
+code still fails the maintainability oracle.
+
+S = functional tests pass, but the maintainability oracle fails.
+
+central dispatch logic or introducing unnecessary coupling. For Interface and Substitutability Discipline
+(D5), it checks that interfaces remain narrow and that callers do not branch on concrete subtype identity.
+For Testability and Determinism (D7), it flags hidden wall-clock or randomness usage and verifies that the
+intended deterministic seam is preserved. For State Ownership and Lifecycle (D8), it checks that lifecyclesensitive state transitions remain within the designated ownership boundary. For Side-Effect Isolation
+(D9), it ensures that logging, tracing, or explanation paths do not intrude into core decision logic. These
+checks are lightweight and targeted rather than full semantic program analyses, but they are sufficient to
+distinguish the intended maintainable solution family from common shortcut patterns.
+Case 021 illustrates the oracle pattern. Functional tests alone cannot distinguish reuse of the existing
+filter pipeline from a shadow parser, so the structural oracle checks for duplicated parsing and validation
+outside the designated repository path. Listing 2 shows an excerpt: it flags uses of std::stoi or
+std::isdigit, rejects inline-only integer handling when FilterValueKind::kInteger appears together
+with ParseInlineFilter, and detects repeated field or error logic outside the existing validation flow. In
+this way, the oracle distinguishes reuse of repository affordances from parallel reimplementation.
+Oracle validation. During case construction, each oracle was validated against intended maintainable
+solutions, representative shortcut solutions, and near-miss variants. We iterated until the oracle stably
+separated the intended solution family from targeted shortcuts under small implementation variation;
+representative intended, shortcut, and near-miss variants are included in the artifact.
+3.4
+
+Evaluation Protocol
+
+For each probe, the harness creates
+a temporary workspace, applies the
+model-generated file edits, configures
+and builds the project with CMake, runs
+the hidden functional tests, and then executes the structural oracles. A probe is
+marked pass only if both the functional
+and structural evaluations succeed.
+This strict conjunction is intentional.
+NITR is designed to expose a failure
+surface that ordinary test-centric evaluation misses: solutions that satisfy the
+requested behavior while introducing
+structural shortcuts. Table 1 summarizes the nine maintainability dimensions covered by NITR, and Table 2 provides the full probe inventory, including each case’s dimension, granularity,
+and aggregate outcome counts across
+the evaluated configurations.
+
+4
+
+Table 1: The nine maintainability dimensions used as probeconstruction axes in NITR. Each case is assigned exactly one
+primary dimension. The last column reports how many cases
+in that dimension involve multiple steps.
+Dim.
+
+Name
+
+#Cases
+
+#Multi-step
+
+D1
+D2
+D3
+D4
+D5
+D6
+D7
+D8
+D9
+
+Change Locality
+Reuse & Repo Awareness
+Responsibility Decomposition
+Extension Structure
+Interface & Substitutability
+Dependency Control
+Testability & Determinism
+State Ownership & Lifecycle
+Side-Effect Isolation
+
+3
+3
+2
+2
+2
+2
+3
+2
+2
+
+1
+2
+1
+1
+1
+1
+2
+1
+1
+
+Total
+
+21
+
+11
+
+Experimental Setup
+
+We use NITR to study coding agents and answer questions:
+• RQ1: How well do contemporary coding systems perform on the NITR case suite?
+
+7
+
+63.6
+
+Agentmode
+
+28.1
+
+APIonly
+
+Micro
+Multi-step
+
+44.2
+13.6
+
+0
+
+20
+
+40
+
+60
+
+Pass Rate (%)
+
+Figure 5: Both API-only and agent-mode systems perform substantially better on micro cases than on
+multi-step cases, indicating that the main difficulty lies in evolutionary tasks rather than isolated edits.
+• RQ2: Which maintainability dimensions are most challenging for current coding systems?
+• RQ3: What structural failure patterns do current AI coding tools exhibit, and to what extent are these
+failures missed by functional tests alone?
+• RQ4: Under our constrained evaluation harness, to what extent do agent-mode configurations outperform direct API-based configurations from the same model family on maintainability preservation?
+Models and Agents. We evaluate 23 configurations from multiple providers: 11 agent-mode and 12
+API-only. Agent-mode systems are accessed through provider-managed CLI surfaces that provide agentic
+scaffolding, such as multi-turn interaction and managed execution environments. API-only systems are
+accessed through direct model endpoints without such scaffolding. For API-mode evaluation, Qwen,
+Gemini, and Claude are served through Google Cloud Vertex AI ver (2026), while OpenAI models are
+accessed through the official OpenAI API ope (2026).
+Submission Format and Execution Setup. To standardize outputs, all systems must return edits as a JSON
+dictionary mapping file names to file contents. A local Python harness materializes each submission
+by overwriting the corresponding repository files. In multi-step cases, agent-mode systems receive
+tasks sequentially and may observe their own prior edits, whereas API-only systems receive each step
+independently together with the relevant prior context. In all settings, models see only the agent-facing
+TASK.md, without hidden hints or additional maintainability instructions.
+Experimental Constraints. To prevent evaluator leakage, neither agent-mode nor API-only systems can
+access the hidden unit tests or Python evaluation scripts. Agent-mode systems are additionally restricted
+to read-only repository access: they may inspect files in the target repository, but cannot execute arbitrary
+commands, use external tools, or access files outside the workspace. These controls ensure that outputs
+are derived only from TASK.md and the visible repository contents.
+
+5
+
+Experimental Results and Findings
+
+5.1
+
+RQ1: Overall Performance
+
+Table 3 summarizes performance across the 21-case suite. Overall pass rates range from 24% (5/21
+cases) for the weakest configurations to 57% (12/21) for the strongest ones. The best-performing systems
+are GPT-5.3-Cx (Agt) and Claude Opus 4.6 (Agt), which each solve 12 of 21 cases. The strongest
+API-only configuration, Gemini 3.1 Pro (API), solves 8 of 21 cases (38%). Taken together, these results
+indicate that even frontier coding systems solve only about half of the NITR suite at best. Maintainabilitypreserving repository evolution therefore remains a substantial open challenge rather than a nearly
+solved capability.
+Performance is highly uneven across the suite, suggesting that current systems succeed mainly when the
+repository already exposes a clear path for change, but struggle once they must infer and preserve that
+path themselves. A small number of probes are close to saturation. Case 012 (cache lifecycle) is solved by
+all 23 configurations, while Case 003 (reuse existing code), Case 009 (session-expiry testability), and Case 010
+(logging side-effects) are passed by 21–22 systems. These are cases where the starter repository already
+provides a strong structural path toward the desired change, so the main burden is recognizing and
+following that path correctly.
+At the other extreme, five probes are not solved by any configuration: Case 002 (refactor-and-reuse),
+Case 004 (responsibility decomposition in the CV pipeline), Case 005 (pricing extension structure), Case 015
+(pipeline provider decoupling), and Case 021 (inline filter entrypoint reuse). These universally unsolved cases
+are revealing because they are not simply hard programming tasks. Rather, they require the model
+8
+
+Table 3: Pass rates of evaluated configurations on NITR (21 cases). Agent uses agentic scaffolding; API
+uses direct inference. Per-dimension cell background:
+all pass,
+majority,
+minority,
+none.
+Model
+
+Mode
+
+#
+
+Rate
+
+D1
+
+D2
+
+D3
+
+D4
+
+D5
+
+D6
+
+D7
+
+D8
+
+D9
+
+GPT-5.3-Cx
+GPT-5.2-Cx
+GPT-5
+GPT-5.4
+GPT-5.4
+GPT-5-Mini
+GPT-5.3-Cx
+
+Agent
+Agent
+Agent
+Agent
+API
+API
+API
+
+12
+11
+11
+10
+7
+6
+6
+
+57%
+52%
+52%
+48%
+33%
+29%
+29%
+
+2/3
+3/3
+2/3
+2/3
+1/3
+0/3
+0/3
+
+1/3
+1/3
+1/3
+1/3
+1/3
+1/3
+1/3
+
+1/2
+0/2
+1/2
+1/2
+0/2
+0/2
+0/2
+
+1/2
+1/2
+1/2
+1/2
+1/2
+1/2
+1/2
+
+1/2
+1/2
+1/2
+1/2
+0/2
+1/2
+1/2
+
+1/2
+1/2
+0/2
+0/2
+0/2
+0/2
+0/2
+
+2/3
+2/3
+3/3
+2/3
+1/3
+1/3
+1/3
+
+2/2
+1/2
+1/2
+1/2
+2/2
+1/2
+1/2
+
+1/2
+1/2
+1/2
+1/2
+1/2
+1/2
+1/2
+
+Claude Opus 4.6
+Claude Opus 4.5
+Claude Sonnet 4.6
+Claude Sonnet 4.5
+Claude Opus 4.5
+Claude Opus 4.6
+Claude Sonnet 4.5
+Claude Sonnet 4.6
+
+Agent
+Agent
+Agent
+Agent
+API
+API
+API
+API
+
+12
+10
+9
+8
+6
+6
+6
+5
+
+57%
+48%
+43%
+38%
+29%
+29%
+29%
+24%
+
+3/3
+2/3
+2/3
+2/3
+1/3
+1/3
+1/3
+0/3
+
+1/3
+1/3
+1/3
+1/3
+1/3
+1/3
+1/3
+1/3
+
+1/2
+1/2
+0/2
+1/2
+0/2
+0/2
+0/2
+0/2
+
+1/2
+1/2
+1/2
+0/2
+1/2
+1/2
+1/2
+1/2
+
+2/2
+1/2
+1/2
+1/2
+0/2
+0/2
+0/2
+0/2
+
+0/2
+0/2
+0/2
+0/2
+0/2
+0/2
+0/2
+0/2
+
+2/3
+2/3
+2/3
+2/3
+1/3
+1/3
+1/3
+1/3
+
+1/2
+1/2
+1/2
+1/2
+1/2
+1/2
+1/2
+1/2
+
+1/2
+1/2
+1/2
+0/2
+1/2
+1/2
+1/2
+1/2
+
+Gemini 3.1 Pro
+Gemini 3.1 Flash
+Gemini 2.5 Pro
+Gemini 3.1 Pro
+Gemini 2.5 Pro
+Gemini 3.1 Flash
+
+Agent
+Agent
+Agent
+API
+API
+API
+
+10
+6
+5
+8
+6
+5
+
+48%
+29%
+24%
+38%
+29%
+24%
+
+3/3
+1/3
+1/3
+2/3
+2/3
+1/3
+
+0/3
+1/3
+1/3
+1/3
+1/3
+1/3
+
+0/2
+0/2
+0/2
+1/2
+0/2
+0/2
+
+1/2
+1/2
+1/2
+1/2
+0/2
+0/2
+
+1/2
+0/2
+0/2
+0/2
+0/2
+0/2
+
+0/2
+0/2
+0/2
+0/2
+0/2
+0/2
+
+1/3
+1/3
+1/3
+1/3
+0/3
+1/3
+
+2/2
+1/2
+1/2
+1/2
+2/2
+1/2
+
+2/2
+1/2
+0/2
+1/2
+1/2
+1/2
+
+Qwen3-Coder
+Qwen3-80B
+
+API
+API
+
+5
+5
+
+24%
+24%
+
+1/3
+0/3
+
+1/3
+1/3
+
+0/2
+0/2
+
+0/2
+1/2
+
+0/2
+0/2
+
+0/2
+0/2
+
+1/3
+1/3
+
+1/2
+1/2
+
+1/2
+1/2
+
+9.5
+5.9
+
+45%
+28%
+48%
+
+32%
+
+15%
+
+41%
+
+26%
+
+4%
+
+45%
+
+59%
+
+48%
+
+Agent avg.
+API avg.
+Case pass rate
+
+to preserve or recover an architectural direction under structural pressure: refactor toward existing
+abstractions, maintain responsibility boundaries, extend behavior without patching central logic, or route
+changes through the repository’s intended reuse path. This suggests that the main limitation exposed
+by NITR is not raw implementation ability alone, but difficulty maintaining design discipline during
+repository-level change.
+A further pattern emerges when we separate micro cases from multi-step cases, also shown in Figure 5.
+Across all 23 configurations, micro cases are passed at 53.5% (123/230), whereas multi-step cases are
+passed at only 20.6% (52/253). The same drop appears in both evaluation regimes. API-only systems fall
+from 44.2% on micro cases (53/120) to 13.6% on multi-step cases (18/132), while agent-mode systems fall
+from 63.6% (70/110) to 28.1% (34/121). Moreover, four of the five universally unsolved cases belong to
+the multi-step setting.
+Summary 1
+NITR shows that current AI coding tools remain far from robust: they solve only 36.2% of cases, and
+pass rates collapse from 53.5% on micro cases to 20.6% on multi-step cases. The real bottleneck is
+sustained structural discipline under change, not isolated code generation or bug fixing.
+5.2
+
+RQ2: Which Maintainability Dimensions Are Most Challenging?
+
+Table 3 (bottom row) reports aggregate pass rates by maintainability dimension. The results reveal a
+non-uniform difficulty pattern within NITR rather than a uniform decline across the suite. Please note
+that because some dimensions are represented by a few cases, these rates should be read as diagnostic
+trends within NITR rather than high-confidence population estimates of maintainability difficulty.
+Dependency Control (D6) is the hardest dimension by a wide margin, with a pass rate of just 4.3%. Across
+its two cases (Case 008 and Case 015), only 2 of 46 evaluated attempts succeed. Responsibility Decomposition
+
+9
+
+Model
+
+001
+
+002
+
+003
+
+004
+
+005
+
+006
+
+007
+
+008
+
+009
+
+010
+
+011
+
+012
+
+013
+
+014
+
+015
+
+016
+
+017
+
+018
+
+019
+
+020
+
+021
+
+Figure 6: Pass/fail heatmap of 23 evaluated configurations across 21 cases.
+Pass,
+S-category failure
+(functional tests pass, maintainability oracle fails),
+Functional test failure,
+Both fail,
+Build
+failure. Cases marked
+confirm that functional tests alone miss these maintainability failures, which
+are detectable only via structural probes.
+
+GPT-5.3-Cx (Agt)
+GPT-5.3-Cx (API)
+GPT-5.4 (Agt)
+GPT-5.4 (API)
+GPT-5.2-Cx (Agt)
+GPT-5 (Agt)
+GPT-5-Mini (API)
+Claude Opus 4.5 (Agt)
+Claude Opus 4.5 (API)
+Claude Opus 4.6 (Agt)
+Claude Opus 4.6 (API)
+Claude Sonnet 4.5 (Agt)
+Claude Sonnet 4.5 (API)
+Claude Sonnet 4.6 (Agt)
+Claude Sonnet 4.6 (API)
+Gemini 3.1 Pro (Agt)
+Gemini 3.1 Pro (API)
+Gemini 3.1 Flash (Agt)
+Gemini 3.1 Flash (API)
+Gemini 2.5 Pro (Agt)
+Gemini 2.5 Pro (API)
+Qwen3-Coder (API)
+Qwen3-80B (API)
+
+S
+S
+S
+S
+✓
+S
+S
+S
+S
+✓
+S
+S
+S
+S
+S
+✓
+S
+S
+S
+B
+✓
+✓
+S
+
+S
+S
+S
+S
+B
+B
+B
+B
+S
+S
+S
+S
+S
+S
+S
+E
+S
+S
+S
+E
+S
+E
+S
+
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+F
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+
+F
+F
+F
+F
+F
+E
+F
+F
+F
+F
+E
+F
+F
+F
+E
+F
+F
+F
+E
+E
+F
+E
+E
+
+B
+B
+B
+B
+B
+B
+E
+F
+F
+B
+F
+B
+E
+F
+E
+F
+F
+F
+F
+E
+E
+B
+E
+
+S
+B
+S
+E
+S
+S
+E
+S
+B
+✓
+B
+E
+F
+✓
+F
+S
+E
+F
+E
+E
+B
+E
+E
+
+✓
+✓
+✓
+F
+✓
+✓
+✓
+✓
+F
+✓
+F
+✓
+B
+F
+B
+✓
+F
+F
+F
+F
+E
+F
+F
+
+✓
+F
+F
+F
+✓
+B
+B
+F
+B
+F
+F
+E
+F
+F
+F
+S
+S
+F
+F
+F
+F
+E
+E
+
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+F
+✓
+✓
+✓
+✓
+E
+✓
+✓
+
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+F
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+F
+✓
+✓
+✓
+
+✓
+F
+✓
+F
+✓
+✓
+F
+✓
+F
+✓
+F
+✓
+F
+✓
+F
+✓
+✓
+F
+F
+F
+F
+F
+F
+
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+
+✓
+F
+✓
+✓
+✓
+✓
+F
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+F
+✓
+✓
+✓
+✓
+✓
+✓
+F
+F
+
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+✓
+E
+✓
+✓
+✓
+✓
+✓
+✓
+F
+✓
+F
+E
+✓
+
+F
+F
+F
+F
+F
+F
+F
+F
+F
+F
+F
+F
+F
+F
+F
+S
+F
+F
+F
+F
+F
+F
+E
+
+✓
+F
+✓
+F
+✓
+✓
+F
+✓
+F
+✓
+F
+✓
+F
+✓
+F
+B
+F
+F
+F
+E
+E
+F
+E
+
+✓
+S
+S
+✓
+S
+S
+F
+S
+B
+B
+B
+B
+B
+B
+S
+✓
+S
+B
+B
+E
+✓
+E
+B
+
+F
+F
+F
+F
+F
+✓
+F
+F
+F
+F
+F
+F
+F
+F
+F
+✓
+F
+F
+F
+F
+F
+F
+F
+
+F
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+✓
+B
+E
+E
+E
+E
+B
+B
+
+✓
+S
+✓
+S
+S
+✓
+S
+✓
+S
+✓
+S
+✓
+S
+S
+S
+S
+✓
+S
+S
+S
+S
+E
+S
+
+F
+F
+F
+F
+F
+F
+F
+F
+F
+F
+F
+F
+F
+F
+F
+F
+F
+F
+F
+F
+F
+F
+F
+
+Pass 5/23 0/23 22/23 0/23 0/23 2/23 10/23 2/23 21/23 21/23 10/23 23/23 18/23 19/23 0/23 8/23 4/23 2/23 1/23 7/23 0/23
+
+(D3) is the second hardest at 15.2%, followed by Interface and Substitutability Discipline (D5) at 26.1%, and
+Reuse and Repo Awareness (D2) at 31.9%. These are dimensions that require the model to identify and
+preserve latent repository structure: respect dependency boundaries, maintain responsibility separation,
+extend behavior through the right abstraction, and reuse existing mechanisms instead of introducing
+parallel paths.
+By contrast, the easiest dimension is State Ownership and Lifecycle (D8) at 58.7%. It is followed by Change
+Locality (D1) and Side-Effect Isolation (D9), both at 47.8%, and Testability and Determinism (D7) at 44.9%.
+These dimensions are still nontrivial, but in many cases the intended structural direction is more explicit
+in the starter repository.
+Summary 2
+Within NITR, maintainability difficulty is highly concentrated instead of evenly distributed. Current
+AI coding tools achieve 58.7% on D8 but only 4.3% on D6, a 13× gap. Within NITR, the bottlenecks
+are dependency control, responsibility decomposition, and abstraction-respecting extension.
+
+5.3
+
+RQ3: Maintainability Failures Missed by Functional Correctness
+
+To answer RQ3, we analyze whether systems fail and how they fail. In particular, we distinguish ordinary
+functional failures from failures that remain behaviorally correct yet violate the maintainability constraint
+encoded by the probe.
+Figure 6 summarizes the outcome of every (model, case) pair. We classify each result as Pass, F (functional
+test failure), S (functional tests pass, but the maintainability oracle fails), B (both fail), or E (build error).
+Across all 483 evaluated pairs, 36.2% pass, 31.5% are functional failures, 13.3% are S-category failures,
+10.4% are joint failures, and 8.7% are build errors. By this decoupling, NITR is deliberately constructed
+so that a behaviorally correct shortcut and a maintainable repository-aligned solution can both satisfy the
+immediate task, while differing in long-term structural quality.
+The S category is especially important for answering this research question. These are solutions that
+compile, pass the hidden functional tests, and would be counted as successful under conventional
+test-based evaluation, yet still violate the intended maintainability constraint. Across the full suite, this
+occurs in 64 of 483 evaluated pairs (13.3%). The effect is particularly strong in Case 001, Case 002, and
+Case 020, which exhibit 17/23, 16/23, and 15/23 S-category outcomes, respectively. In these probes,
+many systems produce code that appears correct behaviorally while silently introducing structural debt.
+This shows that functional correctness and maintainability quality often decouple, and that test-only
+
+10
+
+Table 4: The table summarizes recurring qualitative patterns and representative cases; it is not an
+exhaustive coded annotation of all failures.
+Failure archetype
+
+Defining behavior
+
+Representative
+cases
+
+Outcome
+
+Shortcut over reuse or abstraction
+
+Clones logic or creates a parallel path instead
+of routing the change through a reusable or
+repository-aligned abstraction
+
+001, 002, 011, 021
+
+S/F
+
+Boundary contamination
+
+Preserves visible behavior but violates responsibility, ownership, or side-effect boundaries
+
+004, 019, 020
+
+S/F/B
+
+Incomplete abstraction refactor
+
+Starts the right abstraction shape but does not
+propagate the change consistently across the
+repository
+
+006, 008, 014, 015
+
+E/B
+
+Later-step regression
+
+Works for earlier milestones but breaks baseline behavior or collapses under later extensions
+
+005, 007, 016, 017,
+018, 019
+
+F/B
+
+Missing test seam
+
+Leaves time, randomness, or configurationsensitive behavior hardwired in core logic
+
+009, 016, 018
+
+F
+
+evaluation systematically overestimates maintainability competence on a nontrivial portion of the suite.
+Manual Inspection. To contextualize the failure matrix, we qualitatively inspected failed outcomes at
+the level of individual (model, case) runs. Across the 308 failed runs, the breakdowns clustered into
+a small set of recurring cross-case archetypes rather than appearing arbitrary or case-specific. These
+archetypes capture empirical failure mechanisms shared across maintainability dimensions: reuse and
+dependency-control probes often fail through shortcut-over-reuse or incomplete abstraction refactors,
+whereas responsibility and side-effect probes more often fail through boundary contamination. Overall,
+NITR suggests that current AI coding tools often preserve required behavior through structurally convenient
+shortcuts that accumulate maintainability debt beyond what functional tests alone expose.
+Summary 3
+Within NITR, test passing is an unreliable proxy for maintainability preservation. 64/483 outcomes
+(13.3%) are behaviorally correct yet structurally wrong, and 308 failed runs collapse into five recurring
+archetypes rather than case-specific noise.
+5.4
+
+RQ4: Agents vs. APIs Under the NITR Harness
+
+Under our constrained harness, agent-mode configurations are associated with higher overall performance on NITR. We report this as an observational comparison rather than a clean causal estimate
+of scaffolding alone, since agent and API settings differ in interface and execution surface. Across all
+configurations, agent mode averages 45.0% (9.45/21 cases) versus 28.2% (5.92/21) for API-only systems,
+a gain of 16.8 percentage points. The best agent configuration solves 12 of 21 cases, compared with 8 for
+the best API-only configuration.
+The same pattern appears in matched same-family comparisons. Among the nine families evaluated in
+both modes, agent mode improves performance in eight, with an average gain of 3.0 passed cases. For
+example, GPT-5.3-Cx and Claude Opus 4.6 improve from 6 to 12 passed cases in agent mode. Across
+NITR, the largest gains appear on Cases 007, 011, 016, and 020, which require coordination across module
+boundaries, staged modifications, or responsibility-preserving changes.
+However, agent mode does not remove the core bottlenecks exposed by NITR: no matched family solves
+Cases 002, 004, 005, 015, or 021 in either mode. Overall, under this harness, agent-mode systems are
+associated with better maintainability-preserving performance, but they do not resolve the underlying
+architectural failure modes.
+
+11
+
+Summary 4
+Under the NITR harness, agent-mode configurations generally perform better than API-only ones
+(45.0% vs. 28.2%), but this does not isolate scaffolding as the sole cause and does not remove the core
+architectural bottlenecks.
+5.5
+
+Representative Case Studies
+
+We discuss representative cases to illustrate distinct maintainability failure modes. Cases 001 and 020
+capture NITR’s central behavioral–structural gap, while Case 006 highlights brittle extension against an
+existing repository convention.
+Case 001 (D1, S-category maintainability failure). The task asks agents to implement a multi-type add
+function across three incremental steps. Although the locked app/main.cc calls add with all four types
+from step 1, only the integer path is tested initially, so explicit overloads can still pass early. By step 3, 17
+of 23 configurations incur structural debt by introducing duplicated, type-specific implementations while
+still passing the functional tests. The structural probe requires a generic definition (e.g., template or auto)
+and flags multiple explicit overloads as ERR_DUPLICATED_IMPLEMENTATION.
+Case 020 (D3, S-category maintainability failure). The task asks agents to implement a handover-packet
+ownership boundary between two adjacent pipeline modules. 7 configurations pass the case. 15 of 23
+configurations produce functionally correct solutions, but the structural probe detects that the ownershiptransfer function also performs validation or enrichment that belongs in the receiving module, violating
+the intended responsibility boundary.
+Case 006 (D5, mixed maintainability/functional/build failure). The task asks agents to refactor a hitprocessing pipeline so that the sort stage consumes a narrow view type rather than the full HitBuffer.
+Two configurations pass. 6 configurations still pass all functional tests, but introduce no new view type.
+Here the repository already establishes an extension contract through its existing type-family structure,
+and the task requires the new sort-stage interface to follow that pattern. The structural probe therefore
+checks for a corresponding view abstraction in the public interface using repository-consistent patterns
+(e.g.,SortView or IHitSorting); this is not a stylistic naming preference, but a check that the edit preserves
+the repository’s extension structure rather than taking an ad hoc shortcut. A further four configurations
+introduce a view type but wire it incorrectly, breaking functionality, and eight fail to compile altogether.
+
+6
+
+Discussion and Implications
+
+6.1
+
+Implications
+
+NITR suggests implications for education, code review, and agent design. First, NITR can be useful as a
+teaching instrument for SE courses. Its cases make design tradeoffs concrete by contrasting behaviorally
+correct solutions with structurally poor ones, which help students discuss reuse, boundaries, and
+testability in a more grounded way. Second, in practice, reviewing AI-generated code should go beyond
+asking whether a patch works, and ask whether it preserves reuse paths, dependency boundaries,
+responsibility separation, etc. Especially for multi-step changes, AI-generated code should be treated less
+as finished output and more as a structurally untrusted proposal. Third, the failures exposed by NITR
+suggest that improving coding agents will require stronger repository-level structural reasoning rather
+than better local code synthesis alone.
+6.2
+
+Threats to Validity
+
+Construct validity. NITR operationalizes maintainability through authored probes and case-specific
+structural oracles. This means the framework measures maintainability preservation as instantiated by
+explicit repository-evolution pressures and executable design-boundary checks, not maintainability in an
+unrestricted sense. We therefore position NITR as a diagnostic instrument for targeted maintainability
+pressures rather than a universal maintainability benchmark. Internal validity. Agent/API comparisons
+depend on the execution surfaces used here and should be read as harness-level comparisons rather
+than isolated causal estimates. Each configuration is evaluated with a fixed setup and single sampled
+run per case, so we do not estimate run-to-run variance or prompt sensitivity. External validity. The
+suite uses 21 small C++ repositories for diagnostic clarity. This supports interpretability and oracle
+precision, but does not cover the full diversity of languages, repository scales, or software-engineering
+workflows. Conclusion validity. Some maintainability dimensions are represented by only two or three
+
+12
+
+cases. Accordingly, dimension-level differences are best interpreted as suite-level diagnostic trends rather
+than high-power statistical estimates.
+
+7
+
+Related Work
+
+Software Engineering Benchmarks for LLMs. A large body of work evaluates coding systems primarily
+through behavioral correctness. Early benchmarks such as HumanEval Chen et al. (2021), MBPP Austin
+et al. (2021), and CodeContests Li et al. (2022) focus on synthesis tasks whose outputs are judged by
+hidden tests. More recent benchmarks broaden the setting from isolated functions to realistic codebase
+tasks while retaining correctness as the main signal. RepoBench Liu et al. (2024) introduces repositorylevel context for cross-file completion, LiveCodeBench Jain et al. (2024) emphasizes contamination-free
+and continually refreshed evaluation, SWE-bench Jimenez et al. (2024) measures issue resolution in real
+GitHub repositories, and EvoCodeBench Li et al. (2024a) evaluates repository-grounded code generation
+under evolving benchmark updates.
+This line of work has since expanded along several axes. SWE-bench Verified Chowdhury et al. (2024),
+SWE-bench Pro Deng et al. (2025), and Multi-SWE-bench Zan et al. (2025) strengthen issue-resolution
+evaluation through improved quality control, difficulty, and multilingual coverage. SWE-Evo Thai
+et al. (2025) and Commit-0 Zhao et al. (2025) move toward longer-horizon development workflows,
+while NL2Repo Ding et al. (2026) studies full repository generation from natural-language specifications.
+Automated pipelines such as SWE-rebench Badertdinov et al. (2025) and SWE-bench Live Zhang et al.
+(2025) further improve realism. .
+These works are indispensable for measuring task-completion capability, but their primary signal remains test behavior. NITR instead evaluates whether a behaviorally correct repository edit preserves
+maintainability. It relies on expert-curated probes to ensure data quality, so that each case cleanly encodes
+a specific software engineering principle and maintainability pressure.
+Long-Horizon Software Evolution Benchmarks. A second line of work pushes evaluation beyond
+one-shot issue resolution toward broader software-development behavior and continuous repository
+change. DevBench Li et al. (2024b) evaluates multiple stages of the software-development lifecycle,
+SWE-EVO Thai et al. (2025) and SWE-CI Chen et al. (2026) study multi-step repository evolution and
+continuous-integration-style maintenance, SlopCodeBench slo (2026) examines code erosion as agents
+iterate, and EvoClaw Deng et al. (2026) evaluates continuous software evolution through executable
+milestone sequences that stress sustained system integrity over time.
+These efforts primarily evaluate agents under continuous task evolution measured by test behaviors,
+whereas NITR evaluates whether a behaviorally correct repository edit preserves maintainable structure
+in a way that can be diagnosed precisely.
+LLMs for Design Quality and Maintainability Analysis. Maintainability has long been studied in
+software engineering through code and design quality perspectives, including coupling and cohesion
+metrics Chidamber and Kemerer (1994), design principles such as SOLID Martin (2003), and technical
+debt as a way to reason about future maintenance cost Cunningham (1992).
+Recent software engineering work has begun to study LLMs on maintainability and quality-oriented
+tasks beyond functional correctness Sun et al. (2025); Molison et al. (2025). Recent examples include
+LLM-based localization of code design issues Batole et al. (2025), prompting-based detection of SOLID
+principle violations Pehlivan et al. (2025), evaluation of LLMs for fixing maintainability issues in realworld projects Nunes et al. (2025), context-enriched quality-aware code review generation Zhang et al.
+(2026), and industrial experience with LLM-based automated code review Ramesh et al. (2025).
+These efforts study how LLMs can analyze, review, or repair maintainability-related problems. NITR
+differs from them by evaluating whether maintainability is preserved during code generation itself. Its
+distinguishing mechanism is the use of hidden structural oracles tied to explicit repository-evolution
+pressures.
+
+8
+
+Conclusion
+
+NITR is ultimately a step toward a broader shift in how we evaluate LLM for software engineering: from
+asking whether models can produce correct code, to asking whether they can participate responsibly
+in the long-term evolution of real repositories. As coding agents move from isolated completions to
+sustained collaboration with developers, the central question is no longer only correctness, but whether
+generated changes preserve the structural conditions that make future change possible. We hope NITR
+
+13
+
+helps make maintainability a first-class objective in both evaluation and system design, and encourages
+the next generation of coding agents to be judged not only by what they can build today, but by whether
+what they build remains worth extending tomorrow.
+
+References
+2026. Google Vertex AI. https://cloud.google.com/vertex-ai.
+2026. OpenAI API Platform. https://openai.com/api/.
+2026. SlopCodeBench. https://www.scbench.ai/.
+2026. Why the majority of vibe coded projects fail. https://www.reddit.com/r/ClaudeAI/comments/
+1rt31th/why_the_majority_of_vibe_coded_projects_fail/.
+Jacob Austin, Augustus Odena, Maxwell Nye, Maarten Bosma, Henryk Michalewski, David Dohan, Ellen
+Jiang, Carrie Cai, Michael Terry, Quoc Le, et al. 2021. Program Synthesis with Large Language Models.
+arXiv preprint arXiv:2108.07732 (2021).
+Ibragim Badertdinov, Alexander Golubev, Maksim Nekrashevich, Anton Shevtsov, Simon Karasik,
+Andrei Andriushchenko, Maria Trofimova, Daria Litvintseva, and Boris Yangel. 2025. SWE-rebench:
+An Automated Pipeline for Task Collection and Decontaminated Evaluation of Software Engineering
+Agents. arXiv preprint arXiv:2505.20411 (2025).
+Fraol Batole, David OBrien, Tien N. Nguyen, Robert Dyer, and Hridesh Rajan. 2025. An LLM-Based AgentOriented Approach for Automated Code Design Issue Localization. In Proceedings of the IEEE/ACM
+47th International Conference on Software Engineering (Ottawa, Ontario, Canada) (ICSE ’25). IEEE Press,
+1320–1332. doi:10.1109/ICSE55347.2025.00100
+Islem Bouzenia, Premkumar T. Devanbu, and Michael Pradel. 2025. RepairAgent: An Autonomous,
+LLM-Based Agent for Program Repair. In Proceedings of the 47th IEEE/ACM International Conference on
+Software Engineering (ICSE). 2188–2200. https://arxiv.org/abs/2403.17134
+Jialong Chen, Xander Xu, Hu Wei, Chuan Chen, and Bing Zhao. 2026. SWE-CI: Evaluating Agent
+Capabilities in Maintaining Codebases via Continuous Integration. arXiv preprint arXiv:2603.03823
+(2026). doi:10.48550/arXiv.2603.03823
+Mark Chen, Jerry Tworek, Heewoo Jun, Qiming Yuan, Henrique Ponde de Oliveira Pinto, Jared Kaplan,
+Harri Edwards, Yuri Burda, Nicholas Joseph, Greg Brockman, et al. 2021. Evaluating Large Language
+Models Trained on Code. arXiv preprint arXiv:2107.03374 (2021).
+Shyam R. Chidamber and Chris F. Kemerer. 1994. A Metrics Suite for Object Oriented Design. IEEE
+Transactions on Software Engineering 20, 6 (1994), 476–493. doi:10.1109/32.295895
+Neil Chowdhury, James Aung, Chan Jun Shern, Oliver Jaffe, Dane Sherburn, Giulio Starace, Evan Mays,
+Rachel Dias, Marwan Aljubeh, Mia Glaese, et al. 2024. Introducing SWE-bench Verified. https:
+//openai.com/index/introducing-swe-bench-verified/.
+Ward Cunningham. 1992. The WyCash Portfolio Management System. In Addendum to the Proceedings on
+Object-Oriented Programming Systems, Languages, and Applications (OOPSLA ’92). ACM, 29–30. doi:10.
+1145/157709.157715
+Gangda Deng, Zhaoling Chen, Zhongming Yu, Haoyang Fan, Yuhong Liu, Yuxin Yang, Dhruv Parikh, Rajgopal Kannan, Le Cong, Mengdi Wang, Qian Zhang, Viktor Prasanna, Xiangru Tang, and Xingyao Wang.
+2026. EvoClaw: Evaluating AI Agents on Continuous Software Evolution. arXiv:2603.13428 [cs.SE]
+https://arxiv.org/abs/2603.13428
+Xiang Deng, Jeff Da, Edwin Pan, Yannis Yiming He, Charles Ide, Kanak Garg, Niklas Lauffer, Andrew
+Park, Nitin Pasari, Chetan Rane, Karmini Sampath, Maya Krishnan, Srivatsa Kundurthy, Sean Hendryx,
+Zifan Wang, Vijay Bharadwaj, Jeff Holm, Raja Aluri, Chen Bo Calvin Zhang, Noah Jacobson, Bing Liu,
+and Brad Kenstler. 2025. SWE-Bench Pro: Can AI Agents Solve Long-Horizon Software Engineering
+Tasks? arXiv:2509.16941 [cs.SE] https://arxiv.org/abs/2509.16941
+Jingzhe Ding, Shengda Long, Changxin Pu, Huan Zhou, Hongwan Gao, Xiang Gao, Chao He, Yue Hou,
+Fei Hu, Zhaojian Li, Weiran Shi, Zaiyuan Wang, Daoguang Zan, Chenchen Zhang, Xiaoxu Zhang, Qizhi
+Chen, Xianfu Cheng, Bo Deng, Qingshui Gu, Kai Hua, Juntao Lin, Pai Liu, Mingchen Li, Xuanguang
+Pan, Zifan Peng, Yujia Qin, Yong Shan, Zhewen Tan, Weihao Xie, Zihan Wang, Yishuo Yuan, Jiayu
+Zhang, Enduo Zhao, Yunfei Zhao, He Zhu, Liya Zhu, Chenyang Zou, Ming Ding, Jianpeng Jiao, Jiaheng
+14
+
+Liu, Minghao Liu, Qian Liu, Chongyang Tao, Jian Yang, Tong Yang, Zhaoxiang Zhang, Xinjie Chen,
+Wenhao Huang, and Ge Zhang. 2026. NL2Repo-Bench: Towards Long-Horizon Repository Generation
+Evaluation of Coding Agents. arXiv:2512.12730 [cs.CL] https://arxiv.org/abs/2512.12730
+Roy S Freedman. 1991. Testability of software components. IEEE transactions on Software Engineering 17, 6
+(1991), 553–564.
+Stefan Haefliger, Georg Von Krogh, and Sebastian Spaeth. 2008. Code reuse in open source software.
+Management science 54, 1 (2008), 180–193.
+Ruida Hu, Chao Peng, Jingyi Ren, Bo Jiang, Xiangxin Meng, Qinyun Wu, Pengfei Gao, Xinchen Wang, and
+Cuiyun Gao. 2024. A Real-World Benchmark for Evaluating Fine-Grained Issue Solving Capabilities of
+Large Language Models. arXiv preprint arXiv:2411.18019 (2024). https://arxiv.org/abs/2411.18019
+Naman Jain, Ming-Ho Yee, Kyle Lo, Vaishaal Shankar, Arjun Guha, Koushik Sen, Ion Stoica, and Dan
+Klein. 2024. LiveCodeBench: Holistic and Contamination Free Evaluation of Large Language Models
+for Code. arXiv:2403.07974 [cs.SE] https://arxiv.org/abs/2403.07974
+Carlos E Jimenez, John Yang, Alexander Wettig, Shunyu Yao, Kexin Pei, Ofir Press, and Karthik
+Narasimhan. 2024. SWE-bench: Can Language Models Resolve Real-World GitHub Issues?. In International Conference on Learning Representations (ICLR).
+Charles W Krueger. 1992. Software reuse. ACM Computing Surveys (CSUR) 24, 2 (1992), 131–183.
+Bowen Li, Wenhan Wu, Ziwei Tang, Lin Shi, John Yang, Jinyang Li, Shunyu Yao, Chen Qian, Binyuan
+Hui, Qicheng Zhang, Zhiyin Yu, He Du, Ping Yang, Dahua Lin, Chao Peng, and Kai Chen. 2024b.
+DevBench: A Comprehensive Benchmark for Software Development. arXiv preprint arXiv:2403.08604
+(2024). doi:10.48550/arXiv.2403.08604
+Jia Li, Ge Li, Xuanming Zhang, Yihong Dong, and Zhi Jin. 2024a. EvoCodeBench: An Evolving Code
+Generation Benchmark Aligned with Real-World Code Repositories. arXiv preprint arXiv:2404.00599
+(2024). doi:10.48550/arXiv.2404.00599
+Yujia Li, David Choi, Junyoung Chung, Nate Kushman, Julian Schrittwieser, Rémi Leblond, Tom Eccles,
+James Keeling, Felix Gimeno, Agustin Dal Lago, et al. 2022. Competition-Level Code Generation with
+AlphaCode. Science 378, 6624 (2022), 1092–1097.
+Tianyang Liu, Canwen Xu, and Julian McAuley. 2024. RepoBench: Benchmarking Repository-Level
+Code Auto-Completion Systems. In The Twelfth International Conference on Learning Representations.
+https://openreview.net/forum?id=pPjZIOuQuF
+Robert C. Martin. 2003. Agile Software Development, Principles, Patterns, and Practices. Prentice Hall.
+Alfred Santa Molison, Marcia Moraes, Glaucia Melo, Fabio Santos, and Wesley K. G. Assuncao. 2025.
+Is LLM-Generated Code More Maintainable & Reliable than Human-Written Code? arXiv preprint
+arXiv:2508.00700 (2025). doi:10.48550/arXiv.2508.00700
+Henrique Nunes, Eduardo Figueiredo, Larissa Rocha, Sarah Nadi, Fischer Ferreira, and Geanderson
+Esteves. 2025. Evaluating the Effectiveness of LLMs in Fixing Maintainability Issues in Real-World
+Projects. arXiv:2502.02368 [cs.SE] https://arxiv.org/abs/2502.02368
+Siru Ouyang, Wenhao Yu, Kaixin Ma, Zilin Xiao, Zhihan Zhang, Mengzhao Jia, Jiawei Han, Hongming
+Zhang, and Dong Yu. 2025. RepoGraph: Enhancing AI Software Engineering with Repository-level
+Code Graph. In The Thirteenth International Conference on Learning Representations (ICLR). https:
+//openreview.net/forum?id=JbWVgWsW9H
+Parker. 1982. Design for testability—A survey. IEEE Transactions on computers 100, 1 (1982), 2–15.
+Fatih Pehlivan, Arçin Ülkü Ergüzen, Sahand Moslemi Yengejeh, Mayasah Lami, and Anil Koyuncu. 2025.
+Are We SOLID Yet? An Empirical Study on Prompting LLMs to Detect Design Principle Violations.
+arXiv:2509.03093 [cs.SE] https://arxiv.org/abs/2509.03093
+Shweta Ramesh, Joy Bose, Hamender Singh, A K Raghavan, Sujoy Roy Chowdhury, Giriprasad Sridhara,
+Nishrith Saini, and Ricardo Britto. 2025. Automated Code Review Using Large Language Models
+at Ericsson: An Experience Report. 2025 IEEE International Conference on Software Maintenance and
+Evolution (ICSME) (2025), 602–607. https://api.semanticscholar.org/CorpusID:280046022
+Noah Shinn, Federico Cassano, Ashwin Gopinath, Karthik R. Narasimhan, and Shunyu Yao. 2023.
+Reflexion: Language Agents with Verbal Reinforcement Learning. In Advances in Neural Information
+Processing Systems. https://openreview.net/forum?id=vAElhFcKW6
+15
+
+Xin Sun, Daniel Ståhl, Kristian Sandahl, and Christoph Kessler. 2025. Quality Assurance of LLMgenerated Code: Addressing Non-Functional Quality Characteristics. arXiv preprint arXiv:2511.10271
+(2025). doi:10.48550/arXiv.2511.10271
+Minh V. T. Thai, Tue Le, Dung Nguyen Manh, Huy Phan Nhat, and Nghi D. Q. Bui. 2025. SWEEVO: Benchmarking Coding Agents in Long-Horizon Software Evolution Scenarios. arXiv preprint
+arXiv:2512.18470 (2025).
+Xingyao Wang, Yangyi Chen, Lifan Yuan, Yizhe Zhang, Yunzhu Li, Hao Peng, and Heng Ji. 2024.
+Executable Code Actions Elicit Better LLM Agents. In Proceedings of the 41st International Conference on
+Machine Learning (ICML). 50208–50232. https://arxiv.org/abs/2402.01030
+Xingyao Wang, Boxuan Li, Yufan Song, Frank F. Xu, Xiangru Tang, Mingchen Zhuge, Jiayi Pan, Yueqi
+Song, Bowen Li, Jaskirat Singh, Hoang H. Tran, Fuqiang Li, Ren Ma, Mingzhang Zheng, Bill Qian,
+Yanjun Shao, Niklas Muennighoff, Yizhe Zhang, Binyuan Hui, Junyang Lin, Robert Brennan, Hao
+Peng, Heng Ji, and Graham Neubig. 2025. OpenHands: An Open Platform for AI Software Developers
+as Generalist Agents. In The Thirteenth International Conference on Learning Representations (ICLR).
+https://openreview.net/forum?id=OJd3ayDDoF
+John Yang, Carlos E. Jimenez, Alexander Wettig, Kilian Lieret, Shunyu Yao, Karthik R. Narasimhan, and
+Ofir Press. 2024. SWE-agent: Agent-Computer Interfaces Enable Automated Software Engineering. In
+Advances in Neural Information Processing Systems. https://openreview.net/forum?id=mXpq6ut8J3
+John Yang, Carlos E Jimenez, Alex L Zhang, Kilian Lieret, Joyce Yang, Xindi Wu, Ori Press, Niklas
+Muennighoff, Gabriel Synnaeve, Karthik R Narasimhan, Diyi Yang, Sida Wang, and Ofir Press. 2025.
+SWE-bench Multimodal: Do AI Systems Generalize to Visual Software Domains?. In The Thirteenth
+International Conference on Learning Representations. https://openreview.net/forum?id=riTiq3i21b
+Daoguang Zan, Zhirong Huang, Wei Liu, Hanwu Chen, Linhao Zhang, Shulin Xin, Lu Chen, Qi Liu,
+Xiaojian Zhong, Aoyan Li, et al. 2025. Multi-SWE-bench: A Multilingual Benchmark for Issue Resolving.
+arXiv preprint arXiv:2504.02605 (2025).
+Linghao Zhang, Shilin He, Chaoyun Zhang, Yu Kang, Bowen Li, Chengxing Xie, Junhao Wang, Maoquan
+Wang, Yufan Huang, Shengyu Fu, et al. 2025. SWE-bench Goes Live! arXiv preprint arXiv:2505.23419
+(2025).
+Yuxin Zhang, Yuxia Zhang, Zeyu Sun, Yanjie Jiang, and Hui Liu. 2026. LAURA: Enhancing Code Review
+Generation with Context-Enriched Retrieval-Augmented LLM. In 2025 40th IEEE/ACM International
+Conference on Automated Software Engineering (ASE) (Seoul, Korea, Republic of). IEEE Press, 2983–2995.
+doi:10.1109/ASE63991.2025.00245
+Wenting Zhao, Nan Jiang, Celine Lee, Justin T. Chiu, Claire Cardie, Matthias Gallé, and Alexander M.
+Rush. 2025. Commit0: Library Generation from Scratch. In International Conference on Learning Representations (ICLR).
+Jiasheng Zheng, Boxi Cao, Zhengzhao Ma, Ruotong Pan, Hongyu Lin, Yaojie Lu, Xianpei Han, and Le Sun.
+2024. Beyond Correctness: Benchmarking Multi-dimensional Code Generation for Large Language
+Models. arXiv preprint arXiv:2407.11470 (2024). https://arxiv.org/abs/2407.11470
+
+16
+
+

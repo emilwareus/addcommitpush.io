@@ -1,0 +1,5 @@
+model,architecture,params_or_backbone,duplex_or_streaming,notable_data,source_id,caveat
+Moshi,Multi-stream speech-text model with Mimi codec,7B Helium backbone,Full duplex,"160 ms theoretical latency; 200 ms practical; Mimi 12.5 Hz; 80 ms frames",R-VA-018,"Research system; not drop-in production agent stack."
+Qwen2.5-Omni,Thinker-Talker multimodal model,3B and 7B variants,Streaming speech output,"TMRoPE for time-aligned audio/video; sliding-window DiT to reduce initial package delay",R-VA-019,"Operational latency and interruption quality need local measurement."
+Mini-Omni,Text-instructed speech generation with parallel decoding,0.5B claim,Streaming,"VoiceAssistant-400K; SNAC audio codec; real-time speech interaction claim",R-VA-024,"Research-grade; English output limitation in repo FAQ."
+GLM-4-Voice,GLM-4-9B with speech tokenizer and streaming decoder,GLM-4-9B,Real-time conversations,"175 bps single-codebook speech tokenizer; 12.5 Hz frame rate",R-VA-025,"Bilingual focus; runtime/license constraints must be checked."
