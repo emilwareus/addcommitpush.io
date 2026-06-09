@@ -70,6 +70,7 @@ For the blog, the most dangerous version is not obvious garbage. It is a paragra
 | Inline over-listing | "route, test, schema, event, database column, generated SDK method, issue title" | Dumps examples instead of choosing the right one | Use one example or a category name |
 | Abstract noun soup | "alignment, robustness, architecture, framework" | Sounds technical without committing | Replace with domain nouns |
 | Repeated frame | Every section says "not X, but Y" | Cadence becomes AI-shaped | Vary structure or cut the frame |
+| Point-is-not formula | "The point is not X. The point is Y." | Sounds decisive but often just pads a direct claim | Delete the contrast and state Y directly |
 | Binary reframe tic | "X is not Y. It is Z." | Sounds sharp but often just performs contrast | Make the direct claim instead |
 | Fake punchline | Quote block that restates the paragraph | Performs importance | Keep only if it is sharper than the paragraph |
 | "Helpful" overexplaining | Explains terms the audience already knows | Talks down to senior readers | Trust the audience |
@@ -158,6 +159,7 @@ These are the patterns to search for in the current draft:
 - Tables that summarize obvious advice.
 - Code examples followed by a paragraph explaining every obvious line.
 - "The lesson is not X; the lesson is Y" repeated too often.
+- "The point is not X. The point is Y." used when a direct sentence would do.
 - "X is not Y. It is Z." used as a default opener.
 - Research paragraphs with more than two numbers.
 - "This does not prove..." disclaimers stacked in consecutive sections.

@@ -64,14 +64,14 @@ I have a love hate relationship to my CLAUDE/AGENTS.md. First off, I hate that C
 etc. Clear prompts of what commands / things to do when. But stuff I like to work better, but frankly does not: 
 
 - Follow the hexagonal architecture guidelines.
-- We use DDD in our codebase, make sure to define all business behaviour in the domain.
+- We use DDD in our codebase, make sure to define all business behavior in the domain.
 
-Writing good behavioural prompts, patterns + anti-patterns are often forgotten. Research also shows that the runtime is cut by roughly 30% and output tokens is cut by 16% ish where [AGENTS.md](http://AGENTS.md) are present. This makes sense to me, as these files can remove a bit of the "exploring" of the codebase with some initial guidance. BUT, a counter-study found that can also reduce the success raite by ~20%. But, real code is hard to measure in a controlled study, and both these studies used benchmarks that the models have potentially traiend on (OSS) or synthetic codebases. So, my personal tips are: 
+Writing good behavioral prompts, patterns + anti-patterns are often forgotten. Research also shows that the runtime is cut by roughly 30% and output tokens is cut by 16% ish where [AGENTS.md](http://AGENTS.md) are present. This makes sense to me, as these files can remove a bit of the "exploring" of the codebase with some initial guidance. BUT, a counter-study found that can also reduce the success rate by ~20%. But, real code is hard to measure in a controlled study, and both these studies used benchmarks that the models have potentially trained on (OSS) or synthetic codebases. So, my personal tips are: 
 
-1. These files will not fix everything, dont try to.
+1. These files will not fix everything, don't try to.
 2. Code is better docs than these files, write good code to learn from instead.
-3. Keep them clear, short, and focus on commands and bootstraping exploration
-4. Avoid "general stuff" that inferes a lot in it. "write good code".
+3. Keep them clear, short, and focus on commands and bootstrapping exploration
+4. Avoid "general stuff" that infers a lot in it. "write good code".
 
 **Insights:** [INSIGHT_02](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_02_agent_instructions_are_config.md) · [INSIGHT_24](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_24_context_files_are_config_with_debt.md)
 
@@ -96,7 +96,7 @@ Writing good behavioural prompts, patterns + anti-patterns are often forgotten. 
 
 More context is absolutely not always better. Better context is better. Layered context or "cold loaded" context, such as skills, documentation, CLI stuff, etc., can absolutely be valuable! Especially as a codebase grows it becomes a very bad idea to shove everything into the root AGENTS.md. Letting the model choose when to read what docs, readmes, etc. have improved performance quite a bit for my. The layout I run is in the root monorepo:   
 
-For main architectural / cross spanding knowledge. 
+For main architectural / cross spanning knowledge. 
 
 thoughts/architecture/
 
@@ -107,7 +107,7 @@ thoughts/architecture/
 
 -- 3-.... etc. 
 
-And then for very specifc things
+And then for very specific things
 
 backend/features/agents/evals/
 
@@ -116,7 +116,7 @@ backend/features/agents/evals/
 [-- PROMPT-ENGINEERING-IN-INTERNAL-AGENTS.md](http://README.md)  
 -- [RUNNING-EVALS.md](http://RUNNING-EVALS.md)   
 
-Trying to keep things pretty thin here. and IMO for the local things, the code should be so obvious it should not need docs on how to use/edit it. But I added "prompt engineering" as an example here, as my experience is that my friend Claude needs some guidance here. Another trick I do is in my SpecDrivenDevelopment pipeline, in the research phase, I force the models to enumerate the 3-5 most important archtiecture documents that it must read in plan and implementation to get a better sense of the codebase. This increased the autonomy a bit of the agent in my own experience.
+Trying to keep things pretty thin here. and IMO for the local things, the code should be so obvious it should not need docs on how to use/edit it. But I added "prompt engineering" as an example here, as my experience is that my friend Claude needs some guidance here. Another trick I do is in my SpecDrivenDevelopment pipeline, in the research phase, I force the models to enumerate the 3-5 most important architecture documents that it must read in plan and implementation to get a better sense of the codebase. This increased the autonomy a bit of the agent in my own experience.
 
 **Insights:** [INSIGHT_08](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_08_context_should_be_layered.md) · [INSIGHT_16](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_16_more_context_can_hurt.md)
 
@@ -137,7 +137,7 @@ Trying to keep things pretty thin here. and IMO for the local things, the code s
 You onboard your agent 100 times a day. Make it VERY easy. My personal favorites are: 
 
 - Creating a new worktree spins up the dockerized service fully and seeds the database + starts web
-- make check runs ALL checks, and this makes it easy to just say "run check and iterate unitl all green"
+- make check runs ALL checks, and this makes it easy to just say "run check and iterate until all green"
 - make setup-mac/linux/server/etc. that just completely install everything to get coding working in your env. 
 - devcontainers have actually been useful here :)
 
@@ -213,9 +213,9 @@ The research here is pretty clear, if your agents understand the "Graph" of your
 - Skinny symbol map on every edit (Aider style). Important defs and signatures across the repo. Shape before opening every file.
 - Search wide, rank narrow (Cody style). Keyword, graph, git, docs in; then cut to what fits the context window.
 
-But you are probably not building a code agent harness, you are probably build a good ol' code-thingy. So, to make this acitonable: make sure you coding agent has access to the LSP/IDE-pluging. This gives some of this power to the agents, helping it navigate your codebase and sometimes powering retrivial.
+But you are probably not building a code agent harness, you are probably build a good ol' code-thingy. So, to make this actionable: make sure your coding agent has access to the LSP/IDE-plugin. This gives some of this power to the agents, helping it navigate your codebase and sometimes powering retrieval.
 
-BUT, if you are building an agentic harness (who isn't??), the call graph slice seems to have the highest imact. Makeing in queryable, extracting neighborhoods that typically impact impact each other. I learned on my last startup that call graphs are hard to build, so I'll (probably) just keep to LSP's for now. 
+BUT, if you are building an agentic harness (who isn't??), the call graph slice seems to have the highest impact. Making it queryable, extracting neighborhoods that typically impact each other. I learned on my last startup that call graphs are hard to build, so I'll (probably) just keep to LSP's for now. 
 
 **Insights:** [INSIGHT_01](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_01_context_maps.md) · [INSIGHT_21](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_21_repository_graphs_need_selective_slices.md)
 
@@ -256,11 +256,11 @@ Jokes aside, I loved monorepos before AI took my job. It just makes everything s
 - Compliance documentation
 - Grafana settings
 - The best place to eat ice cream in town
-- All .env secrets (encrypted + commited using SOPS)
+- All .env secrets (encrypted + committed using SOPS)
 
-Sure, MCPs makes stuff searchable and retrievable in other systems. Have fun. Don't use use a no-code-tool to buld you blog, teach your marketing people how to prompt with claude code instead of ChatJippety.   
+Sure, MCPs makes stuff searchable and retrievable in other systems. Have fun. Don't use a no-code-tool to build your blog, teach your marketing people how to prompt with claude code instead of ChatJippety.   
 
-Additionally, this means that you have a completely co-versioned company. Keeping things in sync becomes much easiear when everything is on the same SHA.
+Additionally, this means that you have a completely co-versioned company. Keeping things in sync becomes much easier when everything is on the same SHA.
 
 **Insights:** [INSIGHT_19](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_19_monorepos_are_agent_context_infrastructure.md)
 
@@ -274,11 +274,11 @@ Additionally, this means that you have a completely co-versioned company. Keepin
 
 ### Bounded Context / Layout
 
-There is actually not a lot of research that finds that "good architecture = good code generation". And there is also a the debate of "what is even good architecture"... but I do think there are some wins here, and it is not about the agent. As a developer working with AI generated code we need to have a mental model of the work we are doing. This mental model was something we used to build by crying over our keyboards for hours on end. But now it cry in tokens instead of tears, and the mental model of the codebase becomes harder to form. We get cognetive debt.   
+There is actually not a lot of research that finds that "good architecture = good code generation". And there is also a the debate of "what is even good architecture"... but I do think there are some wins here, and it is not about the agent. As a developer working with AI generated code we need to have a mental model of the work we are doing. This mental model was something we used to build by crying over our keyboards for hours on end. But now it cry in tokens instead of tears, and the mental model of the codebase becomes harder to form. We get cognitive debt.   
 
-I think that a good bounded contexts within the codebase reduces the cognetive debt, makes it easier to grasp and understand the code, and there fore makes the developers take better decisison = better code gen in the long run. It may not improve the toking shotgun today, but it improves your ability to aim it.
+I think that a good bounded contexts within the codebase reduces the cognitive debt, makes it easier to grasp and understand the code, and therefore makes the developers take better decisions = better code gen in the long run. It may not improve the token shotgun today, but it improves your ability to aim it.
 
-I write a lot of go this time around, and I really like the "Three Dot Labs" architecture: [https://threedots.tech](https://threedots.tech/), which is a bit of DDD, event driven, hexagonal-ish, with strong testing guidelines. Here, a bounded context is just a "service", that may be deployed on its own, but can also run in a big monolith along other services, it may not import another bounded context directly, has clear responsebilities, interfaces, APIs, and dependencies. This works well for me and my team, but the goal of this is to keep your cognetive debt low... so you do what's best for you IMO.
+I write a lot of Go this time around, and I really like the "Three Dots Labs" architecture: [https://threedots.tech](https://threedots.tech/), which is a bit of DDD, event driven, hexagonal-ish, with strong testing guidelines. Here, a bounded context is just a "service", that may be deployed on its own, but can also run in a big monolith along other services, it may not import another bounded context directly, has clear responsibilities, interfaces, APIs, and dependencies. This works well for me and my team, but the goal of this is to keep your cognitive debt low... so you do what's best for you IMO.
 
 **Insights:** [INSIGHT_15](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_15_modularity_is_not_magic_boundaries_are.md) · [INSIGHT_26](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_26_static_surfaces_are_agent_affordances.md)
 
@@ -316,7 +316,7 @@ This is where I like [Needle in the Repo](https://arxiv.org/abs/2603.27745) as a
 
 I talked to my grandmother the other day, and she told me about this "farmer's eye". A farmer can walk into a barn with a thousand cows and see which cow is doing badly. They might not be able to explain exactly why. They might not be able to put it into a guideline. But they can see it.
 
-That is the kind of judgement we still need in codebases. If you cannot look at the change and quickly feel whether it belongs, whether the shape is right, whether it will be hard to maintain later. When you have the "farmer's eye" for your codebase, that's great. Optimize for the code quality that let's you keep that.
+That is the kind of judgment we still need in codebases. If you cannot look at the change and quickly feel whether it belongs, whether the shape is right, whether it will be hard to maintain later. When you have the "farmer's eye" for your codebase, that's great. Optimize for the code quality that lets you keep that.
 
 That is where I think code quality matters most right now:
 
@@ -349,7 +349,7 @@ I especially like component tests. If you have a service around some kind of con
 
 Those tests can be written almost like user stories. They describe what the system should achieve, they become easy to inspect, and they communicate back to the agent what it actually changed. You can read them quickly and see whether the test takes the right path through the system.
 
-I care less about test coverage as a percentage and more about branch and behavior coverage. For example, an API endpoint should have tests for the HTTP codes it can return, tenancy tests and access tests. It should prove the most important paths from the outside in, in a way that is easy for a human to inspect. Optimize your test code and infra for prod-like accuracy and readability, to be able to quickly verify intended behaviour.
+I care less about test coverage as a percentage and more about branch and behavior coverage. For example, an API endpoint should have tests for the HTTP codes it can return, tenancy tests and access tests. It should prove the most important paths from the outside in, in a way that is easy for a human to inspect. Optimize your test code and infra for prod-like accuracy and readability, to be able to quickly verify intended behavior.
 
 That is the part I care about:
 
@@ -420,11 +420,9 @@ That is the point:
 
 ### Naming
 
-Suggested segment:
-
 Names are not style polish.
 
-For agents, names are retrieval handles and semantic hints. They connect the issue, tests, docs, types, and code. If a function is called `reconcileInvoicePayment`, the model gets a cheap summary. If it is called `run`, the model has to spend intelligence recovering meaning the code should have exposed.
+For agents, names are retrieval handles and semantic hints. They connect the request to the codebase. If a function is called `reconcileInvoicePayment`, the model gets a cheap summary. If it is called `run`, the model has to spend intelligence recovering meaning the code should have exposed.
 
 The research is unusually clear for something developers usually treat as taste.
 
@@ -442,7 +440,7 @@ The practical rule:
 - Avoid semantic sinkholes: `utils`, `helpers`, `manager`, `handler`, `data`.
 - Treat renames of public symbols as retrieval/API changes, not cosmetics.
 
-The conclusion is not "good names make agents good." Too cute. The conclusion is:
+That gives me a smaller conclusion:
 
 > Bad names make the agent spend intelligence recovering meaning the code should have exposed.
 
@@ -486,7 +484,7 @@ The type surfaces that matter most are boundaries:
 - result/error types;
 - discriminated unions for state.
 
-The point is not static typing as religion. Python with good type hints, Pydantic models, dataclasses, and narrow interfaces can expose plenty of structure. TypeScript with `any`, dynamic indexing, stringly payloads, and broad JSON blobs can be a fog machine.
+Structure matters more than language choice. Python with good type hints, Pydantic models, dataclasses, and narrow interfaces can expose plenty of structure. TypeScript with `any`, dynamic indexing, stringly payloads, and broad JSON blobs can be a fog machine.
 
 Practical rule:
 
@@ -513,8 +511,8 @@ Types are not documentation you hope the agent reads. They are documentation the
 **Official docs**
 
 - [TypeScript: Narrowing / discriminated unions](https://www.typescriptlang.org/docs/handbook/2/narrowing.html)
-- [TypeScript: `noImplicitAny](https://www.typescriptlang.org/tsconfig/#noImplicitAny)`
-- [TypeScript 4.9: `satisfies](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-9.html)`
+- [TypeScript: `noImplicitAny`](https://www.typescriptlang.org/tsconfig/#noImplicitAny)
+- [TypeScript 4.9: `satisfies`](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-4-9.html)
 
 Plot data: `[names_types_apis.csv](../../presentations/write-code-ai-agents-love/research/data/names_types_apis.csv)`
 
@@ -570,9 +568,7 @@ The tooling will evolve as well, but the principle is already clear:
 
 ### Side effects & dynamic surfaces
 
-The point is not "never use side effects." Real systems have side effects. They send emails, enqueue jobs, mutate databases, register handlers, read environment variables, and talk to APIs.
-
-The problem is invisible side effects. If behavior is wired through import-time registration, string registries, reflection, glob-loaded plugins, monkeypatching, or environment-driven branches, the architecture moves out of the code graph and into runtime folklore.
+Real systems have side effects. They send emails, enqueue jobs, mutate databases, register handlers, read environment variables, and talk to APIs. The problem is invisible side effects. If behavior is wired through import-time registration, string registries, reflection, glob-loaded plugins, monkeypatching, or environment-driven branches, the architecture moves out of the code graph and into runtime folklore.
 
 Humans can sometimes learn that by being around the system long enough. Agents mostly learn through grep, ASTs, typecheckers, language servers, tests, and generated manifests. If those tools cannot see the edge, the agent has to infer it.
 
@@ -608,7 +604,7 @@ Now the dynamic behavior still exists, but it has a static address. The event ca
 
 The research does not prove that "dynamic imports cause X% worse agent performance." That would be too neat. But the direction is clear. AutoCodeRover uses AST-based search instead of flat files. GraphCodeAgent loses performance when graph traversal is removed: GPT-4o DevEval Pass@1 drops from 58.14 to 51.83. RepoGraph also helps, with the important caveat that more graph is not always better: in one SWE-bench-Lite setup, 1-hop flat context reached 29.67% resolve while larger 2-hop flat context fell to 26.00%.
 
-The lesson is not "dump the graph into the prompt." The lesson is: make the important edges visible enough that tools can select the right slice. Make it "AST-able".
+Make the important edges visible enough that tools can select the right slice. Make it "AST-able".
 
 A side effect the agent cannot see is a dependency it cannot protect.
 
@@ -640,9 +636,9 @@ The research backs this shape, but not in a magical way. [CodePlan](https://arxi
 
 [RACE-bench](https://arxiv.org/abs/2603.26337) shows the same failure mode from the other side. AutoCodeRover applied patches in 96.21% of feature tasks but resolved only 28.79%. mini-SWE-Agent applied 95.83% and resolved 70.08%. A patch can apply cleanly and still miss the actual feature.
 
-[Constraint Decay](https://arxiv.org/abs/2605.06445) makes it more production-shaped. As framework, architecture, database, and ORM constraints pile up, capable configurations lose about 30 percentage points of assertion pass rate. That is not an argument against constraints. Constraints are the product. It is an argument against hidden constraints.
+[Constraint Decay](https://arxiv.org/abs/2605.06445) makes it more production-shaped. As framework, architecture, database, and ORM constraints pile up, capable configurations lose about 30 percentage points of assertion pass rate. Constraints are the product. Hidden constraints are the problem.
 
-So the advice is not "make every change single-file." That is childish. The advice is: make the ripple legible.
+Single-file changes are the wrong target. Make the ripple legible.
 
 Bad task:
 
@@ -675,13 +671,13 @@ Validation:
 - migration test proves old invoices still load
 ```
 
-That is not bureaucracy. That is the plan graph in human form. This also builds your mental model of the change that is about to happend, making it easier for you to review it later on.
+That is the plan graph in human form. This also builds your mental model of the change that is about to happen, making it easier for you to review it later on.
 
 The skeptical read is obvious: none of this proves your production repo gets better because you wrote a nicer task. CodePlan is small. RACE-bench and FeatureBench are benchmark harnesses. Constraint Decay is partly greenfield backend generation. Stronger models will reduce some misses.
 
-But stronger models do not remove ripple. They only make the local patch better. The underlying job is still to find every dependent obligation and satisfy it without breaking old behavior. If the repo exposes those obligations as imports, types, schemas, tests, generated clients, route maps, lint rules, and examples, the agent has evidence. If the repo hides them in convention and memory, the agent has vibes.
+But stronger models do not remove ripple. They only make the local patch better. The underlying job is still to find every dependent obligation and satisfy it without breaking old behavior. If the repo exposes those obligations as concrete artifacts, the agent has evidence. If the repo hides them in convention and memory, the agent has vibes.
 
-But, create an architecture with "reasonable ripple", so you do not get 10x change coupeling engineers.
+But, create an architecture with "reasonable ripple", so you do not get 10x change coupling engineers.
 
 **Insights:** [INSIGHT_12](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_12_dependency_structure_beats_text_blobs.md) · [INSIGHT_22](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_22_feature_work_fails_at_planning_and_constraints.md) · [INSIGHT_11](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_11_task_specs_are_part_of_the_codebase.md) · [INSIGHT_28](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_28_static_oracles_catch_what_tests_miss.md)
 
@@ -803,7 +799,7 @@ This is the right level for `polint`: mechanical, repo-specific checks that norm
 
 The research points the same way. [CODETASTE](https://arxiv.org/abs/2603.04177) uses repository tests plus custom static checks because refactoring correctness is not only "does the test suite pass?" [Needle in the Repo](https://arxiv.org/abs/2603.27745) found 64 of 483 passing-test cases where the structural or maintainability oracle still failed. I would not overfit that exact number to every repo, but the failure mode is real: tests can be green while the code lands in the wrong shape.
 
-For agents, adding these things to its verification loop have been really powerful in my experience. Every time it fails and I can programatically "lint" the failure to never happend again I do it. This is part of what compounding quality means to me.
+For agents, adding these things to its verification loop have been really powerful in my experience. Every time it fails and I can programmatically "lint" the failure to never happen again I do it. This is part of what compounding quality means to me.
 
 **Insights:** [INSIGHT_04](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_04_tests_are_the_agent_feedback_loop.md) · [INSIGHT_17](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_17_quality_gates_must_cover_smells.md) · [INSIGHT_27](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_27_static_diagnostics_are_agent_interfaces.md) · [INSIGHT_28](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_28_static_oracles_catch_what_tests_miss.md)
 

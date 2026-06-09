@@ -50,7 +50,7 @@ function SlideStepProvider({
         }
       }
     },
-    [step, maxSteps, router, prev, next, basePath],
+    [step, maxSteps, router, prev, next, basePath]
   );
 
   useEffect(() => {
@@ -58,11 +58,7 @@ function SlideStepProvider({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
-  return (
-    <SlideStepContext.Provider value={step}>
-      {children}
-    </SlideStepContext.Provider>
-  );
+  return <SlideStepContext.Provider value={step}>{children}</SlideStepContext.Provider>;
 }
 
 interface PresentationLayoutProps {
@@ -70,6 +66,39 @@ interface PresentationLayoutProps {
   basePath: string;
   slides: Slide[];
   sidebar?: React.ReactNode;
+}
+
+const loopSections = ['Prompt', 'Orient', 'Retrieve', 'Edit', 'Verify'];
+
+function SectionMarker({ section }: { section?: string }) {
+  if (!section) return null;
+
+  const loopIndex = loopSections.indexOf(section);
+  if (loopIndex < 0) return null;
+
+  return (
+    <div className="fixed left-8 top-7 z-50 font-mono">
+      <div className="text-[10px] uppercase tracking-[0.24em] text-primary/45">Agentic loop</div>
+      <div className="mt-1 flex items-center gap-3">
+        <div className="text-sm font-bold uppercase tracking-[0.18em] text-primary">{section}</div>
+
+        <div className="flex items-center gap-1.5">
+          {loopSections.map((loopSection, index) => (
+            <span
+              key={loopSection}
+              className={`h-1.5 w-5 rounded-full ${
+                index === loopIndex
+                  ? 'bg-primary shadow-[0_0_10px_var(--primary)]'
+                  : index < loopIndex
+                    ? 'bg-primary/35'
+                    : 'bg-border/65'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function PresentationLayout({
@@ -81,6 +110,7 @@ export function PresentationLayout({
   const pathname = usePathname();
   const currentSlug = pathname.split('/').pop() ?? '';
   const currentIndex = slides.findIndex((s) => s.slug === currentSlug);
+  const currentSlide = slides[currentIndex];
 
   return (
     <div className="fixed inset-0 z-50 bg-background grid-bg overflow-hidden">
@@ -94,6 +124,8 @@ export function PresentationLayout({
           }}
         />
       </div>
+
+      <SectionMarker section={currentSlide?.section} />
 
       <div className="h-full flex">
         {/* Slide content with fade transition */}
