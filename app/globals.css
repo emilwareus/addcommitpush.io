@@ -4,91 +4,114 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  /*
+   * Base reading palette.
+   *
+   * Expected background: warm paper (#f3f0e6).
+   * Use --foreground for body copy and dense UI text.
+   * Use --primary for headings, links, active controls, and editorial emphasis.
+   * Use --muted-foreground only for metadata and labels; it still needs to pass
+   * small-text contrast because much of the site uses compact mono labels.
+   * Use --hover/--card/--code for blue-tinted surfaces on top of --background.
+   */
   --background: #f3f0e6;
-  --foreground: #1c5f96;
-  --card: rgba(21, 102, 168, 0.05);
-  --card-foreground: #1c5f96;
+  --foreground: #123f63;
+  --card: rgba(18, 104, 168, 0.06);
+  --card-foreground: #123f63;
   --popover: #f3f0e6;
-  --popover-foreground: #1c5f96;
-  --primary: #1566a8;
+  --popover-foreground: #123f63;
+  --primary: #1268a8;
   --primary-foreground: #f3f0e6;
-  --secondary: #1566a8;
+  --secondary: #1268a8;
   --secondary-foreground: #f3f0e6;
-  --accent: #1566a8;
+  --accent: #1268a8;
   --accent-foreground: #f3f0e6;
-  --muted: rgba(21, 102, 168, 0.05);
-  --muted-foreground: rgba(21, 102, 168, 0.78);
+  --muted: rgba(18, 104, 168, 0.06);
+  --muted-foreground: #326d9d;
   --destructive: #a62626;
   --destructive-foreground: #f3f0e6;
-  --border: rgba(21, 102, 168, 0.55);
-  --input: rgba(21, 102, 168, 0.05);
-  --ring: #1566a8;
-  --hair: rgba(21, 102, 168, 0.4);
-  --hover: rgba(21, 102, 168, 0.05);
-  --code: rgba(21, 102, 168, 0.1);
+  --border: rgba(18, 104, 168, 0.58);
+  --input: rgba(18, 104, 168, 0.06);
+  --ring: #1268a8;
+  --hair: rgba(18, 104, 168, 0.42);
+  --hover: rgba(18, 104, 168, 0.06);
+  --code: #e4edf2;
+  --success: #236f4e;
+  --warning: #7a5a00;
+  --danger: #a62626;
+  --info: #1268a8;
   --radius: 0rem;
   --navbar: #f3f0e6;
-  --navbar-foreground: rgba(21, 102, 168, 0.78);
-  --navbar-border: rgba(21, 102, 168, 0.4);
-  --navbar-active: #1566a8;
-  --navbar-hover: #1566a8;
-  --chart-1: #1566a8;
-  --chart-2: rgba(21, 102, 168, 0.78);
-  --chart-3: rgba(21, 102, 168, 0.55);
-  --chart-4: rgba(21, 102, 168, 0.4);
-  --chart-5: rgba(21, 102, 168, 0.25);
-  --sidebar: rgba(21, 102, 168, 0.05);
-  --sidebar-foreground: #1c5f96;
-  --sidebar-primary: #1566a8;
+  --navbar-foreground: #326d9d;
+  --navbar-border: rgba(18, 104, 168, 0.42);
+  --navbar-active: #1268a8;
+  --navbar-hover: #1268a8;
+  --chart-1: #1268a8;
+  --chart-2: #326d9d;
+  --chart-3: rgba(18, 104, 168, 0.58);
+  --chart-4: rgba(18, 104, 168, 0.42);
+  --chart-5: rgba(18, 104, 168, 0.25);
+  --sidebar: rgba(18, 104, 168, 0.06);
+  --sidebar-foreground: #123f63;
+  --sidebar-primary: #1268a8;
   --sidebar-primary-foreground: #f3f0e6;
-  --sidebar-accent: rgba(21, 102, 168, 0.05);
-  --sidebar-accent-foreground: #1c5f96;
-  --sidebar-border: rgba(21, 102, 168, 0.55);
-  --sidebar-ring: #1566a8;
+  --sidebar-accent: rgba(18, 104, 168, 0.06);
+  --sidebar-accent-foreground: #123f63;
+  --sidebar-border: rgba(18, 104, 168, 0.58);
+  --sidebar-ring: #1268a8;
   color-scheme: light;
 }
 
 .dark {
+  /*
+   * Expected background: near-black ink field (#07090d).
+   * Keep --foreground and --muted-foreground bright; presentation slides and
+   * generated insight pages use lots of small labels that cannot rely on opacity.
+   */
   --background: #07090d;
-  --foreground: #cfe4f8;
-  --card: rgba(111, 179, 236, 0.07);
-  --card-foreground: #cfe4f8;
+  --foreground: #d7e9f8;
+  --card: rgba(130, 194, 244, 0.09);
+  --card-foreground: #d7e9f8;
   --popover: #07090d;
-  --popover-foreground: #cfe4f8;
-  --primary: #6fb3ec;
+  --popover-foreground: #d7e9f8;
+  --primary: #82c2f4;
   --primary-foreground: #07090d;
-  --secondary: #6fb3ec;
+  --secondary: #82c2f4;
   --secondary-foreground: #07090d;
-  --accent: #6fb3ec;
+  --accent: #82c2f4;
   --accent-foreground: #07090d;
-  --muted: rgba(111, 179, 236, 0.07);
-  --muted-foreground: rgba(111, 179, 236, 0.62);
+  --muted: rgba(130, 194, 244, 0.09);
+  --muted-foreground: #a9cbe8;
   --destructive: #ff8b8b;
   --destructive-foreground: #07090d;
-  --border: rgba(111, 179, 236, 0.42);
-  --input: rgba(111, 179, 236, 0.07);
-  --ring: #6fb3ec;
-  --hair: rgba(111, 179, 236, 0.3);
-  --hover: rgba(111, 179, 236, 0.07);
-  --code: rgba(111, 179, 236, 0.12);
+  --border: rgba(130, 194, 244, 0.48);
+  --input: rgba(130, 194, 244, 0.09);
+  --ring: #82c2f4;
+  --hair: rgba(130, 194, 244, 0.36);
+  --hover: rgba(130, 194, 244, 0.09);
+  --code: #102033;
+  --success: #8bd6aa;
+  --warning: #f3d376;
+  --danger: #ff9a9a;
+  --info: #82c2f4;
   --navbar: #07090d;
-  --navbar-foreground: rgba(111, 179, 236, 0.62);
-  --navbar-border: rgba(111, 179, 236, 0.3);
-  --navbar-active: #6fb3ec;
-  --navbar-hover: #6fb3ec;
-  --chart-1: #6fb3ec;
-  --chart-2: rgba(111, 179, 236, 0.78);
-  --chart-3: rgba(111, 179, 236, 0.55);
-  --chart-4: rgba(111, 179, 236, 0.42);
-  --chart-5: rgba(111, 179, 236, 0.25);
-  --sidebar: rgba(111, 179, 236, 0.07);
-  --sidebar-foreground: #cfe4f8;
-  --sidebar-primary: #6fb3ec;
+  --navbar-foreground: #a9cbe8;
+  --navbar-border: rgba(130, 194, 244, 0.36);
+  --navbar-active: #82c2f4;
+  --navbar-hover: #82c2f4;
+  --chart-1: #82c2f4;
+  --chart-2: #a9cbe8;
+  --chart-3: rgba(130, 194, 244, 0.64);
+  --chart-4: rgba(130, 194, 244, 0.48);
+  --chart-5: rgba(130, 194, 244, 0.28);
+  --sidebar: rgba(130, 194, 244, 0.09);
+  --sidebar-foreground: #d7e9f8;
+  --sidebar-primary: #82c2f4;
   --sidebar-primary-foreground: #07090d;
-  --sidebar-accent: rgba(111, 179, 236, 0.07);
-  --sidebar-accent-foreground: #cfe4f8;
-  --sidebar-border: rgba(111, 179, 236, 0.42);
-  --sidebar-ring: #6fb3ec;
+  --sidebar-accent: rgba(130, 194, 244, 0.09);
+  --sidebar-accent-foreground: #d7e9f8;
+  --sidebar-border: rgba(130, 194, 244, 0.48);
+  --sidebar-ring: #82c2f4;
   color-scheme: dark;
 }
 
@@ -115,6 +138,10 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -372,18 +399,78 @@
 }
 
 .presentation-slide-surface [class*='bg-zinc'],
+.presentation-slide-surface [class*='bg-slate'],
+.presentation-slide-surface [class*='bg-gray'],
 .presentation-slide-surface [class*='bg-blue-500'],
 .presentation-slide-surface [class*='bg-green-500'],
 .presentation-slide-surface [class*='bg-red-500'],
+.presentation-slide-surface [class*='bg-emerald'],
+.presentation-slide-surface [class*='bg-amber'],
+.presentation-slide-surface [class*='bg-yellow'],
+.presentation-slide-surface [class*='bg-orange'],
+.presentation-slide-surface [class*='bg-rose'],
+.presentation-slide-surface [class*='bg-sky'],
 .presentation-slide-surface [class*='bg-white'] {
   background: var(--hover) !important;
 }
 
 .presentation-slide-surface [class*='border-zinc'],
+.presentation-slide-surface [class*='border-slate'],
+.presentation-slide-surface [class*='border-gray'],
 .presentation-slide-surface [class*='border-blue-500'],
 .presentation-slide-surface [class*='border-green-500'],
-.presentation-slide-surface [class*='border-red-500'] {
+.presentation-slide-surface [class*='border-red-500'],
+.presentation-slide-surface [class*='border-emerald'],
+.presentation-slide-surface [class*='border-amber'],
+.presentation-slide-surface [class*='border-yellow'],
+.presentation-slide-surface [class*='border-orange'],
+.presentation-slide-surface [class*='border-rose'],
+.presentation-slide-surface [class*='border-sky'] {
   border-color: var(--border) !important;
+}
+
+.presentation-slide-surface [class*='text-muted-foreground/'] {
+  color: var(--muted-foreground) !important;
+}
+
+.presentation-slide-surface [class*='text-foreground/'] {
+  color: var(--foreground) !important;
+}
+
+.presentation-slide-surface [class*='text-primary/'] {
+  color: var(--primary) !important;
+}
+
+.presentation-slide-surface [class*='text-zinc'],
+.presentation-slide-surface [class*='text-slate'],
+.presentation-slide-surface [class*='text-gray'],
+.presentation-slide-surface [class*='text-white'],
+.presentation-slide-surface [class*='text-black'] {
+  color: var(--foreground) !important;
+}
+
+.presentation-slide-surface [class*='text-blue'],
+.presentation-slide-surface [class*='text-sky'],
+.presentation-slide-surface [class*='text-cyan'],
+.presentation-slide-surface [class*='text-violet'],
+.presentation-slide-surface [class*='text-purple'] {
+  color: var(--info) !important;
+}
+
+.presentation-slide-surface [class*='text-green'],
+.presentation-slide-surface [class*='text-emerald'] {
+  color: var(--success) !important;
+}
+
+.presentation-slide-surface [class*='text-yellow'],
+.presentation-slide-surface [class*='text-amber'],
+.presentation-slide-surface [class*='text-orange'] {
+  color: var(--warning) !important;
+}
+
+.presentation-slide-surface [class*='text-red'],
+.presentation-slide-surface [class*='text-rose'] {
+  color: var(--danger) !important;
 }
 
 .presentation-slide-surface [style*='box-shadow'] {

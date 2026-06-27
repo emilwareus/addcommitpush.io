@@ -22,7 +22,13 @@ export function CodeBlock({ code, language }: { code: string; language: string }
                 <div key={lineIndex} {...lineProps}>
                   {line.map((token, tokenIndex) => {
                     const tokenProps = getTokenProps({ token });
-                    return <span key={tokenIndex} {...tokenProps} />;
+                    return (
+                      <span
+                        key={tokenIndex}
+                        {...tokenProps}
+                        style={{ ...tokenProps.style, color: 'inherit' }}
+                      />
+                    );
                   })}
                 </div>
               );

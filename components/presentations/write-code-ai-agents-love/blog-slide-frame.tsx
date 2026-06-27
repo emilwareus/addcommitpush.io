@@ -45,7 +45,7 @@ export function BlogSlideFrame({
     <div
       ref={frameRef}
       data-blog-slide-frame
-      className={`not-prose relative left-1/2 -translate-x-1/2 overflow-x-auto overflow-y-hidden rounded-lg bg-background ${
+      className={`presentation-slide-surface not-prose relative left-1/2 -translate-x-1/2 overflow-x-auto overflow-y-hidden rounded-lg bg-background ${
         compact ? 'my-0' : 'my-10'
       }`}
       style={{ width: `min(${maxWidth}px, calc(100vw - 2rem))`, height: slideHeight * scale }}

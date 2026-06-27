@@ -37,11 +37,30 @@ const themeSchema = z.object({
   'muted-foreground': z.string().describe('Text color on muted background'),
   border: z.string().describe('Border color'),
   ring: z.string().describe('Focus ring color'),
-  hair: z.string().optional().describe('Subtle dashed hairline color'),
-  hover: z.string().optional().describe('Subtle hover background color'),
-  code: z.string().optional().describe('Inline and block code background color'),
-  card: z.string().optional().describe('Card component background color'),
-  'card-foreground': z.string().optional().describe('Card text color'),
+  hair: z
+    .string()
+    .optional()
+    .describe('Subtle dashed hairline color on top of the main background'),
+  hover: z
+    .string()
+    .optional()
+    .describe('Subtle interactive background on top of the main background'),
+  code: z
+    .string()
+    .optional()
+    .describe('Inline and block code background; must contrast with foreground text'),
+  success: z.string().optional().describe('Readable positive/success color'),
+  warning: z.string().optional().describe('Readable warning/caution color'),
+  danger: z.string().optional().describe('Readable error/destructive color'),
+  info: z.string().optional().describe('Readable informational accent color'),
+  card: z
+    .string()
+    .optional()
+    .describe('Card/panel background on top of the main page background'),
+  'card-foreground': z
+    .string()
+    .optional()
+    .describe('Card text color; should usually match foreground'),
   popover: z.string().optional().describe('Popover/dropdown background color'),
   'popover-foreground': z.string().optional().describe('Popover text color'),
   input: z.string().optional().describe('Input field background color'),
@@ -97,9 +116,9 @@ export async function POST(req: Request) {
       prompt: `You are a creative UI/UX designer generating a complete theme based on this user request: "${prompt}"
 
 INTERPRET THE REQUEST CREATIVELY:
-- "Make it ugly" → Use clashing colors, poor contrast, garish combinations, Comic Sans font
+- "Make it ugly" → Use clashing colors and garish combinations, but keep body text readable
 - "Make it look like a word document" → White background, black text, Times New Roman, minimal styling, sharp corners
-- "Make it feel like a retro website" → 90s/2000s aesthetic, bright colors, pixel fonts, low contrast, nostalgic palette
+- "Make it feel like a retro website" → 90s/2000s aesthetic, bright colors, pixel fonts, nostalgic palette, readable text
 - "Make it feel hackery, green text terminal" → Dark green/black terminal aesthetic, monospace fonts, matrix green (#00ff00), minimal UI
 - "Make it professional" → Clean, muted colors, high contrast, modern fonts, subtle styling
 - "Make it playful" → Bright, vibrant colors, rounded corners, fun fonts
@@ -113,6 +132,15 @@ COLOR FORMAT REQUIREMENTS:
 - Or hsl/hsla: hsl(h, s%, l%) or hsla(h, s%, l%, a)
 - Or named colors: red, blue, green, etc. (use sparingly)
 - NO quotes, semicolons, or extra characters - just the raw color value
+
+READABILITY REQUIREMENTS:
+- The site contains long blog posts, dense presentation slides, and compact status labels.
+- foreground on background must be comfortable for long reading, not merely decorative.
+- muted-foreground on background must remain readable for 11-13px labels.
+- primary on background must be readable for headings, links, and command-line text.
+- card-foreground on card, popover-foreground on popover, and primary-foreground on primary must be readable.
+- code is a background token; foreground text must remain readable on top of it.
+- success, warning, danger, and info are semantic text/accent colors and must be readable on background.
 
 THEME COMPONENTS TO GENERATE:
 
@@ -129,6 +157,13 @@ THEME COMPONENTS TO GENERATE:
    - muted-foreground: Text on muted backgrounds
    - border: Border colors
    - ring: Focus ring color
+   - hair: Very subtle dashed separators
+   - hover: Hover/selected row background
+   - code: Code block and inline code background
+   - success: Positive/success text and chart states
+   - warning: Warning/caution text and chart states
+   - danger: Error/destructive text and chart states
+   - info: Informational text and chart states
 
 2. NAVIGATION BAR COLORS (CRITICAL - MUST BE INCLUDED):
    The navigation bar is a prominent UI element at the top of every page. It should have distinct colors that match the theme aesthetic.
@@ -171,8 +206,9 @@ THEME COMPONENTS TO GENERATE:
 
 DESIGN PRINCIPLES:
 - Match the aesthetic described in the prompt exactly
+- Preserve readability across blog posts, presentations, brain insights, and status dashboards
 - ALWAYS include navbar colors - the navigation bar is a critical UI element
-- For "ugly": Use clashing colors, poor contrast, inappropriate fonts, bright/garish navbar
+- For "ugly": Use clashing colors, inappropriate fonts, bright/garish navbar, but keep text readable enough to navigate
 - For "word document": White/off-white background, black text, serif fonts, radius 0, light navbar (white/light gray)
 - For "retro": Bright saturated colors, pixel fonts, nostalgic palette, medium radius, colorful navbar matching retro aesthetic
 - For "hackery terminal": Dark green/black, monospace everything, matrix aesthetic, sharp corners, dark navbar (black/dark green) with green text
@@ -193,7 +229,7 @@ EXAMPLES:
   background=#ff00ff, foreground=#ffff00, navbar=#00ffff, navbar-foreground=#000000, navbar-active=#ff00ff, navbar-border=#0000ff, radius=8
   
 - Ugly: 
-  background=#ff00ff, foreground=#00ff00, navbar=#ffff00, navbar-foreground=#ff0000, navbar-active=#0000ff, navbar-border=#ff00ff, Use clashing colors, Comic Sans if possible`,
+  background=#ffeb00, foreground=#180033, primary=#0057ff, muted-foreground=#4b236b, navbar=#ff00aa, navbar-foreground=#ffffff, navbar-active=#00ff66, navbar-border=#180033, Use clashing colors, Comic Sans if possible`,
     });
 
     // Normalize all strings after generation
