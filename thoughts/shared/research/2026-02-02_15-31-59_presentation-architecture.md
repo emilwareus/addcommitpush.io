@@ -4,7 +4,7 @@ researcher: Claude
 git_commit: 021f5410503cdadb8250593764173295994ad0e8
 branch: presentation/deep-research
 repository: addcommitpush.io
-topic: "How to build a React-based presentation system as a sub-page of the blog"
+topic: 'How to build a React-based presentation system as a sub-page of the blog'
 tags: [research, codebase, presentation, nextjs, app-router, keyboard-navigation, slides]
 status: complete
 last_updated: 2026-02-02
@@ -41,12 +41,14 @@ app/presentations/deep-research/
 ```
 
 **Why this structure:**
+
 - `layout.tsx` persists across slide navigations — keyboard listeners, progress bar, and transition wrappers don't remount
 - `[slide]/page.tsx` handles static generation via `generateStaticParams()` returning all slide slugs
 - Each slide gets a URL like `/presentations/deep-research/01-title`
 - The layout can use `usePathname()` to determine the current slide index for navigation
 
 **Static generation enforcement:**
+
 ```typescript
 // app/presentations/deep-research/[slide]/page.tsx
 export const dynamic = 'error';
@@ -63,9 +65,9 @@ Create a slide registry similar to `lib/posts.ts` but for presentation slides:
 
 ```typescript
 interface Slide {
-  slug: string;        // "01-title", "02-group-project", etc.
-  title: string;       // Human-readable title
-  notes?: string;      // Speaker notes (not rendered, but available)
+  slug: string; // "01-title", "02-group-project", etc.
+  title: string; // Human-readable title
+  notes?: string; // Speaker notes (not rendered, but available)
 }
 
 // Ordered array — the index IS the slide order
@@ -91,10 +93,18 @@ const slides: Slide[] = [
   { slug: '19-resources', title: 'Questions & Resources' },
 ];
 
-export function getAllSlides() { return slides; }
-export function getSlideBySlug(slug: string) { return slides.find(s => s.slug === slug) ?? null; }
-export function getAllSlideSlugs() { return slides.map(s => s.slug); }
-export function getSlideIndex(slug: string) { return slides.findIndex(s => s.slug === slug); }
+export function getAllSlides() {
+  return slides;
+}
+export function getSlideBySlug(slug: string) {
+  return slides.find((s) => s.slug === slug) ?? null;
+}
+export function getAllSlideSlugs() {
+  return slides.map((s) => s.slug);
+}
+export function getSlideIndex(slug: string) {
+  return slides.findIndex((s) => s.slug === slug);
+}
 export function getAdjacentSlugs(slug: string) {
   const idx = getSlideIndex(slug);
   return {
@@ -169,6 +179,7 @@ export default function PresentationLayout({ children }: { children: React.React
 ```
 
 **Key decisions:**
+
 - `fixed inset-0` makes the presentation fullscreen within the viewport
 - The root layout's `<Navigation />` component will still render — the presentation layout uses `fixed inset-0` to visually cover it
 - `overflow-hidden` prevents scrolling between slides; each slide must fit in one viewport
@@ -222,15 +233,9 @@ Each exports a default component:
 export function TitleSlide() {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-8">
-      <h1 className="text-6xl md:text-8xl font-bold mb-6">
-        Deep Research Agents
-      </h1>
-      <p className="text-xl md:text-2xl text-muted-foreground mb-4">
-        Architecture Walkthrough
-      </p>
-      <p className="text-lg text-muted-foreground">
-        Emil Wåreus · Foo Cafe Malmo · Feb 5, 2026
-      </p>
+      <h1 className="text-6xl md:text-8xl font-bold mb-6">Deep Research Agents</h1>
+      <p className="text-xl md:text-2xl text-muted-foreground mb-4">Architecture Walkthrough</p>
+      <p className="text-lg text-muted-foreground">Emil Wåreus · Foo Cafe Malmo · Feb 5, 2026</p>
     </div>
   );
 }
@@ -249,29 +254,38 @@ The keyboard handler tracks an internal "step" counter per slide. ArrowRight fir
 const [step, setStep] = useState(0);
 const maxSteps = slideStepCounts[currentSlug] ?? 0;
 
-const handleKeyDown = useCallback((e: KeyboardEvent) => {
-  if (e.key === 'ArrowRight') {
-    if (step < maxSteps) {
-      setStep(s => s + 1);  // Reveal next animation step
-    } else if (next) {
-      setStep(0);
-      router.push(`/presentations/deep-research/${next}`);
+const handleKeyDown = useCallback(
+  (e: KeyboardEvent) => {
+    if (e.key === 'ArrowRight') {
+      if (step < maxSteps) {
+        setStep((s) => s + 1); // Reveal next animation step
+      } else if (next) {
+        setStep(0);
+        router.push(`/presentations/deep-research/${next}`);
+      }
+    } else if (e.key === 'ArrowLeft') {
+      if (step > 0) {
+        setStep((s) => s - 1); // Go back one animation step
+      } else if (prev) {
+        router.push(`/presentations/deep-research/${prev}`);
+      }
     }
-  } else if (e.key === 'ArrowLeft') {
-    if (step > 0) {
-      setStep(s => s - 1);  // Go back one animation step
-    } else if (prev) {
-      router.push(`/presentations/deep-research/${prev}`);
-    }
-  }
-}, [step, maxSteps, router, prev, next]);
+  },
+  [step, maxSteps, router, prev, next]
+);
 ```
 
 Each slide component receives `step` as a prop and conditionally renders elements:
 
 ```tsx
 export function ResultSlide({ step }: { step: number }) {
-  const items = ['Repetitive', 'Inconsistent', 'Different tones', 'Varying quality', 'Not the grade you wanted'];
+  const items = [
+    'Repetitive',
+    'Inconsistent',
+    'Different tones',
+    'Varying quality',
+    'Not the grade you wanted',
+  ];
   return (
     <div className="flex flex-col items-center justify-center h-full">
       <h2 className="text-5xl font-bold mb-12">The result?</h2>
@@ -303,14 +317,14 @@ export function ResultSlide({ step }: { step: number }) {
 
 These components can be imported directly from `@/components/animations/diffusion`:
 
-| Component | Slide | Usage |
-|---|---|---|
-| `DiffusionOverview` | 13-diffusion-architecture | Show 4-phase pipeline |
-| `DraftDenoising` | 14-loop-visualized | Show iterative refinement |
-| `ParallelAgents` | 15-parallel-agents | Show sub-agent isolation |
-| `TwoStageGap` | (could add as bonus slide) | Information vs Generation gap |
-| `RACEMetrics` | 17-benchmarks | Benchmark bar charts |
-| `DiffusionLoopStep` | (optional deep dive) | Single iteration walkthrough |
+| Component           | Slide                      | Usage                         |
+| ------------------- | -------------------------- | ----------------------------- |
+| `DiffusionOverview` | 13-diffusion-architecture  | Show 4-phase pipeline         |
+| `DraftDenoising`    | 14-loop-visualized         | Show iterative refinement     |
+| `ParallelAgents`    | 15-parallel-agents         | Show sub-agent isolation      |
+| `TwoStageGap`       | (could add as bonus slide) | Information vs Generation gap |
+| `RACEMetrics`       | 17-benchmarks              | Benchmark bar charts          |
+| `DiffusionLoopStep` | (optional deep dive)       | Single iteration walkthrough  |
 
 **Sizing concern:** These components are designed for blog-width (max-w-3xl ~672px). In a fullscreen presentation, they may need a container constraint or scaling:
 
@@ -329,9 +343,7 @@ export function StormDemoSlide() {
   return (
     <div className="flex flex-col items-center justify-center h-full text-center px-8">
       <h2 className="text-5xl font-bold mb-8">Live Demo: STORM</h2>
-      <p className="text-xl text-muted-foreground mb-4">
-        Switch to terminal
-      </p>
+      <p className="text-xl text-muted-foreground mb-4">Switch to terminal</p>
       <code className="text-lg bg-muted px-4 py-2 rounded">
         /storm "What are the security implications of WebAssembly?"
       </code>
@@ -359,7 +371,7 @@ import { AnimatePresence, motion } from 'framer-motion';
   >
     {children}
   </motion.div>
-</AnimatePresence>
+</AnimatePresence>;
 ```
 
 **Note:** `AnimatePresence` works with Next.js App Router but requires the children to have a unique `key` based on the route. Since `layout.tsx` doesn't re-render on route change (that's the point of layouts), the AnimatePresence needs to be in a Client Component that reads `usePathname()`.
@@ -412,7 +424,7 @@ Each slide needs to declare how many animation steps it has. Options:
 interface Slide {
   slug: string;
   title: string;
-  steps: number;  // 0 = no intermediate animations, N = N arrow-key reveals
+  steps: number; // 0 = no intermediate animations, N = N arrow-key reveals
 }
 ```
 
@@ -431,18 +443,21 @@ interface Slide {
 ## Architecture Insights
 
 ### Patterns to Follow
+
 1. **Static generation with dynamic import** — Same pattern as blog: `generateStaticParams()` + switch-based dynamic import for code splitting
 2. **Registry pattern** — Centralized slide metadata in `lib/presentations/deep-research.ts`, mirroring `lib/posts.ts`
 3. **Client/Server boundary** — Layout is a Client Component (for keyboard events), page component is a Server Component (for static generation), slide components are Client Components (for Framer Motion animations)
 4. **Barrel exports** — Slide components barrel-exported from an index file
 
 ### Patterns to Diverge From
+
 1. **No Navigation component** — The presentation should cover/hide the site navigation
 2. **Full viewport** — Unlike blog pages (scrollable, max-w-3xl), slides are `h-screen` with centered content
 3. **Keyboard-driven** — Blog has no keyboard navigation; the presentation adds arrow key handling
 4. **Step-based animation** — Blog animations are viewport-triggered; presentation animations are step-triggered (ArrowRight reveals next element)
 
 ### Key Technical Decisions
+
 1. **Per-slide URLs with `[slide]` dynamic route** — Not hash-based SPA
 2. **Layout-level keyboard handler** — Centralizes navigation logic, persists across slide changes
 3. **Step counter with pathname-based reset** — Simple state management without URL search params
@@ -451,12 +466,12 @@ interface Slide {
 
 ## Dependencies Already Available
 
-| Package | Version | Used For |
-|---|---|---|
-| `framer-motion` | ^12.x | Slide transitions, step animations, existing blog animations |
-| `lucide-react` | ^0.x | Icons in slides and existing components |
-| `next` | 16.x | App Router, dynamic routes, static generation |
-| `tailwindcss` | v4 | All styling |
+| Package         | Version | Used For                                                     |
+| --------------- | ------- | ------------------------------------------------------------ |
+| `framer-motion` | ^12.x   | Slide transitions, step animations, existing blog animations |
+| `lucide-react`  | ^0.x    | Icons in slides and existing components                      |
+| `next`          | 16.x    | App Router, dynamic routes, static generation                |
+| `tailwindcss`   | v4      | All styling                                                  |
 
 No new dependencies needed.
 

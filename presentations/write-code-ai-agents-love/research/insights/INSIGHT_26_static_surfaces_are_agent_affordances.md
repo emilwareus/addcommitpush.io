@@ -19,17 +19,17 @@ Plot-ready data lives in `presentations/write-code-ai-agents-love/research/data/
 
 ## Source map
 
-| Ref | Source | Local text | Role in this insight |
-|---|---|---|---|
-| R62 | CrossCodeEval | `paper-text/crosscodeeval-2310.11248.txt` | Cross-file API context improves repository completion. |
-| R49 | Chunking RAG Code Completion | `paper-text/chunking-rag-code-completion-2605.04763.txt` | Function chunks are not automatically the best retrieval unit. |
-| R65 | Naming affects LLMs | `paper-text/naming-affects-llms-code-analysis-2307.12488.txt` | Identifier perturbation damages code search and analysis. |
-| R66 | When Names Disappear | `paper-text/when-names-disappear-2510.03178.txt` | Obfuscating names hurts summarization and execution-oriented tasks. |
-| R43 | Type-Constrained Code Generation | `paper-text/type-constrained-codegen-2504.09246.txt` | Type constraints reduce compile errors and improve pass@1. |
-| R63 | CatCoder | `paper-text/catcoder-2406.03283.txt` | Code and type context improve repository-level Java/Rust generation. |
-| R51 | ToolGen | `paper-text/toolgen-autocomplete-repo-codegen-2401.06391.txt` | Autocomplete/static tools reduce dependency and validity errors. |
-| R64 | A3-CodGen | `paper-text/a3-codgen-2312.05772.txt` | Local/global/library-aware API retrieval helps, but too much context hurts. |
-| D25-D30 | OpenAPI/SDK docs | `articles/openapi-generator.html`, `articles/orval-docs.html`, etc. | Practical tooling path for generated clients. |
+| Ref     | Source                           | Local text                                                          | Role in this insight                                                        |
+| ------- | -------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| R62     | CrossCodeEval                    | `paper-text/crosscodeeval-2310.11248.txt`                           | Cross-file API context improves repository completion.                      |
+| R49     | Chunking RAG Code Completion     | `paper-text/chunking-rag-code-completion-2605.04763.txt`            | Function chunks are not automatically the best retrieval unit.              |
+| R65     | Naming affects LLMs              | `paper-text/naming-affects-llms-code-analysis-2307.12488.txt`       | Identifier perturbation damages code search and analysis.                   |
+| R66     | When Names Disappear             | `paper-text/when-names-disappear-2510.03178.txt`                    | Obfuscating names hurts summarization and execution-oriented tasks.         |
+| R43     | Type-Constrained Code Generation | `paper-text/type-constrained-codegen-2504.09246.txt`                | Type constraints reduce compile errors and improve pass@1.                  |
+| R63     | CatCoder                         | `paper-text/catcoder-2406.03283.txt`                                | Code and type context improve repository-level Java/Rust generation.        |
+| R51     | ToolGen                          | `paper-text/toolgen-autocomplete-repo-codegen-2401.06391.txt`       | Autocomplete/static tools reduce dependency and validity errors.            |
+| R64     | A3-CodGen                        | `paper-text/a3-codgen-2312.05772.txt`                               | Local/global/library-aware API retrieval helps, but too much context hurts. |
+| D25-D30 | OpenAPI/SDK docs                 | `articles/openapi-generator.html`, `articles/orval-docs.html`, etc. | Practical tooling path for generated clients.                               |
 
 ## CrossCodeEval: repository APIs are not optional context
 
@@ -44,36 +44,36 @@ supports the claim that APIs, names, and imports are repository context, not dec
 
 ### CrossCodeEval data copied from the paper
 
-| Measurement | Value |
-|---|---:|
-| Examples | about 10,000 |
-| Repositories | about 1,000 |
-| Languages | 4 |
-| Python examples | 2,665 |
-| Java examples | 2,139 |
-| TypeScript examples | 3,356 |
-| C# examples | 1,768 |
-| References with names needing cross-file information | almost 100% |
-| References predictable from current-file context alone | about 2% |
+| Measurement                                            |        Value |
+| ------------------------------------------------------ | -----------: |
+| Examples                                               | about 10,000 |
+| Repositories                                           |  about 1,000 |
+| Languages                                              |            4 |
+| Python examples                                        |        2,665 |
+| Java examples                                          |        2,139 |
+| TypeScript examples                                    |        3,356 |
+| C# examples                                            |        1,768 |
+| References with names needing cross-file information   |  almost 100% |
+| References predictable from current-file context alone |     about 2% |
 
 ### CrossCodeEval retrieval data copied from the paper
 
-| Setting | Exact match |
-|---|---:|
-| StarCoder-15.5B Python, in-file only | 8.82% |
-| StarCoder-15.5B Python, retrieved context | 15.72% |
-| StarCoder-15.5B Python, reference-assisted retrieval | 21.01% |
-| GPT-3.5-turbo C#, in-file only | 3.56% |
-| GPT-3.5-turbo C#, with cross-file context | 11.82% |
+| Setting                                              | Exact match |
+| ---------------------------------------------------- | ----------: |
+| StarCoder-15.5B Python, in-file only                 |       8.82% |
+| StarCoder-15.5B Python, retrieved context            |      15.72% |
+| StarCoder-15.5B Python, reference-assisted retrieval |      21.01% |
+| GPT-3.5-turbo C#, in-file only                       |       3.56% |
+| GPT-3.5-turbo C#, with cross-file context            |      11.82% |
 
 ### Cross-file context location data copied from the paper
 
-| Language | Same-directory references | Similar-filename references |
-|---|---:|---:|
-| Python | 49.0% | 33.4% |
-| Java | 37.8% | 44.5% |
-| TypeScript | 51.3% | 24.9% |
-| C# | 51.7% | 39.0% |
+| Language   | Same-directory references | Similar-filename references |
+| ---------- | ------------------------: | --------------------------: |
+| Python     |                     49.0% |                       33.4% |
+| Java       |                     37.8% |                       44.5% |
+| TypeScript |                     51.3% |                       24.9% |
+| C#         |                     51.7% |                       39.0% |
 
 Source trace: R62, `paper-text/crosscodeeval-2310.11248.txt`.
 
@@ -102,27 +102,27 @@ performed better because they preserve surrounding declarations and context.
 ### Chunking data copied from the paper
 
 | Chunking strategy on CCEval | Exact match |
-|---|---:|
-| Function | 24.21% |
-| Declaration | 27.71% |
-| cAST | 28.19% |
-| Sliding Window | 28.40% |
+| --------------------------- | ----------: |
+| Function                    |      24.21% |
+| Declaration                 |      27.71% |
+| cAST                        |      28.19% |
+| Sliding Window              |      28.40% |
 
-| Strategy | Edit similarity |
-|---|---:|
-| Function | 0.379 |
-| Declaration | 0.431 |
-| cAST | 0.459 |
-| Sliding Window | 0.464 |
+| Strategy       | Edit similarity |
+| -------------- | --------------: |
+| Function       |           0.379 |
+| Declaration    |           0.431 |
+| cAST           |           0.459 |
+| Sliding Window |           0.464 |
 
 Additional data from the paper:
 
-| Finding | Value |
-|---|---:|
-| Function underperformance range | 3.57-5.64 pp EM |
+| Finding                                       |            Value |
+| --------------------------------------------- | ---------------: |
+| Function underperformance range               |  3.57-5.64 pp EM |
 | Context budget increase 2,048 -> 8,192 tokens | up to +4.2 pp EM |
-| Chunk size effect | <= 1.9 pp |
-| Overlap effect for chunks >= 2,000 | <= 0.5 pp |
+| Chunk size effect                             |        <= 1.9 pp |
+| Overlap effect for chunks >= 2,000            |        <= 0.5 pp |
 
 Source trace: R49, `paper-text/chunking-rag-code-completion-2605.04763.txt`.
 
@@ -149,30 +149,30 @@ understanding. If names are misleading, inconsistent, or obfuscated, they become
 
 ### Naming-affects-LLMs data copied from the paper
 
-| Code search setting | Original MRR | Perturbed/anonymized MRR |
-|---|---:|---:|
-| Java GraphCodeBERT | 70.36% | 17.03% |
-| Python GraphCodeBERT | 68.17% | 23.73% |
+| Code search setting  | Original MRR | Perturbed/anonymized MRR |
+| -------------------- | -----------: | -----------------------: |
+| Java GraphCodeBERT   |       70.36% |                   17.03% |
+| Python GraphCodeBERT |       68.17% |                   23.73% |
 
 Other paper findings to preserve:
 
-| Finding | Interpretation |
-|---|---|
-| Definition names matter more than invocation names | Exported/function names carry goal-level semantics. |
+| Finding                                                       | Interpretation                                           |
+| ------------------------------------------------------------- | -------------------------------------------------------- |
+| Definition names matter more than invocation names            | Exported/function names carry goal-level semantics.      |
 | Misleading shuffled names are often worse than random strings | A wrong semantic hint can be more damaging than opacity. |
-| Code search is especially name-sensitive | Names influence retrieval, not just summarization. |
+| Code search is especially name-sensitive                      | Names influence retrieval, not just summarization.       |
 
 Source trace: R65, `paper-text/naming-affects-llms-code-analysis-2307.12488.txt`.
 
 ### When Names Disappear data copied from the paper
 
-| Task/model | Original | Obfuscated | Drop |
-|---|---:|---:|---:|
-| ClassEval class summarization, DeepSeek V3 | 87.7 | 76.7 | -11.0 |
-| ClassEval class summarization, GPT-4o | 87.3 | 58.7 | -28.6 |
-| Execution prediction, GPT-4o | 76.6 | 70.2 | -6.4 |
-| Execution prediction, DeepSeek V3 under ambiguity | 90.0 | 69.3 | -20.7 |
-| LiveCodeBench, Llama 4 Maverick | 80.2 | 56.4 | -23.8 |
+| Task/model                                        | Original | Obfuscated |  Drop |
+| ------------------------------------------------- | -------: | ---------: | ----: |
+| ClassEval class summarization, DeepSeek V3        |     87.7 |       76.7 | -11.0 |
+| ClassEval class summarization, GPT-4o             |     87.3 |       58.7 | -28.6 |
+| Execution prediction, GPT-4o                      |     76.6 |       70.2 |  -6.4 |
+| Execution prediction, DeepSeek V3 under ambiguity |     90.0 |       69.3 | -20.7 |
+| LiveCodeBench, Llama 4 Maverick                   |     80.2 |       56.4 | -23.8 |
 
 Source trace: R66, `paper-text/when-names-disappear-2510.03178.txt`.
 
@@ -209,32 +209,32 @@ exist.
 
 ### Type-Constrained Code Generation data copied from the paper
 
-| Measurement | Value |
-|---|---:|
-| Type-check errors among generated TypeScript compile errors | 94% |
-| Syntax errors among generated TypeScript compile errors | 6% |
-| Compile-error reduction on HumanEval synthesis | 74.8% |
-| Compile-error reduction on MBPP synthesis | 56.0% |
-| Syntax-only ideal improvement on HumanEval synthesis | 9.0% |
-| Syntax-only ideal improvement on MBPP synthesis | 4.8% |
-| Average pass@1 relative gain, synthesis | +3.5% |
-| Average pass@1 relative gain, translation | +5.0% |
-| Average pass@1 relative gain, repair | +37.0% |
+| Measurement                                                 |  Value |
+| ----------------------------------------------------------- | -----: |
+| Type-check errors among generated TypeScript compile errors |    94% |
+| Syntax errors among generated TypeScript compile errors     |     6% |
+| Compile-error reduction on HumanEval synthesis              |  74.8% |
+| Compile-error reduction on MBPP synthesis                   |  56.0% |
+| Syntax-only ideal improvement on HumanEval synthesis        |   9.0% |
+| Syntax-only ideal improvement on MBPP synthesis             |   4.8% |
+| Average pass@1 relative gain, synthesis                     |  +3.5% |
+| Average pass@1 relative gain, translation                   |  +5.0% |
+| Average pass@1 relative gain, repair                        | +37.0% |
 
 Source trace: R43, `paper-text/type-constrained-codegen-2504.09246.txt`.
 
 ### CatCoder data copied from the paper
 
-| Measurement | Value |
-|---|---:|
-| Java tasks | 199 |
-| Rust tasks | 90 |
-| Java compile@k improvement over RepoCoder | up to +14.44% |
-| Java pass@k improvement over RepoCoder | up to +17.35% |
-| Rust compile@k improvement | up to +3.27% |
-| Rust pass@k improvement | up to +6.68% |
-| Removing type context, Java compile/pass drop | up to 6.63% / 11.57% |
-| Removing type context, Rust compile/pass drop | up to 8.52% / 5.3% |
+| Measurement                                     |                 Value |
+| ----------------------------------------------- | --------------------: |
+| Java tasks                                      |                   199 |
+| Rust tasks                                      |                    90 |
+| Java compile@k improvement over RepoCoder       |         up to +14.44% |
+| Java pass@k improvement over RepoCoder          |         up to +17.35% |
+| Rust compile@k improvement                      |          up to +3.27% |
+| Rust pass@k improvement                         |          up to +6.68% |
+| Removing type context, Java compile/pass drop   |  up to 6.63% / 11.57% |
+| Removing type context, Rust compile/pass drop   |    up to 8.52% / 5.3% |
 | Removing code retrieval, Java compile/pass drop | up to 19.43% / 38.35% |
 | Removing code retrieval, Rust compile/pass drop | up to 46.24% / 56.03% |
 
@@ -252,15 +252,15 @@ xychart-beta
 
 The generated SDK inference:
 
-| Raw API call | Generated typed client |
-|---|---|
-| URL is a string | Endpoint is a method/symbol |
-| Params are ad hoc | Params are typed |
-| Response is guessed | Response model is typed |
-| Errors are discovered at runtime | Errors can be modeled and tested |
-| Examples are scattered | Usage can be colocated/generated |
-| Agent can invent fields | Compiler rejects invalid fields |
-| Drift is silent | CI can check generated output freshness |
+| Raw API call                     | Generated typed client                  |
+| -------------------------------- | --------------------------------------- |
+| URL is a string                  | Endpoint is a method/symbol             |
+| Params are ad hoc                | Params are typed                        |
+| Response is guessed              | Response model is typed                 |
+| Errors are discovered at runtime | Errors can be modeled and tested        |
+| Examples are scattered           | Usage can be colocated/generated        |
+| Agent can invent fields          | Compiler rejects invalid fields         |
+| Drift is silent                  | CI can check generated output freshness |
 
 This is why "rawdogging API calls" is a strong talk example. Raw calls hide the contract exactly
 where agents need visible constraints.
@@ -273,17 +273,17 @@ usage: undefined names, wrong members, missing APIs.
 
 ### ToolGen data copied from the paper
 
-| Measurement | Improvement range |
-|---|---:|
-| Dependency Coverage | +31.4% to +39.1% |
-| Static Validity Rate | +44.9% to +57.7% |
-| Dependency-only validity | +56.8% to +67.7% |
+| Measurement              | Improvement range |
+| ------------------------ | ----------------: |
+| Dependency Coverage      |  +31.4% to +39.1% |
+| Static Validity Rate     |  +44.9% to +57.7% |
+| Dependency-only validity |  +56.8% to +67.7% |
 
 | Model on CoderEval | Average tool triggers per task |
-|---|---:|
-| CodeGPT | 5.02 |
-| CodeT5 | 6.24 |
-| CodeLlama | 7.05 |
+| ------------------ | -----------------------------: |
+| CodeGPT            |                           5.02 |
+| CodeT5             |                           6.24 |
+| CodeLlama          |                           7.05 |
 
 Source trace: R51, `paper-text/toolgen-autocomplete-repo-codegen-2401.06391.txt`.
 
@@ -293,24 +293,24 @@ hurt.
 
 ### A3-CodGen data copied from the paper
 
-| Global retrieval setting | F1 | Accuracy | Avg retrieved functions |
-|---|---:|---:|---:|
-| k=5 | 0.601 | 0.851 | 8.154 |
-| k=10 | 0.526 | not copied here | more context, worse F1 |
-| k=15 | 0.479 | not copied here | more context, worse F1 |
+| Global retrieval setting |    F1 |        Accuracy | Avg retrieved functions |
+| ------------------------ | ----: | --------------: | ----------------------: |
+| k=5                      | 0.601 |           0.851 |                   8.154 |
+| k=10                     | 0.526 | not copied here |  more context, worse F1 |
+| k=15                     | 0.479 | not copied here |  more context, worse F1 |
 
-| Retrieval method | Global functions found |
-|---|---:|
-| Function-description retrieval | 41.5% |
-| Description + generated what-if code | 60.6% |
+| Retrieval method                     | Global functions found |
+| ------------------------------------ | ---------------------: |
+| Function-description retrieval       |                  41.5% |
+| Description + generated what-if code |                  60.6% |
 
 | Installed-library-aware knowledge | Improvement |
-|---|---:|
-| Precision | +30.59% |
-| Recall | +36.36% |
-| F1 | +34.33% |
-| Accuracy | +15.38% |
-| Library coverage | +7.43% |
+| --------------------------------- | ----------: |
+| Precision                         |     +30.59% |
+| Recall                            |     +36.36% |
+| F1                                |     +34.33% |
+| Accuracy                          |     +15.38% |
+| Library coverage                  |      +7.43% |
 
 Source trace: R64, `paper-text/a3-codgen-2312.05772.txt`.
 
@@ -323,16 +323,16 @@ maps, and typed public interfaces.
 The phrase "static surfaces" should mean any repo artifact that makes valid behavior visible before
 runtime:
 
-| Static surface | Agent affordance | Bad alternative |
-|---|---|---|
-| Typed SDK/client | Valid API calls are importable symbols | Stringly typed `fetch` calls |
-| OpenAPI/JSON Schema/TypeSpec/protobuf | Contract can generate code and docs | API contract lives in examples only |
-| Package exports | Public surface is explicit | Deep imports into internal files |
-| TypeScript interfaces | Shape is locally checkable | Runtime-only object conventions |
-| LSP symbols | Agent can jump by definition/reference | Pure text search over ambiguous names |
-| Generated route map | Dynamic routes become discoverable | Runtime registration magic |
-| Custom lint rules | Architecture violations become diagnostics | Prose-only constraints |
-| Colocated examples/tests | Usage is visible near the API | One stale README snippet |
+| Static surface                        | Agent affordance                           | Bad alternative                       |
+| ------------------------------------- | ------------------------------------------ | ------------------------------------- |
+| Typed SDK/client                      | Valid API calls are importable symbols     | Stringly typed `fetch` calls          |
+| OpenAPI/JSON Schema/TypeSpec/protobuf | Contract can generate code and docs        | API contract lives in examples only   |
+| Package exports                       | Public surface is explicit                 | Deep imports into internal files      |
+| TypeScript interfaces                 | Shape is locally checkable                 | Runtime-only object conventions       |
+| LSP symbols                           | Agent can jump by definition/reference     | Pure text search over ambiguous names |
+| Generated route map                   | Dynamic routes become discoverable         | Runtime registration magic            |
+| Custom lint rules                     | Architecture violations become diagnostics | Prose-only constraints                |
+| Colocated examples/tests              | Usage is visible near the API              | One stale README snippet              |
 
 ## Generated SDK policy for agents
 

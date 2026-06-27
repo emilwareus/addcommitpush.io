@@ -1,4 +1,5 @@
 import { BlogCard } from '@/components/blog-card';
+import { BlogTerminalHero } from '@/components/blog-terminal-hero';
 import { getAllPosts } from '@/lib/posts';
 
 // Fully static: error if dynamic APIs are used
@@ -56,30 +57,38 @@ export const metadata = {
 
 export default function HomePage() {
   const blogPosts = getAllPosts();
-  return (
-    <main className="min-h-screen">
-      <div className="container mx-auto px-4 sm:px-6 py-12 md:py-20">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-16 md:mb-24">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 md:mb-8 text-balance">
-              <span className="text-primary neon-glow">[add commit push]</span>
-            </h1>
-            <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl text-pretty leading-relaxed">
-              Welcome to my trash yard of a blog! My name is Emil, and I&apos;m a sphagetti coder,
-              founder, research, and investor. Here I share my thoughts on tech, data, leadership,
-              and startups (and maybe even some politics in the future..).
-              <br />
-              Enjoy!
-            </p>
-          </div>
+  const totalMinutes = blogPosts.reduce((minutes, post) => {
+    const [readTime] = post.readTime.split(' ');
+    return minutes + Number(readTime);
+  }, 0);
 
-          <div className="space-y-8 md:space-y-10">
-            {blogPosts.map((post) => (
-              <BlogCard key={post.slug} post={post} />
-            ))}
+  return (
+    <main className="site-container">
+      <section className="py-16 sm:py-20">
+        <BlogTerminalHero />
+        <p className="mt-6 max-w-[560px] text-[13.5px] leading-[1.7] text-muted-foreground">
+          Notes on tech, data, leadership & startups by Emil Wåreus: coder, founder, researcher,
+          investor. Every post ships with audio narration.
+        </p>
+      </section>
+
+      <section className="grid gap-6 pb-14 md:grid-cols-2">
+        {blogPosts.map((post) => (
+          <BlogCard key={post.slug} post={post} />
+        ))}
+
+        <div className="flex min-h-[290px] flex-col items-center justify-center border border-dashed border-[var(--hair)] p-7 text-center">
+          <div className="font-serif text-lg italic text-muted-foreground">more soon...</div>
+          <div className="mt-3 text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
+            {blogPosts.length} posts · ~{totalMinutes} min
           </div>
         </div>
-      </div>
+      </section>
+
+      <footer className="flex flex-wrap justify-between gap-4 border-t border-dashed border-[var(--hair)] py-10 text-[11.5px] text-muted-foreground">
+        <span>© 2026 Emil Wåreus</span>
+        <span>add commit push</span>
+      </footer>
     </main>
   );
 }

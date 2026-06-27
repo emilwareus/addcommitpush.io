@@ -13,8 +13,8 @@ export function DiffusionArchitectureSlide() {
       <DiffusionOverview className="w-full" />
 
       <p className="mt-8 text-lg text-center px-6 py-3 rounded-lg border border-primary/30 bg-primary/5">
-        Loop stops when <span className="text-primary font-semibold neon-glow">EVIDENCE</span> is complete,
-        not when draft looks good
+        Loop stops when <span className="text-primary font-semibold neon-glow">EVIDENCE</span> is
+        complete, not when draft looks good
       </p>
     </div>
   );

@@ -62,6 +62,7 @@ On Apple Silicon, you should see: `Devices: STT=cpu, TTS=mps, VAD=cpu`
 ### Binary frames (audio)
 
 **Browser → Server:** `[4-byte flags (uint32 LE)] + [PCM int16 16kHz mono]`
+
 - Flags bit 0: `is_tts_playing` (for echo suppression)
 
 **Server → Browser:** `[PCM int16 24kHz mono]` (raw, no header)
@@ -69,10 +70,12 @@ On Apple Silicon, you should see: `Devices: STT=cpu, TTS=mps, VAD=cpu`
 ### JSON frames (control)
 
 **Browser → Server:**
+
 - `{"type": "slide_context", "context": {"current_title": "...", ...}}`
 - `{"type": "shutdown"}`
 
 **Server → Browser:**
+
 - `{"type": "ready"}` — models loaded, ready for audio
 - `{"type": "transcript", "text": "...", "role": "user"|"assistant"}`
 - `{"type": "thinking", "text": "..."}` — sidebar observation

@@ -22,16 +22,16 @@ blog article and richer presentation sections.
 
 ## Insight Files
 
-| # | File | Lines | Role |
-|---:|---|---:|---|
-| 1 | `insights/INSIGHT_01_latency_budget_is_the_product.md` | 236 | Full latency waterfall and data trace. |
-| 2 | `insights/INSIGHT_02_endpointing_is_turn_taking.md` | 189 | VAD, endpointing, semantic EOU, and human turn-taking. |
-| 3 | `insights/INSIGHT_03_streaming_stt_is_not_batch_stt.md` | 188 | STT metrics beyond WER. |
-| 4 | `insights/INSIGHT_04_tts_latency_is_architecture.md` | 200 | TTS TTFA/RTF/architecture tradeoffs. |
-| 5 | `insights/INSIGHT_05_transport_is_media_correctness.md` | 174 | WebRTC vs WebSocket as media responsibility. |
-| 6 | `insights/INSIGHT_06_barge_in_is_the_real_system_test.md` | 167 | Barge-in, cancellation, echo, and state coherence. |
-| 7 | `insights/INSIGHT_07_native_speech_models_change_the_boundary.md` | 161 | Cascaded vs native speech-to-speech. |
-| 8 | `insights/INSIGHT_08_voice_agent_eval_needs_multiple_metrics.md` | 213 | Trace-based eval harness and metric matrix. |
+|   # | File                                                              | Lines | Role                                                   |
+| --: | ----------------------------------------------------------------- | ----: | ------------------------------------------------------ |
+|   1 | `insights/INSIGHT_01_latency_budget_is_the_product.md`            |   236 | Full latency waterfall and data trace.                 |
+|   2 | `insights/INSIGHT_02_endpointing_is_turn_taking.md`               |   189 | VAD, endpointing, semantic EOU, and human turn-taking. |
+|   3 | `insights/INSIGHT_03_streaming_stt_is_not_batch_stt.md`           |   188 | STT metrics beyond WER.                                |
+|   4 | `insights/INSIGHT_04_tts_latency_is_architecture.md`              |   200 | TTS TTFA/RTF/architecture tradeoffs.                   |
+|   5 | `insights/INSIGHT_05_transport_is_media_correctness.md`           |   174 | WebRTC vs WebSocket as media responsibility.           |
+|   6 | `insights/INSIGHT_06_barge_in_is_the_real_system_test.md`         |   167 | Barge-in, cancellation, echo, and state coherence.     |
+|   7 | `insights/INSIGHT_07_native_speech_models_change_the_boundary.md` |   161 | Cascaded vs native speech-to-speech.                   |
+|   8 | `insights/INSIGHT_08_voice_agent_eval_needs_multiple_metrics.md`  |   213 | Trace-based eval harness and metric matrix.            |
 
 ## Site Brain Integration
 

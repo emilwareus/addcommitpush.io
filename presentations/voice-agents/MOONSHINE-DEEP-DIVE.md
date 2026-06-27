@@ -3,6 +3,7 @@
 How an ergodic streaming encoder achieves Whisper-level accuracy at a fraction of the latency, and why it matters for edge voice agents.
 
 **Based on:**
+
 - [Moonshine source code](../../../go-research/external_code/moonshine/)
 - [Moonshine v2 paper (Kudlur et al., Feb 2026)](../../../go-research/external_code/moonshine/moonshine_v2_paper_2602.12241.pdf) -- "Ergodic Streaming Encoder ASR for Latency-Critical Speech Applications"
 - [Original Moonshine paper (Jeffries et al., 2024)](https://arxiv.org/abs/2410.15608) -- "Speech recognition for live transcription and voice commands"
@@ -14,6 +15,7 @@ How an ergodic streaming encoder achieves Whisper-level accuracy at a fraction o
 Moonshine v2 is a family of streaming ASR models designed for **latency-critical edge deployment**. The key innovation: replacing Whisper's full-attention encoder with a **sliding-window ("ergodic") encoder** that achieves bounded, constant-time-to-first-token regardless of utterance length.
 
 The results are dramatic. On an Apple M3:
+
 - Moonshine v2 Tiny: **50ms** latency (5.8x faster than Whisper Tiny at 289ms)
 - Moonshine v2 Small: **148ms** latency (13.1x faster than Whisper Small at 1940ms)
 - Moonshine v2 Medium: **258ms** latency (43.7x faster than Whisper Large-v3 at 11286ms)
@@ -21,6 +23,7 @@ The results are dramatic. On an Apple M3:
 And accuracy matches models **6x their size** on Open ASR benchmarks.
 
 **Key files:**
+
 - [`core/moonshine-model.cpp`](../../../go-research/external_code/moonshine/core/moonshine-model.cpp) -- Non-streaming model inference, dimensions at lines 40-54
 - [`core/moonshine-streaming-model.cpp`](../../../go-research/external_code/moonshine/core/moonshine-streaming-model.cpp) -- Streaming 5-stage pipeline (frontend, encoder, adapter, cross_kv, decoder_kv)
 - [`core/moonshine-streaming-model.h`](../../../go-research/external_code/moonshine/core/moonshine-streaming-model.h) -- Streaming state and config structs
@@ -35,6 +38,7 @@ And accuracy matches models **6x their size** on Open ASR benchmarks.
 ### Why Whisper is slow for real-time
 
 Whisper's encoder uses **full self-attention**: every frame attends to every other frame. This has two consequences:
+
 1. Attention cost is **O(T^2)** in sequence length
 2. The encoder must process the **entire utterance** before any decoder token can be emitted
 
@@ -43,7 +47,8 @@ For a 100M-parameter encoder at 0.1 TOPS (typical edge device), the Moonshine pa
 ### Moonshine's solution: sliding-window attention
 
 Replace full attention with a fixed window `(w_left, w_right)`:
-- Attention cost becomes **O(T * w)** -- linear in sequence length
+
+- Attention cost becomes **O(T \* w)** -- linear in sequence length
 - The encoder can emit representations incrementally as local context arrives
 - TTFT becomes **bounded and constant**, regardless of utterance length
 
@@ -84,11 +89,11 @@ Raw Audio (16kHz) --> [Audio Preprocessor] --> [Streaming Encoder] --> [Adapter]
 
 From the paper Table 1:
 
-| Model | Enc dim | Dec dim | Layers (Enc/Dec) | Pre | Enc | Adap | Dec | Total |
-|-------|---------|---------|-----------------|-----|-----|------|-----|-------|
-| Tiny | 320 | 320 | 6/6 | 2.08M | 7.39M | 1.31M | 22.80M | **33.57M** |
-| Small | 620 | 512 | 10/10 | 7.74M | 43.49M | 2.86M | 69.27M | **123.36M** |
-| Medium | 768 | 640 | 14/14 | 11.86M | 93.66M | 3.64M | 135.77M | **244.93M** |
+| Model  | Enc dim | Dec dim | Layers (Enc/Dec) | Pre    | Enc    | Adap  | Dec     | Total       |
+| ------ | ------- | ------- | ---------------- | ------ | ------ | ----- | ------- | ----------- |
+| Tiny   | 320     | 320     | 6/6              | 2.08M  | 7.39M  | 1.31M | 22.80M  | **33.57M**  |
+| Small  | 620     | 512     | 10/10            | 7.74M  | 43.49M | 2.86M | 69.27M  | **123.36M** |
+| Medium | 768     | 640     | 14/14            | 11.86M | 93.66M | 3.64M | 135.77M | **244.93M** |
 
 Note: the **decoder has substantially more parameters than the encoder** because each decoder layer includes cross-attention projections (in addition to self-attention) and uses SwiGLU feed-forward blocks while the encoder does not.
 
@@ -173,6 +178,7 @@ int MoonshineStreamingModel::process_audio_chunk(MoonshineStreamingState *state,
 ```
 
 The frontend maintains three buffers across chunks:
+
 - `sample_buffer[79]` -- residual raw samples
 - `conv1_buffer[d_model*4]` -- conv1 state
 - `conv2_buffer[c1*4]` -- conv2 state
@@ -188,28 +194,32 @@ The encoder is a standard Transformer stack with one critical change: each layer
 From the paper Section 3.2:
 
 In Moonshine v2:
+
 - First two and last two encoder layers: **(16, 4)**
 - All intermediate layers: **(16, 0)** -- strictly causal
 
 This means:
+
 - **Left context**: 16 frames = 320ms of past audio
 - **Right context (lookahead)**: 4 frames = 80ms of future audio (only in boundary layers)
-- **Total lookahead**: 4 * 20ms = 80ms
+- **Total lookahead**: 4 \* 20ms = 80ms
 
 ### No positional embeddings (ergodic)
 
 The encoder uses **no absolute or relative positional embeddings**. This is deliberate:
 
-> "Encoder computations are translation-invariant in time: for any local window, the same function is applied regardless of where that window occurs in the utterance. Informally, the encoder is *ergodic* in the sense that it has no explicit notion of absolute position; it can only infer structure from the content of the local context provided by sliding-window attention."
+> "Encoder computations are translation-invariant in time: for any local window, the same function is applied regardless of where that window occurs in the utterance. Informally, the encoder is _ergodic_ in the sense that it has no explicit notion of absolute position; it can only infer structure from the content of the local context provided by sliding-window attention."
 
 This is a strong design choice. It means:
+
 - The encoder produces identical outputs for identical local windows regardless of position
-- Position information comes only from the *content* of the sliding window
+- Position information comes only from the _content_ of the sliding window
 - The model can process audio of any length without positional encoding limitations
 
 ### Provisional vs. finalized states
 
 Because of the 80ms lookahead, encoder representations can be:
+
 - **Finalized**: enough future audio has arrived (16 frames = 320ms of additional audio)
 - **Provisional**: may change as more audio arrives
 
@@ -218,6 +228,7 @@ For live captioning, the system can decode from provisional states immediately -
 ### Why this makes TTFT bounded
 
 With full attention, encoding N frames costs O(N^2) -- the encoder must wait for the entire utterance. With sliding-window attention:
+
 - Each frame only attends to `w` neighbors
 - Encoding proceeds incrementally as audio arrives
 - The encoder can start emitting after just `w_right * 20ms = 80ms` of audio
@@ -228,6 +239,7 @@ With full attention, encoding N frames costs O(N^2) -- the encoder must wait for
 ## 6. The Adapter
 
 The adapter bridges the ergodic encoder and the decoder. It adds:
+
 1. **Learned positional embedding** -- the encoder is position-free, but the decoder needs position information
 2. **Linear projection** -- when encoder dim differs from decoder dim (e.g., Small: 620 -> 512)
 
@@ -238,6 +250,7 @@ This keeps the encoder clean (no positional info, purely local processing) while
 ## 7. The Decoder
 
 Standard causal Transformer with:
+
 - **RoPE** (Rotary Position Embeddings) -- not learned positional embeddings like Whisper
 - Cross-attention to adapter features
 - SwiGLU feed-forward blocks (vs GELU FFN in encoder)
@@ -259,13 +272,13 @@ The C++ streaming implementation decomposes the model into five independently-ca
 
 [`moonshine-streaming-model.cpp`](../../../go-research/external_code/moonshine/core/moonshine-streaming-model.cpp)
 
-| Stage | ONNX file | Input | Output | Cached? |
-|-------|-----------|-------|--------|---------|
-| **Frontend** | `frontend.ort` | raw audio chunk + conv buffers | features `[1, T, enc_dim]` | Conv buffers |
-| **Encoder** | `encoder.ort` | features + left context | encoded frames | Sliding window state |
-| **Adapter** | `adapter.ort` | new encoder frames + position offset | "memory" (cross-attn context) | Appends incrementally |
-| **Cross KV** | `cross_kv.ort` | full memory | cross-attention K/V | Invalidated when memory changes |
-| **Decoder KV** | `decoder_kv.ort` | token + cross K/V + self K/V cache | next token logits | Self-attn KV cache |
+| Stage          | ONNX file        | Input                                | Output                        | Cached?                         |
+| -------------- | ---------------- | ------------------------------------ | ----------------------------- | ------------------------------- |
+| **Frontend**   | `frontend.ort`   | raw audio chunk + conv buffers       | features `[1, T, enc_dim]`    | Conv buffers                    |
+| **Encoder**    | `encoder.ort`    | features + left context              | encoded frames                | Sliding window state            |
+| **Adapter**    | `adapter.ort`    | new encoder frames + position offset | "memory" (cross-attn context) | Appends incrementally           |
+| **Cross KV**   | `cross_kv.ort`   | full memory                          | cross-attention K/V           | Invalidated when memory changes |
+| **Decoder KV** | `decoder_kv.ort` | token + cross K/V + self K/V cache   | next token logits             | Self-attn KV cache              |
 
 The key insight: by decomposing into stages, each can be cached independently. New audio only triggers frontend -> encoder -> adapter. Cross K/V is lazily recomputed only when memory changes. Decoder reuses cached self-attention K/V.
 
@@ -315,6 +328,7 @@ The encoder uses left context of `16 * depth` frames. Only "stable" frames are p
 [`moonshine-streaming-model.cpp:1166-1336`](../../../go-research/external_code/moonshine/core/moonshine-streaming-model.cpp)
 
 The C++ implementation supports speculative decoding:
+
 1. Accept optional `speculative_tokens` from a prior decode
 2. Single forward pass with BOS + speculative tokens
 3. Verify predictions against speculative tokens, find divergence point
@@ -378,6 +392,7 @@ MoonshineModel::MoonshineModel(bool log_ort_run, float max_tokens_per_second)
 ```
 
 ORT session configuration:
+
 - `load_model_format = "ORT"` -- flatbuffer format
 - `use_ort_model_bytes_directly = "1"` -- zero-copy model loading
 - `disable_prepacking = "1"` -- reduces memory overhead
@@ -393,38 +408,39 @@ Post-training quantization to 8-bit weights and 8-bit MatMul. The convolutional 
 
 ### WER on Open ASR benchmarks (paper Table 3)
 
-| Dataset | Tiny (34M) | Small (123M) | Medium (245M) |
-|---------|-----------|-------------|---------------|
-| AMI | 19.03 | 12.54 | 10.68 |
-| Earnings-22 | 20.27 | 13.53 | 11.90 |
-| GigaSpeech | 13.90 | 10.41 | 9.63 |
-| Libri (clean) | 4.49 | 2.49 | 2.08 |
-| Libri (other) | 12.09 | 6.78 | 5.00 |
-| SPGISpeech | 6.16 | 3.19 | 2.58 |
-| TED-LIUM | 6.12 | 3.77 | 2.99 |
-| VoxPopuli | 14.02 | 9.98 | 8.54 |
-| **Average** | **12.01** | **7.84** | **6.65** |
+| Dataset       | Tiny (34M) | Small (123M) | Medium (245M) |
+| ------------- | ---------- | ------------ | ------------- |
+| AMI           | 19.03      | 12.54        | 10.68         |
+| Earnings-22   | 20.27      | 13.53        | 11.90         |
+| GigaSpeech    | 13.90      | 10.41        | 9.63          |
+| Libri (clean) | 4.49       | 2.49         | 2.08          |
+| Libri (other) | 12.09      | 6.78         | 5.00          |
+| SPGISpeech    | 6.16       | 3.19         | 2.58          |
+| TED-LIUM      | 6.12       | 3.77         | 2.99          |
+| VoxPopuli     | 14.02      | 9.98         | 8.54          |
+| **Average**   | **12.01**  | **7.84**     | **6.65**      |
 
 ### Response latency comparison (paper Table 2)
 
 On Apple MacBook M3:
 
-| Model | Latency (ms) | Compute Load (%) |
-|-------|-------------|-----------------|
-| Moonshine Tiny | 27 | 5.91 |
-| Moonshine v2 Tiny | **50** | 8.03 |
-| Moonshine v2 Small | **148** | 17.97 |
-| Moonshine v2 Medium | **258** | 28.95 |
-| Whisper Tiny | 289 | 8.46 |
-| Whisper Base | 553 | 16.19 |
-| Whisper Small | 1940 | 56.84 |
-| Whisper Large v3 | 11286 | 330.65 |
+| Model               | Latency (ms) | Compute Load (%) |
+| ------------------- | ------------ | ---------------- |
+| Moonshine Tiny      | 27           | 5.91             |
+| Moonshine v2 Tiny   | **50**       | 8.03             |
+| Moonshine v2 Small  | **148**      | 17.97            |
+| Moonshine v2 Medium | **258**      | 28.95            |
+| Whisper Tiny        | 289          | 8.46             |
+| Whisper Base        | 553          | 16.19            |
+| Whisper Small       | 1940         | 56.84            |
+| Whisper Large v3    | 11286        | 330.65           |
 
 Moonshine v2 Medium achieves **lower latency than Whisper Tiny** while having **better accuracy than Whisper Large-v3**.
 
 ### Pareto frontier (paper Figure 4)
 
 On accuracy vs. parameter count:
+
 - Moonshine v2 and NVIDIA models lie on a similar Pareto frontier
 - Moonshine fills the **lower end** (sub-1B parameters, sub-1GB memory)
 - NVIDIA's models are optimized for GPUs with multi-PFLOP compute
@@ -434,20 +450,20 @@ On accuracy vs. parameter count:
 
 ## 13. Key Differences: Moonshine vs. Whisper
 
-| Feature | Whisper | Moonshine v2 |
-|---------|---------|-------------|
-| **Audio input** | Mel spectrogram (STFT + filterbank) | Raw waveform (learned frontend) |
-| **Input length** | Fixed 30s, zero-padded | Variable length, no padding |
-| **Encoder attention** | Full (O(T^2)) | Sliding window (O(T*w)) |
-| **Positional encoding (encoder)** | Fixed sinusoidal | None (ergodic) |
-| **Positional encoding (decoder)** | Learned | RoPE |
-| **TTFT** | Grows with utterance length | Bounded, constant |
-| **Streaming** | Not native | Native 5-stage pipeline |
-| **Multitask** | Transcription + translation + language ID + timestamps | Transcription only |
-| **Languages** | 99-100 languages | 8 languages (English primary) |
-| **Training data** | 680K hours (weakly supervised) | ~300K hours |
-| **Decoder FFN** | GELU | SwiGLU |
-| **Runtime** | PyTorch | ONNX Runtime (C++, mmap) |
+| Feature                           | Whisper                                                | Moonshine v2                    |
+| --------------------------------- | ------------------------------------------------------ | ------------------------------- |
+| **Audio input**                   | Mel spectrogram (STFT + filterbank)                    | Raw waveform (learned frontend) |
+| **Input length**                  | Fixed 30s, zero-padded                                 | Variable length, no padding     |
+| **Encoder attention**             | Full (O(T^2))                                          | Sliding window (O(T\*w))        |
+| **Positional encoding (encoder)** | Fixed sinusoidal                                       | None (ergodic)                  |
+| **Positional encoding (decoder)** | Learned                                                | RoPE                            |
+| **TTFT**                          | Grows with utterance length                            | Bounded, constant               |
+| **Streaming**                     | Not native                                             | Native 5-stage pipeline         |
+| **Multitask**                     | Transcription + translation + language ID + timestamps | Transcription only              |
+| **Languages**                     | 99-100 languages                                       | 8 languages (English primary)   |
+| **Training data**                 | 680K hours (weakly supervised)                         | ~300K hours                     |
+| **Decoder FFN**                   | GELU                                                   | SwiGLU                          |
+| **Runtime**                       | PyTorch                                                | ONNX Runtime (C++, mmap)        |
 
 ---
 
@@ -456,6 +472,7 @@ On accuracy vs. parameter count:
 ### The streaming story
 
 For a voice agent, the critical metric is **response latency** -- the time from when the user stops speaking to when they hear a response. This includes:
+
 1. VAD detecting end-of-speech (~200ms)
 2. **STT processing** (Moonshine: 50-258ms vs Whisper: 289-11286ms)
 3. LLM inference (~200-500ms)
@@ -466,6 +483,7 @@ Moonshine v2's bounded TTFT means STT is no longer the bottleneck. A Moonshine v
 ### For Jarvis specifically
 
 Our Jarvis voice agent uses faster-whisper (small, int8, CPU). Moonshine v2 Small could be a drop-in improvement:
+
 - Similar accuracy (7.84% avg WER vs ~7-8% for faster-whisper small)
 - 13x lower latency
 - Native ONNX runtime (no Python dependency)

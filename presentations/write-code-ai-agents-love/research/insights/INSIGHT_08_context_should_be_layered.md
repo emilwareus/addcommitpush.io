@@ -13,16 +13,16 @@ right context at the right time" -- hot memory for invariants, cold memory for s
 
 ## Source map
 
-| Ref | Source | Local text | Role in this insight |
-|---|---|---|---|
-| R15 | Codified Context | `paper-text/codified-context-2602.20478.txt` | Case study implementing hot/cold/specialist tiered context in a 108K-line C# system. |
-| R18 | Evaluating AGENTS.md | `paper-text/evaluating-agents-md-2602.11988.txt` | Counter-evidence: context files can reduce success and increase cost when they add noise. |
-| R19 | Claude Code Configs | `paper-text/claude-code-configs-2511.09268.txt` | 328 configuration files showing what developers encode in hot-loaded context. |
-| D05 | Anthropic best practices | `articles/anthropic-claude-code-best-practices.html` | Vendor guidance: context windows fill quickly, performance degrades as sessions grow. |
-| D06 | GitHub Copilot best practices | `articles/github-copilot-coding-agent-best-practices.html` | Scoped rules/instructions for Copilot agents. |
-| D07 | Cursor rules for AI | `articles/cursor-rules-for-ai.html` | Rule files injected into model context, can be scoped by path. |
-| D09 | Aider repo map | `articles/aider-repomap.md` | Compact structural context for large codebases. |
-| R74 | Agent READMEs | `paper-text/agent-readmes-context-files-2025.txt` | Empirical study of 2,303 agent context files across Claude Code, Codex, and Copilot. |
+| Ref | Source                        | Local text                                                 | Role in this insight                                                                      |
+| --- | ----------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| R15 | Codified Context              | `paper-text/codified-context-2602.20478.txt`               | Case study implementing hot/cold/specialist tiered context in a 108K-line C# system.      |
+| R18 | Evaluating AGENTS.md          | `paper-text/evaluating-agents-md-2602.11988.txt`           | Counter-evidence: context files can reduce success and increase cost when they add noise. |
+| R19 | Claude Code Configs           | `paper-text/claude-code-configs-2511.09268.txt`            | 328 configuration files showing what developers encode in hot-loaded context.             |
+| D05 | Anthropic best practices      | `articles/anthropic-claude-code-best-practices.html`       | Vendor guidance: context windows fill quickly, performance degrades as sessions grow.     |
+| D06 | GitHub Copilot best practices | `articles/github-copilot-coding-agent-best-practices.html` | Scoped rules/instructions for Copilot agents.                                             |
+| D07 | Cursor rules for AI           | `articles/cursor-rules-for-ai.html`                        | Rule files injected into model context, can be scoped by path.                            |
+| D09 | Aider repo map                | `articles/aider-repomap.md`                                | Compact structural context for large codebases.                                           |
+| R74 | Agent READMEs                 | `paper-text/agent-readmes-context-files-2025.txt`          | Empirical study of 2,303 agent context files across Claude Code, Codex, and Copilot.      |
 
 ## Codified Context: the tiered architecture in practice
 
@@ -31,24 +31,24 @@ a 108,000-line C# distributed system over 283 development sessions.
 
 ### Codified Context architecture
 
-| Tier | Name | Loading strategy | Content | Size |
-|---|---|---|---|---|
-| 1 | Project Constitution (Hot Memory) | Always loaded, every session | Conventions, retrieval hooks, orchestration protocols | ~660 lines |
-| 2 | Domain-Expert Agents (Specialists) | Invoked per task, triggered by signals | 19 specialized agents embedding project-specific knowledge | Variable |
-| 3 | Knowledge Base (Cold Memory) | Retrieved on demand | 34 specification documents, design intent, failure modes | Substantial |
+| Tier | Name                               | Loading strategy                       | Content                                                    | Size        |
+| ---- | ---------------------------------- | -------------------------------------- | ---------------------------------------------------------- | ----------- |
+| 1    | Project Constitution (Hot Memory)  | Always loaded, every session           | Conventions, retrieval hooks, orchestration protocols      | ~660 lines  |
+| 2    | Domain-Expert Agents (Specialists) | Invoked per task, triggered by signals | 19 specialized agents embedding project-specific knowledge | Variable    |
+| 3    | Knowledge Base (Cold Memory)       | Retrieved on demand                    | 34 specification documents, design intent, failure modes   | Substantial |
 
 ### Codified Context quantitative data
 
-| Measurement | Value | Unit |
-|---|---:|---|
-| Codebase size | 108,000 | lines of C# |
-| Development sessions | 283 | sessions |
-| Human prompts | 2,801 | total interactions |
-| Agent invocations | 1,197 | specialist agent calls |
-| Agent turns | 16,522 | total across all sessions |
-| Specialized agents | 19 | domain experts |
-| Specification documents (cold memory) | 34 | on-demand docs |
-| Total context infrastructure | ~26,000 | lines |
+| Measurement                           |   Value | Unit                      |
+| ------------------------------------- | ------: | ------------------------- |
+| Codebase size                         | 108,000 | lines of C#               |
+| Development sessions                  |     283 | sessions                  |
+| Human prompts                         |   2,801 | total interactions        |
+| Agent invocations                     |   1,197 | specialist agent calls    |
+| Agent turns                           |  16,522 | total across all sessions |
+| Specialized agents                    |      19 | domain experts            |
+| Specification documents (cold memory) |      34 | on-demand docs            |
+| Total context infrastructure          | ~26,000 | lines                     |
 
 Source trace: R15, `paper-text/codified-context-2602.20478.txt`.
 
@@ -81,12 +81,12 @@ as a flat block of instructions -- the result is often worse than no context at 
 
 ### Evaluating AGENTS.md data on context file impact
 
-| Setting | Effect on task success | Effect on cost |
-|---|---|---|
-| No context file | Baseline | Baseline |
-| LLM-generated context file | Tends to reduce success | Increases cost by >20% |
-| Developer-provided context file | Tends to reduce success | Increases cost |
-| Behavioral change with context | More exploration, more testing | Agents respect instructions even when unhelpful |
+| Setting                         | Effect on task success         | Effect on cost                                  |
+| ------------------------------- | ------------------------------ | ----------------------------------------------- |
+| No context file                 | Baseline                       | Baseline                                        |
+| LLM-generated context file      | Tends to reduce success        | Increases cost by >20%                          |
+| Developer-provided context file | Tends to reduce success        | Increases cost                                  |
+| Behavioral change with context  | More exploration, more testing | Agents respect instructions even when unhelpful |
 
 Source trace: R18, `paper-text/evaluating-agents-md-2602.11988.txt`.
 
@@ -106,13 +106,13 @@ The analysis of 328 Claude Code configuration files shows what the community con
 
 ### Most common concerns in Claude Code configs
 
-| Concern category | Prevalence | Interpretation |
-|---|---|---|
-| Application architecture | 72.6% | Most files describe structure |
-| Build/test commands | Common | Exact copy-paste commands |
-| Code style | Common | Naming, imports, formatting |
-| Workflow guidelines | Common | When to test, what to avoid |
-| Median headings per file | 7 | Moderate structure |
+| Concern category         | Prevalence | Interpretation                |
+| ------------------------ | ---------- | ----------------------------- |
+| Application architecture | 72.6%      | Most files describe structure |
+| Build/test commands      | Common     | Exact copy-paste commands     |
+| Code style               | Common     | Naming, imports, formatting   |
+| Workflow guidelines      | Common     | When to test, what to avoid   |
+| Median headings per file | 7          | Moderate structure            |
 
 Source trace: R19, `paper-text/claude-code-configs-2511.09268.txt`.
 
@@ -133,12 +133,12 @@ Source trace: R74, `paper-text/agent-readmes-context-files-2025.txt`.
 
 Multiple practitioner tools have independently converged on layered context:
 
-| Tool | Hot context | Cold/scoped context | Evidence |
-|---|---|---|---|
-| Claude Code | CLAUDE.md at root | Subdirectory CLAUDE.md files | D05: scoped by directory hierarchy |
-| Cursor | .cursorrules | Path-specific rule files | D07: rules can be scoped to paths |
-| GitHub Copilot | Repository instructions | Path-specific instructions | D06: supports both levels |
-| Aider | In-chat conventions | Repo map (generated) | D09: compact structural summary |
+| Tool           | Hot context             | Cold/scoped context          | Evidence                           |
+| -------------- | ----------------------- | ---------------------------- | ---------------------------------- |
+| Claude Code    | CLAUDE.md at root       | Subdirectory CLAUDE.md files | D05: scoped by directory hierarchy |
+| Cursor         | .cursorrules            | Path-specific rule files     | D07: rules can be scoped to paths  |
+| GitHub Copilot | Repository instructions | Path-specific instructions   | D06: supports both levels          |
+| Aider          | In-chat conventions     | Repo map (generated)         | D09: compact structural summary    |
 
 Source quality: `official-doc evidence` for all four.
 
@@ -151,6 +151,7 @@ to the problem, not an arbitrary design choice.
 Based on the evidence, the boundary between hot and cold context can be defined functionally:
 
 **Hot context** (always loaded): information the agent needs for ANY task in the repository.
+
 - Build and test commands (exact, copy-paste)
 - Architecture overview (module boundaries, key components)
 - Code style constraints (naming, imports, patterns)
@@ -158,6 +159,7 @@ Based on the evidence, the boundary between hot and cold context can be defined 
 - Trigger table (which specialist/doc to consult for which domain)
 
 **Cold context** (loaded on demand): information the agent needs only for SPECIFIC tasks.
+
 - Detailed specification documents per subsystem
 - API contracts and design decisions for specific modules
 - Migration guides and changelog for specific features

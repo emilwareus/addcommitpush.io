@@ -10,14 +10,14 @@ have been measured on those metrics with enough rigor to trust the numbers?
 
 ## Source Map
 
-| Ref | Source | Local path | Role | Source quality |
-|---|---|---|---|---|
-| R-VA-001 | Local STT deep dive | `../STT-DEEP-DIVE.md` | Existing WER/RTF/latency metric definitions and Whisper WER table. | `practitioner signal` (compiles `paper evidence` from Whisper paper appendix) |
-| R-VA-003 | Moonshine v2: Ergodic Streaming Encoder ASR for Latency-Critical Speech Applications | `../paper-text/moonshine-v2-2602.12241.txt` | Local response-latency and WER comparison with Whisper. | `paper evidence` |
-| R-VA-004 | Open ASR Leaderboard: Towards Reproducible and Transparent Multilingual Speech Recognition Evaluation | `../paper-text/open-asr-leaderboard-2510.06961.txt` | Reproducible WER/RTFx benchmark across ASR systems. Published by authors from Hugging Face, NVIDIA, Cambridge, Mistral, and OpenAI. | `benchmark evidence` |
-| R-VA-020 | Deepgram Flux docs and launch post | `../articles/deepgram-flux-quickstart.html`, `../articles/deepgram-flux-configuration.html`, `../articles/deepgram-flux-launch.html` | Provider view of streaming latency and EOT events. | Latency numbers: `vendor claim`; API parameters: `official-doc evidence` |
-| R-VA-026 | NVIDIA Parakeet TDT 0.6B v3 model card | URL in `../references.md` | Current Parakeet v3 WER/RTFx values. | `official-doc evidence` |
-| R-VA-030 | Whisper paper (Radford et al., 2022) | `../paper-text/whisper-2212.04356.txt` | Baseline model trained on 680,000 hours; original WER numbers. | `paper evidence` |
+| Ref      | Source                                                                                                | Local path                                                                                                                           | Role                                                                                                                                | Source quality                                                                |
+| -------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| R-VA-001 | Local STT deep dive                                                                                   | `../STT-DEEP-DIVE.md`                                                                                                                | Existing WER/RTF/latency metric definitions and Whisper WER table.                                                                  | `practitioner signal` (compiles `paper evidence` from Whisper paper appendix) |
+| R-VA-003 | Moonshine v2: Ergodic Streaming Encoder ASR for Latency-Critical Speech Applications                  | `../paper-text/moonshine-v2-2602.12241.txt`                                                                                          | Local response-latency and WER comparison with Whisper.                                                                             | `paper evidence`                                                              |
+| R-VA-004 | Open ASR Leaderboard: Towards Reproducible and Transparent Multilingual Speech Recognition Evaluation | `../paper-text/open-asr-leaderboard-2510.06961.txt`                                                                                  | Reproducible WER/RTFx benchmark across ASR systems. Published by authors from Hugging Face, NVIDIA, Cambridge, Mistral, and OpenAI. | `benchmark evidence`                                                          |
+| R-VA-020 | Deepgram Flux docs and launch post                                                                    | `../articles/deepgram-flux-quickstart.html`, `../articles/deepgram-flux-configuration.html`, `../articles/deepgram-flux-launch.html` | Provider view of streaming latency and EOT events.                                                                                  | Latency numbers: `vendor claim`; API parameters: `official-doc evidence`      |
+| R-VA-026 | NVIDIA Parakeet TDT 0.6B v3 model card                                                                | URL in `../references.md`                                                                                                            | Current Parakeet v3 WER/RTFx values.                                                                                                | `official-doc evidence`                                                       |
+| R-VA-030 | Whisper paper (Radford et al., 2022)                                                                  | `../paper-text/whisper-2212.04356.txt`                                                                                               | Baseline model trained on 680,000 hours; original WER numbers.                                                                      | `paper evidence`                                                              |
 
 ## What WER Measures And What It Hides
 
@@ -58,18 +58,18 @@ meaningful for relative comparison but do not transfer directly to other hardwar
 
 Copied subset from the paper (Table 3 in the Open ASR Leaderboard paper, `benchmark evidence`):
 
-| Model | Open | Avg. WER | RTFx | Encoder | Decoder | Languages | Hardware | Source |
-|---|---|---:|---:|---|---|---:|---|---|
-| Cohere Labs Transcribe | Yes | 5.42 | 525 | FastConformer | Transformer | 14 | A100-SXM4-80GB | R-VA-004 |
-| NVIDIA Canary Qwen 2.5B | Yes | 5.63 | 418 | FastConformer | LLM | 1 | A100-SXM4-80GB | R-VA-004 |
-| Qwen3 ASR 1.7B | Yes | 5.76 | 148 | Custom | LLM | 52 | A100-SXM4-80GB | R-VA-004 |
-| NVIDIA Parakeet TDT 0.6B v2 | Yes | 6.05 | 3390 | FastConformer | TDT | 1 | A100-SXM4-80GB | R-VA-004 |
-| NVIDIA Parakeet TDT 0.6B v3 | Yes | 6.32 | 3330 | FastConformer | TDT | 25 | A100-SXM4-80GB | R-VA-004 |
-| Google Chirp v2 | No | 6.42 | not reported | not listed | not listed | 468 | A100-SXM4-80GB | R-VA-004 |
-| Mistral Voxtral Small 24B | Yes | 6.62 | 54.1 | Whisper-FT | LLM | 8 | A100-SXM4-80GB | R-VA-004 |
-| OpenAI Whisper Large v3 | Yes | 7.44 | 146 | Whisper | Whisper | 99 | A100-SXM4-80GB | R-VA-004 |
-| OpenAI Whisper Large v3 Turbo | Yes | 7.83 | 200 | Whisper | Whisper | 99 | A100-SXM4-80GB | R-VA-004 |
-| NVIDIA FastConformer CTC Large | Yes | 8.96 | 6400 | FastConformer | CTC | 1 | A100-SXM4-80GB | R-VA-004 |
+| Model                          | Open | Avg. WER |         RTFx | Encoder       | Decoder     | Languages | Hardware       | Source   |
+| ------------------------------ | ---- | -------: | -----------: | ------------- | ----------- | --------: | -------------- | -------- |
+| Cohere Labs Transcribe         | Yes  |     5.42 |          525 | FastConformer | Transformer |        14 | A100-SXM4-80GB | R-VA-004 |
+| NVIDIA Canary Qwen 2.5B        | Yes  |     5.63 |          418 | FastConformer | LLM         |         1 | A100-SXM4-80GB | R-VA-004 |
+| Qwen3 ASR 1.7B                 | Yes  |     5.76 |          148 | Custom        | LLM         |        52 | A100-SXM4-80GB | R-VA-004 |
+| NVIDIA Parakeet TDT 0.6B v2    | Yes  |     6.05 |         3390 | FastConformer | TDT         |         1 | A100-SXM4-80GB | R-VA-004 |
+| NVIDIA Parakeet TDT 0.6B v3    | Yes  |     6.32 |         3330 | FastConformer | TDT         |        25 | A100-SXM4-80GB | R-VA-004 |
+| Google Chirp v2                | No   |     6.42 | not reported | not listed    | not listed  |       468 | A100-SXM4-80GB | R-VA-004 |
+| Mistral Voxtral Small 24B      | Yes  |     6.62 |         54.1 | Whisper-FT    | LLM         |         8 | A100-SXM4-80GB | R-VA-004 |
+| OpenAI Whisper Large v3        | Yes  |     7.44 |          146 | Whisper       | Whisper     |        99 | A100-SXM4-80GB | R-VA-004 |
+| OpenAI Whisper Large v3 Turbo  | Yes  |     7.83 |          200 | Whisper       | Whisper     |        99 | A100-SXM4-80GB | R-VA-004 |
+| NVIDIA FastConformer CTC Large | Yes  |     8.96 |         6400 | FastConformer | CTC         |         1 | A100-SXM4-80GB | R-VA-004 |
 
 The paper also notes that, restricting the comparison to models with transformer/LLM-based
 decoders (10 Conformer-based and 22 Whisper-based), Conformer-based systems are on average
@@ -91,17 +91,17 @@ voice agent needs than file throughput.
 The paper reports Table 2 values. These were measured on an Apple MacBook M3
 (`paper evidence`):
 
-| Model | Params | Response latency (ms) | Compute load (%) | Hardware | Source |
-|---|---:|---:|---:|---|---|
-| Moonshine v2 Tiny | 34M | 50 | 8.03 | Apple M3 | R-VA-003, Table 2 |
-| Moonshine v2 Small | 123M | 148 | 17.97 | Apple M3 | R-VA-003, Table 2 |
-| Moonshine v2 Medium | 245M | 258 | 28.95 | Apple M3 | R-VA-003, Table 2 |
-| Moonshine Tiny (v1) | -- | 27 | 5.91 | Apple M3 | R-VA-003, Table 2 |
-| Moonshine Base (v1) | -- | 44 | 7.34 | Apple M3 | R-VA-003, Table 2 |
-| Whisper Tiny | 39M | 289 | 8.46 | Apple M3 | R-VA-003, Table 2 |
-| Whisper Base | 74M | 553 | 16.19 | Apple M3 | R-VA-003, Table 2 |
-| Whisper Small | 244M | 1,940 | 56.84 | Apple M3 | R-VA-003, Table 2 |
-| Whisper Large v3 | 1,550M | 11,286 | 330.65 | Apple M3 | R-VA-003, Table 2 |
+| Model               | Params | Response latency (ms) | Compute load (%) | Hardware | Source            |
+| ------------------- | -----: | --------------------: | ---------------: | -------- | ----------------- |
+| Moonshine v2 Tiny   |    34M |                    50 |             8.03 | Apple M3 | R-VA-003, Table 2 |
+| Moonshine v2 Small  |   123M |                   148 |            17.97 | Apple M3 | R-VA-003, Table 2 |
+| Moonshine v2 Medium |   245M |                   258 |            28.95 | Apple M3 | R-VA-003, Table 2 |
+| Moonshine Tiny (v1) |     -- |                    27 |             5.91 | Apple M3 | R-VA-003, Table 2 |
+| Moonshine Base (v1) |     -- |                    44 |             7.34 | Apple M3 | R-VA-003, Table 2 |
+| Whisper Tiny        |    39M |                   289 |             8.46 | Apple M3 | R-VA-003, Table 2 |
+| Whisper Base        |    74M |                   553 |            16.19 | Apple M3 | R-VA-003, Table 2 |
+| Whisper Small       |   244M |                 1,940 |            56.84 | Apple M3 | R-VA-003, Table 2 |
+| Whisper Large v3    | 1,550M |                11,286 |           330.65 | Apple M3 | R-VA-003, Table 2 |
 
 The paper's own discussion says Moonshine v2 fills the lower parameter-count region for
 memory-constrained edge processors. The paper states: "Moonshine v2 Tiny achieves 50 ms
@@ -120,17 +120,17 @@ return), not full end-to-end voice-agent latency.
 The paper also reports WER on Open ASR benchmarks (Table 3, `paper evidence`, R-VA-003).
 These are per-dataset WER values for Moonshine v2 variants:
 
-| Dataset | Moonshine v2 Tiny (34M) WER | Moonshine v2 Small (123M) WER | Moonshine v2 Medium (245M) WER | Source |
-|---|---:|---:|---:|---|
-| AMI | 19.03% | 12.54% | 10.68% | R-VA-003, Table 3 |
-| Earnings-22 | 20.27% | 13.53% | 11.90% | R-VA-003, Table 3 |
-| GigaSpeech | 13.90% | 10.41% | 9.46% | R-VA-003, Table 3 |
-| LibriSpeech clean | 4.49% | 2.49% | 2.08% | R-VA-003, Table 3 |
-| LibriSpeech other | 12.09% | 6.78% | 5.00% | R-VA-003, Table 3 |
-| SPGISpeech | 6.16% | 3.19% | 2.58% | R-VA-003, Table 3 |
-| TED-LIUM | 6.12% | 3.77% | 2.99% | R-VA-003, Table 3 |
-| VoxPopuli | 14.02% | 9.98% | 8.54% | R-VA-003, Table 3 |
-| **Average** | **12.01%** | **7.84%** | **6.65%** | R-VA-003, Table 3 |
+| Dataset           | Moonshine v2 Tiny (34M) WER | Moonshine v2 Small (123M) WER | Moonshine v2 Medium (245M) WER | Source            |
+| ----------------- | --------------------------: | ----------------------------: | -----------------------------: | ----------------- |
+| AMI               |                      19.03% |                        12.54% |                         10.68% | R-VA-003, Table 3 |
+| Earnings-22       |                      20.27% |                        13.53% |                         11.90% | R-VA-003, Table 3 |
+| GigaSpeech        |                      13.90% |                        10.41% |                          9.46% | R-VA-003, Table 3 |
+| LibriSpeech clean |                       4.49% |                         2.49% |                          2.08% | R-VA-003, Table 3 |
+| LibriSpeech other |                      12.09% |                         6.78% |                          5.00% | R-VA-003, Table 3 |
+| SPGISpeech        |                       6.16% |                         3.19% |                          2.58% | R-VA-003, Table 3 |
+| TED-LIUM          |                       6.12% |                         3.77% |                          2.99% | R-VA-003, Table 3 |
+| VoxPopuli         |                      14.02% |                         9.98% |                          8.54% | R-VA-003, Table 3 |
+| **Average**       |                  **12.01%** |                     **7.84%** |                      **6.65%** | R-VA-003, Table 3 |
 
 ### Whisper WER On LibriSpeech Clean
 
@@ -138,14 +138,14 @@ Keep Whisper accuracy context separate from the response-latency table. The loca
 deep dive (R-VA-001) compiles Whisper WER values originally from the Whisper paper appendix
 (`paper evidence`, R-VA-030):
 
-| Model | LibriSpeech clean WER | LibriSpeech other WER | Source |
-|---|---:|---:|---|
-| Whisper Tiny (39M) | 7.54% | 17.15% | R-VA-001, originally R-VA-030 (`paper evidence`) |
-| Whisper Base (74M) | 5.01% | 12.85% | R-VA-001, originally R-VA-030 (`paper evidence`) |
-| Whisper Small (244M) | 3.43% | 7.63% | R-VA-001, originally R-VA-030 (`paper evidence`) |
-| Whisper Medium (769M) | 2.90% | 5.90% | R-VA-001, originally R-VA-030 (`paper evidence`) |
-| Whisper Large v3 (1.55B) | ~2.7% | ~4.5% | R-VA-001, originally R-VA-030 (`paper evidence`) |
-| Whisper Turbo (809M) | ~3.0% | ~5.0% | R-VA-001, originally R-VA-030 (`paper evidence`) |
+| Model                    | LibriSpeech clean WER | LibriSpeech other WER | Source                                           |
+| ------------------------ | --------------------: | --------------------: | ------------------------------------------------ |
+| Whisper Tiny (39M)       |                 7.54% |                17.15% | R-VA-001, originally R-VA-030 (`paper evidence`) |
+| Whisper Base (74M)       |                 5.01% |                12.85% | R-VA-001, originally R-VA-030 (`paper evidence`) |
+| Whisper Small (244M)     |                 3.43% |                 7.63% | R-VA-001, originally R-VA-030 (`paper evidence`) |
+| Whisper Medium (769M)    |                 2.90% |                 5.90% | R-VA-001, originally R-VA-030 (`paper evidence`) |
+| Whisper Large v3 (1.55B) |                 ~2.7% |                 ~4.5% | R-VA-001, originally R-VA-030 (`paper evidence`) |
+| Whisper Turbo (809M)     |                 ~3.0% |                 ~5.0% | R-VA-001, originally R-VA-030 (`paper evidence`) |
 
 These are useful clean-WER anchors, but they are not the same measurement as Moonshine's
 live response latency. Comparing a Whisper WER column with a Moonshine response-latency
@@ -174,11 +174,11 @@ This distinction matters because many demos "work" with Whisper but feel delayed
 Deepgram Flux is relevant because it makes end-of-turn an explicit product surface. The
 documentation provides three configurable parameters (`official-doc evidence`, R-VA-020):
 
-| Parameter | Default | Range | Role | Source quality |
-|---|---|---|---|---|
-| `eot_threshold` | 0.7 | 0.5 -- 0.9 | Confidence threshold for EndOfTurn event | `official-doc evidence` |
-| `eager_eot_threshold` | not set | 0.3 -- 0.9 | Earlier speculative EOT trigger; enables EagerEndOfTurn events | `official-doc evidence` |
-| `eot_timeout_ms` | 5000 | 500 -- 10000 | Silence timeout forcing EndOfTurn regardless of confidence | `official-doc evidence` |
+| Parameter             | Default | Range        | Role                                                           | Source quality          |
+| --------------------- | ------- | ------------ | -------------------------------------------------------------- | ----------------------- |
+| `eot_threshold`       | 0.7     | 0.5 -- 0.9   | Confidence threshold for EndOfTurn event                       | `official-doc evidence` |
+| `eager_eot_threshold` | not set | 0.3 -- 0.9   | Earlier speculative EOT trigger; enables EagerEndOfTurn events | `official-doc evidence` |
+| `eot_timeout_ms`      | 5000    | 500 -- 10000 | Silence timeout forcing EndOfTurn regardless of confidence     | `official-doc evidence` |
 
 The quickstart page claims "~260ms end-of-turn detection" (`vendor claim`, R-VA-020). This
 number is not accompanied by a benchmark methodology, dataset, hardware specification, or
@@ -194,18 +194,18 @@ cancel) maps naturally to speculative LLM execution.
 
 The evaluation table for a real voice agent should include:
 
-| Metric | Why it matters | How to measure |
-|---|---|---|
-| WER/CER | Base transcription quality. | Reference transcript comparison after normalization. |
-| Entity WER | Names, product terms, numbers, codes. | Domain entity extraction plus transcript alignment. |
-| Time to first partial | Perceived responsiveness and speculative context. | Audio start -> first interim transcript. |
-| Partial churn | Whether early text is stable enough to use. | Edit distance between successive partials and final. |
-| End-of-turn latency | When LLM can start safely. | Human stop time -> EOT/stable final. |
-| False EOT rate | Interruptions. | User-labeled incomplete turns marked complete. |
-| Missed EOT rate | Dead air. | Complete turns not closed within target. |
-| P95/P99 latency | Tail frustration. | Percentiles over calls, not just mean. |
-| Concurrency RTF/RTFx | Cost and serving capacity. | Benchmark at expected stream count. |
-| Telephony/noise robustness | Real users. | 8 kHz, mu-law, packet loss, echo, background speech. |
+| Metric                     | Why it matters                                    | How to measure                                       |
+| -------------------------- | ------------------------------------------------- | ---------------------------------------------------- |
+| WER/CER                    | Base transcription quality.                       | Reference transcript comparison after normalization. |
+| Entity WER                 | Names, product terms, numbers, codes.             | Domain entity extraction plus transcript alignment.  |
+| Time to first partial      | Perceived responsiveness and speculative context. | Audio start -> first interim transcript.             |
+| Partial churn              | Whether early text is stable enough to use.       | Edit distance between successive partials and final. |
+| End-of-turn latency        | When LLM can start safely.                        | Human stop time -> EOT/stable final.                 |
+| False EOT rate             | Interruptions.                                    | User-labeled incomplete turns marked complete.       |
+| Missed EOT rate            | Dead air.                                         | Complete turns not closed within target.             |
+| P95/P99 latency            | Tail frustration.                                 | Percentiles over calls, not just mean.               |
+| Concurrency RTF/RTFx       | Cost and serving capacity.                        | Benchmark at expected stream count.                  |
+| Telephony/noise robustness | Real users.                                       | 8 kHz, mu-law, packet loss, echo, background speech. |
 
 ## Chart Sketch
 

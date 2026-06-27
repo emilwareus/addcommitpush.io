@@ -30,8 +30,8 @@ const stages = [
     label: 'Evidence-complete draft',
     render: (
       <p>
-        Foo Café hosts ~300 events/year with 1,691 Meetup members. Weekly hack nights see ~84%
-        RSVP conversion. Topics: AI/ML, FinTech, Web Dev. [Source: meetup.com/foocafe]
+        Foo Café hosts ~300 events/year with 1,691 Meetup members. Weekly hack nights see ~84% RSVP
+        conversion. Topics: AI/ML, FinTech, Web Dev. [Source: meetup.com/foocafe]
       </p>
     ),
   },

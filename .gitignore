@@ -63,3 +63,5 @@ go-research/external_code/
 **.pyc
 presentations/voice-agents/jarvis/models/
 presentations/voice-agents/.venv/
+
+tmp 

@@ -10,16 +10,16 @@ This note is deliberately not a polished article. It is the evidence trace for l
 
 ## Source Map
 
-| Ref | Source | Local path | Role |
-|---|---|---|---|
-| R-VA-003 | Moonshine v2: Ergodic Streaming Encoder ASR (arXiv 2602.12241) | `../paper-text/moonshine-v2-2602.12241.txt` | Local/live ASR response-latency and WER numbers. `paper evidence`. |
-| R-VA-004 | Open ASR Leaderboard (arXiv 2510.06961) | `../paper-text/open-asr-leaderboard-2510.06961.txt` | Accuracy/throughput context and benchmark caveats. `paper evidence`. |
-| R-VA-007 | OpenAI Realtime API reference | `../articles/openai-realtime-api-reference.html` | Turn detection knobs, default silence duration, interruption semantics. `official-doc evidence`. |
-| R-VA-009 | Pipecat Smart Turn docs | `../articles/pipecat-smart-turn.html` | Turn detection as a separate stage after VAD. `official-doc evidence`. |
-| R-VA-014 | Fish Audio S2 (arXiv 2603.08823) | `../paper-text/fish-audio-s2-2603.08823.txt` | Primary TTFA and RTF data for production TTS serving. `paper evidence`. |
-| R-VA-018 | Moshi (arXiv 2410.00037) | `../paper-text/moshi-2410.00037.txt` | Native speech argument against cascaded multi-stage latency; 230 ms human turn-taking citation. `paper evidence`. |
-| R-VA-022 | Stivers et al. "Universals and cultural variation in turn-taking in conversation" (PNAS, 2009) | URL in `../references.md` | Human response offset baseline. `paper evidence`. |
-| R-VA-023 | ITU-T G.114: One-way transmission time | `../articles/itu-g114.html` | Network delay planning baseline. `official-doc evidence`. |
+| Ref      | Source                                                                                         | Local path                                          | Role                                                                                                              |
+| -------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| R-VA-003 | Moonshine v2: Ergodic Streaming Encoder ASR (arXiv 2602.12241)                                 | `../paper-text/moonshine-v2-2602.12241.txt`         | Local/live ASR response-latency and WER numbers. `paper evidence`.                                                |
+| R-VA-004 | Open ASR Leaderboard (arXiv 2510.06961)                                                        | `../paper-text/open-asr-leaderboard-2510.06961.txt` | Accuracy/throughput context and benchmark caveats. `paper evidence`.                                              |
+| R-VA-007 | OpenAI Realtime API reference                                                                  | `../articles/openai-realtime-api-reference.html`    | Turn detection knobs, default silence duration, interruption semantics. `official-doc evidence`.                  |
+| R-VA-009 | Pipecat Smart Turn docs                                                                        | `../articles/pipecat-smart-turn.html`               | Turn detection as a separate stage after VAD. `official-doc evidence`.                                            |
+| R-VA-014 | Fish Audio S2 (arXiv 2603.08823)                                                               | `../paper-text/fish-audio-s2-2603.08823.txt`        | Primary TTFA and RTF data for production TTS serving. `paper evidence`.                                           |
+| R-VA-018 | Moshi (arXiv 2410.00037)                                                                       | `../paper-text/moshi-2410.00037.txt`                | Native speech argument against cascaded multi-stage latency; 230 ms human turn-taking citation. `paper evidence`. |
+| R-VA-022 | Stivers et al. "Universals and cultural variation in turn-taking in conversation" (PNAS, 2009) | URL in `../references.md`                           | Human response offset baseline. `paper evidence`.                                                                 |
+| R-VA-023 | ITU-T G.114: One-way transmission time                                                         | `../articles/itu-g114.html`                         | Network delay planning baseline. `official-doc evidence`.                                                         |
 
 ## Why This Is The First Insight
 
@@ -71,13 +71,13 @@ highly interactive speech can be affected by lower delays. That is a network
 recommendation, not an AI-agent budget. But it is a useful warning: if the media path
 itself consumes a few hundred milliseconds, the model stack has little room left.
 
-| Baseline | Number | Source quality | What it means | What it does not mean |
-|---|---:|---|---|---|
-| Human turn response offset (cross-language median) | ~200 ms | `paper evidence` (Stivers et al. 2009, R-VA-022) | Humans predict turn endings. | AI agents can safely answer after every 200 ms pause. |
-| Human turn response offset (Moshi's cited average) | ~230 ms | `paper evidence` (Moshi, R-VA-018, citing Stivers et al.) | Rounded/mean summary of the same underlying data. | A contradictory finding; it reflects a different summary statistic. |
-| Japanese mean in Stivers et al. | ~7 ms | `paper evidence` (R-VA-022) | Some cultures/languages have extremely tight turn timing. | A universal target for products. |
-| Danish mean in Stivers et al. | ~469 ms | `paper evidence` (R-VA-022) | Normal conversation tolerates variation. | Slow endpointing is always fine. |
-| ITU G.114 planning upper bound | 400 ms one-way | `official-doc evidence` (R-VA-023) | Network delay above this is broadly problematic. | Full voice-agent round trip should be 400 ms total. |
+| Baseline                                           |         Number | Source quality                                            | What it means                                             | What it does not mean                                               |
+| -------------------------------------------------- | -------------: | --------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------- |
+| Human turn response offset (cross-language median) |        ~200 ms | `paper evidence` (Stivers et al. 2009, R-VA-022)          | Humans predict turn endings.                              | AI agents can safely answer after every 200 ms pause.               |
+| Human turn response offset (Moshi's cited average) |        ~230 ms | `paper evidence` (Moshi, R-VA-018, citing Stivers et al.) | Rounded/mean summary of the same underlying data.         | A contradictory finding; it reflects a different summary statistic. |
+| Japanese mean in Stivers et al.                    |          ~7 ms | `paper evidence` (R-VA-022)                               | Some cultures/languages have extremely tight turn timing. | A universal target for products.                                    |
+| Danish mean in Stivers et al.                      |        ~469 ms | `paper evidence` (R-VA-022)                               | Normal conversation tolerates variation.                  | Slow endpointing is always fine.                                    |
+| ITU G.114 planning upper bound                     | 400 ms one-way | `official-doc evidence` (R-VA-023)                        | Network delay above this is broadly problematic.          | Full voice-agent round trip should be 400 ms total.                 |
 
 ## The Voice Agent Waterfall
 
@@ -114,17 +114,17 @@ response latency as "the amount of time taken between the end of a speech uttera
 returned transcript in a real-time, live transcription scenario running on an Apple MacBook
 M3." The paper compares Moonshine, Moonshine v2, and Whisper via faster-whisper.
 
-| Model | Params | Response latency on Apple M3 | Compute load | Source | Source quality |
-|---|---:|---:|---:|---|---|
-| Moonshine Tiny | 27M | 27 ms | 5.91% | R-VA-003 Table 2 (latency/load); params from Figure 5 | `paper evidence` |
-| Moonshine Base | 61M | 44 ms | 7.34% | R-VA-003 Table 2 (latency/load); params from Figure 5 | `paper evidence` |
-| Moonshine v2 Tiny | 34M | 50 ms | 8.03% | R-VA-003 Table 2 | `paper evidence` |
-| Moonshine v2 Small | 123M | 148 ms | 17.97% | R-VA-003 Table 2 | `paper evidence` |
-| Moonshine v2 Medium | 245M | 258 ms | 28.95% | R-VA-003 Table 2 | `paper evidence` |
-| Whisper Tiny | 39M | 289 ms | 8.46% | R-VA-003 Table 2 (latency/load); params from R-VA-030 | `paper evidence` |
-| Whisper Base | 74M | 553 ms | 16.19% | R-VA-003 Table 2 (latency/load); params from R-VA-030 | `paper evidence` |
-| Whisper Small | 244M | 1,940 ms | 56.84% | R-VA-003 Table 2 (latency/load); params from R-VA-030 | `paper evidence` |
-| Whisper Large v3 | 1,550M | 11,286 ms | 330.65% | R-VA-003 Table 2 (latency/load); params from R-VA-030 | `paper evidence` |
+| Model               | Params | Response latency on Apple M3 | Compute load | Source                                                | Source quality   |
+| ------------------- | -----: | ---------------------------: | -----------: | ----------------------------------------------------- | ---------------- |
+| Moonshine Tiny      |    27M |                        27 ms |        5.91% | R-VA-003 Table 2 (latency/load); params from Figure 5 | `paper evidence` |
+| Moonshine Base      |    61M |                        44 ms |        7.34% | R-VA-003 Table 2 (latency/load); params from Figure 5 | `paper evidence` |
+| Moonshine v2 Tiny   |    34M |                        50 ms |        8.03% | R-VA-003 Table 2                                      | `paper evidence` |
+| Moonshine v2 Small  |   123M |                       148 ms |       17.97% | R-VA-003 Table 2                                      | `paper evidence` |
+| Moonshine v2 Medium |   245M |                       258 ms |       28.95% | R-VA-003 Table 2                                      | `paper evidence` |
+| Whisper Tiny        |    39M |                       289 ms |        8.46% | R-VA-003 Table 2 (latency/load); params from R-VA-030 | `paper evidence` |
+| Whisper Base        |    74M |                       553 ms |       16.19% | R-VA-003 Table 2 (latency/load); params from R-VA-030 | `paper evidence` |
+| Whisper Small       |   244M |                     1,940 ms |       56.84% | R-VA-003 Table 2 (latency/load); params from R-VA-030 | `paper evidence` |
+| Whisper Large v3    | 1,550M |                    11,286 ms |      330.65% | R-VA-003 Table 2 (latency/load); params from R-VA-030 | `paper evidence` |
 
 All values in this table were verified against `../paper-text/moonshine-v2-2602.12241.txt`.
 
@@ -147,10 +147,10 @@ achieves 148 ms (13.1x faster than Whisper Small), and Moonshine v2 Medium achie
 Fish Audio S2 is useful because it reports both RTF and TTFA (`paper evidence`, R-VA-014).
 RTF is total speed; TTFA is when the user can start hearing something.
 
-| System | RTF | TTFA | Hardware/context | Source | Source quality |
-|---|---:|---:|---|---|---|
-| Fish Audio S2 | 0.195 | as low as 100 ms | single NVIDIA H200, SGLang, production serving | R-VA-014 Section 5 | `paper evidence` |
-| Fish Audio S2 under high concurrency | <0.5 RTF | not separately stated | 3000+ acoustic tokens/s | R-VA-014 Section 5 | `paper evidence` |
+| System                               |      RTF |                  TTFA | Hardware/context                               | Source             | Source quality   |
+| ------------------------------------ | -------: | --------------------: | ---------------------------------------------- | ------------------ | ---------------- |
+| Fish Audio S2                        |    0.195 |      as low as 100 ms | single NVIDIA H200, SGLang, production serving | R-VA-014 Section 5 | `paper evidence` |
+| Fish Audio S2 under high concurrency | <0.5 RTF | not separately stated | 3000+ acoustic tokens/s                        | R-VA-014 Section 5 | `paper evidence` |
 
 The "as low as 100 ms" TTFA claim requires careful qualification. The paper states this is
 achieved "in the production serving environment" on a single NVIDIA H200 GPU, using their
@@ -183,12 +183,12 @@ supports VAD-only, STT endpointing, realtime model detection, and turn-detector 
 
 This means a voice-agent latency budget should have at least two endpointing columns:
 
-| Layer | Example number | Source quality | Why it matters |
-|---|---:|---|---|
-| Acoustic frame classification | 10-32 ms frames | `official-doc evidence` (Silero defaults, R-VA-006) | Detects whether speech is present. |
-| Silence endpointing | 200-700 ms typical settings in local docs/frameworks | `official-doc evidence` (R-VA-007, R-VA-008, R-VA-009) | Decides when a pause is enough silence. |
-| Semantic EOU | model-specific, e.g. Pipecat under 100 ms after pause | `official-doc evidence` (R-VA-009) | Decides whether the utterance is actually complete. |
-| Forced timeout | seconds | `official-doc evidence` (R-VA-007: 5-30 s; R-VA-020: 500-10,000 ms) | Prevents an incomplete turn from hanging forever. |
+| Layer                         |                                        Example number | Source quality                                                      | Why it matters                                      |
+| ----------------------------- | ----------------------------------------------------: | ------------------------------------------------------------------- | --------------------------------------------------- |
+| Acoustic frame classification |                                       10-32 ms frames | `official-doc evidence` (Silero defaults, R-VA-006)                 | Detects whether speech is present.                  |
+| Silence endpointing           |  200-700 ms typical settings in local docs/frameworks | `official-doc evidence` (R-VA-007, R-VA-008, R-VA-009)              | Decides when a pause is enough silence.             |
+| Semantic EOU                  | model-specific, e.g. Pipecat under 100 ms after pause | `official-doc evidence` (R-VA-009)                                  | Decides whether the utterance is actually complete. |
+| Forced timeout                |                                               seconds | `official-doc evidence` (R-VA-007: 5-30 s; R-VA-020: 500-10,000 ms) | Prevents an incomplete turn from hanging forever.   |
 
 ## Chart Sketch
 

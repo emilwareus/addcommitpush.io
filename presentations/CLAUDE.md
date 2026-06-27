@@ -25,10 +25,10 @@ Follow the **assertion-evidence model**: each slide has a sentence headline (the
 
 ### Typography (dark theme, projected)
 
-| Element | Size | Weight |
-|---------|------|--------|
-| Headline (assertion) | text-3xl to text-5xl (36-48px) | bold |
-| Body / evidence | text-sm to text-base (14-16px) | normal to medium |
+| Element               | Size                             | Weight              |
+| --------------------- | -------------------------------- | ------------------- |
+| Headline (assertion)  | text-3xl to text-5xl (36-48px)   | bold                |
+| Body / evidence       | text-sm to text-base (14-16px)   | normal to medium    |
 | Annotations / sources | text-xs to text-[10px] (10-12px) | normal, muted color |
 
 - **Sans-serif only.** Use the project's default font stack.

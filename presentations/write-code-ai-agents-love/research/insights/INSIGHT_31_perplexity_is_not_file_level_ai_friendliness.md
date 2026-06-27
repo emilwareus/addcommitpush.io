@@ -13,9 +13,9 @@ is "AI-friendly." Use structural code quality metrics alongside or instead.
 
 ## Source map
 
-| Ref | Source | Local file | Role in this insight |
-|---|---|---|---|
-| R77 | Code for Machines, Not Just Humans (Borg et al., 2026) | `papers/code-for-machines-2601.02200.pdf` | Negative result: PPL has negligible association with CodeHealth at the file level. |
+| Ref | Source                                                                   | Local file                                         | Role in this insight                                                                       |
+| --- | ------------------------------------------------------------------------ | -------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| R77 | Code for Machines, Not Just Humans (Borg et al., 2026)                   | `papers/code-for-machines-2601.02200.pdf`          | Negative result: PPL has negligible association with CodeHealth at the file level.         |
 | R79 | How do Humans and LLMs Process Confusing Code? (Abdelsalam et al., 2025) | `papers/humans-llms-confusing-code-2508.18547.pdf` | Positive result: PPL spikes correlate with human EEG confusion at the token/snippet level. |
 
 ## Borg et al. RQ1: Perplexity vs CodeHealth (negative result)
@@ -30,18 +30,18 @@ measured using Cliff's delta.
 
 ### Table 1 -- Perplexity by CodeHealth group, copied from the paper
 
-| Model | Group | N | Median PPL | IQR | Max PPL | Delta median | p (Holm) | delta (Cliff's) |
-|---|---|---:|---:|---:|---:|---:|---:|---:|
-| Gemma | Healthy | 2369 | 2.092 | 0.515 | 3.127 | +0.069 | <0.001 | +0.098 |
-| Gemma | Unhealthy | 2396 | 2.023 | 0.552 | 3.071 | | | |
-| GLM | Healthy | 2375 | 1.577 | 0.493 | 2.529 | -0.017 | 0.039 | -0.039 |
-| GLM | Unhealthy | 2404 | 1.594 | 0.492 | 2.533 | | | |
-| GPT | Healthy | 2214 | 2.943 | 1.473 | 6.226 | +0.237 | <0.001 | +0.136 |
-| GPT | Unhealthy | 2216 | 2.706 | 1.559 | 6.299 | | | |
-| Granite | Healthy | 2369 | 1.764 | 0.582 | 2.932 | +0.005 | 0.992 | +0.000 |
-| Granite | Unhealthy | 2395 | 1.759 | 0.617 | 2.923 | | | |
-| Qwen | Healthy | 2335 | 1.728 | 0.610 | 2.915 | -0.041 | 0.004 | -0.054 |
-| Qwen | Unhealthy | 2388 | 1.769 | 0.622 | 2.968 | | | |
+| Model   | Group     |    N | Median PPL |   IQR | Max PPL | Delta median | p (Holm) | delta (Cliff's) |
+| ------- | --------- | ---: | ---------: | ----: | ------: | -----------: | -------: | --------------: |
+| Gemma   | Healthy   | 2369 |      2.092 | 0.515 |   3.127 |       +0.069 |   <0.001 |          +0.098 |
+| Gemma   | Unhealthy | 2396 |      2.023 | 0.552 |   3.071 |              |          |                 |
+| GLM     | Healthy   | 2375 |      1.577 | 0.493 |   2.529 |       -0.017 |    0.039 |          -0.039 |
+| GLM     | Unhealthy | 2404 |      1.594 | 0.492 |   2.533 |              |          |                 |
+| GPT     | Healthy   | 2214 |      2.943 | 1.473 |   6.226 |       +0.237 |   <0.001 |          +0.136 |
+| GPT     | Unhealthy | 2216 |      2.706 | 1.559 |   6.299 |              |          |                 |
+| Granite | Healthy   | 2369 |      1.764 | 0.582 |   2.932 |       +0.005 |    0.992 |          +0.000 |
+| Granite | Unhealthy | 2395 |      1.759 | 0.617 |   2.923 |              |          |                 |
+| Qwen    | Healthy   | 2335 |      1.728 | 0.610 |   2.915 |       -0.041 |    0.004 |          -0.054 |
+| Qwen    | Unhealthy | 2388 |      1.769 | 0.622 |   2.968 |              |          |                 |
 
 Units: PPL is mean per-token perplexity (dimensionless). IQR is interquartile
 range. Delta median is Healthy minus Unhealthy (positive = healthy code has
@@ -93,13 +93,13 @@ difficulty.
 
 ### Key data from the paper
 
-| Measurement | Value |
-|---|---:|
-| EEG participants | 24 |
-| High-quality EEG samples | 1,432 |
-| Model used for PPL | Qwen2.5-Coder-32B |
+| Measurement                |                                                  Value |
+| -------------------------- | -----------------------------------------------------: |
+| EEG participants           |                                                     24 |
+| High-quality EEG samples   |                                                  1,432 |
+| Model used for PPL         |                                      Qwen2.5-Coder-32B |
 | Atoms of confusion studied | Standard set (operator precedence, conditionals, etc.) |
-| PPL-EEG correlation | Statistically significant for LFP component |
+| PPL-EEG correlation        |            Statistically significant for LFP component |
 
 ### Key finding
 
@@ -115,10 +115,10 @@ file level.
 
 The apparent contradiction resolves cleanly when you separate the scales:
 
-| Scale | PPL usefulness | What it measures | Citation |
-|---|---|---|---|
-| Token/snippet | Useful | Local confusion, surprising constructs, atoms of confusion | R79 (Abdelsalam) |
-| File-level aggregate | Not useful | Nothing practically meaningful about structural quality | R77 (Borg) |
+| Scale                | PPL usefulness | What it measures                                           | Citation         |
+| -------------------- | -------------- | ---------------------------------------------------------- | ---------------- |
+| Token/snippet        | Useful         | Local confusion, surprising constructs, atoms of confusion | R79 (Abdelsalam) |
+| File-level aggregate | Not useful     | Nothing practically meaningful about structural quality    | R77 (Borg)       |
 
 ### Why the scales diverge
 

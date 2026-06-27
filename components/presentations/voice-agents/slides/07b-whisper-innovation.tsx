@@ -6,8 +6,8 @@ export function WhisperInnovationSlide() {
       </h2>
 
       <p className="text-xl text-muted-foreground mb-6 text-center max-w-4xl">
-        Scaling weakly supervised pretraining to 680K hours eliminated the need for
-        dataset-specific fine-tuning
+        Scaling weakly supervised pretraining to 680K hours eliminated the need for dataset-specific
+        fine-tuning
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full mb-6">
@@ -18,8 +18,8 @@ export function WhisperInnovationSlide() {
             <div>
               <div className="font-semibold text-zinc-400 mb-1">Before Whisper</div>
               <p>
-                Train on ~1K hours of clean data. Fine-tune per domain. Build separate inverse
-                text normalization pipelines for punctuation and formatting.
+                Train on ~1K hours of clean data. Fine-tune per domain. Build separate inverse text
+                normalization pipelines for punctuation and formatting.
               </p>
             </div>
 
@@ -43,9 +43,7 @@ export function WhisperInnovationSlide() {
         </div>
 
         <div className="bg-zinc-900/80 border border-primary/30 rounded-xl p-5">
-          <h3 className="text-2xl font-bold text-primary mb-4">
-            The Limitation for Voice Agents
-          </h3>
+          <h3 className="text-2xl font-bold text-primary mb-4">The Limitation for Voice Agents</h3>
 
           <div className="space-y-3">
             {[
@@ -78,8 +76,9 @@ export function WhisperInnovationSlide() {
 
           <div className="mt-4 pt-3 border-t border-zinc-800">
             <p className="text-sm text-muted-foreground">
-              On an Apple M3, Whisper Small takes <span className="text-primary font-mono">1940ms</span> per
-              utterance. Whisper Large-v3 takes <span className="text-primary font-mono">11.3s</span>.
+              On an Apple M3, Whisper Small takes{' '}
+              <span className="text-primary font-mono">1940ms</span> per utterance. Whisper Large-v3
+              takes <span className="text-primary font-mono">11.3s</span>.
             </p>
           </div>
         </div>

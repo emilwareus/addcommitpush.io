@@ -19,16 +19,16 @@ cascades into barge-in correctness.
 
 ## Source Map
 
-| Ref | Source | Local path | Role |
-|---|---|---|---|
-| R-VA-002 | Local VAD deep dive | `../VAD-DEEP-DIVE.md` | VAD state machine, Silero/WebRTC ROC-AUC comparison, threshold tuning. `local measurement` / `practitioner signal`. |
-| R-VA-005 | Silero VAD quality metrics | `../articles/silero-vad-quality-metrics.html` | ROC-AUC benchmark: Silero v6 0.97 vs WebRTC 0.73. `benchmark evidence`. |
-| R-VA-007 | OpenAI Realtime API reference | `../articles/openai-realtime-api-reference.html` | `server_vad` and `semantic_vad` turn detection, `interrupt_response` field, `conversation.item.truncate` event, `prefix_padding_ms`, `silence_duration_ms`, `threshold`, `eagerness`. `official-doc evidence`. |
-| R-VA-008 | LiveKit turns overview | `../articles/livekit-turns.html` | Turn detection modes, adaptive interruption handling, false interruption recovery, `InterruptionOptions` fields. `official-doc evidence`. |
-| R-VA-009 | Pipecat Smart Turn docs | `../articles/pipecat-smart-turn.html` | Context-aware turn completion model. `official-doc evidence`. |
-| R-VA-028 | Local transport deep dive | `../TRANSPORT-DEEP-DIVE.md` | Echo cancellation analysis, WebRTC AEC vs WebSocket workarounds, `is_tts_playing` flag implementation. `local measurement` / `practitioner signal`. |
-| R-VA-031 | OpenAI Realtime WebRTC/WebSocket docs | `../articles/openai-realtime-webrtc.html`, `../articles/openai-realtime-websocket.html` | Transport and event model for Realtime sessions. `official-doc evidence`. |
-| R-VA-033 | Pipecat transport docs | `../articles/pipecat-choosing-transport.html` | Transport guidance: "Browser echo cancellation (AEC) is wired into the WebRTC stack. It's not available to arbitrary WebSocket streams." `official-doc evidence`. |
+| Ref      | Source                                | Local path                                                                              | Role                                                                                                                                                                                                           |
+| -------- | ------------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R-VA-002 | Local VAD deep dive                   | `../VAD-DEEP-DIVE.md`                                                                   | VAD state machine, Silero/WebRTC ROC-AUC comparison, threshold tuning. `local measurement` / `practitioner signal`.                                                                                            |
+| R-VA-005 | Silero VAD quality metrics            | `../articles/silero-vad-quality-metrics.html`                                           | ROC-AUC benchmark: Silero v6 0.97 vs WebRTC 0.73. `benchmark evidence`.                                                                                                                                        |
+| R-VA-007 | OpenAI Realtime API reference         | `../articles/openai-realtime-api-reference.html`                                        | `server_vad` and `semantic_vad` turn detection, `interrupt_response` field, `conversation.item.truncate` event, `prefix_padding_ms`, `silence_duration_ms`, `threshold`, `eagerness`. `official-doc evidence`. |
+| R-VA-008 | LiveKit turns overview                | `../articles/livekit-turns.html`                                                        | Turn detection modes, adaptive interruption handling, false interruption recovery, `InterruptionOptions` fields. `official-doc evidence`.                                                                      |
+| R-VA-009 | Pipecat Smart Turn docs               | `../articles/pipecat-smart-turn.html`                                                   | Context-aware turn completion model. `official-doc evidence`.                                                                                                                                                  |
+| R-VA-028 | Local transport deep dive             | `../TRANSPORT-DEEP-DIVE.md`                                                             | Echo cancellation analysis, WebRTC AEC vs WebSocket workarounds, `is_tts_playing` flag implementation. `local measurement` / `practitioner signal`.                                                            |
+| R-VA-031 | OpenAI Realtime WebRTC/WebSocket docs | `../articles/openai-realtime-webrtc.html`, `../articles/openai-realtime-websocket.html` | Transport and event model for Realtime sessions. `official-doc evidence`.                                                                                                                                      |
+| R-VA-033 | Pipecat transport docs                | `../articles/pipecat-choosing-transport.html`                                           | Transport guidance: "Browser echo cancellation (AEC) is wired into the WebRTC stack. It's not available to arbitrary WebSocket streams." `official-doc evidence`.                                              |
 
 ## Why Barge-In Is Hard
 
@@ -94,15 +94,15 @@ distinct interruption handling:
 
 **server_vad mode fields:**
 
-| Field | Type | Default | Description | Source |
-|---|---|---|---|---|
-| `type` | string | -- | `"server_vad"` | R-VA-007 |
-| `threshold` | number (0.0-1.0) | 0.5 | VAD activation threshold. Higher = requires louder audio. | R-VA-007 |
-| `prefix_padding_ms` | number | 300 ms | Audio to include before VAD detected speech. | R-VA-007 |
-| `silence_duration_ms` | number | 500 ms | Duration of silence to detect speech stop. | R-VA-007 |
-| `interrupt_response` | boolean | (not specified) | Whether to cancel ongoing response when VAD start event occurs. If `true`, response is cancelled; if `false`, response continues until complete. | R-VA-007 |
-| `create_response` | boolean | (not specified) | Whether to automatically generate a response when VAD stop occurs. | R-VA-007 |
-| `idle_timeout_ms` | number | 5000-30000 ms range | Timeout for no speech detected. Currently only supported for `server_vad`. | R-VA-007 |
+| Field                 | Type             | Default             | Description                                                                                                                                      | Source   |
+| --------------------- | ---------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| `type`                | string           | --                  | `"server_vad"`                                                                                                                                   | R-VA-007 |
+| `threshold`           | number (0.0-1.0) | 0.5                 | VAD activation threshold. Higher = requires louder audio.                                                                                        | R-VA-007 |
+| `prefix_padding_ms`   | number           | 300 ms              | Audio to include before VAD detected speech.                                                                                                     | R-VA-007 |
+| `silence_duration_ms` | number           | 500 ms              | Duration of silence to detect speech stop.                                                                                                       | R-VA-007 |
+| `interrupt_response`  | boolean          | (not specified)     | Whether to cancel ongoing response when VAD start event occurs. If `true`, response is cancelled; if `false`, response continues until complete. | R-VA-007 |
+| `create_response`     | boolean          | (not specified)     | Whether to automatically generate a response when VAD stop occurs.                                                                               | R-VA-007 |
+| `idle_timeout_ms`     | number           | 5000-30000 ms range | Timeout for no speech detected. Currently only supported for `server_vad`.                                                                       | R-VA-007 |
 
 The docs state: "Server VAD means that the model will detect the start and end of speech
 based on audio volume and respond at the end of user speech." Source: R-VA-007.
@@ -120,12 +120,12 @@ policies (e.g., only interrupt on specific keywords).
 
 **semantic_vad mode fields:**
 
-| Field | Type | Default | Description | Source |
-|---|---|---|---|---|
-| `type` | string | -- | `"semantic_vad"` | R-VA-007 |
-| `eagerness` | enum | `"auto"` (= `"medium"`) | How eagerly the model responds. `low`/`medium`/`high`/`auto`. | R-VA-007 |
-| `interrupt_response` | boolean | (not specified) | Same as server_vad: cancel ongoing response on VAD start. | R-VA-007 |
-| `create_response` | boolean | (not specified) | Auto-generate response on VAD stop. | R-VA-007 |
+| Field                | Type    | Default                 | Description                                                   | Source   |
+| -------------------- | ------- | ----------------------- | ------------------------------------------------------------- | -------- |
+| `type`               | string  | --                      | `"semantic_vad"`                                              | R-VA-007 |
+| `eagerness`          | enum    | `"auto"` (= `"medium"`) | How eagerly the model responds. `low`/`medium`/`high`/`auto`. | R-VA-007 |
+| `interrupt_response` | boolean | (not specified)         | Same as server_vad: cancel ongoing response on VAD start.     | R-VA-007 |
+| `create_response`    | boolean | (not specified)         | Auto-generate response on VAD stop.                           | R-VA-007 |
 
 The docs state: "Semantic VAD is more advanced and uses a turn detection model (in
 conjunction with VAD) to semantically estimate whether the user has finished speaking, then
@@ -171,25 +171,25 @@ comprehensive interruption handling system with multiple layers.
 
 **Turn detection modes:**
 
-| Mode | Description | Source |
-|---|---|---|
+| Mode                | Description                                                                                    | Source   |
+| ------------------- | ---------------------------------------------------------------------------------------------- | -------- |
 | Turn detector model | Custom open-weights model for context-aware turn detection on top of VAD or STT endpoint data. | R-VA-008 |
-| Realtime models | Server-side detection from realtime LLM (OpenAI Realtime API, Gemini Live API). | R-VA-008 |
-| VAD only | End-of-turn from speech and silence data alone. | R-VA-008 |
-| STT endpointing | Phrase endpoints from STT provider (AssemblyAI recommended). | R-VA-008 |
-| Manual turn control | Disable automatic detection; control turn boundaries explicitly. | R-VA-008 |
+| Realtime models     | Server-side detection from realtime LLM (OpenAI Realtime API, Gemini Live API).                | R-VA-008 |
+| VAD only            | End-of-turn from speech and silence data alone.                                                | R-VA-008 |
+| STT endpointing     | Phrase endpoints from STT provider (AssemblyAI recommended).                                   | R-VA-008 |
+| Manual turn control | Disable automatic detection; control turn boundaries explicitly.                               | R-VA-008 |
 
 **Interruption options (InterruptionOptions):**
 
-| Field | Type | Description | Source |
-|---|---|---|---|
-| `enabled` | boolean | Whether agent can be interrupted by user speech. | R-VA-008 |
-| `mode` | `"adaptive"` or `"vad"` | How interruptions are detected. `"adaptive"` is default on LiveKit Cloud. | R-VA-008 |
-| `min_duration` | seconds | Minimum speech duration to register as interruption. | R-VA-008 |
-| `min_words` | integer | Minimum words to register as interruption (requires STT). | R-VA-008 |
-| `discard_audio_if_uninterruptible` | boolean | Drop buffered audio if agent is speaking and cannot be interrupted. | R-VA-008 |
-| `false_interruption_timeout` | seconds | Duration of silence after interruption to wait before emitting false interruption event. | R-VA-008 |
-| `resume_false_interruption` | boolean | Whether to resume agent speech after false interruption is detected. | R-VA-008 |
+| Field                              | Type                    | Description                                                                              | Source   |
+| ---------------------------------- | ----------------------- | ---------------------------------------------------------------------------------------- | -------- |
+| `enabled`                          | boolean                 | Whether agent can be interrupted by user speech.                                         | R-VA-008 |
+| `mode`                             | `"adaptive"` or `"vad"` | How interruptions are detected. `"adaptive"` is default on LiveKit Cloud.                | R-VA-008 |
+| `min_duration`                     | seconds                 | Minimum speech duration to register as interruption.                                     | R-VA-008 |
+| `min_words`                        | integer                 | Minimum words to register as interruption (requires STT).                                | R-VA-008 |
+| `discard_audio_if_uninterruptible` | boolean                 | Drop buffered audio if agent is speaking and cannot be interrupted.                      | R-VA-008 |
+| `false_interruption_timeout`       | seconds                 | Duration of silence after interruption to wait before emitting false interruption event. | R-VA-008 |
+| `resume_false_interruption`        | boolean                 | Whether to resume agent speech after false interruption is detected.                     | R-VA-008 |
 
 **Adaptive interruption handling:**
 
@@ -237,26 +237,26 @@ stricter setting that reduces false positives in noisy environments.
 
 ### Barge-In Requirements Comparison
 
-| Provider/Framework | Interruption control field | Default behavior | Backchannel handling | Transcript truncation | Source |
-|---|---|---|---|---|---|
-| OpenAI (server_vad) | `interrupt_response: boolean` | Cancel on VAD start (when true) | No built-in distinction; acoustic VAD only | `conversation.item.truncate` event deletes unheard transcript | R-VA-007 |
-| OpenAI (semantic_vad) | `interrupt_response: boolean`, `eagerness` | Cancel on VAD start (when true), eagerness controls sensitivity | Semantic model scores turn-end probability | `conversation.item.truncate` event deletes unheard transcript | R-VA-007 |
-| LiveKit | `InterruptionOptions.enabled`, `mode` | `"adaptive"` mode on Cloud | Adaptive interruption handling distinguishes interruption from backchannel | False interruption recovery resumes agent speech | R-VA-008 |
-| Pipecat | Transport-level AEC + VAD threshold | VAD threshold 0.7 (stricter) | Smart Turn uses prosody features | Framework-level pipeline interruption | R-VA-009, R-VA-033 |
-| Jarvis (WebSocket) | `is_tts_playing` flag | Mic muted during playback; barge-in impossible | N/A (mic is muted) | N/A | R-VA-028 |
-| Jarvis (WebRTC) | Browser AEC | AEC removes echo; VAD processes normally | Not implemented | Not implemented | R-VA-028 |
+| Provider/Framework    | Interruption control field                 | Default behavior                                                | Backchannel handling                                                       | Transcript truncation                                         | Source             |
+| --------------------- | ------------------------------------------ | --------------------------------------------------------------- | -------------------------------------------------------------------------- | ------------------------------------------------------------- | ------------------ |
+| OpenAI (server_vad)   | `interrupt_response: boolean`              | Cancel on VAD start (when true)                                 | No built-in distinction; acoustic VAD only                                 | `conversation.item.truncate` event deletes unheard transcript | R-VA-007           |
+| OpenAI (semantic_vad) | `interrupt_response: boolean`, `eagerness` | Cancel on VAD start (when true), eagerness controls sensitivity | Semantic model scores turn-end probability                                 | `conversation.item.truncate` event deletes unheard transcript | R-VA-007           |
+| LiveKit               | `InterruptionOptions.enabled`, `mode`      | `"adaptive"` mode on Cloud                                      | Adaptive interruption handling distinguishes interruption from backchannel | False interruption recovery resumes agent speech              | R-VA-008           |
+| Pipecat               | Transport-level AEC + VAD threshold        | VAD threshold 0.7 (stricter)                                    | Smart Turn uses prosody features                                           | Framework-level pipeline interruption                         | R-VA-009, R-VA-033 |
+| Jarvis (WebSocket)    | `is_tts_playing` flag                      | Mic muted during playback; barge-in impossible                  | N/A (mic is muted)                                                         | N/A                                                           | R-VA-028           |
+| Jarvis (WebRTC)       | Browser AEC                                | AEC removes echo; VAD processes normally                        | Not implemented                                                            | Not implemented                                               | R-VA-028           |
 
 ## VAD Quality Cascades Into Barge-In Correctness (benchmark evidence)
 
 The Silero VAD quality metrics wiki (R-VA-005) and local VAD deep dive (R-VA-002) provide
 the key benchmark:
 
-| Model | ROC-AUC | Accuracy | Source |
-|---|---|---|---|
-| **Silero v6** | **0.97** | **0.92** | R-VA-005, R-VA-002 |
-| Silero v5 | 0.96 | 0.91 | R-VA-005, R-VA-002 |
-| FireRed VAD | 0.94 | 0.88 | R-VA-005, R-VA-002 |
-| Silero v4 | 0.91 | 0.85 | R-VA-005, R-VA-002 |
+| Model          | ROC-AUC  | Accuracy | Source             |
+| -------------- | -------- | -------- | ------------------ |
+| **Silero v6**  | **0.97** | **0.92** | R-VA-005, R-VA-002 |
+| Silero v5      | 0.96     | 0.91     | R-VA-005, R-VA-002 |
+| FireRed VAD    | 0.94     | 0.88     | R-VA-005, R-VA-002 |
+| Silero v4      | 0.91     | 0.85     | R-VA-005, R-VA-002 |
 | **WebRTC VAD** | **0.73** | **0.74** | R-VA-005, R-VA-002 |
 
 Benchmark context: This is a multi-domain validation set of 17 hours across 9 datasets.
@@ -270,6 +270,7 @@ R-VA-002.
 **How this cascades into barge-in:**
 
 During the Speaking state, the VAD operates under degraded conditions:
+
 - Agent audio leaks into the microphone (unless AEC is perfect).
 - Background noise is present.
 - The user's voice overlaps with the agent's audio.
@@ -277,6 +278,7 @@ During the Speaking state, the VAD operates under degraded conditions:
 A VAD with 0.73 ROC-AUC (WebRTC) will produce significantly more false positives under
 these conditions than a VAD with 0.97 ROC-AUC (Silero v6). Each false positive during
 agent playback triggers an unnecessary interruption, which:
+
 - Stops the agent mid-sentence.
 - Loses the generated response (or requires resumption logic).
 - Disrupts conversation flow.
@@ -297,12 +299,12 @@ WebRTC VAD for interruption detection.
 The local transport deep dive (R-VA-028) documents three echo cancellation approaches
 with specific quality data:
 
-| AEC approach | Where it runs | Reliability | Limitation | Source |
-|---|---|---|---|---|
-| WebRTC native AEC | Browser audio driver | High -- direct access to mic and speaker signals | Requires WebRTC transport or `<audio>` element playout | R-VA-028 |
-| getUserMedia echoCancellation | Browser, capture-side | "~80% of the time on Chrome desktop" | "The AEC may not have access to the correct reference signal" when audio plays through Web Audio API | R-VA-028 |
-| Server-side AEC (SpeexDSP) | Server | Depends on tuning | Requires sending reference signal back to server (doubles bandwidth), adds latency | R-VA-028 |
-| Mic muting (`is_tts_playing`) | Server, by discarding frames | 100% echo prevention | Prevents barge-in entirely | R-VA-028 |
+| AEC approach                  | Where it runs                | Reliability                                      | Limitation                                                                                           | Source   |
+| ----------------------------- | ---------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------- | -------- |
+| WebRTC native AEC             | Browser audio driver         | High -- direct access to mic and speaker signals | Requires WebRTC transport or `<audio>` element playout                                               | R-VA-028 |
+| getUserMedia echoCancellation | Browser, capture-side        | "~80% of the time on Chrome desktop"             | "The AEC may not have access to the correct reference signal" when audio plays through Web Audio API | R-VA-028 |
+| Server-side AEC (SpeexDSP)    | Server                       | Depends on tuning                                | Requires sending reference signal back to server (doubles bandwidth), adds latency                   | R-VA-028 |
+| Mic muting (`is_tts_playing`) | Server, by discarding frames | 100% echo prevention                             | Prevents barge-in entirely                                                                           | R-VA-028 |
 
 The deep dive elaborates on why WebRTC AEC has a structural advantage: "In WebRTC, the
 browser controls both the playback (via `<audio>` element or MediaStream) and the capture
@@ -327,13 +329,13 @@ laughter, or brief acknowledgments. Treating every speech event during agent pla
 an interruption makes the agent fragile and over-eager. Ignoring every speech event makes
 it impossible to interrupt.
 
-| Input during agent speech | Desired behavior | Why | Source |
-|---|---|---|---|
-| "stop" | Cancel immediately | Explicit termination command | Conceptual |
-| "wait, no..." | Cancel and listen | Semantic correction intent | Conceptual |
-| "yeah" | Often continue speaking | Backchannel, not interruption | Conceptual |
-| "mm-hm" | Continue speaking | Acknowledgment | Conceptual |
-| Cough/noise | Continue speaking | Non-speech event | Conceptual |
+| Input during agent speech                   | Desired behavior                   | Why                             | Source     |
+| ------------------------------------------- | ---------------------------------- | ------------------------------- | ---------- |
+| "stop"                                      | Cancel immediately                 | Explicit termination command    | Conceptual |
+| "wait, no..."                               | Cancel and listen                  | Semantic correction intent      | Conceptual |
+| "yeah"                                      | Often continue speaking            | Backchannel, not interruption   | Conceptual |
+| "mm-hm"                                     | Continue speaking                  | Acknowledgment                  | Conceptual |
+| Cough/noise                                 | Continue speaking                  | Non-speech event                | Conceptual |
 | Overlapping correction ("actually it's...") | Cancel if semantic intent is clear | Requires semantic understanding | Conceptual |
 
 The system cannot solve this with acoustic VAD alone. It needs a policy layer. The
@@ -362,24 +364,24 @@ below.
 
 ### What is well-measured
 
-| Metric | What it measures | Open benchmarks | Source |
-|---|---|---|---|
-| WER (Word Error Rate) | STT transcript accuracy | LibriSpeech, Open ASR Leaderboard, Fleurs, etc. | R-VA-004 |
-| MOS (Mean Opinion Score) | TTS audio quality | Seed-TTS-Eval, subjective listener tests | R-VA-012, R-VA-014 |
-| UTMOS | Automated TTS quality prediction | Automated version of MOS | R-VA-012, R-VA-013 |
-| ROC-AUC | VAD frame-level accuracy | Silero wiki benchmark (17 hours, 9 datasets) | R-VA-005 |
-| RTF / TTFA | Model inference speed | Per-model benchmarks | Various |
-| Response latency | Time from user-done to agent-audio | Moonshine v2 defines this precisely | R-VA-003 |
+| Metric                   | What it measures                   | Open benchmarks                                 | Source             |
+| ------------------------ | ---------------------------------- | ----------------------------------------------- | ------------------ |
+| WER (Word Error Rate)    | STT transcript accuracy            | LibriSpeech, Open ASR Leaderboard, Fleurs, etc. | R-VA-004           |
+| MOS (Mean Opinion Score) | TTS audio quality                  | Seed-TTS-Eval, subjective listener tests        | R-VA-012, R-VA-014 |
+| UTMOS                    | Automated TTS quality prediction   | Automated version of MOS                        | R-VA-012, R-VA-013 |
+| ROC-AUC                  | VAD frame-level accuracy           | Silero wiki benchmark (17 hours, 9 datasets)    | R-VA-005           |
+| RTF / TTFA               | Model inference speed              | Per-model benchmarks                            | Various            |
+| Response latency         | Time from user-done to agent-audio | Moonshine v2 defines this precisely             | R-VA-003           |
 
 ### What is poorly measured
 
-| Metric | What it would measure | Status | Source |
-|---|---|---|---|
-| Interruption detection accuracy | How often the system correctly identifies a true interruption vs backchannel vs noise | No open benchmark exists | Observation from this research |
-| Interruption latency | Time from user speech onset to agent playout stop | No standardized measurement | Observation from this research |
-| Transcript truncation correctness | Whether unheard text is correctly excluded from context | No benchmark; implementation-specific | Observation from this research |
-| False interruption rate | How often noise/echo/backchannel causes unnecessary cancellation | LiveKit tracks this (`agent_false_interruption` event) but no cross-platform benchmark | R-VA-008 |
-| Resumption quality | Whether the agent resumes coherently after a false interruption | No benchmark | Observation from this research |
+| Metric                            | What it would measure                                                                 | Status                                                                                 | Source                         |
+| --------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------ |
+| Interruption detection accuracy   | How often the system correctly identifies a true interruption vs backchannel vs noise | No open benchmark exists                                                               | Observation from this research |
+| Interruption latency              | Time from user speech onset to agent playout stop                                     | No standardized measurement                                                            | Observation from this research |
+| Transcript truncation correctness | Whether unheard text is correctly excluded from context                               | No benchmark; implementation-specific                                                  | Observation from this research |
+| False interruption rate           | How often noise/echo/backchannel causes unnecessary cancellation                      | LiveKit tracks this (`agent_false_interruption` event) but no cross-platform benchmark | R-VA-008                       |
+| Resumption quality                | Whether the agent resumes coherently after a false interruption                       | No benchmark                                                                           | Observation from this research |
 
 Inference: The voice agent community has mature benchmarks for individual components (STT
 accuracy, TTS quality, VAD frame accuracy) but lacks benchmarks for system-level
@@ -398,14 +400,14 @@ utterance.
 An agent response should be treated as a cancellable stream, not a text blob or audio
 file. The cancellation contract needs the following elements:
 
-| Element | Why it matters | OpenAI implementation | Source |
-|---|---|---|---|
-| Response ID | Know which model output is being cancelled | `response.done` event includes response with status `cancelled` | R-VA-007 |
-| Audio chunk timestamp | Know what audio was actually played | `audio_end_ms` field in truncate event | R-VA-007 |
-| Playback cursor | Truncate conversation history to heard content | Client-side tracking, sent via truncate event | R-VA-007 |
-| Interruption timestamp | Align user speech with assistant audio timeline | `input_audio_buffer.speech_started` event includes `audio_start_ms` | R-VA-007 |
-| Cancellation acknowledgement | Avoid continuing stale TTS/LLM streams | Response status changes to `cancelled` | R-VA-007 |
-| Transcript state | Do not include unheard text as if it was said | "Truncating audio will delete the server-side text transcript" | R-VA-007 |
+| Element                      | Why it matters                                  | OpenAI implementation                                               | Source   |
+| ---------------------------- | ----------------------------------------------- | ------------------------------------------------------------------- | -------- |
+| Response ID                  | Know which model output is being cancelled      | `response.done` event includes response with status `cancelled`     | R-VA-007 |
+| Audio chunk timestamp        | Know what audio was actually played             | `audio_end_ms` field in truncate event                              | R-VA-007 |
+| Playback cursor              | Truncate conversation history to heard content  | Client-side tracking, sent via truncate event                       | R-VA-007 |
+| Interruption timestamp       | Align user speech with assistant audio timeline | `input_audio_buffer.speech_started` event includes `audio_start_ms` | R-VA-007 |
+| Cancellation acknowledgement | Avoid continuing stale TTS/LLM streams          | Response status changes to `cancelled`                              | R-VA-007 |
+| Transcript state             | Do not include unheard text as if it was said   | "Truncating audio will delete the server-side text transcript"      | R-VA-007 |
 
 Inference: OpenAI's implementation of the truncation contract is the most documented among
 the providers examined. The explicit deletion of server-side text transcript on truncation
@@ -429,25 +431,25 @@ The barge-in evaluation should test these scenarios:
 
 The test harness should record:
 
-| Measurement | What it tests |
-|---|---|
-| Whether playout stopped | Cancellation responsiveness |
-| Stop latency (ms from user speech to playout stop) | System-level interruption latency |
-| Whether stale assistant audio kept playing | Playout cancellation completeness |
-| Whether stale assistant text remained in conversation history | Transcript truncation correctness |
-| Whether user interruption was transcribed correctly | STT under echo/overlap conditions |
-| Whether the next response addressed the interruption | LLM context coherence after truncation |
+| Measurement                                                   | What it tests                          |
+| ------------------------------------------------------------- | -------------------------------------- |
+| Whether playout stopped                                       | Cancellation responsiveness            |
+| Stop latency (ms from user speech to playout stop)            | System-level interruption latency      |
+| Whether stale assistant audio kept playing                    | Playout cancellation completeness      |
+| Whether stale assistant text remained in conversation history | Transcript truncation correctness      |
+| Whether user interruption was transcribed correctly           | STT under echo/overlap conditions      |
+| Whether the next response addressed the interruption          | LLM context coherence after truncation |
 
 ### Transport dependency
 
 Barge-in capability depends on the transport choice:
 
-| Transport | AEC | Barge-in possible | Source |
-|---|---|---|---|
-| WebRTC | Browser-native AEC with reference signal access | Yes | R-VA-028 |
-| WebSocket + getUserMedia echoCancellation | Browser AEC without reliable reference signal | Unreliable (~80% on Chrome desktop) | R-VA-028 |
-| WebSocket + mic muting | No echo but no listening during playback | No | R-VA-028 |
-| WebSocket + server-side AEC | SpeexDSP or similar | Yes, but doubles bandwidth and adds latency | R-VA-028 |
+| Transport                                 | AEC                                             | Barge-in possible                           | Source   |
+| ----------------------------------------- | ----------------------------------------------- | ------------------------------------------- | -------- |
+| WebRTC                                    | Browser-native AEC with reference signal access | Yes                                         | R-VA-028 |
+| WebSocket + getUserMedia echoCancellation | Browser AEC without reliable reference signal   | Unreliable (~80% on Chrome desktop)         | R-VA-028 |
+| WebSocket + mic muting                    | No echo but no listening during playback        | No                                          | R-VA-028 |
+| WebSocket + server-side AEC               | SpeexDSP or similar                             | Yes, but doubles bandwidth and adds latency | R-VA-028 |
 
 This is the connection between INSIGHT_05 and this insight. Transport choice determines
 AEC quality, which determines whether the mic input during agent playback is clean enough

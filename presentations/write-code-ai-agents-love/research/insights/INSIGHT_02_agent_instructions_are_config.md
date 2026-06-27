@@ -8,17 +8,17 @@ signal about what developers actually encode in these files.
 
 ## Source map
 
-| Ref | Source | Local text | Role |
-|---|---|---|---|
-| R17 | On the Impact of AGENTS.md (ICSE JAWs 2026) | `paper-text/agents-md-impact-2601.20404.txt` | Paired study: AGENTS.md reduced median runtime 28.6% and output tokens 16.6%. |
-| R18 | Evaluating AGENTS.md (ETH Zurich 2026-02) | `paper-text/evaluating-agents-md-2602.11988.txt` | Counter-evidence: context files can reduce success and increase cost by 20%+ when over-broad. |
-| R19 | Decoding Configuration of AI Coding Agents (2025-11) | `paper-text/claude-code-configs-2511.09268.txt` | Empirical study of 328 Claude Code config files; reveals what developers encode. |
-| R73 | OctoBench (2026-01) | `paper-text/octobench-2601.10343.txt` | Measures scaffold-aware instruction following; shows gap between task-solving and compliance. |
-| R74 | Agent READMEs (2025-11) | `paper-text/agent-readmes-context-files-2025.txt` | Empirical study of 2,303 agent context files across Claude Code, Codex, and Copilot repos. |
-| D05 | Anthropic: Claude Code best practices | `articles/anthropic-claude-code-best-practices.html` | Official-doc evidence: CLAUDE.md and verification workflows matter. |
-| D06 | GitHub Copilot coding agent best practices | `articles/github-copilot-coding-agent-best-practices.html` | Official-doc evidence: repository-wide and path-specific instructions. |
-| D07 | Cursor rules for AI | `articles/cursor-rules-for-ai.html` | Official-doc evidence: rule files injected into model context, scope-able. |
-| D35 | Builder.io: Improve your AI code output with AGENTS.md | `articles/builder-agents-md.html` | Practitioner signal: small project instructions reduce repeated repo rediscovery. |
+| Ref | Source                                                 | Local text                                                 | Role                                                                                          |
+| --- | ------------------------------------------------------ | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| R17 | On the Impact of AGENTS.md (ICSE JAWs 2026)            | `paper-text/agents-md-impact-2601.20404.txt`               | Paired study: AGENTS.md reduced median runtime 28.6% and output tokens 16.6%.                 |
+| R18 | Evaluating AGENTS.md (ETH Zurich 2026-02)              | `paper-text/evaluating-agents-md-2602.11988.txt`           | Counter-evidence: context files can reduce success and increase cost by 20%+ when over-broad. |
+| R19 | Decoding Configuration of AI Coding Agents (2025-11)   | `paper-text/claude-code-configs-2511.09268.txt`            | Empirical study of 328 Claude Code config files; reveals what developers encode.              |
+| R73 | OctoBench (2026-01)                                    | `paper-text/octobench-2601.10343.txt`                      | Measures scaffold-aware instruction following; shows gap between task-solving and compliance. |
+| R74 | Agent READMEs (2025-11)                                | `paper-text/agent-readmes-context-files-2025.txt`          | Empirical study of 2,303 agent context files across Claude Code, Codex, and Copilot repos.    |
+| D05 | Anthropic: Claude Code best practices                  | `articles/anthropic-claude-code-best-practices.html`       | Official-doc evidence: CLAUDE.md and verification workflows matter.                           |
+| D06 | GitHub Copilot coding agent best practices             | `articles/github-copilot-coding-agent-best-practices.html` | Official-doc evidence: repository-wide and path-specific instructions.                        |
+| D07 | Cursor rules for AI                                    | `articles/cursor-rules-for-ai.html`                        | Official-doc evidence: rule files injected into model context, scope-able.                    |
+| D35 | Builder.io: Improve your AI code output with AGENTS.md | `articles/builder-agents-md.html`                          | Practitioner signal: small project instructions reduce repeated repo rediscovery.             |
 
 ## Lulla et al. (R17): AGENTS.md reduces runtime and token cost
 
@@ -32,14 +32,14 @@ signal about what developers actually encode in these files.
 
 ### Efficiency results
 
-| Metric | Without AGENTS.md | With AGENTS.md | Diff | Diff % |
-|---|---:|---:|---:|---:|
-| Wall-clock time mean (s) | 162.94 | 129.91 | -33.03 | -20.27% |
-| Wall-clock time median (s) | 98.57 | 70.34 | -28.23 | -28.64% |
-| Output tokens mean | 5,744.81 | 4,591.46 | -1,153.35 | -20.08% |
-| Output tokens median | 2,925.00 | 2,440.00 | -485.00 | -16.58% |
-| Input tokens mean | 353,010 | 318,652 | -34,358 | -9.73% |
-| Total tokens mean | 687,632 | 619,322 | -68,310 | -9.93% |
+| Metric                     | Without AGENTS.md | With AGENTS.md |      Diff |  Diff % |
+| -------------------------- | ----------------: | -------------: | --------: | ------: |
+| Wall-clock time mean (s)   |            162.94 |         129.91 |    -33.03 | -20.27% |
+| Wall-clock time median (s) |             98.57 |          70.34 |    -28.23 | -28.64% |
+| Output tokens mean         |          5,744.81 |       4,591.46 | -1,153.35 | -20.08% |
+| Output tokens median       |          2,925.00 |       2,440.00 |   -485.00 | -16.58% |
+| Input tokens mean          |           353,010 |        318,652 |   -34,358 |  -9.73% |
+| Total tokens mean          |           687,632 |        619,322 |   -68,310 |  -9.93% |
 
 Source trace: R17, `paper-text/agents-md-impact-2601.20404.txt`, Table 1.
 
@@ -102,12 +102,12 @@ Source trace: R17, `paper-text/agents-md-impact-2601.20404.txt`, §3–5; JAWs P
 
 ### Key results
 
-| Condition comparison | Resolution / success | Steps & cost |
-|---|---|---|
-| LLM-generated vs none (SWE-bench Lite) | **−0.5 pp** avg resolution | **+2.45** steps, **+20%** cost (Table 2, **~p. 6**) |
-| LLM-generated vs none (AGENT BENCH) | **−2.0 pp** avg resolution | **+3.92** steps, **+23%** cost (Table 2, **~p. 6**) |
-| Developer-provided vs none (AGENT BENCH) | **+4%** avg resolution | **+3.34** steps, up to **+19%** cost (§4.2, **~pp. 6–7**) |
-| LLM-generated: cells with drop | **5 / 8** model×benchmark settings (Figure 3, **~p. 6**) | steps up in **every** setting |
+| Condition comparison                     | Resolution / success                                     | Steps & cost                                              |
+| ---------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------- |
+| LLM-generated vs none (SWE-bench Lite)   | **−0.5 pp** avg resolution                               | **+2.45** steps, **+20%** cost (Table 2, **~p. 6**)       |
+| LLM-generated vs none (AGENT BENCH)      | **−2.0 pp** avg resolution                               | **+3.92** steps, **+23%** cost (Table 2, **~p. 6**)       |
+| Developer-provided vs none (AGENT BENCH) | **+4%** avg resolution                                   | **+3.34** steps, up to **+19%** cost (§4.2, **~pp. 6–7**) |
+| LLM-generated: cells with drop           | **5 / 8** model×benchmark settings (Figure 3, **~p. 6**) | steps up in **every** setting                             |
 
 Source trace: R18, `paper-text/evaluating-agents-md-2602.11988.txt`, §4.2, Table 2, Figure 3
 ([arXiv:2602.11988](https://arxiv.org/abs/2602.11988)).
@@ -120,13 +120,13 @@ Source trace: R18, `paper-text/evaluating-agents-md-2602.11988.txt`, §4.2, Tabl
 
 ### AGENT BENCH statistics
 
-| Property | Mean | Min | Max |
-|---|---:|---:|---:|
-| PR patch lines edited | 118.9 | 12 | 1,973 |
-| PR patch files edited | 2.5 | 1 | 23 |
-| Context file words | 641.0 | 24 | 2,003 |
-| Context file sections | 9.7 | 1 | 29 |
-| Test coverage | 75% | 2.5% | 100% |
+| Property              |  Mean |  Min |   Max |
+| --------------------- | ----: | ---: | ----: |
+| PR patch lines edited | 118.9 |   12 | 1,973 |
+| PR patch files edited |   2.5 |    1 |    23 |
+| Context file words    | 641.0 |   24 | 2,003 |
+| Context file sections |   9.7 |    1 |    29 |
+| Test coverage         |   75% | 2.5% |  100% |
 
 The paper's recommendation: "omit LLM-generated context files for the time being" and "include
 only minimal requirements (e.g., specific tooling to use with this repository)."
@@ -143,14 +143,14 @@ existing docs; on under-documented niche repos, a context file can act as the on
 Both papers use **real GitHub OSS**. Neither uses purely synthetic codebases. They still answer
 different questions under different experimental contracts.
 
-| Dimension | R17 (Lulla et al.) | R18 (Gloaguen et al.) |
-|---|---|---|
-| Primary outcome | Runtime, tokens | **Test-pass resolution rate** |
-| Context file | **Existing human** root `AGENTS.md` only | **None / LLM-generated / human** (human only on AGENT BENCH) |
-| Task | Replay **small merged PRs** (≤100 LoC) | **Issue-resolution** benchmarks (SWE-bench Lite + AGENT BENCH) |
-| Agents | **Codex only** (`gpt-5.2-codex`) | Claude Code, Codex (2 models), Qwen Code |
-| Design | Paired: same snapshot ± file | Benchmark instances; LLM file via agent `/init`-style generation |
-| "Success" | Sanity check on 50 outputs | Full test suite must pass |
+| Dimension       | R17 (Lulla et al.)                       | R18 (Gloaguen et al.)                                            |
+| --------------- | ---------------------------------------- | ---------------------------------------------------------------- |
+| Primary outcome | Runtime, tokens                          | **Test-pass resolution rate**                                    |
+| Context file    | **Existing human** root `AGENTS.md` only | **None / LLM-generated / human** (human only on AGENT BENCH)     |
+| Task            | Replay **small merged PRs** (≤100 LoC)   | **Issue-resolution** benchmarks (SWE-bench Lite + AGENT BENCH)   |
+| Agents          | **Codex only** (`gpt-5.2-codex`)         | Claude Code, Codex (2 models), Qwen Code                         |
+| Design          | Paired: same snapshot ± file             | Benchmark instances; LLM file via agent `/init`-style generation |
+| "Success"       | Sanity check on 50 outputs               | Full test suite must pass                                        |
 
 **When R17's cost/runtime gains apply (~Table 1, p. 4):** Developer-written root file already
 tuned to the repo; agent reproduces a **small** historical change; outcome is **fewer tokens and
@@ -179,28 +179,28 @@ the same 124 tasks.
 
 ### Most common concerns in CLAUDE.md files
 
-| Concern | Files containing it | Percentage |
-|---|---:|---:|
-| Software Architecture | 238 | 72.6% |
-| Development Guidelines | 147 | 44.8% |
-| Project Overview | 128 | 39.0% |
-| Testing | 116 | 35.4% |
-| Commands | 109 | 33.2% |
-| Dependencies | 101 | 30.8% |
-| General Project Guidelines | 84 | 25.6% |
-| Integration and Usage | 59 | 18.0% |
-| Configuration | 57 | 17.4% |
+| Concern                    | Files containing it | Percentage |
+| -------------------------- | ------------------: | ---------: |
+| Software Architecture      |                 238 |      72.6% |
+| Development Guidelines     |                 147 |      44.8% |
+| Project Overview           |                 128 |      39.0% |
+| Testing                    |                 116 |      35.4% |
+| Commands                   |                 109 |      33.2% |
+| Dependencies               |                 101 |      30.8% |
+| General Project Guidelines |                  84 |      25.6% |
+| Integration and Usage      |                  59 |      18.0% |
+| Configuration              |                  57 |      17.4% |
 
 Source trace: R19, `paper-text/claude-code-configs-2511.09268.txt`, Figure 2.
 
 ### Code examples and links in config files
 
-| Category | Code examples | Links |
-|---|---:|---:|
-| Architecture | 10.98% | 1.83% |
-| Development Guidelines | 17.68% | 0.61% |
-| Testing | 15.24% | 0.0% |
-| Commands | 15.55% | 0.3% |
+| Category               | Code examples | Links |
+| ---------------------- | ------------: | ----: |
+| Architecture           |        10.98% | 1.83% |
+| Development Guidelines |        17.68% | 0.61% |
+| Testing                |        15.24% |  0.0% |
+| Commands               |        15.55% |  0.3% |
 
 The dominant pattern: Architecture is the most frequent topic (72.6%), and it rarely links out
 to other documents. This means developers are encoding architectural knowledge directly in the
@@ -211,13 +211,13 @@ config file, not pointing to external docs.
 OctoBench measures whether agents follow scaffold-specified instructions (system prompts, config
 files, tool schemas, memory state) while solving tasks.
 
-| Metric | Value |
-|---|---:|
-| Environments | 34 |
-| Task instances | 217 |
-| Scaffold types | 3 |
-| Total checklist items | 7,098 |
-| Average checklist items per instance | 32.7 |
+| Metric                               | Value |
+| ------------------------------------ | ----: |
+| Environments                         |    34 |
+| Task instances                       |   217 |
+| Scaffold types                       |     3 |
+| Total checklist items                | 7,098 |
+| Average checklist items per instance |  32.7 |
 
 Key finding: "a systematic gap between task-solving and scaffold-aware compliance." An agent
 may appear correct while silently breaking higher-priority constraints from the config file. This
@@ -232,12 +232,14 @@ Combining the positive evidence (R17: efficiency gains) with the negative eviden
 files hurt), the pattern emerges:
 
 **Effective agent instructions are:**
+
 - Short (median 641 words per R19's finding; the shorter ones in R17 showed gains)
 - Specific (exact commands, architecture constraints, not generic advice)
 - Actionable (commands the agent can copy-paste and run)
 - Minimal (only rules the repo actually follows; stale/aspirational rules are noise)
 
 **Ineffective agent instructions:**
+
 - Long lists of generic engineering advice
 - LLM-generated content that adds exploration overhead without precision
 - Requirements that contradict the repo's actual state
@@ -246,6 +248,7 @@ files hurt), the pattern emerges:
 ### Practical content checklist (inference, supported by R17 + R18 + R19)
 
 Include:
+
 - exact build/test/lint commands
 - architecture summary (modules, boundaries, extension points)
 - non-obvious conventions (naming, patterns, package structure)
@@ -254,6 +257,7 @@ Include:
 - verification expectations (what the agent should check before finishing)
 
 Exclude:
+
 - stale changelogs
 - generic engineering advice available in any tutorial
 - long file trees (the agent can list files itself)
@@ -308,7 +312,7 @@ Exclude:
 2. **R19 concern frequency bar chart**: showing Architecture at 72.6% dominance.
 3. **R18 three-condition comparison**: no file vs developer-provided vs LLM-generated, showing
    the non-linear relationship.
-3b. **R17 vs R18 comparison table** ("Reconciling R17 vs R18"): same OSS, different outcomes
+   3b. **R17 vs R18 comparison table** ("Reconciling R17 vs R18"): same OSS, different outcomes
    (efficiency vs resolution)—use for the love/hate AGENTS.md section.
 4. **"Control plane, not README" slide**: the talk hook, with the distinction between config
    (versioned, tested, scoped) and documentation (aspirational, verbose, stale).

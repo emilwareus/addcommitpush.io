@@ -5,10 +5,7 @@ const APP_URL = 'http://localhost:3000/presentations/voice-agents/01-title';
 test.use({
   // Chromium flag to provide a fake audio device for getUserMedia
   launchOptions: {
-    args: [
-      '--use-fake-device-for-media-stream',
-      '--use-fake-ui-for-media-stream',
-    ],
+    args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'],
   },
 });
 

@@ -9,12 +9,12 @@ clear contracts, focused tests, and enough local context for retrieval systems t
 
 ## Source map
 
-| Ref | Source | Local text | Role in this insight |
-|---|---|---|---|
-| R47 | CodeChain | `paper-text/codechain-modular-codegen-2310.08992.txt` | Modular decomposition + self-revision improves pass@1 on competitive programming. |
-| R48 | Revisiting Modularity | `paper-text/revisiting-modularity-codegen-2407.11406.txt` | Counter-evidence: modularity score has no clear positive correlation with generation. |
-| R49 | Chunking study | `paper-text/chunking-rag-code-completion-2605.04763.txt` | Function-level chunks underperform Declaration, Sliding Window, and cAST strategies. |
-| R61 | The Modular Imperative | `paper-text/modular-imperative-lmpl-2025.txt` | Position paper: modularity should constrain/guide/validate LLM code generation. |
+| Ref | Source                 | Local text                                                | Role in this insight                                                                  |
+| --- | ---------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| R47 | CodeChain              | `paper-text/codechain-modular-codegen-2310.08992.txt`     | Modular decomposition + self-revision improves pass@1 on competitive programming.     |
+| R48 | Revisiting Modularity  | `paper-text/revisiting-modularity-codegen-2407.11406.txt` | Counter-evidence: modularity score has no clear positive correlation with generation. |
+| R49 | Chunking study         | `paper-text/chunking-rag-code-completion-2605.04763.txt`  | Function-level chunks underperform Declaration, Sliding Window, and cAST strategies.  |
+| R61 | The Modular Imperative | `paper-text/modular-imperative-lmpl-2025.txt`             | Position paper: modularity should constrain/guide/validate LLM code generation.       |
 
 ## CodeChain: modular decomposition + self-revision helps
 
@@ -24,10 +24,10 @@ representative sub-modules extracted from previous generations.
 
 ### CodeChain results copied from the paper
 
-| Benchmark | Relative pass@1 improvement |
-|---|---:|
-| APPS | 35% |
-| CodeContests | 76% |
+| Benchmark    | Relative pass@1 improvement |
+| ------------ | --------------------------: |
+| APPS         |                         35% |
+| CodeContests |                         76% |
 
 Source trace: R47, `paper-text/codechain-modular-codegen-2310.08992.txt`, lines 28-29 and 129-130.
 
@@ -43,6 +43,7 @@ Source trace: R47, `paper-text/codechain-modular-codegen-2310.08992.txt`, lines 
 ### Why it works
 
 CodeChain's improvement comes from two mechanisms working together:
+
 - **Modular decomposition** breaks complex problems into sub-tasks
 - **Self-revision with verified sub-modules** provides correct building blocks
 
@@ -66,19 +67,19 @@ challenges the claim that modular code examples improve LLM generation quality.
 The paper introduces a quantitative Modularity Score (MOS) based on Cyclomatic Complexity:
 
 1. Compute total Cyclomatic Complexity (CCtotal) from the code's control-flow graph
-2. Calculate the ideal number of modules: m* = ceil(CCtotal / tau) where tau = 5
-3. MOS = min(1, n/m*) where n is the actual number of modules
+2. Calculate the ideal number of modules: m\* = ceil(CCtotal / tau) where tau = 5
+3. MOS = min(1, n/m\*) where n is the actual number of modules
 
 Source trace: R48, `paper-text/revisiting-modularity-codegen-2407.11406.txt`, lines 104-182.
 
 ### Four code categories
 
-| Category | Definition |
-|---|---|
-| Modular Code (MC) | High MOS solutions from dataset |
-| Singular Code (SC) | MOS = 0 solutions for same problems |
-| LLM-Modularized Code (LMC) | GPT-3.5-Turbo converted code (claimed modular) |
-| LMC-Recovered Code (RC) | Human-recovered version stripping LLM side-effects |
+| Category                   | Definition                                         |
+| -------------------------- | -------------------------------------------------- |
+| Modular Code (MC)          | High MOS solutions from dataset                    |
+| Singular Code (SC)         | MOS = 0 solutions for same problems                |
+| LLM-Modularized Code (LMC) | GPT-3.5-Turbo converted code (claimed modular)     |
+| LMC-Recovered Code (RC)    | Human-recovered version stripping LLM side-effects |
 
 ### Key finding
 
@@ -88,6 +89,7 @@ be the crucial factor for performance."
 Source trace: R48, lines 87-90.
 
 The paper finds:
+
 - No clear positive correlation between modularity score and generation performance
 - Sometimes weak negative relationships
 - Models up to 34B parameters tested (not just small models)
@@ -99,6 +101,7 @@ The paper finds:
 
 The paper challenges the prior claim (Jain et al., 2024) that modular examples improve
 generation. The prior work used GPT-3.5-Turbo to convert code into modular form, but:
+
 1. LLMs are verbose -- the conversion may have added helpful detail, not just modularity
 2. Without a quantitative modularity metric, it was impossible to isolate modularity's effect
 
@@ -113,39 +116,40 @@ and nine parameter configurations on two benchmarks.
 
 ### Chunking strategies tested
 
-| Strategy | Description |
-|---|---|
-| Function | Each function/method as a complete chunk (body included) |
-| Declaration | Class headers, field definitions, method signatures (bodies omitted) |
-| Sliding Window | Fixed-size overlapping text windows |
-| cAST | Context-aware AST-based chunking |
+| Strategy       | Description                                                          |
+| -------------- | -------------------------------------------------------------------- |
+| Function       | Each function/method as a complete chunk (body included)             |
+| Declaration    | Class headers, field definitions, method signatures (bodies omitted) |
+| Sliding Window | Fixed-size overlapping text windows                                  |
+| cAST           | Context-aware AST-based chunking                                     |
 
 ### Key results copied from the paper
 
-| Finding | Value |
-|---|---|
-| Function underperformance vs other strategies | 3.57-5.64 percentage points EM on RepoEval |
-| Cliff's delta (Function vs others) | -1.0 (large negative effect) |
-| Cross-file context length gain (2048 -> 8192 tokens) | up to 4.2 pp EM |
-| Chunk size effect | <= 1.9 pp (weaker, non-monotonic) |
-| Retriever choice variation | <= 1.11 pp EM on RepoEval |
+| Finding                                              | Value                                      |
+| ---------------------------------------------------- | ------------------------------------------ |
+| Function underperformance vs other strategies        | 3.57-5.64 percentage points EM on RepoEval |
+| Cliff's delta (Function vs others)                   | -1.0 (large negative effect)               |
+| Cross-file context length gain (2048 -> 8192 tokens) | up to 4.2 pp EM                            |
+| Chunk size effect                                    | <= 1.9 pp (weaker, non-monotonic)          |
+| Retriever choice variation                           | <= 1.11 pp EM on RepoEval                  |
 
 Source trace: R49, `paper-text/chunking-rag-code-completion-2605.04763.txt`, lines 68-76 and 113-126.
 
 ### Pareto optimality results
 
-| Strategy | Pareto-optimal on cost-quality front? |
-|---|---|
-| Sliding Window | Yes (on both benchmarks) |
-| cAST | Yes (on both benchmarks) |
-| Declaration | Competitive |
-| Function | Never Pareto-optimal |
+| Strategy       | Pareto-optimal on cost-quality front? |
+| -------------- | ------------------------------------- |
+| Sliding Window | Yes (on both benchmarks)              |
+| cAST           | Yes (on both benchmarks)              |
+| Declaration    | Competitive                           |
+| Function       | Never Pareto-optimal                  |
 
 Source trace: R49, lines 124-126.
 
 ### Why function chunking fails
 
 The paper explains that function-level chunks:
+
 - Isolate functions from their surrounding context
 - Lose class-level structure, field definitions, and inter-function relationships
 - Are often too small to provide enough context for the completion task
@@ -172,9 +176,9 @@ empirical study but provides useful observations.
 
 ### Key observations from the paper
 
-| Experiment | Outcome |
-|---|---|
-| Without modular guidance | LLM produced monolithic solution: 586 lines in one file |
+| Experiment                | Outcome                                                                                                                                     |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Without modular guidance  | LLM produced monolithic solution: 586 lines in one file                                                                                     |
 | With Rubric specification | Surface-level modularity (separate files, interfaces) but hidden dependencies, duplicated data, excessive complexity, 4x code size increase |
 
 Source trace: R61, `paper-text/modular-imperative-lmpl-2025.txt`, lines 175-185.
@@ -200,12 +204,12 @@ Modular code needs external validation of its modularity properties.
 
 The four sources paint a coherent picture when read together:
 
-| Source | Claim | Scope |
-|---|---|---|
-| CodeChain | Modular decomposition + revision helps | Competitive programming (self-contained) |
-| Revisiting Modularity | Modularity score does not predict performance | NL2Code with in-context examples |
-| Chunking study | Function-level chunks underperform | Retrieval for code completion |
-| Modular Imperative | Surface modularity is insufficient; boundaries must be enforced | Position based on experiments |
+| Source                | Claim                                                           | Scope                                    |
+| --------------------- | --------------------------------------------------------------- | ---------------------------------------- |
+| CodeChain             | Modular decomposition + revision helps                          | Competitive programming (self-contained) |
+| Revisiting Modularity | Modularity score does not predict performance                   | NL2Code with in-context examples         |
+| Chunking study        | Function-level chunks underperform                              | Retrieval for code completion            |
+| Modular Imperative    | Surface modularity is insufficient; boundaries must be enforced | Position based on experiments            |
 
 ### The reconciliation
 
@@ -231,14 +235,14 @@ A micro-module that hides its context across many files is not.
 
 ## Inference for codebase design
 
-| Practice | Why it helps agents | Why raw modularity does not |
-|---|---|---|
-| API contracts at each boundary | Declaration chunking preserves them for retrieval | Small functions without contracts are invisible |
-| Focused tests at boundaries | Provide validation oracles for each module | Scattered micro-tests do not map to modules |
-| Related declarations close together | Retrieval context budget captures the neighborhood | Spread-out declarations waste retrieval budget |
-| Avoid micro-modules that fragment context | Cross-file context is the dominant parameter | 10 tiny files use more retrieval budget than 2 coherent files |
-| Responsibility-based splitting | Alignment with task scope | Size-based splitting can separate related code |
-| Ownership-aligned folders | Module boundary = team boundary = architectural boundary | Arbitrary folder nesting confuses structural retrieval |
+| Practice                                  | Why it helps agents                                      | Why raw modularity does not                                   |
+| ----------------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------- |
+| API contracts at each boundary            | Declaration chunking preserves them for retrieval        | Small functions without contracts are invisible               |
+| Focused tests at boundaries               | Provide validation oracles for each module               | Scattered micro-tests do not map to modules                   |
+| Related declarations close together       | Retrieval context budget captures the neighborhood       | Spread-out declarations waste retrieval budget                |
+| Avoid micro-modules that fragment context | Cross-file context is the dominant parameter             | 10 tiny files use more retrieval budget than 2 coherent files |
+| Responsibility-based splitting            | Alignment with task scope                                | Size-based splitting can separate related code                |
+| Ownership-aligned folders                 | Module boundary = team boundary = architectural boundary | Arbitrary folder nesting confuses structural retrieval        |
 
 ### The cross-file context budget argument
 

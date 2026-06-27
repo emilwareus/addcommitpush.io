@@ -23,6 +23,7 @@ Query → Search → Synthesize → Report
 ```
 
 **Limitations:**
+
 1. **Information Loss:** Late discoveries can't influence early decisions
 2. **No Self-Correction:** Errors propagate to final output
 3. **Static Search Strategy:** Can't adapt based on findings
@@ -43,23 +44,25 @@ The iterative nature mirrors how humans actually conduct research—cycles of se
 ### Classical Diffusion Models (Images)
 
 **Forward Diffusion:** Add noise to data
+
 ```
 x₀ → x₁ → x₂ → ... → xₜ (pure noise)
 ```
 
 **Reverse Diffusion:** Learn to denoise
+
 ```
 xₜ → xₜ₋₁ → ... → x₁ → x₀ (clean data)
 ```
 
 ### Research Diffusion
 
-| Classical Diffusion | Research Diffusion |
-|--------------------|--------------------|
-| Random noise (xₜ) | Initial draft from model knowledge |
-| Denoising step | Research iteration + draft refinement |
-| Guidance signal | Retrieved information from web search |
-| Clean output (x₀) | Comprehensive, accurate research report |
+| Classical Diffusion | Research Diffusion                      |
+| ------------------- | --------------------------------------- |
+| Random noise (xₜ)   | Initial draft from model knowledge      |
+| Denoising step      | Research iteration + draft refinement   |
+| Guidance signal     | Retrieved information from web search   |
+| Clean output (x₀)   | Comprehensive, accurate research report |
 
 **Key Insight:** The initial draft generated purely from LLM training data represents the "noisy" starting state. Each iteration of identifying gaps, searching, and incorporating findings acts as a denoising step.
 
@@ -70,6 +73,7 @@ xₜ → xₜ₋₁ → ... → x₁ → x₀ (clean data)
 ### Phase 1: Research Brief Generation
 
 Transform user query into detailed research brief with:
+
 - Core research question
 - Key sub-questions to explore
 - Expected deliverables and scope
@@ -82,6 +86,7 @@ Transform user query into detailed research brief with:
 Generate a draft from the LLM's **internal knowledge only**—no external information retrieval.
 
 **Characteristics:**
+
 - May contain outdated information (training data cutoff)
 - Gaps marked with "[NEEDS RESEARCH]" placeholders
 - Uncertain claims that need verification
@@ -99,6 +104,7 @@ The core innovation. Each iteration follows four steps:
 4. **Assess:** Are findings comprehensive? (NOT draft appearance!)
 
 **Termination Criteria (priority order):**
+
 1. Gap-closed: Diverse queries yield no new findings
 2. Iteration cap: Hard stop at 15 supervisor iterations
 3. Supervisor override: Allowed only with rationale tied to evidence coverage
@@ -106,6 +112,7 @@ The core innovation. Each iteration follows four steps:
 ### Phase 4: Final Report Generation
 
 Apply quality optimization:
+
 - **Insightfulness Rules:** Granular breakdowns, detailed mapping tables, nuanced discussion
 - **Helpfulness Rules:** Proper citations, markdown formatting, clear structure
 - Deduplicate findings by URL
@@ -118,6 +125,7 @@ Apply quality optimization:
 ### Supervisor Agent
 
 The supervisor orchestrates the diffusion loop:
+
 - Analyzes current draft state
 - Identifies knowledge gaps
 - Delegates research to sub-agents (parallel)
@@ -125,6 +133,7 @@ The supervisor orchestrates the diffusion loop:
 - Decides when research is complete
 
 **Tools available:**
+
 - `conduct_research` - Spawn parallel sub-agents
 - `refine_draft` - Update draft with new findings
 - `think` - Internal reflection
@@ -137,6 +146,7 @@ Each sub-researcher is a complete agent with its own tool loop:
 **Context:** Receives only the topic (no visibility into other agents' work)
 
 **Tools available:**
+
 - `search` - Web search via Brave API
 - `fetch` - Fetch and summarize a specific URL
 - `read_document` - Read PDF, DOCX, XLSX files
@@ -169,16 +179,17 @@ When the supervisor receives multiple `conduct_research` calls:
 
 ### The Context Problems
 
-| Problem | Description | Solution |
-|---------|-------------|----------|
-| Context Poisoning | Hallucinations enter context | Draft as verified state |
-| Context Distraction | Too much context | Parallel isolated agents |
-| Context Confusion | Superfluous context | Structured compression |
-| Context Clash | Disagreeing context | Supervisor resolution |
+| Problem             | Description                  | Solution                 |
+| ------------------- | ---------------------------- | ------------------------ |
+| Context Poisoning   | Hallucinations enter context | Draft as verified state  |
+| Context Distraction | Too much context             | Parallel isolated agents |
+| Context Confusion   | Superfluous context          | Structured compression   |
+| Context Clash       | Disagreeing context          | Supervisor resolution    |
 
 ### Draft as Context Anchor
 
 The draft serves as **persistent, verified context** that:
+
 - **Evolves incrementally:** Each `refine_draft` call is validated
 - **Structures information:** Prevents disorganized accumulation
 - **Guides research:** Makes gaps explicit
@@ -187,6 +198,7 @@ The draft serves as **persistent, verified context** that:
 ### Multi-Agent Context Isolation
 
 Sub-researchers operate with **isolated contexts**:
+
 - Cannot see each other's work
 - Prevents topic A's findings from biasing topic B
 - Keeps context from growing unboundedly
@@ -201,6 +213,7 @@ Sub-researchers operate with **isolated contexts**:
 **Focus:** What information exists, not how to present it
 
 **Characteristics:**
+
 - Draft updates are functional, not polished
 - Prioritizes breadth of coverage
 - Uses global-context OR section-specific queries based on gap analysis
@@ -211,6 +224,7 @@ Sub-researchers operate with **isolated contexts**:
 **Focus:** Presentation, coherence, and user satisfaction
 
 **Characteristics:**
+
 - All information is available
 - Applies full Insightfulness + Helpfulness rules
 - Generates final deliverable with proper citations
@@ -228,17 +242,20 @@ Sub-researchers operate with **isolated contexts**:
 **Location:** `/go-research/external_code/Deep_Research/`
 
 **Key files:**
+
 - `multi_agent_supervisor.py` - Supervisor coordination
 - `research_agent.py` - Sub-researcher agent
 - `prompts.py` - All system prompts
 - `state_multi_agent_supervisor.py` - State management
 
 **Supervisor tools:**
+
 ```python
 supervisor_tools = [ConductResearch, ResearchComplete, think_tool, refine_draft_report]
 ```
 
 **Iteration limits:**
+
 ```python
 max_researcher_iterations = 15  # Supervisor iterations
 max_concurrent_researchers = 3  # Parallel sub-agents
@@ -249,6 +266,7 @@ max_concurrent_researchers = 3  # Parallel sub-agents
 **Location:** `/go-research/internal/architectures/think_deep/`
 
 **Key components:**
+
 - `loop.go` - Main AgentLoop orchestrating all phases
 - `supervisor.go` - Supervisor agent with tool execution
 - `sub_researcher.go` - Sub-agent implementation
@@ -307,6 +325,7 @@ Critical: Any information even remotely relevant must be preserved verbatim
 ### Results
 
 **Google TTD-DR Performance:**
+
 - 74.5% win rate vs. OpenAI Deep Research
 - Outperforms by 7.7% on one dataset, 1.7% on another
 

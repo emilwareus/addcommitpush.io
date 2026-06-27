@@ -89,7 +89,27 @@ function StreamingToggle({
 }
 
 export function JarvisSidebar() {
-  const { messages, status, isConnected, streamingConfig, vadConfig, sttModel, sttModels, llmModel, llmModels, transport, bargeInEnabled, connect, disconnect, setStreamingConfig, setVadConfig, setSttModel, setLlmModel, setTransport, setBargeInEnabled } = useJarvis();
+  const {
+    messages,
+    status,
+    isConnected,
+    streamingConfig,
+    vadConfig,
+    sttModel,
+    sttModels,
+    llmModel,
+    llmModels,
+    transport,
+    bargeInEnabled,
+    connect,
+    disconnect,
+    setStreamingConfig,
+    setVadConfig,
+    setSttModel,
+    setLlmModel,
+    setTransport,
+    setBargeInEnabled,
+  } = useJarvis();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -106,19 +126,17 @@ export function JarvisSidebar() {
       <div className="p-4 border-b border-primary/20 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${statusColor(status)}`} />
-          <h3 className="text-primary font-mono text-sm font-bold tracking-wider">
-            JARVIS
-          </h3>
+          <h3 className="text-primary font-mono text-sm font-bold tracking-wider">JARVIS</h3>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground font-mono">
-            {statusLabel(status)}
-          </span>
+          <span className="text-xs text-muted-foreground font-mono">{statusLabel(status)}</span>
           <button
             type="button"
             onClick={() => setSettingsOpen((o) => !o)}
             className={`p-1 rounded transition-colors cursor-pointer ${
-              settingsOpen ? 'bg-primary/20 text-primary' : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
+              settingsOpen
+                ? 'bg-primary/20 text-primary'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted/30'
             }`}
             aria-label="Settings"
           >
@@ -168,7 +186,9 @@ export function JarvisSidebar() {
                     <option value="">{isConnected ? 'No models' : 'Connect to load'}</option>
                   ) : (
                     llmModels.map((m) => (
-                      <option key={m} value={m}>{m}</option>
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
                     ))
                   )}
                 </select>
@@ -189,7 +209,9 @@ export function JarvisSidebar() {
                     <option value="">{isConnected ? 'No models' : 'Connect to load'}</option>
                   ) : (
                     sttModels.map((m) => (
-                      <option key={m} value={m}>{m}</option>
+                      <option key={m} value={m}>
+                        {m}
+                      </option>
                     ))
                   )}
                 </select>
@@ -241,7 +263,9 @@ export function JarvisSidebar() {
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono text-muted-foreground">Threshold</span>
-                    <span className="text-xs font-mono text-muted-foreground">{vadConfig.threshold.toFixed(2)}</span>
+                    <span className="text-xs font-mono text-muted-foreground">
+                      {vadConfig.threshold.toFixed(2)}
+                    </span>
                   </div>
                   <input
                     type="range"
@@ -250,14 +274,18 @@ export function JarvisSidebar() {
                     step="0.05"
                     value={vadConfig.threshold}
                     disabled={!isConnected}
-                    onChange={(e) => setVadConfig({ ...vadConfig, threshold: parseFloat(e.target.value) })}
+                    onChange={(e) =>
+                      setVadConfig({ ...vadConfig, threshold: parseFloat(e.target.value) })
+                    }
                     className="w-full h-1 bg-muted-foreground/30 rounded-full appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed accent-primary"
                   />
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-mono text-muted-foreground">Silence (ms)</span>
-                    <span className="text-xs font-mono text-muted-foreground">{vadConfig.silenceMs}</span>
+                    <span className="text-xs font-mono text-muted-foreground">
+                      {vadConfig.silenceMs}
+                    </span>
                   </div>
                   <input
                     type="range"
@@ -266,7 +294,9 @@ export function JarvisSidebar() {
                     step="100"
                     value={vadConfig.silenceMs}
                     disabled={!isConnected}
-                    onChange={(e) => setVadConfig({ ...vadConfig, silenceMs: parseInt(e.target.value, 10) })}
+                    onChange={(e) =>
+                      setVadConfig({ ...vadConfig, silenceMs: parseInt(e.target.value, 10) })
+                    }
                     className="w-full h-1 bg-muted-foreground/30 rounded-full appearance-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed accent-primary"
                   />
                 </div>
@@ -293,9 +323,7 @@ export function JarvisSidebar() {
               className={messageStyle(msg)}
             >
               {msg.type === 'thinking' && (
-                <span className="text-xs text-blue-400/60 block mb-0.5 font-mono">
-                  thinking
-                </span>
+                <span className="text-xs text-blue-400/60 block mb-0.5 font-mono">thinking</span>
               )}
               {msg.type === 'partial' && (
                 <span className="text-xs text-muted-foreground/40 block mb-0.5 font-mono">
@@ -308,9 +336,7 @@ export function JarvisSidebar() {
                 </span>
               )}
               {msg.role === 'assistant' && (
-                <span className="text-xs text-primary/60 block mb-0.5 font-mono">
-                  jarvis
-                </span>
+                <span className="text-xs text-primary/60 block mb-0.5 font-mono">jarvis</span>
               )}
               <span className="text-sm leading-relaxed">{msg.text}</span>
             </motion.div>

@@ -78,7 +78,9 @@ function SectionMarker({ section }: { section?: string }) {
 
   return (
     <div className="fixed left-8 top-7 z-50 font-mono">
-      <div className="text-[10px] uppercase tracking-[0.24em] text-primary/45">Agentic loop</div>
+      <div className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
+        Agentic loop
+      </div>
       <div className="mt-1 flex items-center gap-3">
         <div className="text-sm font-bold uppercase tracking-[0.18em] text-primary">{section}</div>
 
@@ -86,12 +88,12 @@ function SectionMarker({ section }: { section?: string }) {
           {loopSections.map((loopSection, index) => (
             <span
               key={loopSection}
-              className={`h-1.5 w-5 rounded-full ${
+              className={`h-1 w-5 ${
                 index === loopIndex
-                  ? 'bg-primary shadow-[0_0_10px_var(--primary)]'
+                  ? 'bg-primary'
                   : index < loopIndex
-                    ? 'bg-primary/35'
-                    : 'bg-border/65'
+                    ? 'bg-[var(--border)]'
+                    : 'bg-[var(--hair)]'
               }`}
             />
           ))}
@@ -113,14 +115,12 @@ export function PresentationLayout({
   const currentSlide = slides[currentIndex];
 
   return (
-    <div className="fixed inset-0 z-50 bg-background grid-bg overflow-hidden">
-      {/* Progress bar */}
-      <div className="fixed top-0 left-0 right-0 h-1 bg-muted/50 z-50">
+    <div className="presentation-slide-surface fixed inset-0 z-50 overflow-hidden">
+      <div className="fixed top-0 left-0 right-0 z-50 h-[3px] bg-[var(--hair)]">
         <div
           className="h-full bg-primary transition-all duration-300 ease-out"
           style={{
             width: `${((currentIndex + 1) / slides.length) * 100}%`,
-            boxShadow: '0 0 8px var(--primary), 0 0 16px var(--primary)',
           }}
         />
       </div>
@@ -128,7 +128,6 @@ export function PresentationLayout({
       <SectionMarker section={currentSlide?.section} />
 
       <div className="h-full flex">
-        {/* Slide content with fade transition */}
         <div className="flex-1 h-full">
           <SlideStepProvider
             key={currentSlug}
@@ -143,7 +142,7 @@ export function PresentationLayout({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="h-full w-full flex items-center justify-center"
+                className="flex h-full w-full items-center justify-center"
               >
                 {children}
               </motion.div>
@@ -151,12 +150,10 @@ export function PresentationLayout({
           </SlideStepProvider>
         </div>
 
-        {/* Optional sidebar */}
         {sidebar}
       </div>
 
-      {/* Slide counter */}
-      <div className="fixed bottom-4 right-6 text-sm text-primary/40 z-50 font-mono">
+      <div className="fixed right-6 bottom-4 z-50 font-mono text-sm text-muted-foreground">
         {currentIndex + 1} / {slides.length}
       </div>
     </div>

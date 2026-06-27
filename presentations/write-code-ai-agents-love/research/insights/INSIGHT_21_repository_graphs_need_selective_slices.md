@@ -22,14 +22,14 @@ Plot-ready data lives in `presentations/write-code-ai-agents-love/research/data/
 
 ## Source map
 
-| Ref | Source | Local text | Role in this insight |
-|---|---|---|---|
-| R13 | Repository Intelligence Graph | `paper-text/repository-intelligence-graph-2601.10112.txt` | Best evidence that deterministic repo maps improve orientation speed and accuracy. |
-| R53 | GraphCodeAgent | `paper-text/graphcodeagent-2504.10046.txt` | Best evidence that graph-guided traversal improves repository code generation, especially cross-file tasks. |
-| R12 | RepoGraph | `paper-text/repograph-2410.14684.txt` | Best evidence that graph context can help existing agents, and that too much graph context can hurt. |
-| R10 | ContextBench | `paper-text/contextbench-2602.05892.txt` | Shows final task success hides context retrieval quality. |
-| R11 | SWE Context Bench | `paper-text/swe-contextbench-2602.08316.txt` | Shows prior context helps only when selected compactly and correctly. |
-| R35 | What to Retrieve for Effective RACG | `paper-text/what-to-retrieve-racg-2503.20589.txt` | Shows API/context retrieval can help more than superficially similar snippets. |
+| Ref | Source                              | Local text                                                | Role in this insight                                                                                        |
+| --- | ----------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| R13 | Repository Intelligence Graph       | `paper-text/repository-intelligence-graph-2601.10112.txt` | Best evidence that deterministic repo maps improve orientation speed and accuracy.                          |
+| R53 | GraphCodeAgent                      | `paper-text/graphcodeagent-2504.10046.txt`                | Best evidence that graph-guided traversal improves repository code generation, especially cross-file tasks. |
+| R12 | RepoGraph                           | `paper-text/repograph-2410.14684.txt`                     | Best evidence that graph context can help existing agents, and that too much graph context can hurt.        |
+| R10 | ContextBench                        | `paper-text/contextbench-2602.05892.txt`                  | Shows final task success hides context retrieval quality.                                                   |
+| R11 | SWE Context Bench                   | `paper-text/swe-contextbench-2602.08316.txt`              | Shows prior context helps only when selected compactly and correctly.                                       |
+| R35 | What to Retrieve for Effective RACG | `paper-text/what-to-retrieve-racg-2503.20589.txt`         | Shows API/context retrieval can help more than superficially similar snippets.                              |
 
 ## What RIG actually measured
 
@@ -45,17 +45,17 @@ the relevant structure.
 
 ### RIG data copied from the paper
 
-| RIG result | Baseline vs RIG finding | Interpretation for the talk |
-|---|---:|---|
-| Mean accuracy improvement | +12.2% | An explicit repo map changes answers, not only speed. |
-| Completion time reduction | -53.9% | Agents spend much less time reconstructing topology. |
-| Seconds per correct answer reduction | -57.8% | Efficiency improves even when correctness is accounted for. |
-| High-complexity repo accuracy gain | +17.4% | The graph is more valuable when the repo is harder to infer. |
-| Low-complexity repo accuracy gain | +1.1% | Small/simple repos need less externalized structure. |
-| Multilingual repo accuracy gain | +17.7% | Cross-language topology is a major agent pain point. |
-| Single-language repo accuracy gain | +6.6% | The effect still exists, but it is smaller. |
-| Multilingual efficiency gain | +70.3% | Explicit cross-language wiring saves a lot of time. |
-| Single-language efficiency gain | +46.4% | Explicit structure still saves time in simpler language settings. |
+| RIG result                           | Baseline vs RIG finding | Interpretation for the talk                                       |
+| ------------------------------------ | ----------------------: | ----------------------------------------------------------------- |
+| Mean accuracy improvement            |                  +12.2% | An explicit repo map changes answers, not only speed.             |
+| Completion time reduction            |                  -53.9% | Agents spend much less time reconstructing topology.              |
+| Seconds per correct answer reduction |                  -57.8% | Efficiency improves even when correctness is accounted for.       |
+| High-complexity repo accuracy gain   |                  +17.4% | The graph is more valuable when the repo is harder to infer.      |
+| Low-complexity repo accuracy gain    |                   +1.1% | Small/simple repos need less externalized structure.              |
+| Multilingual repo accuracy gain      |                  +17.7% | Cross-language topology is a major agent pain point.              |
+| Single-language repo accuracy gain   |                   +6.6% | The effect still exists, but it is smaller.                       |
+| Multilingual efficiency gain         |                  +70.3% | Explicit cross-language wiring saves a lot of time.               |
+| Single-language efficiency gain      |                  +46.4% | Explicit structure still saves time in simpler language settings. |
 
 Source trace: R13, especially the abstract/results sections in
 `paper-text/repository-intelligence-graph-2601.10112.txt`.
@@ -90,16 +90,16 @@ starts to look weak.
 
 ### GraphCodeAgent data copied from the paper
 
-| GraphCodeAgent result | Value | Interpretation |
-|---|---:|---|
-| DevEval GPT-4o relative Pass@1 improvement | +43.81% | Graph-guided retrieval beats the best reported baseline in that setting. |
-| DevEval Gemini-1.5-Pro relative Pass@1 improvement | +39.15% | The effect is not unique to one model. |
-| CoderEval GPT-4o relative Pass@1 improvement | +31.91% | The effect appears on another benchmark. |
-| CoderEval Gemini-1.5-Pro relative Pass@1 improvement | +8.25% | Smaller but still positive in the reported table. |
-| Cross-file dependency slice relative improvement | +94.30% | The graph helps most when context crosses file boundaries. |
-| Full GraphCodeAgent DevEval GPT-4o Pass@1 | 58.14 | Reference point for the ablation below. |
-| Without dynamic SSCGTraverse | 51.83 | Removing traversal causes a meaningful drop. |
-| Reported relative ablation decline | 12.17% | The agent needs to walk the graph, not just receive a static blob. |
+| GraphCodeAgent result                                |   Value | Interpretation                                                           |
+| ---------------------------------------------------- | ------: | ------------------------------------------------------------------------ |
+| DevEval GPT-4o relative Pass@1 improvement           | +43.81% | Graph-guided retrieval beats the best reported baseline in that setting. |
+| DevEval Gemini-1.5-Pro relative Pass@1 improvement   | +39.15% | The effect is not unique to one model.                                   |
+| CoderEval GPT-4o relative Pass@1 improvement         | +31.91% | The effect appears on another benchmark.                                 |
+| CoderEval Gemini-1.5-Pro relative Pass@1 improvement |  +8.25% | Smaller but still positive in the reported table.                        |
+| Cross-file dependency slice relative improvement     | +94.30% | The graph helps most when context crosses file boundaries.               |
+| Full GraphCodeAgent DevEval GPT-4o Pass@1            |   58.14 | Reference point for the ablation below.                                  |
+| Without dynamic SSCGTraverse                         |   51.83 | Removing traversal causes a meaningful drop.                             |
+| Reported relative ablation decline                   |  12.17% | The agent needs to walk the graph, not just receive a static blob.       |
 
 Source trace: R53, especially the main result tables and ablation section in
 `paper-text/graphcodeagent-2504.10046.txt`.
@@ -136,18 +136,18 @@ The 2-hop flat context was much larger and got worse resolution than 1-hop flat 
 
 ### RepoGraph data copied from the paper
 
-| Setup | Nodes | Edges | Tokens | Resolve |
-|---|---:|---:|---:|---:|
-| 1-hop flat context | 11.6 | 37.1 | 2,310.7 | 29.67% |
-| 2-hop flat context | 54.5 | 89.9 | 10,505.3 | 26.00% |
-| 2-hop summary context | not copied here | not copied here | 1,229.2 | 28.67% |
+| Setup                 |           Nodes |           Edges |   Tokens | Resolve |
+| --------------------- | --------------: | --------------: | -------: | ------: |
+| 1-hop flat context    |            11.6 |            37.1 |  2,310.7 |  29.67% |
+| 2-hop flat context    |            54.5 |            89.9 | 10,505.3 |  26.00% |
+| 2-hop summary context | not copied here | not copied here |  1,229.2 |  28.67% |
 
-| System | Baseline resolve | With RepoGraph | Delta |
-|---|---:|---:|---:|
-| RAG | 2.67% | 5.33% | +2.66 pp |
-| Agentless | 27.33% | 29.67% | +2.34 pp |
-| AutoCodeRover | 19.00% | 21.33% | +2.33 pp |
-| SWE-agent | 18.33% | 20.33% | +2.00 pp |
+| System        | Baseline resolve | With RepoGraph |    Delta |
+| ------------- | ---------------: | -------------: | -------: |
+| RAG           |            2.67% |          5.33% | +2.66 pp |
+| Agentless     |           27.33% |         29.67% | +2.34 pp |
+| AutoCodeRover |           19.00% |         21.33% | +2.33 pp |
+| SWE-agent     |           18.33% |         20.33% | +2.00 pp |
 
 Source trace: R12, `paper-text/repograph-2410.14684.txt`.
 
@@ -178,16 +178,16 @@ but Free Summary Learning hurts. That is the same selective-slice lesson again.
 
 ### SWE Context Bench data copied from the paper
 
-| Condition | Resolved rate |
-|---|---:|
-| No context | 26.26% |
-| Oracle Summary Learning | 34.34% |
-| Free Summary Learning | 22.22% |
+| Condition               | Resolved rate |
+| ----------------------- | ------------: |
+| No context              |        26.26% |
+| Oracle Summary Learning |        34.34% |
+| Free Summary Learning   |        22.22% |
 
 | Context representation | Average tokens |
-|---|---:|
-| Full trajectories | 25,633.7 |
-| Summaries | 217.1 |
+| ---------------------- | -------------: |
+| Full trajectories      |       25,633.7 |
+| Summaries              |          217.1 |
 
 Source trace: R11, `paper-text/swe-contextbench-2602.08316.txt`.
 
@@ -218,13 +218,13 @@ For a normal TypeScript/Next.js/product repo, that means:
 
 The hard distinction:
 
-| Bad pattern | Better pattern | Why agents care |
-|---|---|---|
-| "Read the whole repo and figure it out." | Generated repo map or explicit package graph. | Less orientation cost. |
-| One giant architecture prompt. | Small root index pointing to scoped, executable artifacts. | Less context pollution. |
-| Hidden dynamic registration. | Manifest, typed registry, or generated route map. | Search and static analysis can recover edges. |
-| Tests only discoverable by running everything. | Feature-to-test naming, colocated tests, or test map. | Faster verify loop. |
-| Raw API calls scattered through app code. | Generated SDK/client with typed methods. | API edges become local symbols. |
+| Bad pattern                                    | Better pattern                                             | Why agents care                               |
+| ---------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------- |
+| "Read the whole repo and figure it out."       | Generated repo map or explicit package graph.              | Less orientation cost.                        |
+| One giant architecture prompt.                 | Small root index pointing to scoped, executable artifacts. | Less context pollution.                       |
+| Hidden dynamic registration.                   | Manifest, typed registry, or generated route map.          | Search and static analysis can recover edges. |
+| Tests only discoverable by running everything. | Feature-to-test naming, colocated tests, or test map.      | Faster verify loop.                           |
+| Raw API calls scattered through app code.      | Generated SDK/client with typed methods.                   | API edges become local symbols.               |
 
 ## What this does not prove
 

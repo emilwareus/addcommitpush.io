@@ -7,10 +7,7 @@ export { useSlideStep } from '@/components/presentations/shared/presentation-lay
 
 export default function DeepResearchLayout({ children }: { children: React.ReactNode }) {
   return (
-    <PresentationLayout
-      basePath="/presentations/deep-research"
-      slides={getAllSlides()}
-    >
+    <PresentationLayout basePath="/presentations/deep-research" slides={getAllSlides()}>
       {children}
     </PresentationLayout>
   );

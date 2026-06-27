@@ -8,12 +8,12 @@ injection, type-constrained decoding, and library-aware retrieval.
 
 ## Source map
 
-| Ref | Source | Local text | Role in this insight |
-|---|---|---|---|
-| R51 | ToolGen | `paper-text/toolgen-autocomplete-repo-codegen-2401.06391.txt` | Autocompletion-visible identifiers reduce undefined-variable and no-member errors. |
-| R63 | CatCoder | `paper-text/catcoder-2406.03283.txt` | Type context from static analyzers improves Java/Rust repository generation. |
-| R43 | Type-Constrained Code Generation | `paper-text/type-constrained-codegen-2504.09246.txt` | Type system constraints during decoding reduce compilation errors by >50%. |
-| R64 | A3-CodGen | `paper-text/a3-codgen-2312.05772.txt` | Local/global/third-party-library-aware retrieval improves code reuse. |
+| Ref | Source                           | Local text                                                    | Role in this insight                                                               |
+| --- | -------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| R51 | ToolGen                          | `paper-text/toolgen-autocomplete-repo-codegen-2401.06391.txt` | Autocompletion-visible identifiers reduce undefined-variable and no-member errors. |
+| R63 | CatCoder                         | `paper-text/catcoder-2406.03283.txt`                          | Type context from static analyzers improves Java/Rust repository generation.       |
+| R43 | Type-Constrained Code Generation | `paper-text/type-constrained-codegen-2504.09246.txt`          | Type system constraints during decoding reduce compilation errors by >50%.         |
+| R64 | A3-CodGen                        | `paper-text/a3-codgen-2312.05772.txt`                         | Local/global/third-party-library-aware retrieval improves code reuse.              |
 
 ## ToolGen: autocompletion tools eliminate dependency errors
 
@@ -26,12 +26,12 @@ Source trace: R51, `paper-text/toolgen-autocomplete-repo-codegen-2401.06391.txt`
 
 ### ToolGen results copied from the paper
 
-| Metric | CodeGPT | CodeT5 | CodeLlama |
-|---|---:|---:|---:|
-| Dependency Coverage improvement | +31.4% | +39.1% | +36.7% |
-| Static Validity Rate improvement | +57.7% | +44.9% | +49.2% |
-| Pass@1 on CoderEval | same | +40.0% | +25.0% |
-| Latency per function (seconds) | 0.63-2.34 | 0.63-2.34 | 0.63-2.34 |
+| Metric                           |   CodeGPT |    CodeT5 | CodeLlama |
+| -------------------------------- | --------: | --------: | --------: |
+| Dependency Coverage improvement  |    +31.4% |    +39.1% |    +36.7% |
+| Static Validity Rate improvement |    +57.7% |    +44.9% |    +49.2% |
+| Pass@1 on CoderEval              |      same |    +40.0% |    +25.0% |
+| Latency per function (seconds)   | 0.63-2.34 | 0.63-2.34 | 0.63-2.34 |
 
 Source trace: R51, lines 78-88.
 
@@ -49,6 +49,7 @@ Source trace: R51, lines 78-88.
 ### The illustrative example
 
 When encountering `self.` in the file `layers/layer.py` from repo `zomux/deepy`:
+
 - CodeLlama predicts `_updates` -> **no-member error**
 - Jedi provides 68 accessible attributes, including the correct `_registered_updates` at
   position 46
@@ -59,6 +60,7 @@ tool knows what actually exists because it analyzes the type's defined members.
 ### New metrics introduced
 
 ToolGen introduces two dependency-focused metrics:
+
 - **Dependency Coverage:** fraction of repository-level dependencies correctly resolved
 - **Static Validity Rate:** fraction of generated functions that pass static validity checks
   (no undefined-variable, no-member, import errors)
@@ -72,16 +74,17 @@ both retrieved code and type context extracted from static analyzers.
 
 ### CatCoder results copied from the paper
 
-| Metric | Improvement over RepoCoder (Java) | Improvement over RepoCoder (Rust) |
-|---|---:|---:|
-| compile@k | up to 14.44% | up to 14.44% |
-| pass@k | up to 17.35% | up to 17.35% |
+| Metric    | Improvement over RepoCoder (Java) | Improvement over RepoCoder (Rust) |
+| --------- | --------------------------------: | --------------------------------: |
+| compile@k |                      up to 14.44% |                      up to 14.44% |
+| pass@k    |                      up to 17.35% |                      up to 17.35% |
 
 Source trace: R63, `paper-text/catcoder-2406.03283.txt`, lines 19-20 and 117-119.
 
 ### What type context provides
 
 For the motivating example (Apache Commons Math, `triu` method):
+
 - The LLM knows the algorithm (extract upper triangular part)
 - But it does not know that `RealMatrix` requires `getEntry(row, column)` for access
 - It does not know that `Array2DRowRealMatrix` is the concrete constructor
@@ -113,13 +116,13 @@ approach: enforcing type system rules during the decoding process itself.
 
 ### Type-Constrained results copied from the paper
 
-| Effect | Value |
-|---|---|
-| Compilation error reduction | >50% (more than half) |
+| Effect                                                     | Value                   |
+| ---------------------------------------------------------- | ----------------------- |
+| Compilation error reduction                                | >50% (more than half)   |
 | Functional correctness improvement (synthesis/translation) | +3.5% to +5.5% relative |
-| Functionally correct repair improvement | +37% relative |
-| Model sizes tested | 2B to 34B parameters |
-| Language | TypeScript |
+| Functionally correct repair improvement                    | +37% relative           |
+| Model sizes tested                                         | 2B to 34B parameters    |
+| Language                                                   | TypeScript              |
 
 Source trace: R43, `paper-text/type-constrained-codegen-2504.09246.txt`, lines 88-91.
 
@@ -127,10 +130,10 @@ Source trace: R43, `paper-text/type-constrained-codegen-2504.09246.txt`, lines 8
 
 The paper reports a critical finding about where compilation errors come from:
 
-| Error type | Share of compilation errors (TypeScript) |
-|---|---:|
-| Type errors (failing type checks) | 94% |
-| Syntactic errors | 6% |
+| Error type                        | Share of compilation errors (TypeScript) |
+| --------------------------------- | ---------------------------------------: |
+| Type errors (failing type checks) |                                      94% |
+| Syntactic errors                  |                                       6% |
 
 Source trace: R43, lines 57-63.
 
@@ -141,6 +144,7 @@ eliminates the dominant error class.
 ### How type constraining works
 
 The approach builds a prefix automaton that:
+
 1. Maintains a type environment for completed expressions
 2. Assesses whether partial expressions can be completed to match a required type
 3. Uses type inhabitation search to determine valid completions
@@ -156,11 +160,11 @@ library-awareness angle. It identifies three categories of repository informatio
 
 ### Three information types in A3-CodGen
 
-| Type | Definition | Failure mode without it |
-|---|---|---|
-| Local | Current file: defined functions, variables, FQNs | Logic errors, missed local APIs |
-| Global | Other files in same repo: importable functions | Code duplication, missing reuse |
-| Third-party | Pre-installed libraries accessible via import | ModuleNotFoundError, compatibility issues |
+| Type        | Definition                                       | Failure mode without it                   |
+| ----------- | ------------------------------------------------ | ----------------------------------------- |
+| Local       | Current file: defined functions, variables, FQNs | Logic errors, missed local APIs           |
+| Global      | Other files in same repo: importable functions   | Code duplication, missing reuse           |
+| Third-party | Pre-installed libraries accessible via import    | ModuleNotFoundError, compatibility issues |
 
 Source trace: R64, `paper-text/a3-codgen-2312.05772.txt`, lines 69-85.
 
@@ -175,6 +179,7 @@ Source trace: R64, lines 77-78.
 
 The framework generates code with higher reuse rates compared to human developers.
 Specifically:
+
 - Outperforms GitHub Copilot on global reuse and third-party library reuse
 - Performs similarly on local reuse
 - Identifies optimal configurations for local and global information ("too much global context
@@ -184,16 +189,16 @@ Specifically:
 
 The evidence supports concrete codebase practices:
 
-| Practice | Mechanism | Evidence |
-|---|---|---|
-| Explicit exports and imports | Makes available symbols discoverable by static tools | R51 (ToolGen) |
-| Typed public APIs | Type context enables CatCoder-style static analysis | R63 (CatCoder) |
-| Declared class fields/dependencies | Prevents no-member errors; autocompletion works | R51 (ToolGen) |
-| No dynamic mutation of types | Static analyzers cannot track runtime-added members | R43, R63 |
-| Reliable typecheck commands | Enables type-constrained generation and validation | R43 |
-| Approved library lists in docs | Prevents third-party hallucination | R64 (A3-CodGen) |
-| Generated SDK clients from OpenAPI | Provides typed, discoverable API surfaces | Practitioner signal |
-| Schema-first design | Types exist before implementation; agents can reference them | R63, inference |
+| Practice                           | Mechanism                                                    | Evidence            |
+| ---------------------------------- | ------------------------------------------------------------ | ------------------- |
+| Explicit exports and imports       | Makes available symbols discoverable by static tools         | R51 (ToolGen)       |
+| Typed public APIs                  | Type context enables CatCoder-style static analysis          | R63 (CatCoder)      |
+| Declared class fields/dependencies | Prevents no-member errors; autocompletion works              | R51 (ToolGen)       |
+| No dynamic mutation of types       | Static analyzers cannot track runtime-added members          | R43, R63            |
+| Reliable typecheck commands        | Enables type-constrained generation and validation           | R43                 |
+| Approved library lists in docs     | Prevents third-party hallucination                           | R64 (A3-CodGen)     |
+| Generated SDK clients from OpenAPI | Provides typed, discoverable API surfaces                    | Practitioner signal |
+| Schema-first design                | Types exist before implementation; agents can reference them | R63, inference      |
 
 ### The fundamental mechanism
 

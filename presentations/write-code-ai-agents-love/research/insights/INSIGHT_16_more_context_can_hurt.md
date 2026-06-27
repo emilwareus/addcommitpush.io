@@ -9,12 +9,12 @@ context for the task at hand.
 
 ## Source map
 
-| Ref | Source | Local text | Source quality | Role in this insight |
-|---|---|---|---|---|
-| R18 | Evaluating AGENTS.md (Gloaguen et al., ETH Zurich, 2026) | `paper-text/evaluating-agents-md-2602.11988.txt` | paper evidence | Primary. Controlled experiment showing LLM-generated context files reduce success and increase cost. |
-| R64 | A3-CodGen (Liao et al., 2024) | `paper-text/a3-codgen-2312.05772.txt` | paper evidence | Shows global context retrieval has a non-monotonic quality curve: too many retrieved functions hurt. |
+| Ref | Source                                                          | Local text                                               | Source quality | Role in this insight                                                                                            |
+| --- | --------------------------------------------------------------- | -------------------------------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------- |
+| R18 | Evaluating AGENTS.md (Gloaguen et al., ETH Zurich, 2026)        | `paper-text/evaluating-agents-md-2602.11988.txt`         | paper evidence | Primary. Controlled experiment showing LLM-generated context files reduce success and increase cost.            |
+| R64 | A3-CodGen (Liao et al., 2024)                                   | `paper-text/a3-codgen-2312.05772.txt`                    | paper evidence | Shows global context retrieval has a non-monotonic quality curve: too many retrieved functions hurt.            |
 | R49 | How Does Chunking Affect RAG Code Completion? (Wu et al., 2026) | `paper-text/chunking-rag-code-completion-2605.04763.txt` | paper evidence | Shows function-level chunking underperforms, and cross-file context length matters more than chunk granularity. |
-| R32 | Lost in the Middle (Liu et al., Stanford, 2023) | `paper-text/lost-in-the-middle-2307.03172.txt` | paper evidence | Shows positional degradation in long contexts; models miss information in the middle of long inputs. |
+| R32 | Lost in the Middle (Liu et al., Stanford, 2023)                 | `paper-text/lost-in-the-middle-2307.03172.txt`           | paper evidence | Shows positional degradation in long contexts; models miss information in the middle of long inputs.            |
 
 ---
 
@@ -53,7 +53,8 @@ retrieved, introducing excessive interference and hindering accurate reusing."
 
 For local context, the same pattern appears at the knowledge-type level: adding Module Variables
 to the context caused an 11.87% drop in precision. The best local configuration was Local Functions
-+ Class Instance Attributes only -- not all four available knowledge types.
+
+- Class Instance Attributes only -- not all four available knowledge types.
 
 Methods: Controlled ablation on a 383-function benchmark from 29 PyPI repositories. Foundation
 model: GPT-3.5-Turbo-16k.
@@ -108,23 +109,23 @@ tool-based context management over raw long-context feeding.
 
 ### Evaluating AGENTS.md: resolution rate and cost changes
 
-| Setting | SWE-bench Lite avg resolution | AGENT BENCH avg resolution | Avg cost increase |
-|---|---:|---:|---:|
-| No context file (baseline) | varies by agent | varies by agent | -- |
-| LLM-generated context file | -0.5 pp avg | -2.0 pp avg | +20-23% |
-| Developer-written context file | N/A (not available for SWE-bench) | +4% avg | +20-23% |
+| Setting                        |     SWE-bench Lite avg resolution | AGENT BENCH avg resolution | Avg cost increase |
+| ------------------------------ | --------------------------------: | -------------------------: | ----------------: |
+| No context file (baseline)     |                   varies by agent |            varies by agent |                -- |
+| LLM-generated context file     |                       -0.5 pp avg |                -2.0 pp avg |           +20-23% |
+| Developer-written context file | N/A (not available for SWE-bench) |                    +4% avg |           +20-23% |
 
 Source: R18, Section 4.2, Table 2, Figure 3.
 
 ### A3-CodGen: global function retrieval by top-k
 
-| Top-k | Avg retrieved functions | Precision | Recall | F1 | Accuracy |
-|---:|---:|---:|---:|---:|---:|
-| 0 (no global) | N/A | N/A | N/A | N/A | 0.843 |
-| 1 | 1.757 | 0.372 | 0.533 | 0.438 | 0.786 |
-| 5 | 8.154 | 0.518 | 0.717 | 0.601 | 0.851 |
-| 10 | 16.031 | 0.479 | 0.583 | 0.526 | 0.836 |
-| 15 | 23.592 | 0.407 | 0.583 | 0.479 | 0.802 |
+|         Top-k | Avg retrieved functions | Precision | Recall |    F1 | Accuracy |
+| ------------: | ----------------------: | --------: | -----: | ----: | -------: |
+| 0 (no global) |                     N/A |       N/A |    N/A |   N/A |    0.843 |
+|             1 |                   1.757 |     0.372 |  0.533 | 0.438 |    0.786 |
+|             5 |                   8.154 |     0.518 |  0.717 | 0.601 |    0.851 |
+|            10 |                  16.031 |     0.479 |  0.583 | 0.526 |    0.836 |
+|            15 |                  23.592 |     0.407 |  0.583 | 0.479 |    0.802 |
 
 Source: R64, Table II. Units: precision/recall/F1/accuracy are fractions (0-1).
 
@@ -134,21 +135,21 @@ retrieval helps, but retrieval of irrelevant candidates actively hurts.
 ### Chunking study: function chunks vs others (RepoEval)
 
 | Chunking strategy | Exact Match (EM) relative to best | Cost-quality Pareto optimal? |
-|---|---:|---|
-| Sliding Window | reference | Yes |
-| cAST | within 2.1 pp of best | Yes |
-| Declaration | within 2.1 pp of best | No |
-| Function | -3.57 to -5.64 pp | Never |
+| ----------------- | --------------------------------: | ---------------------------- |
+| Sliding Window    |                         reference | Yes                          |
+| cAST              |             within 2.1 pp of best | Yes                          |
+| Declaration       |             within 2.1 pp of best | No                           |
+| Function          |                 -3.57 to -5.64 pp | Never                        |
 
 Source: R49, Section findings summary.
 
 ### Cross-file context length effect (chunking study)
 
 | Context length (tokens) | EM gain over 2,048 baseline |
-|---:|---:|
-| 2,048 | baseline |
-| 4,096 | up to ~2 pp |
-| 8,192 | up to 4.2 pp |
+| ----------------------: | --------------------------: |
+|                   2,048 |                    baseline |
+|                   4,096 |                 up to ~2 pp |
+|                   8,192 |                up to 4.2 pp |
 
 Source: R49. Units: percentage points of Exact Match.
 
@@ -199,7 +200,7 @@ For practitioners structuring codebases for agents:
 
 ## What this does not prove
 
-- This does not prove documentation is harmful. It proves *irrelevant* documentation in the
+- This does not prove documentation is harmful. It proves _irrelevant_ documentation in the
   working context is harmful. The distinction matters.
 
 - This does not prove smaller context windows are better. The chunking study shows that more

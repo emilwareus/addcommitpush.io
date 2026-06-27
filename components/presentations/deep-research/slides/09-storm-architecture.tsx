@@ -12,7 +12,13 @@ function DownArrow({ visible }: { visible: boolean }) {
       className="flex justify-center py-1"
     >
       <svg width="24" height="28" viewBox="0 0 24 28" fill="none" className="text-muted-foreground">
-        <path d="M12 2v20m0 0l-7-7m7 7l7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path
+          d="M12 2v20m0 0l-7-7m7 7l7-7"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </svg>
     </motion.div>
   );
@@ -100,9 +106,7 @@ function ConversationLanes() {
           className={`flex-1 rounded border ${lane.color} px-3 py-3 text-center`}
         >
           <div className="text-sm font-semibold text-muted-foreground mb-1">{lane.perspective}</div>
-          <div className="text-sm font-mono text-muted-foreground">
-            Writer &harr; Expert
-          </div>
+          <div className="text-sm font-mono text-muted-foreground">Writer &harr; Expert</div>
           <div className="text-xs text-muted-foreground/60">&times;3 turns</div>
         </div>
       ))}
@@ -236,7 +240,8 @@ export function StormArchitectureSlide() {
         className="mt-6 px-6 py-3 rounded-lg border border-secondary/30 bg-secondary/5 text-center"
       >
         <p className="text-lg text-secondary font-semibold">
-          Linear pipeline &mdash; each phase runs <span className="underline">exactly once</span>. No backtracking.
+          Linear pipeline &mdash; each phase runs <span className="underline">exactly once</span>.
+          No backtracking.
         </p>
       </motion.div>
     </div>

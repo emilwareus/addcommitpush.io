@@ -5,6 +5,7 @@ A comparative analysis of STT options for real-time voice agents: accuracy, spee
 **Models covered:** OpenAI Whisper, faster-whisper, Moonshine, Deepgram Nova-3, Google Cloud STT (Chirp), Mistral Voxtral
 
 **Table of contents:**
+
 1. [How STT Models Are Evaluated](#1-how-stt-models-are-evaluated) -- metrics, datasets, and why benchmarks lie
 2. [Head-to-Head Comparison](#2-head-to-head-comparison) -- accuracy, speed, cost
 3. [OpenAI Whisper](#3-openai-whisper----the-foundation)
@@ -41,13 +42,13 @@ The alignment between hypothesis and reference is computed using dynamic program
 
 **What counts as "good" WER:**
 
-| Domain | Typical WER | Why |
-|--------|-------------|-----|
-| Read audiobooks (LibriSpeech clean) | 1-3% | Studio quality, clear enunciation |
-| TED talks | 3-6% | Prepared speech, some accents |
-| Earnings calls | 8-15% | Domain jargon, phone audio, multiple speakers |
-| Meeting transcription | 12-25% | Overlapping speakers, far-field mics |
-| Noisy phone calls | 15-30%+ | Background noise, compression, accents |
+| Domain                              | Typical WER | Why                                           |
+| ----------------------------------- | ----------- | --------------------------------------------- |
+| Read audiobooks (LibriSpeech clean) | 1-3%        | Studio quality, clear enunciation             |
+| TED talks                           | 3-6%        | Prepared speech, some accents                 |
+| Earnings calls                      | 8-15%       | Domain jargon, phone audio, multiple speakers |
+| Meeting transcription               | 12-25%      | Overlapping speakers, far-field mics          |
+| Noisy phone calls                   | 15-30%+     | Background noise, compression, accents        |
 
 Human transcriber disagreement is typically **4-5% WER**, which sets a practical floor.
 
@@ -68,6 +69,7 @@ CER = (S_c + D_c + I_c) / N_c
 ```
 
 **When CER is preferred:**
+
 - **Languages without word boundaries.** Mandarin, Japanese, Thai use no whitespace between words, making WER meaningless. CER is the standard metric for these languages.
 - **Fine-grained error analysis.** WER treats "cat" -> "bat" and "cat" -> "refrigerator" as equally wrong (one substitution). CER scores the first as 1/3 errors and the second much higher.
 - CER is always lower than or equal to WER for whitespace-delimited languages.
@@ -80,11 +82,11 @@ Measures processing speed relative to audio duration:
 RTF = processing_time / audio_duration
 ```
 
-| RTF | Meaning | "Nx" notation |
-|-----|---------|---------------|
-| 0.1 | 10x faster than real-time | 10x real-time |
-| 0.5 | 2x faster than real-time | 2x real-time |
-| 1.0 | Exactly real-time | 1x real-time |
+| RTF | Meaning                   | "Nx" notation  |
+| --- | ------------------------- | -------------- |
+| 0.1 | 10x faster than real-time | 10x real-time  |
+| 0.5 | 2x faster than real-time  | 2x real-time   |
+| 1.0 | Exactly real-time         | 1x real-time   |
 | 2.0 | Half as fast as real-time | 0.5x real-time |
 
 For voice agents, you want RTF well below 1.0 (typically 0.1-0.3) to leave budget for network latency, VAD, LLM inference, and TTS in the response pipeline.
@@ -95,7 +97,7 @@ RTF is **hardware-dependent**. Always report the hardware alongside the number.
 
 Three distinct measurements, each answering a different question:
 
-**Time to First Token (TTFT):** Time from when audio streaming begins to when the first partial transcript appears. Measures perceived responsiveness. But beware: early partials are often wrong and require correction. Fast TTFT does not mean the system is actually *useful* quickly.
+**Time to First Token (TTFT):** Time from when audio streaming begins to when the first partial transcript appears. Measures perceived responsiveness. But beware: early partials are often wrong and require correction. Fast TTFT does not mean the system is actually _useful_ quickly.
 
 **Finals Latency / End-of-Utterance Latency:** Time from when the user **stops speaking** to when the **final, stable transcript** is available. This is the metric that matters most for voice agents, because the LLM cannot start generating a response until the transcript is finalized.
 
@@ -114,18 +116,18 @@ Always report **P50, P95, and P99 percentiles**. A system with 200ms P50 but 200
 
 Each dataset probes a different axis. A model's score on one says little about another.
 
-| Dataset | Hours | Source | What it tests | Difficulty |
-|---------|-------|--------|---------------|------------|
-| **LibriSpeech clean** | ~5.4h test | Audiobooks (LibriVox) | Studio-quality read speech | Easy (near-saturated, top models <2% WER) |
-| **LibriSpeech other** | ~5.3h test | Audiobooks (noisier subset) | Accented/unclear read speech | Medium |
-| **Common Voice** | Varies | Crowd-sourced Wikipedia readings | Accent diversity, variable mic quality | Medium-Hard (100+ languages) |
-| **FLEURS** | ~12min/lang | Native speakers reading translations | Cross-lingual comparison (102 languages) | Medium (controlled recording) |
-| **VoxPopuli** | ~1,800h labeled | European Parliament recordings | Non-native English accents, formal speech | Medium-Hard |
-| **Earnings22** | 119h | Corporate earnings calls | Financial jargon, multi-speaker, phone audio | Hard |
-| **GigaSpeech** | 10,000h | Audiobooks + podcasts + YouTube | Multi-domain generalization | Medium-Hard |
-| **AMI** | 100h | Recorded meetings, multiple mic types | Overlapping speakers, far-field, crosstalk | Very Hard (especially SDM) |
-| **SPGISpeech** | 5,000h | S&P Global earnings transcriptions | Professional transcription style matching | Medium |
-| **TED-LIUM** | 452h | TED talks | Prepared speech, diverse topics | Medium |
+| Dataset               | Hours           | Source                                | What it tests                                | Difficulty                                |
+| --------------------- | --------------- | ------------------------------------- | -------------------------------------------- | ----------------------------------------- |
+| **LibriSpeech clean** | ~5.4h test      | Audiobooks (LibriVox)                 | Studio-quality read speech                   | Easy (near-saturated, top models <2% WER) |
+| **LibriSpeech other** | ~5.3h test      | Audiobooks (noisier subset)           | Accented/unclear read speech                 | Medium                                    |
+| **Common Voice**      | Varies          | Crowd-sourced Wikipedia readings      | Accent diversity, variable mic quality       | Medium-Hard (100+ languages)              |
+| **FLEURS**            | ~12min/lang     | Native speakers reading translations  | Cross-lingual comparison (102 languages)     | Medium (controlled recording)             |
+| **VoxPopuli**         | ~1,800h labeled | European Parliament recordings        | Non-native English accents, formal speech    | Medium-Hard                               |
+| **Earnings22**        | 119h            | Corporate earnings calls              | Financial jargon, multi-speaker, phone audio | Hard                                      |
+| **GigaSpeech**        | 10,000h         | Audiobooks + podcasts + YouTube       | Multi-domain generalization                  | Medium-Hard                               |
+| **AMI**               | 100h            | Recorded meetings, multiple mic types | Overlapping speakers, far-field, crosstalk   | Very Hard (especially SDM)                |
+| **SPGISpeech**        | 5,000h          | S&P Global earnings transcriptions    | Professional transcription style matching    | Medium                                    |
+| **TED-LIUM**          | 452h            | TED talks                             | Prepared speech, diverse topics              | Medium                                    |
 
 **Why scores diverge across datasets:** A model optimized on clean read speech (LibriSpeech) will collapse on AMI because it has never seen overlapping speakers through a distant microphone. A model fine-tuned on financial transcripts knows ticker symbols but struggles with casual podcast speech. Each dataset probes: audio quality, speaker diversity, domain vocabulary, recording conditions, and speech style.
 
@@ -135,13 +137,14 @@ Created because existing benchmarks are stale, have reference transcript errors,
 
 **Composition:**
 
-| Dataset | Weight | Size | Domain |
-|---------|--------|------|--------|
-| **AA-AgentTalk** (proprietary) | 50% | 469 samples, ~250 min | Voice agent interactions: 6 content categories, 17 accent groups, 8 speaking styles |
-| **VoxPopuli-Cleaned-AA** | 25% | 628 samples, ~119 min | European parliamentary speech (non-native accents) |
-| **Earnings22-Cleaned-AA** | 25% | 6 samples, ~115 min | Corporate earnings calls |
+| Dataset                        | Weight | Size                  | Domain                                                                              |
+| ------------------------------ | ------ | --------------------- | ----------------------------------------------------------------------------------- |
+| **AA-AgentTalk** (proprietary) | 50%    | 469 samples, ~250 min | Voice agent interactions: 6 content categories, 17 accent groups, 8 speaking styles |
+| **VoxPopuli-Cleaned-AA**       | 25%    | 628 samples, ~119 min | European parliamentary speech (non-native accents)                                  |
+| **Earnings22-Cleaned-AA**      | 25%    | 6 samples, ~115 min   | Corporate earnings calls                                                            |
 
 Key design choices:
+
 - **AA-AgentTalk is proprietary and not public** -- reduces training-set contamination / benchmark leakage
 - **Cleaned references** -- VoxPopuli and Earnings22 transcripts were manually corrected to remove human annotator errors
 - **Custom normalizer** -- extends OpenAI's Whisper normalizer with digit splitting, leading zero preservation, proper noun variants
@@ -162,6 +165,7 @@ Key design choices:
 **The production gap.** Deepgram's own buyer's guide states that production ASR accuracy degrades **7.5x to 16x** from benchmark numbers. Background noise, spontaneous speech, domain terminology, and concurrent load compound into failures that clean benchmarks do not predict.
 
 **Trust hierarchy (most to least trustworthy):**
+
 1. Independent benchmarks with published methodology, cleaned references, and held-out test data (AA-WER)
 2. Independent benchmarks on public datasets (HuggingFace Open ASR Leaderboard)
 3. Vendor benchmarks on public datasets with published methodology
@@ -173,64 +177,64 @@ Key design choices:
 
 ### Accuracy (WER)
 
-| Model | LibriSpeech Clean | LibriSpeech Other | AA-WER (independent) | Notes |
-|-------|-------------------|-------------------|----------------------|-------|
-| **Whisper tiny** (39M) | 7.54% | 17.15% | -- | English-only `.en` variant: 5.6% clean |
-| **Whisper base** (74M) | 5.01% | 12.85% | -- | |
-| **Whisper small** (244M) | 3.43% | 7.63% | -- | |
-| **Whisper medium** (769M) | 2.90% | 5.90% | -- | |
-| **Whisper large-v3** (1.55B) | ~2.7% | ~4.5% | ~10.6% | 10-20% error reduction over v2 |
-| **Whisper turbo** (809M) | ~3.0% | ~5.0% | -- | Comparable to large-v2, 8x faster than large |
-| **faster-whisper** | identical | identical | identical | Same weights, CTranslate2 backend |
-| **Moonshine v1 Tiny** (27M) | 4.52% | 11.71% | -- | 28% fewer params than Whisper tiny |
-| **Moonshine v1 Base** (62M) | 3.23% | 8.18% | -- | 15% fewer params than Whisper base |
-| **Moonshine v2 Tiny** (34M) | 4.49% | 12.09% | -- | Streaming encoder |
-| **Moonshine v2 Small** (123M) | 2.49% | 6.78% | -- | |
-| **Moonshine v2 Medium** (245M) | 2.08% | 5.00% | -- | Beats Whisper large-v3 at 6x fewer params |
-| **Deepgram Nova-3** | -- | -- | 12.8% | Vendor claims 5.26% batch, 6.84% streaming |
-| **Google Chirp 2** | -- | -- | 9.8% | |
-| **Voxtral Mini (3B)** | 1.86% | 4.04% | 3.7% | Open weights, Apache 2.0. LS WER from Voxtral paper Table 3 (self-reported) |
-| **Voxtral Small (24B)** | 1.53% | 3.14% | 3.0% | Open weights, Apache 2.0. LS WER from Voxtral paper Table 3 (self-reported) |
-| **Voxtral Mini Transcribe V2** | -- | -- | 3.6% | Closed weights |
-| **Voxtral Realtime (4B)** | -- | -- | ~3.6-5.6% | Depends on latency setting (2.4s to 240ms) |
+| Model                          | LibriSpeech Clean | LibriSpeech Other | AA-WER (independent) | Notes                                                                       |
+| ------------------------------ | ----------------- | ----------------- | -------------------- | --------------------------------------------------------------------------- |
+| **Whisper tiny** (39M)         | 7.54%             | 17.15%            | --                   | English-only `.en` variant: 5.6% clean                                      |
+| **Whisper base** (74M)         | 5.01%             | 12.85%            | --                   |                                                                             |
+| **Whisper small** (244M)       | 3.43%             | 7.63%             | --                   |                                                                             |
+| **Whisper medium** (769M)      | 2.90%             | 5.90%             | --                   |                                                                             |
+| **Whisper large-v3** (1.55B)   | ~2.7%             | ~4.5%             | ~10.6%               | 10-20% error reduction over v2                                              |
+| **Whisper turbo** (809M)       | ~3.0%             | ~5.0%             | --                   | Comparable to large-v2, 8x faster than large                                |
+| **faster-whisper**             | identical         | identical         | identical            | Same weights, CTranslate2 backend                                           |
+| **Moonshine v1 Tiny** (27M)    | 4.52%             | 11.71%            | --                   | 28% fewer params than Whisper tiny                                          |
+| **Moonshine v1 Base** (62M)    | 3.23%             | 8.18%             | --                   | 15% fewer params than Whisper base                                          |
+| **Moonshine v2 Tiny** (34M)    | 4.49%             | 12.09%            | --                   | Streaming encoder                                                           |
+| **Moonshine v2 Small** (123M)  | 2.49%             | 6.78%             | --                   |                                                                             |
+| **Moonshine v2 Medium** (245M) | 2.08%             | 5.00%             | --                   | Beats Whisper large-v3 at 6x fewer params                                   |
+| **Deepgram Nova-3**            | --                | --                | 12.8%                | Vendor claims 5.26% batch, 6.84% streaming                                  |
+| **Google Chirp 2**             | --                | --                | 9.8%                 |                                                                             |
+| **Voxtral Mini (3B)**          | 1.86%             | 4.04%             | 3.7%                 | Open weights, Apache 2.0. LS WER from Voxtral paper Table 3 (self-reported) |
+| **Voxtral Small (24B)**        | 1.53%             | 3.14%             | 3.0%                 | Open weights, Apache 2.0. LS WER from Voxtral paper Table 3 (self-reported) |
+| **Voxtral Mini Transcribe V2** | --                | --                | 3.6%                 | Closed weights                                                              |
+| **Voxtral Realtime (4B)**      | --                | --                | ~3.6-5.6%            | Depends on latency setting (2.4s to 240ms)                                  |
 
 **Key finding:** Voxtral leads on independent benchmarks. Moonshine v2 Medium beats Whisper large-v3 on LibriSpeech with 6x fewer parameters. Cloud APIs (Deepgram, Google) score worse on independent benchmarks than their marketing suggests.
 
 ### Speed / Latency
 
-| Model | Latency / RTF | Hardware | Notes |
-|-------|---------------|----------|-------|
-| **Whisper large-v3** | ~10x real-time | A100 GPU | Batch only, no native streaming |
-| **Whisper turbo** | ~80x real-time | A100 GPU | 8x faster than large, batch only |
-| **faster-whisper large-v2** | 2.3x faster than Whisper (fp16) | RTX 3070 Ti | 8.4x faster with batch=8 |
-| **faster-whisper large-v2** | 8.9x faster than Whisper (int8, batch=8) | RTX 3070 Ti | 16s vs 2m23s for same audio |
-| **faster-whisper (CPU, int8, batch=8)** | 8.2x faster than Whisper | i7-12700K | 51s vs 6m58s (small model) |
-| **Moonshine v2 Tiny** | 50ms per utterance | Apple M3 | 5.8x faster than Whisper Tiny |
-| **Moonshine v2 Small** | 148ms per utterance | Apple M3 | 13.1x faster than Whisper Small |
-| **Moonshine v2 Medium** | 258ms per utterance | Apple M3 | 43.7x faster than Whisper large-v3 |
-| **Moonshine v2 Tiny** | 237ms per utterance | Raspberry Pi 5 | Real-time capable on edge hardware |
-| **Deepgram Nova-3** | sub-300ms streaming | Cloud | WebSocket, ~100-200ms chunk size |
-| **Google Chirp 2** | ~70 audio sec/sec compute | Cloud | Streaming supported, latency not published |
-| **Voxtral Realtime** | 240ms - 2.4s configurable | Cloud / self-hosted (4B) | Accuracy degrades at lower latency |
-| **Voxtral Transcribe V2** | ~3x faster than ElevenLabs Scribe | Cloud | Batch only |
+| Model                                   | Latency / RTF                            | Hardware                 | Notes                                      |
+| --------------------------------------- | ---------------------------------------- | ------------------------ | ------------------------------------------ |
+| **Whisper large-v3**                    | ~10x real-time                           | A100 GPU                 | Batch only, no native streaming            |
+| **Whisper turbo**                       | ~80x real-time                           | A100 GPU                 | 8x faster than large, batch only           |
+| **faster-whisper large-v2**             | 2.3x faster than Whisper (fp16)          | RTX 3070 Ti              | 8.4x faster with batch=8                   |
+| **faster-whisper large-v2**             | 8.9x faster than Whisper (int8, batch=8) | RTX 3070 Ti              | 16s vs 2m23s for same audio                |
+| **faster-whisper (CPU, int8, batch=8)** | 8.2x faster than Whisper                 | i7-12700K                | 51s vs 6m58s (small model)                 |
+| **Moonshine v2 Tiny**                   | 50ms per utterance                       | Apple M3                 | 5.8x faster than Whisper Tiny              |
+| **Moonshine v2 Small**                  | 148ms per utterance                      | Apple M3                 | 13.1x faster than Whisper Small            |
+| **Moonshine v2 Medium**                 | 258ms per utterance                      | Apple M3                 | 43.7x faster than Whisper large-v3         |
+| **Moonshine v2 Tiny**                   | 237ms per utterance                      | Raspberry Pi 5           | Real-time capable on edge hardware         |
+| **Deepgram Nova-3**                     | sub-300ms streaming                      | Cloud                    | WebSocket, ~100-200ms chunk size           |
+| **Google Chirp 2**                      | ~70 audio sec/sec compute                | Cloud                    | Streaming supported, latency not published |
+| **Voxtral Realtime**                    | 240ms - 2.4s configurable                | Cloud / self-hosted (4B) | Accuracy degrades at lower latency         |
+| **Voxtral Transcribe V2**               | ~3x faster than ElevenLabs Scribe        | Cloud                    | Batch only                                 |
 
 **Key finding:** For self-hosted real-time: faster-whisper with VAD is the proven path. Moonshine v2 is the speed king, especially on edge. For cloud streaming: Deepgram has the lowest latency. Voxtral Realtime is the only open-weights streaming model with near-offline accuracy.
 
 ### Cost
 
-| Model | Pricing | Notes |
-|-------|---------|-------|
-| **Whisper (self-hosted)** | Free (MIT license) | Compute cost only: ~$0.003-0.005/min on A100 |
-| **Whisper (OpenAI API)** | $0.006/min | whisper-1 endpoint |
-| **GPT-4o Mini Transcribe** | $0.003/min | OpenAI's cheapest API option |
-| **faster-whisper (self-hosted)** | Free (MIT license) | Same compute as Whisper but uses less GPU |
-| **Moonshine (self-hosted)** | Free (MIT license) | Runs on Raspberry Pi -- minimal compute cost |
-| **Deepgram Nova-3 (batch)** | $0.0043/min | Pay-as-you-go |
-| **Deepgram Nova-3 (streaming)** | $0.0077/min | 79% premium over batch |
-| **Google Chirp (standard)** | $0.016/min | All Chirp models same price |
-| **Google Chirp (dynamic batch)** | ~$0.004/min | 75% discount, up to 24hr turnaround |
-| **Voxtral Transcribe V2 (batch)** | $0.003/min | Among the cheapest cloud options |
-| **Voxtral Realtime (streaming)** | $0.006/min | Open weights also available for self-hosting |
+| Model                             | Pricing            | Notes                                        |
+| --------------------------------- | ------------------ | -------------------------------------------- |
+| **Whisper (self-hosted)**         | Free (MIT license) | Compute cost only: ~$0.003-0.005/min on A100 |
+| **Whisper (OpenAI API)**          | $0.006/min         | whisper-1 endpoint                           |
+| **GPT-4o Mini Transcribe**        | $0.003/min         | OpenAI's cheapest API option                 |
+| **faster-whisper (self-hosted)**  | Free (MIT license) | Same compute as Whisper but uses less GPU    |
+| **Moonshine (self-hosted)**       | Free (MIT license) | Runs on Raspberry Pi -- minimal compute cost |
+| **Deepgram Nova-3 (batch)**       | $0.0043/min        | Pay-as-you-go                                |
+| **Deepgram Nova-3 (streaming)**   | $0.0077/min        | 79% premium over batch                       |
+| **Google Chirp (standard)**       | $0.016/min         | All Chirp models same price                  |
+| **Google Chirp (dynamic batch)**  | ~$0.004/min        | 75% discount, up to 24hr turnaround          |
+| **Voxtral Transcribe V2 (batch)** | $0.003/min         | Among the cheapest cloud options             |
+| **Voxtral Realtime (streaming)**  | $0.006/min         | Open weights also available for self-hosting |
 
 **Key finding:** Self-hosted faster-whisper or Moonshine is cheapest at scale. For cloud APIs, Voxtral batch ($0.003/min) and GPT-4o Mini Transcribe ($0.003/min) tie for cheapest. Google is the most expensive at $0.016/min standard rate.
 
@@ -247,14 +251,14 @@ Encoder-decoder Transformer trained on 680,000 hours of weakly supervised web au
 - **Decoder:** Standard Transformer decoder with learned positional embeddings
 - **Tokenizer:** Byte-pair encoding (GPT-2 style)
 
-| Size | Encoder + Decoder Layers | d_model | Heads | Parameters |
-|------|--------------------------|---------|-------|------------|
-| tiny | 4 + 4 | 384 | 6 | 39M |
-| base | 6 + 6 | 512 | 8 | 74M |
-| small | 12 + 12 | 768 | 12 | 244M |
-| medium | 24 + 24 | 1024 | 16 | 769M |
-| large | 32 + 32 | 1280 | 20 | 1550M |
-| turbo | 32 + **4** | 1280 | 20 | 809M |
+| Size   | Encoder + Decoder Layers | d_model | Heads | Parameters |
+| ------ | ------------------------ | ------- | ----- | ---------- |
+| tiny   | 4 + 4                    | 384     | 6     | 39M        |
+| base   | 6 + 6                    | 512     | 8     | 74M        |
+| small  | 12 + 12                  | 768     | 12    | 244M       |
+| medium | 24 + 24                  | 1024    | 16    | 769M       |
+| large  | 32 + 32                  | 1280    | 20    | 1550M      |
+| turbo  | 32 + **4**               | 1280    | 20    | 809M       |
 
 Turbo's trick: keep the full 32-layer encoder but shrink the decoder to just 4 layers. The encoder does the heavy lifting; the decoder just needs to emit tokens.
 
@@ -285,22 +289,22 @@ faster-whisper is a reimplementation of Whisper using **CTranslate2**, a C++ inf
 
 ### Benchmark: large-v2 on RTX 3070 Ti 8GB
 
-| Implementation | Precision | Batch | Time | VRAM |
-|----------------|-----------|-------|------|------|
-| openai/whisper | fp16 | 1 | 2m23s | 4708 MB |
-| faster-whisper | fp16 | 1 | 1m03s | 4525 MB |
-| faster-whisper | fp16 | 8 | **17s** | 6090 MB |
-| faster-whisper | int8 | 1 | 59s | **2926 MB** |
-| faster-whisper | int8 | 8 | **16s** | 4500 MB |
+| Implementation | Precision | Batch | Time    | VRAM        |
+| -------------- | --------- | ----- | ------- | ----------- |
+| openai/whisper | fp16      | 1     | 2m23s   | 4708 MB     |
+| faster-whisper | fp16      | 1     | 1m03s   | 4525 MB     |
+| faster-whisper | fp16      | 8     | **17s** | 6090 MB     |
+| faster-whisper | int8      | 1     | 59s     | **2926 MB** |
+| faster-whisper | int8      | 8     | **16s** | 4500 MB     |
 
 **Result: 8.9x faster with int8 + batching, at 38% less VRAM.**
 
 ### CPU Benchmark: small model on i7-12700K
 
-| Implementation | Precision | Batch | Time | RAM |
-|----------------|-----------|-------|------|-----|
-| openai/whisper | fp32 | 1 | 6m58s | 2335 MB |
-| faster-whisper | int8 | 8 | **51s** | 3608 MB |
+| Implementation | Precision | Batch | Time    | RAM     |
+| -------------- | --------- | ----- | ------- | ------- |
+| openai/whisper | fp32      | 1     | 6m58s   | 2335 MB |
+| faster-whisper | int8      | 8     | **51s** | 3608 MB |
 
 **8.2x faster on CPU.** This matters for deployments without GPUs.
 
@@ -333,14 +337,14 @@ Released February 2026, v2 adds a streaming encoder:
 
 This is Moonshine's strongest argument:
 
-| Model | Params | Avg WER (8 datasets) |
-|-------|--------|---------------------|
-| Whisper tiny.en | 37.8M | 12.81% |
-| Moonshine v1 Tiny | 27.1M | 12.66% |
-| Whisper base.en | 72.6M | 10.32% |
-| Moonshine v1 Base | 61.5M | 10.07% |
-| Whisper large-v3 | 1550M | ~7.44% |
-| **Moonshine v2 Medium** | **245M** | **6.65%** |
+| Model                   | Params   | Avg WER (8 datasets) |
+| ----------------------- | -------- | -------------------- |
+| Whisper tiny.en         | 37.8M    | 12.81%               |
+| Moonshine v1 Tiny       | 27.1M    | 12.66%               |
+| Whisper base.en         | 72.6M    | 10.32%               |
+| Moonshine v1 Base       | 61.5M    | 10.07%               |
+| Whisper large-v3        | 1550M    | ~7.44%               |
+| **Moonshine v2 Medium** | **245M** | **6.65%**            |
 
 Moonshine v2 Medium beats Whisper large-v3 with **6x fewer parameters**.
 
@@ -361,6 +365,7 @@ Their "Flavors of Moonshine" paper showed monolingual Moonshine models (27M para
 ### Architecture
 
 Proprietary transformer-based, two components:
+
 1. **Acoustic Transformer** -- encodes audio waveforms
 2. **Language Transformer** -- decodes with prompt context
 
@@ -407,6 +412,7 @@ Uses Transformer-XL-style backbone for long-range context. Trained with multi-st
 ### Accuracy
 
 Google does not publish official WER numbers. Independent benchmarks:
+
 - Chirp: 11.6% AA-WER
 - Chirp 2: 9.8% AA-WER (better than Deepgram Nova-3 at 12.8%, but nearly 4x the price)
 
@@ -469,21 +475,27 @@ Voxtral Realtime is the **only open-weights streaming STT model achieving near-o
 ## 9. Decision Matrix for Voice Agents
 
 ### If you need: lowest latency streaming
+
 **Deepgram Nova-3** (sub-300ms, battle-tested) or **faster-whisper + VAD** (self-hosted, proven)
 
 ### If you need: best accuracy
+
 **Voxtral Small 24B** (3.0% AA-WER, open weights) or **Voxtral Transcribe V2** (3.6% AA-WER, API only)
 
 ### If you need: on-device / edge
+
 **Moonshine v2 Tiny** (34M params, 237ms on Raspberry Pi 5, 50ms on M3)
 
 ### If you need: cheapest at scale
+
 **faster-whisper (self-hosted)** or **Moonshine (self-hosted)** -- both MIT license, zero per-minute cost
 
 ### If you need: most languages
+
 **Whisper large-v3** (99+ languages) or **Google Chirp 3** (100+ languages)
 
 ### If you need: open-weights streaming
+
 **Voxtral Realtime 4B** (Apache 2.0, only option in this category with near-offline accuracy)
 
 ---
@@ -507,43 +519,51 @@ If we were starting fresh in 2026, **Voxtral Realtime 4B** would be worth evalua
 ## Sources
 
 **Whisper:**
+
 - [OpenAI Whisper GitHub](https://github.com/openai/whisper)
 - [Whisper Paper](https://cdn.openai.com/papers/whisper.pdf) -- "Robust Speech Recognition via Large-Scale Weak Supervision"
 - [HuggingFace whisper-large-v3-turbo](https://huggingface.co/openai/whisper-large-v3-turbo)
 - [OpenAI API Pricing](https://developers.openai.com/api/docs/pricing)
 
 **faster-whisper:**
+
 - [faster-whisper GitHub](https://github.com/SYSTRAN/faster-whisper) -- benchmark tables
 - [Modal: Choosing Whisper Variants](https://modal.com/blog/choosing-whisper-variants)
 
 **Moonshine:**
+
 - [Moonshine GitHub](https://github.com/moonshine-ai/moonshine)
 - [Moonshine v1 Paper (arXiv 2410.15608)](https://arxiv.org/abs/2410.15608)
 - [Moonshine v2 Paper (arXiv 2602.12241)](https://arxiv.org/abs/2602.12241)
 - [Flavors of Moonshine (arXiv 2509.02523)](https://arxiv.org/abs/2509.02523)
 
 **Deepgram:**
+
 - [Introducing Nova-3](https://deepgram.com/learn/introducing-nova-3-speech-to-text-api)
 - [Deepgram Pricing](https://deepgram.com/pricing)
 - [Deepgram STT Benchmarks](https://deepgram.com/learn/speech-to-text-benchmarks)
 
 **Google Cloud:**
+
 - [Google Cloud STT Pricing](https://cloud.google.com/speech-to-text/pricing)
 - [Chirp 2 Docs](https://docs.cloud.google.com/speech-to-text/docs/models/chirp-2)
 - [Chirp 3 Docs](https://docs.cloud.google.com/speech-to-text/docs/models/chirp-3)
 
 **Voxtral:**
+
 - [Voxtral Transcribe 2 Announcement](https://mistral.ai/news/voxtral-transcribe-2)
 - [Voxtral arXiv Paper](https://arxiv.org/html/2507.13264v1)
 - [Voxtral Mini 4B Realtime on HuggingFace](https://huggingface.co/mistralai/Voxtral-Mini-4B-Realtime-2602)
 - [Mistral Audio Transcription Docs](https://docs.mistral.ai/capabilities/audio_transcription)
 
 **Independent Benchmarks:**
+
 - [Artificial Analysis STT Leaderboard](https://artificialanalysis.ai/speech-to-text)
 - [AA-WER v2.0 Methodology](https://artificialanalysis.ai/articles/aa-wer-v2)
 - [Northflank STT Benchmarks 2026](https://northflank.com/blog/best-open-source-speech-to-text-stt-model-in-2026-benchmarks)
 
 **Evaluation Metrics & Methodology:**
+
 - [Word Error Rate - Wikipedia](https://en.wikipedia.org/wiki/Word_error_rate)
 - [Is Word Error Rate Useful? - AssemblyAI](https://www.assemblyai.com/blog/word-error-rate)
 - [The Problem with WER - Speechmatics](https://www.speechmatics.com/company/articles-and-news/the-problem-with-word-error-rate-wer)

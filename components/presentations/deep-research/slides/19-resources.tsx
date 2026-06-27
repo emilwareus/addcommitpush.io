@@ -23,9 +23,6 @@ const resources = [
 
 export function ResourcesSlide() {
   return (
-    <SharedResourcesSlide
-      resources={resources}
-      footer="Emil Wåreus &middot; addcommitpush.io"
-    />
+    <SharedResourcesSlide resources={resources} footer="Emil Wåreus &middot; addcommitpush.io" />
   );
 }

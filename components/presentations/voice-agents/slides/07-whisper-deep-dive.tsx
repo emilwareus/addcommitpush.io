@@ -70,19 +70,11 @@ export function WhisperDeepDiveSlide() {
           <span className="px-2 py-1 rounded bg-zinc-800 text-primary">
             &lt;|startoftranscript|&gt;
           </span>
-          <span className="px-2 py-1 rounded bg-zinc-800 text-blue-400">
-            &lt;|en|&gt;
-          </span>
-          <span className="px-2 py-1 rounded bg-zinc-800 text-green-400">
-            &lt;|transcribe|&gt;
-          </span>
-          <span className="px-2 py-1 rounded bg-zinc-800 text-yellow-400">
-            &lt;|0.00|&gt;
-          </span>
+          <span className="px-2 py-1 rounded bg-zinc-800 text-blue-400">&lt;|en|&gt;</span>
+          <span className="px-2 py-1 rounded bg-zinc-800 text-green-400">&lt;|transcribe|&gt;</span>
+          <span className="px-2 py-1 rounded bg-zinc-800 text-yellow-400">&lt;|0.00|&gt;</span>
           <span className="text-muted-foreground">... text tokens ...</span>
-          <span className="px-2 py-1 rounded bg-zinc-800 text-yellow-400">
-            &lt;|2.50|&gt;
-          </span>
+          <span className="px-2 py-1 rounded bg-zinc-800 text-yellow-400">&lt;|2.50|&gt;</span>
           <span className="px-2 py-1 rounded bg-zinc-800 text-muted-foreground">
             &lt;|endoftext|&gt;
           </span>

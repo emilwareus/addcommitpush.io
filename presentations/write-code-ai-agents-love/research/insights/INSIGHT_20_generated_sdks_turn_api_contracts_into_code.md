@@ -11,18 +11,18 @@ available as typed, documented, locally searchable code.
 
 ## Source map
 
-| Ref | Source | Local text | Source quality | Role in this insight |
-|---|---|---|---|---|
-| R42 | DocPrompting (Zhou et al., ICLR 2023) | `paper-text/docprompting-2207.05987.txt` | paper evidence | Shows retrieving relevant API documentation improves code generation by 2.85% pass@1 (52% relative) on CoNaLa. |
-| R43 | Type-Constrained Code Generation (Mundler et al., 2025) | `paper-text/type-constrained-codegen-2504.09246.txt` | paper evidence | Type constraints reduce compilation errors by more than half and improve functional correctness 3.5-5.5% relatively. |
-| R51 | ToolGen (Wang et al., 2024) | `paper-text/toolgen-autocomplete-repo-codegen-2401.06391.txt` | paper evidence | Visible accessible symbols reduce undefined-variable and no-member errors; +31-39% dependency coverage, +45-58% static validity. |
-| R52 | RAR: Retrieval Augmented Retrieval | `papers/rar-retrieval-augmented-retrieval-2024.pdf` | paper evidence | Examples and API/grammar documentation are complementary context sources for code generation. |
-| D25 | OpenAPI Generator | `articles/openapi-generator.html` | official-doc evidence | 50+ client generators from OpenAPI specs across languages. |
-| D26 | Microsoft Kiota | `articles/microsoft-kiota.html` | official-doc evidence | Generates API clients for OpenAPI APIs with authentication, serialization, and middleware. |
-| D27 | Orval | `articles/orval-docs.html` | official-doc evidence | Type-safe TypeScript clients, models, mocks, and query integrations from OpenAPI. |
-| D28 | Speakeasy | `articles/speakeasy-generate-sdks.html` | official-doc evidence | Generates SDKs with typed models and validation from OpenAPI/JSON Schema. |
-| D29 | Stainless | `articles/stainless-typescript-sdk.html` | official-doc evidence | Production TypeScript SDKs from OpenAPI specifications. |
-| D30 | FastAPI: Generate Clients | `articles/fastapi-generate-clients.html` | official-doc evidence | OpenAPI output enables generated, up-to-date SDKs and automation workflows. |
+| Ref | Source                                                  | Local text                                                    | Source quality        | Role in this insight                                                                                                             |
+| --- | ------------------------------------------------------- | ------------------------------------------------------------- | --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| R42 | DocPrompting (Zhou et al., ICLR 2023)                   | `paper-text/docprompting-2207.05987.txt`                      | paper evidence        | Shows retrieving relevant API documentation improves code generation by 2.85% pass@1 (52% relative) on CoNaLa.                   |
+| R43 | Type-Constrained Code Generation (Mundler et al., 2025) | `paper-text/type-constrained-codegen-2504.09246.txt`          | paper evidence        | Type constraints reduce compilation errors by more than half and improve functional correctness 3.5-5.5% relatively.             |
+| R51 | ToolGen (Wang et al., 2024)                             | `paper-text/toolgen-autocomplete-repo-codegen-2401.06391.txt` | paper evidence        | Visible accessible symbols reduce undefined-variable and no-member errors; +31-39% dependency coverage, +45-58% static validity. |
+| R52 | RAR: Retrieval Augmented Retrieval                      | `papers/rar-retrieval-augmented-retrieval-2024.pdf`           | paper evidence        | Examples and API/grammar documentation are complementary context sources for code generation.                                    |
+| D25 | OpenAPI Generator                                       | `articles/openapi-generator.html`                             | official-doc evidence | 50+ client generators from OpenAPI specs across languages.                                                                       |
+| D26 | Microsoft Kiota                                         | `articles/microsoft-kiota.html`                               | official-doc evidence | Generates API clients for OpenAPI APIs with authentication, serialization, and middleware.                                       |
+| D27 | Orval                                                   | `articles/orval-docs.html`                                    | official-doc evidence | Type-safe TypeScript clients, models, mocks, and query integrations from OpenAPI.                                                |
+| D28 | Speakeasy                                               | `articles/speakeasy-generate-sdks.html`                       | official-doc evidence | Generates SDKs with typed models and validation from OpenAPI/JSON Schema.                                                        |
+| D29 | Stainless                                               | `articles/stainless-typescript-sdk.html`                      | official-doc evidence | Production TypeScript SDKs from OpenAPI specifications.                                                                          |
+| D30 | FastAPI: Generate Clients                               | `articles/fastapi-generate-clients.html`                      | official-doc evidence | OpenAPI output enables generated, up-to-date SDKs and automation workflows.                                                      |
 
 ---
 
@@ -37,6 +37,7 @@ methods, function signatures, parameter types) helps even more, because the agen
 same code-navigation tools (grep, LSP, type checking) it uses for any other code.
 
 Key results:
+
 - CodeT5 + DocPrompting: +2.85% pass@1 (52% relative gain) on CoNaLa (Python)
 - CodeT5 + DocPrompting: +4.39% pass@10 (30% relative gain) on CoNaLa
 - GPT-Neo-1.3B + DocPrompting: +6.9% absolute exact match on tldr (Bash)
@@ -64,6 +65,7 @@ repository-level dependencies visible to the model via autocompletion tools dram
 dependency errors.
 
 Key results:
+
 - Dependency Coverage improvement: +31.4% to +39.1% across three LLMs (CodeGPT, CodeT5, CodeLlama)
 - Static Validity Rate improvement: +44.9% to +57.7% across three LLMs
 - CoderEval Pass@1 improvement: +40.0% (CodeT5), +25.0% (CodeLlama), same (CodeGPT)
@@ -94,6 +96,7 @@ improve generation, then a typed SDK (which provides type information for all AP
 is a form of implicit type constraining.
 
 Key results:
+
 - Compilation errors reduced by more than half (synthesis and translation tasks)
 - Functional correctness improvement: +3.5% to +5.5% relatively (synthesis and translation)
 - Functionally correct repair: +37% relatively on average
@@ -131,35 +134,35 @@ Limitations: Paper not fully extracted to local text. Using the reference entry 
 
 ### Evidence that API-relevant context improves generation
 
-| Paper | Mechanism | Key metric improvement | Units |
-|---|---|---:|---|
-| R42 DocPrompting | Retrieve API docs before generation | +2.85 pass@1 (52% relative) | CoNaLa Python benchmark |
-| R51 ToolGen | Expose accessible symbols via autocompletion | +31.4 to +39.1 dependency coverage | Repository code benchmark |
-| R51 ToolGen | Expose accessible symbols via autocompletion | +44.9 to +57.7 static validity rate | Repository code benchmark |
-| R51 ToolGen | Expose accessible symbols via autocompletion | +25.0 to +40.0 pass@1 | CoderEval benchmark |
-| R43 Type-constrained | Enforce type correctness during generation | >50% compilation error reduction | HumanEval/MBPP TypeScript |
-| R43 Type-constrained | Enforce type correctness during generation | +3.5 to +5.5% functional correctness | HumanEval/MBPP TypeScript |
+| Paper                | Mechanism                                    |               Key metric improvement | Units                     |
+| -------------------- | -------------------------------------------- | -----------------------------------: | ------------------------- |
+| R42 DocPrompting     | Retrieve API docs before generation          |          +2.85 pass@1 (52% relative) | CoNaLa Python benchmark   |
+| R51 ToolGen          | Expose accessible symbols via autocompletion |   +31.4 to +39.1 dependency coverage | Repository code benchmark |
+| R51 ToolGen          | Expose accessible symbols via autocompletion |  +44.9 to +57.7 static validity rate | Repository code benchmark |
+| R51 ToolGen          | Expose accessible symbols via autocompletion |                +25.0 to +40.0 pass@1 | CoderEval benchmark       |
+| R43 Type-constrained | Enforce type correctness during generation   |     >50% compilation error reduction | HumanEval/MBPP TypeScript |
+| R43 Type-constrained | Enforce type correctness during generation   | +3.5 to +5.5% functional correctness | HumanEval/MBPP TypeScript |
 
 ### Where compilation errors come from (R43)
 
 | Error category | Share of compilation errors |
-|---|---:|
-| Type errors | 94% |
-| Syntax errors | 6% |
+| -------------- | --------------------------: |
+| Type errors    |                         94% |
+| Syntax errors  |                          6% |
 
 Source: R43, Section 5 evaluation discussion. This means typed SDKs address the dominant error
 category, not just a marginal one.
 
 ### SDK generator ecosystem (practitioner landscape)
 
-| Tool | Source | Languages | Key differentiator |
-|---|---|---|---|
-| OpenAPI Generator | D25 | 50+ client targets | Broadest language coverage |
-| Microsoft Kiota | D26 | TypeScript, Python, Java, Go, C#, PHP, Ruby | Auth, serialization, middleware abstractions |
-| Orval | D27 | TypeScript | React Query/SWR hooks, mocks, MSW integration |
-| Speakeasy | D28 | TypeScript, Python, Go, Java, Ruby, C#, Swift, PHP, Terraform | Typed models, validation, commercial SLA |
-| Stainless | D29 | TypeScript, Python | Production-grade, used by Anthropic/OpenAI SDKs |
-| FastAPI built-in | D30 | N/A (generates spec) | OpenAPI spec generation from Python type hints |
+| Tool              | Source | Languages                                                     | Key differentiator                              |
+| ----------------- | ------ | ------------------------------------------------------------- | ----------------------------------------------- |
+| OpenAPI Generator | D25    | 50+ client targets                                            | Broadest language coverage                      |
+| Microsoft Kiota   | D26    | TypeScript, Python, Java, Go, C#, PHP, Ruby                   | Auth, serialization, middleware abstractions    |
+| Orval             | D27    | TypeScript                                                    | React Query/SWR hooks, mocks, MSW integration   |
+| Speakeasy         | D28    | TypeScript, Python, Go, Java, Ruby, C#, Swift, PHP, Terraform | Typed models, validation, commercial SLA        |
+| Stainless         | D29    | TypeScript, Python                                            | Production-grade, used by Anthropic/OpenAI SDKs |
+| FastAPI built-in  | D30    | N/A (generates spec)                                          | OpenAPI spec generation from Python type hints  |
 
 ---
 
@@ -175,7 +178,7 @@ flowchart TD
     Raw --> E4["Unhandled response type"]
     Raw --> E5["Missing auth header"]
   end
-  
+
   subgraph With Generated SDK
     SDK["client.users.getUser({ userId })"]
     SDK --> T1["URL path: typed, correct"]
@@ -205,10 +208,10 @@ Verify SDK freshness in CI: run the generator, diff against committed output, fa
 
 ### Prefer SDK methods over raw URL strings
 
-| Pattern | Risk for agents | Why |
-|---|---|---|
-| `fetch('/api/users/' + id)` | High | URL path, params, body, response all untyped strings |
-| `client.users.getUser({ userId })` | Low | All parameters typed, response narrowed, IDE/LSP support |
+| Pattern                            | Risk for agents | Why                                                      |
+| ---------------------------------- | --------------- | -------------------------------------------------------- |
+| `fetch('/api/users/' + id)`        | High            | URL path, params, body, response all untyped strings     |
+| `client.users.getUser({ userId })` | Low             | All parameters typed, response narrowed, IDE/LSP support |
 
 ### Keep generated code in predictable locations
 
@@ -229,10 +232,10 @@ adjacent to the generated SDK.
 
 ## Generated vs committed: two workable patterns
 
-| Pattern | When to use | Agent implication |
-|---|---|---|
-| Commit generated SDKs | Consumed by many packages; need code review; serve as readable context | Agent can inspect SDK directly without running generator |
-| Generate on demand (not committed) | Generator is fast and deterministic; CI verifies freshness | Agent must run generator or trust CI; SDK not in search index |
+| Pattern                            | When to use                                                            | Agent implication                                             |
+| ---------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Commit generated SDKs              | Consumed by many packages; need code review; serve as readable context | Agent can inspect SDK directly without running generator      |
+| Generate on demand (not committed) | Generator is fast and deterministic; CI verifies freshness             | Agent must run generator or trust CI; SDK not in search index |
 
 The key distinction: the contract, generator config, and validation command must all be in the
 repo and easy for agents to discover and run. Whether the output is committed is a workflow

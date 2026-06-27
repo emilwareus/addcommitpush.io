@@ -9,16 +9,16 @@ Live) is slowly expanding beyond Python bug-fixing without yet solving the maint
 
 ## Source map
 
-| Ref | Source | Local text | Role |
-|---|---|---|---|
-| R09 | SWE-CI (2026-03) | `paper-text/swe-ci-2603.03823.txt` | First benchmark to evaluate long-term maintainability through iterated CI evolution. |
-| R46 | Needle in the Repo (2026-03) | `paper-text/needle-in-the-repo-2603.27745.txt` | Probes maintainability with structural oracles beyond functional tests. |
-| R08 | FEA-Bench (2025-03) | `paper-text/fea-bench-2503.06680.txt` | Expands task space to feature implementation across repositories. |
-| R05 | Multi-SWE-bench (2025-04) | `paper-text/multi-swe-bench-2504.02605.txt` | Extends issue resolving beyond Python into multiple ecosystems. |
-| R06 | SWE-bench Live (2025-05) | `paper-text/swe-bench-live-2505.23419.txt` | Addresses contamination and benchmark freshness. |
-| R07 | SWE-rebench (2025-05) | `paper-text/swe-rebench-2505.20411.txt` | Automated pipeline for fresh, decontaminated agent tasks. |
-| R59 | Smells of LLM Generated Code (2025-10) | `paper-text/smells-llm-generated-code-2510.03029.txt` | LLM-generated code shows more design/implementation smells than professional code. |
-| R61 | The Modular Imperative (2025) | `paper-text/modular-imperative-lmpl-2025.pdf` | Argues for constraining LLM code through modular design practices. |
+| Ref | Source                                 | Local text                                            | Role                                                                                 |
+| --- | -------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| R09 | SWE-CI (2026-03)                       | `paper-text/swe-ci-2603.03823.txt`                    | First benchmark to evaluate long-term maintainability through iterated CI evolution. |
+| R46 | Needle in the Repo (2026-03)           | `paper-text/needle-in-the-repo-2603.27745.txt`        | Probes maintainability with structural oracles beyond functional tests.              |
+| R08 | FEA-Bench (2025-03)                    | `paper-text/fea-bench-2503.06680.txt`                 | Expands task space to feature implementation across repositories.                    |
+| R05 | Multi-SWE-bench (2025-04)              | `paper-text/multi-swe-bench-2504.02605.txt`           | Extends issue resolving beyond Python into multiple ecosystems.                      |
+| R06 | SWE-bench Live (2025-05)               | `paper-text/swe-bench-live-2505.23419.txt`            | Addresses contamination and benchmark freshness.                                     |
+| R07 | SWE-rebench (2025-05)                  | `paper-text/swe-rebench-2505.20411.txt`               | Automated pipeline for fresh, decontaminated agent tasks.                            |
+| R59 | Smells of LLM Generated Code (2025-10) | `paper-text/smells-llm-generated-code-2510.03029.txt` | LLM-generated code shows more design/implementation smells than professional code.   |
+| R61 | The Modular Imperative (2025)          | `paper-text/modular-imperative-lmpl-2025.pdf`         | Argues for constraining LLM code through modular design practices.                   |
 
 ## SWE-CI (R09): the evolution-based evaluation paradigm
 
@@ -35,15 +35,15 @@ changes."
 
 ### Benchmark design
 
-| Property | Value |
-|---|---:|
-| Total tasks | 100 |
-| Average development history per task | 233 days |
-| Average consecutive commits per task | 71 |
-| Evaluation protocol | Architect-Programmer dual-agent CI loop |
-| Base requirement | Repository with >= 3 years maintenance history |
-| Star requirement | >= 500 stars |
-| Token consumption for experiments | > 10 billion tokens |
+| Property                             |                                          Value |
+| ------------------------------------ | ---------------------------------------------: |
+| Total tasks                          |                                            100 |
+| Average development history per task |                                       233 days |
+| Average consecutive commits per task |                                             71 |
+| Evaluation protocol                  |        Architect-Programmer dual-agent CI loop |
+| Base requirement                     | Repository with >= 3 years maintenance history |
+| Star requirement                     |                                   >= 500 stars |
+| Token consumption for experiments    |                            > 10 billion tokens |
 
 Source trace: R09, `paper-text/swe-ci-2603.03823.txt`.
 
@@ -56,12 +56,14 @@ e = (sum of gamma^i * a(c_i), i=1..N) / (sum of gamma^i, i=1..N)
 ```
 
 Where:
+
 - `a(c)` is the normalized change: how many tests the agent has gained or lost relative to baseline
 - `gamma >= 1` gives later iterations more weight
 - When `gamma = 1`, EvoScore is simple average normalized change
 - As `gamma` increases, long-term stability is increasingly rewarded
 
 The normalized change formula:
+
 - Improvement: `(n(c) - n(c0)) / (n(c*) - n(c0))` -- fraction of gap closed
 - Regression: `(n(c) - n(c0)) / n(c0)` -- fraction of originally-passing tests broken
 - Result range: [-1, 1]
@@ -95,22 +97,23 @@ is designed so that success depends primarily on one targeted maintainability di
 
 ### NITR results (from prior research notes)
 
-| Metric | Value |
-|---|---:|
-| Average solve rate across all AI configurations | 36.2% |
-| Best configuration solve rate | 57.1% |
-| Micro cases solve rate | 53.5% |
-| Multi-step cases solve rate | 20.6% |
+| Metric                                                          |          Value |
+| --------------------------------------------------------------- | -------------: |
+| Average solve rate across all AI configurations                 |          36.2% |
+| Best configuration solve rate                                   |          57.1% |
+| Micro cases solve rate                                          |          53.5% |
+| Multi-step cases solve rate                                     |          20.6% |
 | Outcomes passing functional tests but failing structural oracle | 64/483 (13.3%) |
-| Hardest: dependency control | 4.3% |
-| Hardest: responsibility decomposition | 15.2% |
-| Agent-mode improvement over direct inference | 45.0% vs 28.2% |
+| Hardest: dependency control                                     |           4.3% |
+| Hardest: responsibility decomposition                           |          15.2% |
+| Agent-mode improvement over direct inference                    | 45.0% vs 28.2% |
 
 Source trace: R46, `paper-text/needle-in-the-repo-2603.27745.txt`.
 
 ### Maintainability dimensions tested
 
 The hardest pressures are architectural rather than local:
+
 - **Dependency control (4.3% success):** Maintaining proper import boundaries and dependency direction
 - **Responsibility decomposition (15.2% success):** Splitting functionality into appropriate modules
 
@@ -120,6 +123,7 @@ layer or dumps functionality into a single file passes the test but creates futu
 ### The 13.3% false-positive finding
 
 "64/483 outcomes (13.3%) pass all functional tests yet fail the structural oracle." This means:
+
 - Functional tests are necessary but insufficient
 - One in eight "correct" patches introduces structural debt
 - Without structural oracles, this debt is invisible until the next modification
@@ -133,6 +137,7 @@ functional correctness but does not automatically produce maintainable structure
 ### FEA-Bench (R08): feature implementation
 
 FEA-Bench expands beyond bug-fixing to feature implementation. Feature work requires:
+
 - Understanding existing architecture
 - Finding extension points
 - Maintaining existing behavior while adding new capability
@@ -146,6 +151,7 @@ is worse than no feature.
 
 Multi-SWE-bench extends issue resolving into multiple programming language ecosystems. This
 matters for maintainability because:
+
 - Different languages have different modularity mechanisms (modules, packages, traits, interfaces)
 - Static type systems provide different levels of structural constraint
 - Build systems vary in how they encode and enforce boundaries
@@ -178,16 +184,16 @@ Source trace: R61, `paper-text/modular-imperative-lmpl-2025.pdf`.
 
 Combining the evidence, codebase patterns that support future editability:
 
-| Pattern | Why it helps agents produce maintainable code |
-|---|---|
-| Clear module boundaries | Agent can see where new code belongs without violating structure |
-| Stable public interfaces | Agent knows which surfaces are safe to depend on |
-| Small, focused modules | Reduces the scope of changes; limits blast radius |
-| Typed contracts | Compiler catches structural violations before tests run |
-| Behavior tests around extension points | Agent verifies preservation without structural coupling |
-| Migration notes when conventions change | Agent knows the current preferred pattern |
-| Examples showing the preferred pattern | Agent has a template to follow, not just constraints to infer |
-| Structural lints (import boundaries, etc.) | Agent gets fast feedback on architectural violations |
+| Pattern                                    | Why it helps agents produce maintainable code                    |
+| ------------------------------------------ | ---------------------------------------------------------------- |
+| Clear module boundaries                    | Agent can see where new code belongs without violating structure |
+| Stable public interfaces                   | Agent knows which surfaces are safe to depend on                 |
+| Small, focused modules                     | Reduces the scope of changes; limits blast radius                |
+| Typed contracts                            | Compiler catches structural violations before tests run          |
+| Behavior tests around extension points     | Agent verifies preservation without structural coupling          |
+| Migration notes when conventions change    | Agent knows the current preferred pattern                        |
+| Examples showing the preferred pattern     | Agent has a template to follow, not just constraints to infer    |
+| Structural lints (import boundaries, etc.) | Agent gets fast feedback on architectural violations             |
 
 ## Inference
 

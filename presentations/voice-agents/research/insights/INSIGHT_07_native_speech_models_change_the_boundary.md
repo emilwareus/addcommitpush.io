@@ -17,14 +17,14 @@ other and against the cascaded baseline without needing to reopen the papers.
 
 ## Source Map
 
-| Ref | Source | Local path | Role |
-|---|---|---|---|
-| R-VA-018 | Moshi: a speech-text foundation model for real-time dialogue | `../paper-text/moshi-2410.00037.txt` | Full-duplex speech-text model. Strongest conceptual source for native speech dialogue. |
-| R-VA-019 | Qwen2.5-Omni Technical Report | `../paper-text/qwen25-omni-2503.20215.txt` | Thinker-Talker architecture with streaming speech output and multimodal benchmarks. |
-| R-VA-024 | Mini-Omni: Language Models Can Hear, Talk While Thinking in Streaming | `../paper-text/mini-omni-2408.16725.txt` | Small open real-time speech interaction model with SNAC codec. |
-| R-VA-025 | GLM-4-Voice: Towards Intelligent and Human-Like End-to-End Spoken Chatbot | `../paper-text/glm-4-voice-2412.02612.txt` | Low-bitrate speech tokenizer with flow-matching decoder and end-to-end spoken chatbot. |
-| R-VA-028 | Local transport deep dive | `../TRANSPORT-DEEP-DIVE.md` | Cascaded architecture and media-system context. |
-| R-VA-022 | Stivers et al. 2009 | `../articles/human-turn-taking-stivers.html` | Human turn-taking response time baseline. |
+| Ref      | Source                                                                    | Local path                                   | Role                                                                                   |
+| -------- | ------------------------------------------------------------------------- | -------------------------------------------- | -------------------------------------------------------------------------------------- |
+| R-VA-018 | Moshi: a speech-text foundation model for real-time dialogue              | `../paper-text/moshi-2410.00037.txt`         | Full-duplex speech-text model. Strongest conceptual source for native speech dialogue. |
+| R-VA-019 | Qwen2.5-Omni Technical Report                                             | `../paper-text/qwen25-omni-2503.20215.txt`   | Thinker-Talker architecture with streaming speech output and multimodal benchmarks.    |
+| R-VA-024 | Mini-Omni: Language Models Can Hear, Talk While Thinking in Streaming     | `../paper-text/mini-omni-2408.16725.txt`     | Small open real-time speech interaction model with SNAC codec.                         |
+| R-VA-025 | GLM-4-Voice: Towards Intelligent and Human-Like End-to-End Spoken Chatbot | `../paper-text/glm-4-voice-2412.02612.txt`   | Low-bitrate speech tokenizer with flow-matching decoder and end-to-end spoken chatbot. |
+| R-VA-028 | Local transport deep dive                                                 | `../TRANSPORT-DEEP-DIVE.md`                  | Cascaded architecture and media-system context.                                        |
+| R-VA-022 | Stivers et al. 2009                                                       | `../articles/human-turn-taking-stivers.html` | Human turn-taking response time baseline.                                              |
 
 ## The Cascade
 
@@ -117,23 +117,23 @@ audio token streams. (`paper evidence`, R-VA-018, Section 3.4.4.)
 
 ### Moshi Data Table
 
-| Claim | Value | Unit | Source | Quality label |
-|---|---:|---|---|---|
-| Theoretical latency | 160 | ms | R-VA-018, Abstract | `paper evidence` |
-| Practical latency | 200 | ms | R-VA-018, Abstract | `paper evidence` |
-| Natural conversation average | 230 | ms | R-VA-018 citing Stivers et al. 2009 | `paper evidence citing Stivers et al. 2009` |
-| Backbone parameters | 7B | params | R-VA-018, Section 3.2 | `paper evidence` |
-| Backbone name | Helium | - | R-VA-018, Section 3.2 | `paper evidence` |
-| Pretraining data (text) | 2.1T | tokens | R-VA-018, Section 3.2 | `paper evidence` |
-| Mimi codec frame rate | 12.5 | Hz | R-VA-018, Section 3.3.1 | `paper evidence` |
-| Mimi frame duration | 80 | ms | R-VA-018, Section 3.3.1 | `paper evidence` |
-| Mimi bitrate (Q=8 at 12.5 Hz) | 1.1 | kbps | R-VA-018, Section 3.3.1 | `paper evidence` |
-| Mimi quantizers | 8 | count | R-VA-018, Section 3.3.1 | `paper evidence` |
-| Mimi codebook size (per quantizer) | 2048 | entries | R-VA-018, Section 3.3.1 | `paper evidence` |
-| Audio training data | 7M | hours | R-VA-018, Section 4.2 | `paper evidence` |
-| Temporal Transformer layers | 32 | layers | R-VA-018, Table 1 | `paper evidence` |
-| Depth Transformer layers | 6 | layers | R-VA-018, Table 1 | `paper evidence` |
-| Overlapping speech fraction | 10-20 | % | R-VA-018 citing Cetin and Shriberg 2006 | `paper evidence citing Cetin and Shriberg 2006` |
+| Claim                              |  Value | Unit    | Source                                  | Quality label                                   |
+| ---------------------------------- | -----: | ------- | --------------------------------------- | ----------------------------------------------- |
+| Theoretical latency                |    160 | ms      | R-VA-018, Abstract                      | `paper evidence`                                |
+| Practical latency                  |    200 | ms      | R-VA-018, Abstract                      | `paper evidence`                                |
+| Natural conversation average       |    230 | ms      | R-VA-018 citing Stivers et al. 2009     | `paper evidence citing Stivers et al. 2009`     |
+| Backbone parameters                |     7B | params  | R-VA-018, Section 3.2                   | `paper evidence`                                |
+| Backbone name                      | Helium | -       | R-VA-018, Section 3.2                   | `paper evidence`                                |
+| Pretraining data (text)            |   2.1T | tokens  | R-VA-018, Section 3.2                   | `paper evidence`                                |
+| Mimi codec frame rate              |   12.5 | Hz      | R-VA-018, Section 3.3.1                 | `paper evidence`                                |
+| Mimi frame duration                |     80 | ms      | R-VA-018, Section 3.3.1                 | `paper evidence`                                |
+| Mimi bitrate (Q=8 at 12.5 Hz)      |    1.1 | kbps    | R-VA-018, Section 3.3.1                 | `paper evidence`                                |
+| Mimi quantizers                    |      8 | count   | R-VA-018, Section 3.3.1                 | `paper evidence`                                |
+| Mimi codebook size (per quantizer) |   2048 | entries | R-VA-018, Section 3.3.1                 | `paper evidence`                                |
+| Audio training data                |     7M | hours   | R-VA-018, Section 4.2                   | `paper evidence`                                |
+| Temporal Transformer layers        |     32 | layers  | R-VA-018, Table 1                       | `paper evidence`                                |
+| Depth Transformer layers           |      6 | layers  | R-VA-018, Table 1                       | `paper evidence`                                |
+| Overlapping speech fraction        |  10-20 | %       | R-VA-018 citing Cetin and Shriberg 2006 | `paper evidence citing Cetin and Shriberg 2006` |
 
 ## Qwen2.5-Omni
 
@@ -195,40 +195,40 @@ The paper reports extensive benchmarks. Relevant speech-related results:
 
 **ASR (WER, lower is better):**
 
-| Dataset | Qwen2.5-Omni-7B | Whisper-large-v3 | Source |
-|---|---:|---:|---|
-| LibriSpeech test-clean | 1.8 | 1.8 | R-VA-019, Table 2 |
-| LibriSpeech test-other | 3.4 | 3.6 | R-VA-019, Table 2 |
-| Fleurs zh | 3.0 | 7.7 | R-VA-019, Table 2 |
-| Fleurs en | 4.1 | 4.1 | R-VA-019, Table 2 |
+| Dataset                | Qwen2.5-Omni-7B | Whisper-large-v3 | Source            |
+| ---------------------- | --------------: | ---------------: | ----------------- |
+| LibriSpeech test-clean |             1.8 |              1.8 | R-VA-019, Table 2 |
+| LibriSpeech test-other |             3.4 |              3.6 | R-VA-019, Table 2 |
+| Fleurs zh              |             3.0 |              7.7 | R-VA-019, Table 2 |
+| Fleurs en              |             4.1 |              4.1 | R-VA-019, Table 2 |
 
 (`paper evidence`, R-VA-019, Table 2.)
 
 **Speech Generation (Seed-TTS-Eval WER, lower is better):**
 
-| Dataset | Qwen2.5-Omni-7B (RL) | MaskGCT | F5-TTS | CosyVoice 2 | Source |
-|---|---:|---:|---:|---:|---|
-| test-zh | 1.42% | 2.27% | 1.56% | 1.45% | R-VA-019, Table 9 |
-| test-en | 2.33% | 2.62% | 1.83% | 2.57% | R-VA-019, Table 9 |
-| test-hard | 6.54% | 10.27% | 8.67% | 6.83% | R-VA-019, Table 9 |
+| Dataset   | Qwen2.5-Omni-7B (RL) | MaskGCT | F5-TTS | CosyVoice 2 | Source            |
+| --------- | -------------------: | ------: | -----: | ----------: | ----------------- |
+| test-zh   |                1.42% |   2.27% |  1.56% |       1.45% | R-VA-019, Table 9 |
+| test-en   |                2.33% |   2.62% |  1.83% |       2.57% | R-VA-019, Table 9 |
+| test-hard |                6.54% |  10.27% |  8.67% |       6.83% | R-VA-019, Table 9 |
 
 (`paper evidence`, R-VA-019, Table 9.)
 
 **Single-Speaker NMOS (Naturalness MOS, higher is better):**
 
-| Speaker | zh | en | Source |
-|---|---:|---:|---|
-| Human | 4.51 | - | R-VA-019, Table 10 |
+| Speaker                |   zh |   en | Source             |
+| ---------------------- | ---: | ---: | ------------------ |
+| Human                  | 4.51 |    - | R-VA-019, Table 10 |
 | Qwen2.5-Omni Speaker B | 4.51 | 4.62 | R-VA-019, Table 10 |
 
 (`paper evidence`, R-VA-019, Table 10.)
 
 **Speech Instruction Following (Speech vs Text Input, accuracy):**
 
-| Benchmark | Qwen2-7B (text input) | Qwen2.5-Omni-7B (speech input) | Source |
-|---|---:|---:|---|
-| MMLU | 69.3 | 65.6 | R-VA-019, Table 4 |
-| GSM8K | 82.3 | 85.4 | R-VA-019, Table 4 |
+| Benchmark | Qwen2-7B (text input) | Qwen2.5-Omni-7B (speech input) | Source            |
+| --------- | --------------------: | -----------------------------: | ----------------- |
+| MMLU      |                  69.3 |                           65.6 | R-VA-019, Table 4 |
+| GSM8K     |                  82.3 |                           85.4 | R-VA-019, Table 4 |
 
 (`paper evidence`, R-VA-019, Table 4.)
 
@@ -239,22 +239,22 @@ result for a native multimodal model.
 
 ### Qwen2.5-Omni Data Table
 
-| Claim | Value | Unit | Source | Quality label |
-|---|---:|---|---|---|
-| Architecture | Thinker-Talker | - | R-VA-019, Section 2.1 | `paper evidence` |
-| Evaluated model size | 7B | params | R-VA-019, Table 1 | `paper evidence` |
-| LLM initialization | Qwen2.5 | - | R-VA-019, Section 3 | `paper evidence` |
-| Audio encoder init | Whisper-large-v3 | - | R-VA-019, Section 3 | `paper evidence` |
-| Vision encoder params | ~675M | params | R-VA-019, Section 2.2 | `paper evidence` |
-| Audio encoder temporal resolution | 40 | ms/frame | R-VA-019, Section 2.2 | `paper evidence` |
-| Block-wise attention chunk | 2 | seconds | R-VA-019, Section 2.4 | `paper evidence` |
-| DiT receptive field | 4 | blocks | R-VA-019, Section 2.4 | `paper evidence` |
-| Seed-TTS test-zh WER (RL) | 1.42 | % | R-VA-019, Table 9 | `paper evidence` |
-| Seed-TTS test-en WER (RL) | 2.33 | % | R-VA-019, Table 9 | `paper evidence` |
-| Seed-TTS test-hard WER (RL) | 6.54 | % | R-VA-019, Table 9 | `paper evidence` |
-| NMOS zh (Speaker B) | 4.51 | MOS | R-VA-019, Table 10 | `paper evidence` |
-| NMOS en (Speaker B) | 4.62 | MOS | R-VA-019, Table 10 | `paper evidence` |
-| Specific end-to-end latency | not reported | ms | R-VA-019 | `paper evidence` (absence) |
+| Claim                             |            Value | Unit     | Source                | Quality label              |
+| --------------------------------- | ---------------: | -------- | --------------------- | -------------------------- |
+| Architecture                      |   Thinker-Talker | -        | R-VA-019, Section 2.1 | `paper evidence`           |
+| Evaluated model size              |               7B | params   | R-VA-019, Table 1     | `paper evidence`           |
+| LLM initialization                |          Qwen2.5 | -        | R-VA-019, Section 3   | `paper evidence`           |
+| Audio encoder init                | Whisper-large-v3 | -        | R-VA-019, Section 3   | `paper evidence`           |
+| Vision encoder params             |            ~675M | params   | R-VA-019, Section 2.2 | `paper evidence`           |
+| Audio encoder temporal resolution |               40 | ms/frame | R-VA-019, Section 2.2 | `paper evidence`           |
+| Block-wise attention chunk        |                2 | seconds  | R-VA-019, Section 2.4 | `paper evidence`           |
+| DiT receptive field               |                4 | blocks   | R-VA-019, Section 2.4 | `paper evidence`           |
+| Seed-TTS test-zh WER (RL)         |             1.42 | %        | R-VA-019, Table 9     | `paper evidence`           |
+| Seed-TTS test-en WER (RL)         |             2.33 | %        | R-VA-019, Table 9     | `paper evidence`           |
+| Seed-TTS test-hard WER (RL)       |             6.54 | %        | R-VA-019, Table 9     | `paper evidence`           |
+| NMOS zh (Speaker B)               |             4.51 | MOS      | R-VA-019, Table 10    | `paper evidence`           |
+| NMOS en (Speaker B)               |             4.62 | MOS      | R-VA-019, Table 10    | `paper evidence`           |
+| Specific end-to-end latency       |     not reported | ms       | R-VA-019              | `paper evidence` (absence) |
 
 ## Mini-Omni
 
@@ -321,12 +321,12 @@ architectural capability claim, not a latency benchmark.
 
 **ASR (WER on LibriSpeech, lower is better):**
 
-| Dataset | Mini-Omni | Whisper-small | VITA | Source |
-|---|---:|---:|---:|---|
-| test-clean | 4.5 | 3.4 | 8.14 | R-VA-024, Table 2 |
-| test-other | 9.7 | 7.6 | 18.41 | R-VA-024, Table 2 |
-| dev-clean | 4.6 | - | 7.57 | R-VA-024, Table 2 |
-| dev-other | 9.2 | - | 16.57 | R-VA-024, Table 2 |
+| Dataset    | Mini-Omni | Whisper-small |  VITA | Source            |
+| ---------- | --------: | ------------: | ----: | ----------------- |
+| test-clean |       4.5 |           3.4 |  8.14 | R-VA-024, Table 2 |
+| test-other |       9.7 |           7.6 | 18.41 | R-VA-024, Table 2 |
+| dev-clean  |       4.6 |             - |  7.57 | R-VA-024, Table 2 |
+| dev-other  |       9.2 |             - | 16.57 | R-VA-024, Table 2 |
 
 (`paper evidence`, R-VA-024, Table 2.)
 
@@ -341,22 +341,22 @@ primary contribution is end-to-end speech-to-speech in a compact form factor, no
 
 ### Mini-Omni Data Table
 
-| Claim | Value | Unit | Source | Quality label |
-|---|---:|---|---|---|
-| Base LLM | Qwen2-0.5B | - | R-VA-024, Section 4.2 | `paper evidence` |
-| Base LLM params | 0.5B | params | R-VA-024, Section 4.2 | `paper evidence` |
-| Transformer blocks | 24 | blocks | R-VA-024, Section 4.2 | `paper evidence` |
-| Internal dimension | 896 | dim | R-VA-024, Section 4.2 | `paper evidence` |
-| Speech encoder | Whisper-small | - | R-VA-024, Section 4.2 | `paper evidence` |
-| TTS adapter blocks | 6 | blocks | R-VA-024, Section 4.2 | `paper evidence` |
-| Audio codec | SNAC | - | R-VA-024, Section 1 | `paper evidence` |
-| SNAC codebook layers | 7 (intro says 8, but Section 4.2 clarifies 7 audio + 1 text = 8 output heads) | layers | R-VA-024, Sections 1 and 4.2 | `paper evidence` (paper-internal inconsistency) |
-| Token rate | hundreds | tokens/sec | R-VA-024, Section 1 | `paper evidence` (imprecise) |
-| Training GPUs | 8x A100 | - | R-VA-024, Section 4.2 | `paper evidence` |
-| VoiceAssistant-400K entries | 400K+ | entries | R-VA-024, Section 1 | `paper evidence` |
-| ASR test-clean WER | 4.5 | % | R-VA-024, Table 2 | `paper evidence` |
-| ASR test-other WER | 9.7 | % | R-VA-024, Table 2 | `paper evidence` |
-| Specific end-to-end latency | not reported | ms | R-VA-024 | `paper evidence` (absence) |
+| Claim                       |                                                                         Value | Unit       | Source                       | Quality label                                   |
+| --------------------------- | ----------------------------------------------------------------------------: | ---------- | ---------------------------- | ----------------------------------------------- |
+| Base LLM                    |                                                                    Qwen2-0.5B | -          | R-VA-024, Section 4.2        | `paper evidence`                                |
+| Base LLM params             |                                                                          0.5B | params     | R-VA-024, Section 4.2        | `paper evidence`                                |
+| Transformer blocks          |                                                                            24 | blocks     | R-VA-024, Section 4.2        | `paper evidence`                                |
+| Internal dimension          |                                                                           896 | dim        | R-VA-024, Section 4.2        | `paper evidence`                                |
+| Speech encoder              |                                                                 Whisper-small | -          | R-VA-024, Section 4.2        | `paper evidence`                                |
+| TTS adapter blocks          |                                                                             6 | blocks     | R-VA-024, Section 4.2        | `paper evidence`                                |
+| Audio codec                 |                                                                          SNAC | -          | R-VA-024, Section 1          | `paper evidence`                                |
+| SNAC codebook layers        | 7 (intro says 8, but Section 4.2 clarifies 7 audio + 1 text = 8 output heads) | layers     | R-VA-024, Sections 1 and 4.2 | `paper evidence` (paper-internal inconsistency) |
+| Token rate                  |                                                                      hundreds | tokens/sec | R-VA-024, Section 1          | `paper evidence` (imprecise)                    |
+| Training GPUs               |                                                                       8x A100 | -          | R-VA-024, Section 4.2        | `paper evidence`                                |
+| VoiceAssistant-400K entries |                                                                         400K+ | entries    | R-VA-024, Section 1          | `paper evidence`                                |
+| ASR test-clean WER          |                                                                           4.5 | %          | R-VA-024, Table 2            | `paper evidence`                                |
+| ASR test-other WER          |                                                                           9.7 | %          | R-VA-024, Table 2            | `paper evidence`                                |
+| Specific end-to-end latency |                                                                  not reported | ms         | R-VA-024                     | `paper evidence` (absence)                      |
 
 ## GLM-4-Voice
 
@@ -386,13 +386,13 @@ evaluation in Table 1, which shows it offers "an optimal balance between efficie
 
 **GLM-4-Voice Tokenizer Evaluation (Table 1, subset):**
 
-| Tokenizer | Frame Rate | Bitrate (bps) | LS-clean WER | LS-other WER | Recon WER | VisQOL | MOSNet |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| SpeechTokenizer (1.5K) | 50 Hz | 1500 | - | - | 9.97 | 1.53 | 2.67 |
-| SpeechTokenizer (4K) | 50 Hz | 4000 | - | - | 6.32 | 3.07 | 3.10 |
-| Moshi (Mimi) | 12.5 Hz | 1100 | - | - | 8.36 | 2.82 | 2.89 |
-| GLM-4-Voice (12.5 Hz) | 12.5 Hz | 175 | 2.10 | 4.90 | 8.43 | 2.52 | 3.39 |
-| GLM-4-Voice (50 Hz) | 50 Hz | 600 | 1.85 | 3.78 | 6.24 | 2.67 | 3.38 |
+| Tokenizer              | Frame Rate | Bitrate (bps) | LS-clean WER | LS-other WER | Recon WER | VisQOL | MOSNet |
+| ---------------------- | ---------: | ------------: | -----------: | -----------: | --------: | -----: | -----: |
+| SpeechTokenizer (1.5K) |      50 Hz |          1500 |            - |            - |      9.97 |   1.53 |   2.67 |
+| SpeechTokenizer (4K)   |      50 Hz |          4000 |            - |            - |      6.32 |   3.07 |   3.10 |
+| Moshi (Mimi)           |    12.5 Hz |          1100 |            - |            - |      8.36 |   2.82 |   2.89 |
+| GLM-4-Voice (12.5 Hz)  |    12.5 Hz |           175 |         2.10 |         4.90 |      8.43 |   2.52 |   3.39 |
+| GLM-4-Voice (50 Hz)    |      50 Hz |           600 |         1.85 |         3.78 |      6.24 |   2.67 |   3.38 |
 
 (`paper evidence`, R-VA-025, Table 1.)
 
@@ -417,8 +417,9 @@ T_total = T_speech_tokenize + T_llm_prefill + T_llm_decode + T_speech_decode
 ```
 
 Where:
+
 - Speech tokenization operates in streaming blocks of fixed size t_block
-- LLM prefill depends on f_r * T_user_speech (frame rate 12.5 * user speech duration)
+- LLM prefill depends on f*r * T*user_speech (frame rate 12.5 * user speech duration)
 - LLM decoding generates N_first_speech = 13 text tokens + 10 speech tokens = 23 tokens
 - Speech decoding processes 10 audio tokens for the first chunk
 
@@ -442,36 +443,36 @@ before starting speech. (`paper evidence`, R-VA-025, Section 3.3.)
 
 **Speech Language Modeling (accuracy, higher is better):**
 
-| Model | Modality | Params | Topic-StoryCloze | StoryCloze | Source |
-|---|---|---:|---:|---:|---|
-| TWIST | S->S | 7B | 66.6 | 53.3 | R-VA-025, Table 3 |
-| Spirit-LM | S->S | 7B | 82.9 | 61.0 | R-VA-025, Table 3 |
-| Moshi | S->S | 7B | 83.0 | 60.8 | R-VA-025, Table 3 |
-| GLM-4-Voice | S->T | 9B | 93.6 | 76.3 | R-VA-025, Table 3 |
-| GLM-4-Voice | S->S | 9B | 82.9 | 62.4 | R-VA-025, Table 3 |
+| Model       | Modality | Params | Topic-StoryCloze | StoryCloze | Source            |
+| ----------- | -------- | -----: | ---------------: | ---------: | ----------------- |
+| TWIST       | S->S     |     7B |             66.6 |       53.3 | R-VA-025, Table 3 |
+| Spirit-LM   | S->S     |     7B |             82.9 |       61.0 | R-VA-025, Table 3 |
+| Moshi       | S->S     |     7B |             83.0 |       60.8 | R-VA-025, Table 3 |
+| GLM-4-Voice | S->T     |     9B |             93.6 |       76.3 | R-VA-025, Table 3 |
+| GLM-4-Voice | S->S     |     9B |             82.9 |       62.4 | R-VA-025, Table 3 |
 
 (`paper evidence`, R-VA-025, Table 3. Baseline results taken from Defossez et al. 2024.)
 
 **Spoken Question Answering (accuracy %, higher is better):**
 
-| Model | Modality | Params | Web Questions | Llama Questions | TriviaQA | Source |
-|---|---|---:|---:|---:|---:|---|
-| Moshi | S->T | 7B | 26.6 | 62.3 | 22.8 | R-VA-025, Table 4 |
-| Moshi | S->S | 7B | 9.2 | 21.0 | 7.3 | R-VA-025, Table 4 |
-| GLM-4-Voice | S->T | 9B | 32.2 | 64.7 | 39.1 | R-VA-025, Table 4 |
-| GLM-4-Voice | S->S | 9B | 15.9 | 50.7 | 26.5 | R-VA-025, Table 4 |
+| Model       | Modality | Params | Web Questions | Llama Questions | TriviaQA | Source            |
+| ----------- | -------- | -----: | ------------: | --------------: | -------: | ----------------- |
+| Moshi       | S->T     |     7B |          26.6 |            62.3 |     22.8 | R-VA-025, Table 4 |
+| Moshi       | S->S     |     7B |           9.2 |            21.0 |      7.3 | R-VA-025, Table 4 |
+| GLM-4-Voice | S->T     |     9B |          32.2 |            64.7 |     39.1 | R-VA-025, Table 4 |
+| GLM-4-Voice | S->S     |     9B |          15.9 |            50.7 |     26.5 | R-VA-025, Table 4 |
 
 (`paper evidence`, R-VA-025, Table 4. Baseline results taken from Defossez et al. 2024.)
 
 **Chat Model Evaluation:**
 
-| Model | General QA (GPT-4o score) | Knowledge (GPT-4o score) | UTMOS | ASR-WER % | Source |
-|---|---:|---:|---:|---:|---|
-| SpeechGPT | 1.40 | 2.20 | 3.86 | 66.57 | R-VA-025, Table 6 |
-| Mini-Omni | 2.44 | 1.10 | 3.17 | 25.28 | R-VA-025, Table 6 |
-| Llama-Omni | 3.50 | 3.90 | 3.92 | 9.18 | R-VA-025, Table 6 |
-| Moshi | 2.42 | 3.60 | 3.90 | 7.95 | R-VA-025, Table 6 |
-| GLM-4-Voice | 5.40 | 5.20 | 4.45 | 5.74 | R-VA-025, Table 6 |
+| Model       | General QA (GPT-4o score) | Knowledge (GPT-4o score) | UTMOS | ASR-WER % | Source            |
+| ----------- | ------------------------: | -----------------------: | ----: | --------: | ----------------- |
+| SpeechGPT   |                      1.40 |                     2.20 |  3.86 |     66.57 | R-VA-025, Table 6 |
+| Mini-Omni   |                      2.44 |                     1.10 |  3.17 |     25.28 | R-VA-025, Table 6 |
+| Llama-Omni  |                      3.50 |                     3.90 |  3.92 |      9.18 | R-VA-025, Table 6 |
+| Moshi       |                      2.42 |                     3.60 |  3.90 |      7.95 | R-VA-025, Table 6 |
+| GLM-4-Voice |                      5.40 |                     5.20 |  4.45 |      5.74 | R-VA-025, Table 6 |
 
 (`paper evidence`, R-VA-025, Table 6.)
 
@@ -483,35 +484,35 @@ Mini-Omni's 25.28%.
 
 ### GLM-4-Voice Data Table
 
-| Claim | Value | Unit | Source | Quality label |
-|---|---:|---|---|---|
-| Backbone | GLM-4-9B | - | R-VA-025, Section 4.1 | `paper evidence` |
-| Backbone params | 9B | params | R-VA-025, Table 3 | `paper evidence` |
-| Tokenizer frame rate | 12.5 | Hz | R-VA-025, Section 3.1 | `paper evidence` |
-| Tokenizer bitrate | 175 | bps | R-VA-025, Section 3.1 | `paper evidence` |
-| Codebook type | single | codebook | R-VA-025, Section 3.1 | `paper evidence` |
-| Pre-training tokens | 1T | tokens | R-VA-025, Section 4.1 | `paper evidence` |
-| Unsupervised speech data | 700k | hours | R-VA-025, Section 4.1 | `paper evidence` |
-| Streaming block size | 0.8 | seconds | R-VA-025, Section 3.2 | `paper evidence` |
-| Min tokens for first audio | 10 | speech tokens | R-VA-025, Section 3.2 | `paper evidence` |
-| Streaming Thoughts text:speech ratio | 13:26 | tokens | R-VA-025, Section 3.3 | `paper evidence` |
-| Chat UTMOS | 4.45 | MOS | R-VA-025, Table 6 | `paper evidence` |
-| Chat ASR-WER | 5.74 | % | R-VA-025, Table 6 | `paper evidence` |
-| Chat General QA (GPT-4o) | 5.40 | /10 | R-VA-025, Table 6 | `paper evidence` |
-| Chat Knowledge (GPT-4o) | 5.20 | /10 | R-VA-025, Table 6 | `paper evidence` |
-| ASR LS test-clean WER | 2.82 | % | R-VA-025, Table 5 | `paper evidence` |
-| TTS Seed-TTS test-en WER | 2.91 | % | R-VA-025, Table 5 | `paper evidence` |
-| TTS Seed-TTS test-zh WER | 2.10 | % | R-VA-025, Table 5 | `paper evidence` |
-| Specific end-to-end latency | not reported | ms | R-VA-025 | `paper evidence` (absence) |
+| Claim                                |        Value | Unit          | Source                | Quality label              |
+| ------------------------------------ | -----------: | ------------- | --------------------- | -------------------------- |
+| Backbone                             |     GLM-4-9B | -             | R-VA-025, Section 4.1 | `paper evidence`           |
+| Backbone params                      |           9B | params        | R-VA-025, Table 3     | `paper evidence`           |
+| Tokenizer frame rate                 |         12.5 | Hz            | R-VA-025, Section 3.1 | `paper evidence`           |
+| Tokenizer bitrate                    |          175 | bps           | R-VA-025, Section 3.1 | `paper evidence`           |
+| Codebook type                        |       single | codebook      | R-VA-025, Section 3.1 | `paper evidence`           |
+| Pre-training tokens                  |           1T | tokens        | R-VA-025, Section 4.1 | `paper evidence`           |
+| Unsupervised speech data             |         700k | hours         | R-VA-025, Section 4.1 | `paper evidence`           |
+| Streaming block size                 |          0.8 | seconds       | R-VA-025, Section 3.2 | `paper evidence`           |
+| Min tokens for first audio           |           10 | speech tokens | R-VA-025, Section 3.2 | `paper evidence`           |
+| Streaming Thoughts text:speech ratio |        13:26 | tokens        | R-VA-025, Section 3.3 | `paper evidence`           |
+| Chat UTMOS                           |         4.45 | MOS           | R-VA-025, Table 6     | `paper evidence`           |
+| Chat ASR-WER                         |         5.74 | %             | R-VA-025, Table 6     | `paper evidence`           |
+| Chat General QA (GPT-4o)             |         5.40 | /10           | R-VA-025, Table 6     | `paper evidence`           |
+| Chat Knowledge (GPT-4o)              |         5.20 | /10           | R-VA-025, Table 6     | `paper evidence`           |
+| ASR LS test-clean WER                |         2.82 | %             | R-VA-025, Table 5     | `paper evidence`           |
+| TTS Seed-TTS test-en WER             |         2.91 | %             | R-VA-025, Table 5     | `paper evidence`           |
+| TTS Seed-TTS test-zh WER             |         2.10 | %             | R-VA-025, Table 5     | `paper evidence`           |
+| Specific end-to-end latency          | not reported | ms            | R-VA-025              | `paper evidence` (absence) |
 
 ## Comprehensive Model Comparison
 
-| Model | Backbone | Params | Codec | Codebooks | Frame Rate | Bitrate | Latency Claim | Duplex Support | Source |
-|---|---|---:|---|---:|---:|---|---|---|---|
-| Moshi | Helium (custom) | 7B | Mimi (split RVQ) | 8 (1 VQ + 7 RVQ) | 12.5 Hz | 1.1 kbps | 160 ms theoretical, 200 ms practical | Full duplex (multi-stream) | R-VA-018 |
-| Qwen2.5-Omni | Qwen2.5 | 7B | qwen-tts-tokenizer | not specified | 40 ms/frame (audio encoder) | not specified | not reported | Streaming speech output (not full duplex) | R-VA-019 |
-| Mini-Omni | Qwen2-0.5B | 0.5B | SNAC | 7 audio + 1 text (paper intro says 8 codebooks; Section 4.2 says 7 token layers) | not specified ("hundreds/s") | not specified | "real-time" (no number) | Streaming output (not full duplex) | R-VA-024 |
-| GLM-4-Voice | GLM-4-9B | 9B | Supervised VQ (whisper-derived) | 1 | 12.5 Hz | 175 bps | formula only (no measured number) | Streaming output (not full duplex) | R-VA-025 |
+| Model        | Backbone        | Params | Codec                           |                                                                        Codebooks |                   Frame Rate | Bitrate       | Latency Claim                        | Duplex Support                            | Source   |
+| ------------ | --------------- | -----: | ------------------------------- | -------------------------------------------------------------------------------: | ---------------------------: | ------------- | ------------------------------------ | ----------------------------------------- | -------- |
+| Moshi        | Helium (custom) |     7B | Mimi (split RVQ)                |                                                                 8 (1 VQ + 7 RVQ) |                      12.5 Hz | 1.1 kbps      | 160 ms theoretical, 200 ms practical | Full duplex (multi-stream)                | R-VA-018 |
+| Qwen2.5-Omni | Qwen2.5         |     7B | qwen-tts-tokenizer              |                                                                    not specified |  40 ms/frame (audio encoder) | not specified | not reported                         | Streaming speech output (not full duplex) | R-VA-019 |
+| Mini-Omni    | Qwen2-0.5B      |   0.5B | SNAC                            | 7 audio + 1 text (paper intro says 8 codebooks; Section 4.2 says 7 token layers) | not specified ("hundreds/s") | not specified | "real-time" (no number)              | Streaming output (not full duplex)        | R-VA-024 |
+| GLM-4-Voice  | GLM-4-9B        |     9B | Supervised VQ (whisper-derived) |                                                                                1 |                      12.5 Hz | 175 bps       | formula only (no measured number)    | Streaming output (not full duplex)        | R-VA-025 |
 
 **Caveats:** All latency numbers are from the papers' own evaluations. Only Moshi reports a
 measured practical latency. Qwen2.5-Omni, Mini-Omni, and GLM-4-Voice describe streaming
@@ -523,13 +524,13 @@ turn-based input.
 
 ## Native Versus Cascaded Comparison
 
-| Architecture | Strengths | Weaknesses | Source label |
-|---|---|---|---|
-| Cascaded STT -> LLM -> TTS | Debuggable, modular, easy transcripts, easy tools, mature components | Compounded latency, text bottleneck, external turn-taking | `practitioner signal` (from R-VA-028 and general engineering practice) |
-| Moshi (multi-stream native) | Preserves paralinguistic signal, models overlap/backchannels, 200 ms practical latency, no explicit turns | Harder debugging, harder moderation/logging, tool-calling boundary less obvious, English-only 7B backbone | `paper evidence` (R-VA-018) |
-| Qwen2.5-Omni (Thinker-Talker hybrid) | Keeps reasoning/text structure, strong multimodal benchmarks, NMOS near human | No measured latency, no full duplex, more complex serving | `paper evidence` (R-VA-019) |
-| GLM-4-Voice (single-codebook native) | Lowest bitrate tokenizer, highest chat quality scores, strong SQA, bilingual | No measured latency, no full duplex, 9B model size | `paper evidence` (R-VA-025) |
-| Mini-Omni (compact native) | Smallest model (0.5B), demonstrates feasibility at small scale | Weakest ASR, no quality benchmarks for TTS, no measured latency | `paper evidence` (R-VA-024) |
+| Architecture                         | Strengths                                                                                                 | Weaknesses                                                                                                | Source label                                                           |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| Cascaded STT -> LLM -> TTS           | Debuggable, modular, easy transcripts, easy tools, mature components                                      | Compounded latency, text bottleneck, external turn-taking                                                 | `practitioner signal` (from R-VA-028 and general engineering practice) |
+| Moshi (multi-stream native)          | Preserves paralinguistic signal, models overlap/backchannels, 200 ms practical latency, no explicit turns | Harder debugging, harder moderation/logging, tool-calling boundary less obvious, English-only 7B backbone | `paper evidence` (R-VA-018)                                            |
+| Qwen2.5-Omni (Thinker-Talker hybrid) | Keeps reasoning/text structure, strong multimodal benchmarks, NMOS near human                             | No measured latency, no full duplex, more complex serving                                                 | `paper evidence` (R-VA-019)                                            |
+| GLM-4-Voice (single-codebook native) | Lowest bitrate tokenizer, highest chat quality scores, strong SQA, bilingual                              | No measured latency, no full duplex, 9B model size                                                        | `paper evidence` (R-VA-025)                                            |
+| Mini-Omni (compact native)           | Smallest model (0.5B), demonstrates feasibility at small scale                                            | Weakest ASR, no quality benchmarks for TTS, no measured latency                                           | `paper evidence` (R-VA-024)                                            |
 
 ## Codec Architecture Diagram
 
@@ -579,6 +580,7 @@ sits between them, using a streaming-thoughts template that interleaves text and
 Mini-Omni demonstrates that the approach works even at 0.5B parameters.
 
 Inference: The codec design is the key differentiator:
+
 - Mimi (Moshi): High bitrate (1.1 kbps), multi-codebook, semantic-acoustic split. Designed for
   real-time full-duplex.
 - GLM-4-Voice tokenizer: Ultra-low bitrate (175 bps), single codebook, supervised from ASR.

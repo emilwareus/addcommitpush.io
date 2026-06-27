@@ -17,6 +17,7 @@ STORM is a research methodology developed by Stanford University's OVAL Lab that
 ## Core Concept
 
 STORM models the "pre-writing" phase of research that human writers naturally follow:
+
 1. Research the topic from multiple perspectives
 2. Identify key questions and knowledge gaps
 3. Organize information into a coherent outline
@@ -31,11 +32,13 @@ The key innovation is simulating **multi-perspective conversations** where diffe
 ### Phase 1: DISCOVER (Perspective Generation)
 
 **What happens:**
+
 - Survey related topics via web search
 - LLM identifies 3-6 expert perspectives
 - Each perspective gets: Name, Focus Area, Initial Questions
 
 **Example perspectives for "Cloud Security Sandboxing":**
+
 1. Cloud Security Architect - Multi-tenant isolation, threat containment
 2. Performance Engineer - Startup latency optimization, resource management
 3. GCP Platform Specialist - GCP-native implementation patterns
@@ -46,11 +49,13 @@ The key innovation is simulating **multi-perspective conversations** where diffe
 ### Phase 2: CONVERSE (Parallel Conversation Simulation)
 
 **What happens:**
+
 - For each perspective, simulate a conversation between:
   - **WikiWriter:** Asks questions based on the persona's focus
   - **TopicExpert:** Converts questions → search queries, executes searches, synthesizes answers with citations
 
 **Conversation flow:**
+
 1. WikiWriter asks a question based on perspective's focus
 2. TopicExpert converts question to search queries
 3. TopicExpert executes web searches
@@ -65,6 +70,7 @@ The key innovation is simulating **multi-perspective conversations** where diffe
 ### Phase 3: ANALYZE (Fact Extraction & Validation)
 
 **What happens:**
+
 - Extract all facts from conversations
 - Detect contradictions between perspectives
 - Identify knowledge gaps
@@ -77,6 +83,7 @@ The key innovation is simulating **multi-perspective conversations** where diffe
 ### Phase 4: SYNTHESIZE (Two-Phase Outline & Article Generation)
 
 **What happens:**
+
 1. **Draft outline** from conversation content
 2. **Refine outline** for coherence and logical flow
 3. **Generate full article** with inline citations
@@ -85,6 +92,7 @@ The key innovation is simulating **multi-perspective conversations** where diffe
 **Output:** Wikipedia-style long-form article with proper citations
 
 **Code locations:**
+
 - `knowledge_storm/storm_wiki/modules/outline_generation.py`
 - `knowledge_storm/storm_wiki/modules/article_generation.py`
 - `knowledge_storm/storm_wiki/modules/article_polish.py`
@@ -136,22 +144,22 @@ The key innovation is simulating **multi-perspective conversations** where diffe
 
 From `STORMWikiRunnerArguments`:
 
-| Parameter | Default | Description |
-|-----------|---------|-------------|
-| max_conv_turn | 3 | Maximum questions in conversational Q&A |
-| max_perspective | 3 | Maximum number of perspectives |
-| max_search_queries_per_turn | 3 | Search queries per conversation turn |
-| search_top_k | 3 | Top K search results to consider |
-| retrieve_top_k | 3 | Top K references for each section |
-| max_thread_num | 10 | Maximum parallel threads |
+| Parameter                   | Default | Description                             |
+| --------------------------- | ------- | --------------------------------------- |
+| max_conv_turn               | 3       | Maximum questions in conversational Q&A |
+| max_perspective             | 3       | Maximum number of perspectives          |
+| max_search_queries_per_turn | 3       | Search queries per conversation turn    |
+| search_top_k                | 3       | Top K search results to consider        |
+| retrieve_top_k              | 3       | Top K references for each section       |
+| max_thread_num              | 10      | Maximum parallel threads                |
 
 ### Perspective Scaling
 
-| Complexity | Perspectives | Use Case |
-|------------|--------------|----------|
-| Simple | 2-3 | Factual queries with limited scope |
-| Moderate | 3-4 | Multi-aspect topics needing diverse views |
-| Complex | 5-6 | Deep research requiring comprehensive coverage |
+| Complexity | Perspectives | Use Case                                       |
+| ---------- | ------------ | ---------------------------------------------- |
+| Simple     | 2-3          | Factual queries with limited scope             |
+| Moderate   | 3-4          | Multi-aspect topics needing diverse views      |
+| Complex    | 5-6          | Deep research requiring comprehensive coverage |
 
 ---
 
@@ -169,6 +177,7 @@ class STORMWikiLMConfigs:
 ```
 
 Default models (OpenAI):
+
 - Conversation: gpt-4o-mini-2024-07-18
 - Outline: gpt-4-0125-preview
 - Article: gpt-4o-2024-05-13
@@ -183,12 +192,14 @@ The go-research package includes a STORM implementation:
 **Location:** `/go-research/internal/architectures/storm/`
 
 **Key differences from Python:**
+
 - Uses OpenRouter as LLM provider
 - Brave Search for web retrieval
 - Streaming output during conversations
 - Session persistence to JSON + Obsidian vault
 
 **Usage:**
+
 ```bash
 cd go-research
 go run ./cmd/research
@@ -208,11 +219,13 @@ From the NAACL 2024 paper:
 - **FActScore:** Comparable to human-written Wikipedia articles
 
 **Strengths:**
+
 - Multi-perspective ensures diverse viewpoint coverage
 - Conversation simulation generates high-quality questions
 - Two-phase outline prevents incoherent structure
 
 **Weaknesses:**
+
 - Linear pipeline can't self-correct early errors
 - No explicit handling of contradictory sources
 - Fixed number of perspectives regardless of topic complexity

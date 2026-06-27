@@ -3,6 +3,7 @@
 How OpenAI's encoder-decoder Transformer turns audio into text, and why it remains the foundation for open-source speech recognition.
 
 **Based on:**
+
 - [Whisper source code](../../../go-research/external_code/whisper/whisper/)
 - [Whisper paper (Radford et al., 2022)](../../../go-research/external_code/whisper/whisper_paper_2212.04356.pdf) -- "Robust Speech Recognition via Large-Scale Weak Supervision"
 
@@ -15,6 +16,7 @@ Whisper is an encoder-decoder Transformer trained on **680,000 hours** of weakly
 The key insight: scaling weakly supervised pre-training to 680K hours (vs ~1K hours in academic datasets) eliminates the need for dataset-specific fine-tuning. The model learns to handle punctuation, capitalization, and formatting directly, replacing the traditional inverse text normalization pipeline.
 
 **Key files:**
+
 - [`whisper/model.py`](../../../go-research/external_code/whisper/whisper/model.py) -- Model architecture (encoder, decoder, attention)
 - [`whisper/audio.py`](../../../go-research/external_code/whisper/whisper/audio.py) -- Audio preprocessing, mel spectrogram
 - [`whisper/tokenizer.py`](../../../go-research/external_code/whisper/whisper/tokenizer.py) -- BPE tokenizer, special tokens, timestamp tokens
@@ -31,6 +33,7 @@ Audio (16kHz) --> Mel Spectrogram (80/128 bands) --> [Conv Stem + Transformer En
 ```
 
 The architecture is a standard encoder-decoder Transformer with two notable choices:
+
 1. A convolutional stem (not learned embeddings) for the audio input
 2. A multitask training format that handles transcription, translation, language ID, and VAD through special tokens
 
@@ -38,16 +41,17 @@ The architecture is a standard encoder-decoder Transformer with two notable choi
 
 From [`model.py`](../../../go-research/external_code/whisper/whisper/model.py) `ModelDimensions` and the paper Table 1:
 
-| Model | Layers (enc/dec) | Width | Heads | Head dim | FFN dim | Params |
-|-------|-----------------|-------|-------|----------|---------|--------|
-| tiny | 4 / 4 | 384 | 6 | 64 | 1536 | 39M |
-| base | 6 / 6 | 512 | 8 | 64 | 2048 | 74M |
-| small | 12 / 12 | 768 | 12 | 64 | 3072 | 244M |
-| medium | 24 / 24 | 1024 | 16 | 64 | 4096 | 769M |
-| large-v3 | 32 / 32 | 1280 | 20 | 64 | 5120 | 1550M |
-| turbo | 32 / **4** | 1280 | 20 | 64 | 5120 | 809M |
+| Model    | Layers (enc/dec) | Width | Heads | Head dim | FFN dim | Params |
+| -------- | ---------------- | ----- | ----- | -------- | ------- | ------ |
+| tiny     | 4 / 4            | 384   | 6     | 64       | 1536    | 39M    |
+| base     | 6 / 6            | 512   | 8     | 64       | 2048    | 74M    |
+| small    | 12 / 12          | 768   | 12    | 64       | 3072    | 244M   |
+| medium   | 24 / 24          | 1024  | 16    | 64       | 4096    | 769M   |
+| large-v3 | 32 / 32          | 1280  | 20    | 64       | 5120    | 1550M  |
+| turbo    | 32 / **4**       | 1280  | 20    | 64       | 5120    | 809M   |
 
 Key observations:
+
 - Encoder and decoder always have the **same width** but turbo slashes decoder from 32 to 4 layers (the core speed trick -- same encoder quality, much faster decoding).
 - Head dimension is always 64, FFN is always 4x width.
 - large-v3 increased mel bands from 80 to 128 and added Cantonese (vocab 51866 vs 51865).
@@ -74,15 +78,15 @@ FRAMES_PER_SECOND = exact_div(SAMPLE_RATE, HOP_LENGTH)  # 10ms per audio frame
 TOKENS_PER_SECOND = exact_div(SAMPLE_RATE, N_SAMPLES_PER_TOKEN)  # 20ms per audio token
 ```
 
-| Constant | Value | Meaning |
-|----------|-------|---------|
-| `SAMPLE_RATE` | 16,000 Hz | |
-| `N_FFT` | 400 | 25ms window at 16kHz |
-| `HOP_LENGTH` | 160 | 10ms hop at 16kHz |
-| `CHUNK_LENGTH` | 30 seconds | Fixed processing window |
-| `N_SAMPLES` | 480,000 | 30s * 16kHz |
-| `N_FRAMES` | 3,000 | 480000 / 160 mel frames |
-| `TOKENS_PER_SECOND` | 50 | After conv2 stride-2: 100 fps / 2 |
+| Constant            | Value      | Meaning                           |
+| ------------------- | ---------- | --------------------------------- |
+| `SAMPLE_RATE`       | 16,000 Hz  |                                   |
+| `N_FFT`             | 400        | 25ms window at 16kHz              |
+| `HOP_LENGTH`        | 160        | 10ms hop at 16kHz                 |
+| `CHUNK_LENGTH`      | 30 seconds | Fixed processing window           |
+| `N_SAMPLES`         | 480,000    | 30s \* 16kHz                      |
+| `N_FRAMES`          | 3,000      | 480000 / 160 mel frames           |
+| `TOKENS_PER_SECOND` | 50         | After conv2 stride-2: 100 fps / 2 |
 
 Each encoder token represents **20ms** of audio. The 30-second chunk produces exactly **1500 encoder tokens** (3000 mel frames / 2 from the stride-2 convolution).
 
@@ -124,6 +128,7 @@ def log_mel_spectrogram(
 ```
 
 Steps:
+
 1. Hann window, size 400 (25ms)
 2. STFT with `torch.stft(audio, n_fft=400, hop_length=160)`
 3. Squared magnitude: `stft[..., :-1].abs() ** 2`
@@ -237,6 +242,7 @@ class TextDecoder(nn.Module):
 ```
 
 Key differences from the encoder:
+
 - **Learned** positional embeddings (encoder uses fixed sinusoidal)
 - **Cross-attention** to encoder output in every block
 - **Causal mask** (upper-triangular -inf) for autoregressive generation
@@ -245,6 +251,7 @@ Key differences from the encoder:
 ### Context window split
 
 The decoder context is 448 tokens, split:
+
 - Up to 224 for **prompt** (previous text conditioning)
 - Up to 224 for **new generation**
 
@@ -379,6 +386,7 @@ Custom `LayerNorm` casts to float32 for normalization, then back to input dtype.
 ### Vocabulary
 
 Uses **tiktoken** (OpenAI's BPE) with the GPT-2 tokenization regex pattern. Two encodings:
+
 - `gpt2` for English-only models
 - `multilingual` with refit vocabulary for multilingual models
 
@@ -387,6 +395,7 @@ Uses **tiktoken** (OpenAI's BPE) with the GPT-2 tokenization regex pattern. Two 
 [`tokenizer.py:340-355`](../../../go-research/external_code/whisper/whisper/tokenizer.py)
 
 Appended after the base BPE vocabulary in exact order:
+
 1. `<|endoftext|>` (EOT)
 2. `<|startoftranscript|>` (SOT)
 3. **99-100 language tokens**: `<|en|>`, `<|zh|>`, `<|de|>`, ... (100 for v3, adds `<|yue|>` Cantonese)
@@ -472,6 +481,7 @@ Default schedule: `(0.0, 0.2, 0.4, 0.6, 0.8, 1.0)`. For each segment:
 [`decoding.py:441-505`](../../../go-research/external_code/whisper/whisper/decoding.py)
 
 `ApplyTimestampRules` enforces:
+
 1. Timestamps must appear in **pairs** (start, end)
 2. Timestamps must be **monotonically increasing**
 3. First token must be a timestamp
@@ -532,6 +542,7 @@ At the first decoding step, the softmax probability for `<|nospeech|>` is captur
 [`decoding.py:301-404`](../../../go-research/external_code/whisper/whisper/decoding.py)
 
 Standard beam search with patience. At each step:
+
 - Top `beam_size + 1` candidates per beam
 - Cumulative log probabilities tracked
 - Finished sequences (ending in EOT) stored separately
@@ -634,6 +645,7 @@ DTW implementations: CPU via numba JIT, GPU via Triton kernel.
 ### Dataset
 
 680,000 hours from the internet:
+
 - 117,000 hours covering 96 non-English languages
 - 125,000 hours of X->en translation data
 - Rest is English transcription
@@ -660,6 +672,7 @@ Audio broken into 30-second segments paired with transcript subsets. Segments wi
 ### Multitask format
 
 All tasks encoded as token sequences (paper Figure 1):
+
 - `<|startoftranscript|>` -> language tag -> `<|transcribe|>` or `<|translate|>` -> timestamps -> text -> `<|endoftext|>`
 - No-speech segments: `<|nospeech|>`
 - Previous text conditioning via `<|startofprev|>` prefix

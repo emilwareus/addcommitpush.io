@@ -1,4 +1,5 @@
 # Deep Research Agents - Architecture Walkthrough
+
 ## Slide Deck with Speaker Notes
 
 **Event:** Foo Cafe Malmö | February 5th, 2026
@@ -8,9 +9,11 @@
 ---
 
 ## SLIDE 1: Title + Hook
+
 **Duration:** 2 minutes
 
 ### Visual
+
 ```
 ┌────────────────────────────────────────────────────────────────────┐
 │                                                                     │
@@ -36,6 +39,7 @@
 ```
 
 ### Speaker Notes
+
 "Welcome everyone! Quick show of hands:
 
 - Who's used ChatGPT or Claude for research? [most hands]
@@ -48,9 +52,11 @@ Today I'll show you how we fixed this - and yes, it involves the same math that 
 ---
 
 ## SLIDE 2: Timeline - The Evolution
+
 **Duration:** 5 minutes
 
 ### Visual
+
 ```
 ┌────────────────────────────────────────────────────────────────────┐
 │                                                                     │
@@ -79,6 +85,7 @@ Today I'll show you how we fixed this - and yes, it involves the same math that 
 ```
 
 ### Speaker Notes
+
 "Quick history - this field moves FAST.
 
 2022: Google showed LLMs can 'think' step-by-step (Chain-of-Thought) and combine reasoning with tools (ReAct). Birth of agents.
@@ -96,9 +103,11 @@ The pattern: we went from single LLM calls, to agents, to multi-agent, to iterat
 ---
 
 ## SLIDE 3: STORM Architecture
+
 **Duration:** 4 minutes
 
 ### Visual
+
 ```
 ┌────────────────────────────────────────────────────────────────────┐
 │                                                                     │
@@ -133,9 +142,11 @@ The pattern: we went from single LLM calls, to agents, to multi-agent, to iterat
 ```
 
 ### Speaker Notes
+
 "STORM's insight: Wikipedia articles are comprehensive because they synthesize MULTIPLE expert viewpoints.
 
 Five phases:
+
 1. DISCOVER - Search for related content, generate expert personas. Always includes a 'Basic fact writer' for broad coverage.
 2. INTERVIEW - For each persona, a WikiWriter asks questions and a TopicExpert answers with web-searched citations [1],[2]. The TopicExpert first generates search queries, then searches, then synthesizes. All conversations run in PARALLEL.
 3. OUTLINE - Two-stage: draft from LLM knowledge first, then refine with conversation data. Prevents the outline from being biased by whichever expert found the most.
@@ -149,9 +160,11 @@ Let me show you..."
 ---
 
 ## SLIDE 4: STORM Demo
+
 **Duration:** 6 minutes
 
 ### Visual
+
 ```
 ┌────────────────────────────────────────────────────────────────────┐
 │                                                                     │
@@ -177,6 +190,7 @@ Let me show you..."
 ```
 
 ### Speaker Notes
+
 [Run the demo, narrate as it goes]
 Expected: ~75s, ~$0.05, ~48 LLM calls, 60+ sources
 
@@ -191,9 +205,11 @@ And finally the lead section, written AFTER the body. Here's the final Wikipedia
 ---
 
 ## SLIDE 5: The Problem with Linear Pipelines
+
 **Duration:** 2 minutes
 
 ### Visual
+
 ```
 ┌────────────────────────────────────────────────────────────────────┐
 │                                                                     │
@@ -221,6 +237,7 @@ And finally the lead section, written AFTER the body. Here's the final Wikipedia
 ```
 
 ### Speaker Notes
+
 "STORM is great, but it still has the group project problem.
 
 The sub-agents can't see each other's work. If agent B discovers something that should change the plan, too late.
@@ -232,9 +249,11 @@ What if the report could EVOLVE? What if we could iterate and refine?"
 ---
 
 ## SLIDE 6: Diffusion Deep Research - The Insight
+
 **Duration:** 3 minutes
 
 ### Visual
+
 ```
 ┌────────────────────────────────────────────────────────────────────┐
 │                                                                     │
@@ -265,6 +284,7 @@ What if the report could EVOLVE? What if we could iterate and refine?"
 ```
 
 ### Speaker Notes
+
 "Here's Google's breakthrough.
 
 In image diffusion, you start with random noise and iteratively 'denoise' until you get a clean image.
@@ -280,9 +300,11 @@ The key insight: the initial draft IS the noise. We refine it away through itera
 ---
 
 ## SLIDE 7: Diffusion Architecture
+
 **Duration:** 4 minutes
 
 ### Visual
+
 [Use: diffusion-overview component screenshot]
 
 ```
@@ -317,6 +339,7 @@ The key insight: the initial draft IS the noise. We refine it away through itera
 ```
 
 ### Speaker Notes
+
 "Four phases:
 
 1. BRIEF - Transform query into detailed research objectives
@@ -337,9 +360,11 @@ The key insight: the initial draft IS the noise. We refine it away through itera
 ---
 
 ## SLIDE 8: Parallel Sub-Agents
+
 **Duration:** 2 minutes
 
 ### Visual
+
 [Use: parallel-agents component screenshot]
 
 ```
@@ -375,6 +400,7 @@ The key insight: the initial draft IS the noise. We refine it away through itera
 ```
 
 ### Speaker Notes
+
 "When the supervisor calls ConductResearch, it spawns up to 3 ReAct sub-agents in parallel.
 
 Each sub-agent runs its own Think-Act-Observe loop — the same ReAct pattern we saw earlier. They search the web, reflect on what they found, search again, until they have enough.
@@ -388,9 +414,11 @@ After all sub-agents return, the draft is automatically refined with the new evi
 ---
 
 ## SLIDE 9: Diffusion Demo
+
 **Duration:** 7 minutes
 
 ### Visual
+
 ```
 ┌────────────────────────────────────────────────────────────────────┐
 │                                                                     │
@@ -416,6 +444,7 @@ After all sub-agents return, the draft is automatically refined with the new evi
 ```
 
 ### Speaker Notes
+
 [Run the demo, narrate as it goes]
 
 "Watch the initial draft - it's rough, has gaps marked... Now it's identifying what's missing... Spawning sub-agents... See the iteration count going up... The draft is getting more detailed with each pass... And here's the final report - compare how much more comprehensive it is than the initial draft."
@@ -423,9 +452,11 @@ After all sub-agents return, the draft is automatically refined with the new evi
 ---
 
 ## SLIDE 10: Why Diffusion Wins
+
 **Duration:** 3 minutes
 
 ### Visual
+
 [Use: race-metrics component screenshot if available]
 
 ```
@@ -458,6 +489,7 @@ After all sub-agents return, the draft is automatically refined with the new evi
 ```
 
 ### Speaker Notes
+
 "The numbers are striking. Google's diffusion beat OpenAI's Deep Research 74.5% of the time.
 
 Why?
@@ -473,9 +505,11 @@ The theme: iteration and self-correction beat single-pass every time."
 ---
 
 ## SLIDE 11: Practical Takeaways
+
 **Duration:** 3 minutes
 
 ### Visual
+
 ```
 ┌────────────────────────────────────────────────────────────────────┐
 │                                                                     │
@@ -507,6 +541,7 @@ The theme: iteration and self-correction beat single-pass every time."
 ```
 
 ### Speaker Notes
+
 "Seven takeaways:
 
 1. Start with a draft - even rough, it shows gaps faster than staring at blank page.
@@ -526,9 +561,11 @@ The theme: iteration and self-correction beat single-pass every time."
 ---
 
 ## SLIDE 12: Resources + Q&A
+
 **Duration:** 15+ minutes
 
 ### Visual
+
 ```
 ┌────────────────────────────────────────────────────────────────────┐
 │                                                                     │
@@ -561,9 +598,11 @@ The theme: iteration and self-correction beat single-pass every time."
 ```
 
 ### Speaker Notes
+
 "Questions?
 
 [If needed, prompt with:]
+
 - What research tasks would you want to automate?
 - Anyone tried the commercial products?
 - What concerns do you have about automated research?
@@ -577,35 +616,38 @@ Thanks everyone! There's pizza - let's chat!"
 
 # TIMING SUMMARY
 
-| Slide | Content | Duration |
-|-------|---------|----------|
-| 1 | Title + Hook | 2 min |
-| 2 | Timeline | 5 min |
-| 3 | STORM Architecture | 4 min |
-| 4 | STORM Demo | 6 min |
-| 5 | Problem with Linear | 2 min |
-| 6 | Diffusion Insight | 3 min |
-| 7 | Diffusion Architecture | 4 min |
-| 8 | Parallel Sub-Agents | 2 min |
-| 9 | Diffusion Demo | 7 min |
-| 10 | Why It Wins + Benchmarks | 3 min |
-| 11 | Practical Takeaways | 3 min |
-| 12 | Resources + Q&A | 15+ min |
-| **TOTAL** | **12 slides** | **~56 min + Q&A** |
+| Slide     | Content                  | Duration          |
+| --------- | ------------------------ | ----------------- |
+| 1         | Title + Hook             | 2 min             |
+| 2         | Timeline                 | 5 min             |
+| 3         | STORM Architecture       | 4 min             |
+| 4         | STORM Demo               | 6 min             |
+| 5         | Problem with Linear      | 2 min             |
+| 6         | Diffusion Insight        | 3 min             |
+| 7         | Diffusion Architecture   | 4 min             |
+| 8         | Parallel Sub-Agents      | 2 min             |
+| 9         | Diffusion Demo           | 7 min             |
+| 10        | Why It Wins + Benchmarks | 3 min             |
+| 11        | Practical Takeaways      | 3 min             |
+| 12        | Resources + Q&A          | 15+ min           |
+| **TOTAL** | **12 slides**            | **~56 min + Q&A** |
 
 ---
 
 # VISUAL ASSETS
 
 **From blog components:**
+
 - `diffusion-overview.tsx` - 4-phase pipeline
 - `parallel-agents.tsx` - Sub-agent architecture
 - `race-metrics.tsx` - Benchmark bars
 
 **Cover image:**
+
 - `/public/posts/diffusion-deep-research/cover-optimized.webp`
 
 **Demo commands:**
+
 - `uv run main.py --agent=react "I am giving a presentation at Foo Café in Malmö..."`
 - `uv run main.py --agent=storm "I am giving a presentation at Foo Café in Malmö..."`
 - `uv run main.py --agent=diffusion "I am giving a presentation at Foo Café in Malmö..."`

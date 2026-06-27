@@ -18,10 +18,10 @@ cp .env.example .env
 
 ### Required environment variables
 
-| Variable | Source |
-|----------|--------|
+| Variable             | Source                                           |
+| -------------------- | ------------------------------------------------ |
 | `OPENROUTER_API_KEY` | [openrouter.ai/keys](https://openrouter.ai/keys) |
-| `TAVILY_API_KEY` | [app.tavily.com](https://app.tavily.com/) |
+| `TAVILY_API_KEY`     | [app.tavily.com](https://app.tavily.com/)        |
 
 ## Usage
 
@@ -42,6 +42,7 @@ uv run main.py --agent=react "What is the latest version of Python?"
 **Speed:** Fast (~10s). Best for simple factual queries.
 
 **Graph:**
+
 ```
 START -> agent -> [tool calls?] -> tools -> agent (loop)
                   [no calls]   -> END
@@ -60,6 +61,7 @@ uv run main.py --agent=storm "Comparison of React, Vue, and Svelte in 2026"
 **Speed:** Medium (~60-90s). Runs 3 parallel expert interviews.
 
 **Graph:**
+
 ```
 START -> discover_perspectives -> conduct_interview (x3 parallel)
       -> generate_outline -> write_report -> END
@@ -78,6 +80,7 @@ uv run main.py --agent=diffusion "The state of quantum computing in 2026"
 **Speed:** Slower (~2-3 min). Runs up to 3 refinement iterations.
 
 **Graph:**
+
 ```
 START -> generate_brief -> generate_noisy_draft -> identify_gaps
       -> research_sub_agent (xN parallel) -> refine_draft
@@ -87,11 +90,11 @@ START -> generate_brief -> generate_noisy_draft -> identify_gaps
 
 ## Architecture overview
 
-| Agent | Paper | Key idea | LangGraph features used |
-|-------|-------|----------|------------------------|
-| ReAct | Yao et al. 2022 | Think-Act-Observe loop | Conditional edges, ToolNode |
-| STORM | Stanford 2024 | Multi-perspective interviews | `Send()` fan-out, subgraphs, structured output |
-| Diffusion | Google 2025 | Iterative noise-to-signal refinement | `Send()` fan-out, `operator.add` reducers, loop control |
+| Agent     | Paper           | Key idea                             | LangGraph features used                                 |
+| --------- | --------------- | ------------------------------------ | ------------------------------------------------------- |
+| ReAct     | Yao et al. 2022 | Think-Act-Observe loop               | Conditional edges, ToolNode                             |
+| STORM     | Stanford 2024   | Multi-perspective interviews         | `Send()` fan-out, subgraphs, structured output          |
+| Diffusion | Google 2025     | Iterative noise-to-signal refinement | `Send()` fan-out, `operator.add` reducers, loop control |
 
 ## Model
 

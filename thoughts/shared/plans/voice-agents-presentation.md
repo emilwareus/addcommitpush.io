@@ -7,6 +7,7 @@ Build a 19-slide presentation at `/presentations/voice-agents/` about building r
 ## Current State Analysis
 
 ### Presentation System (exists)
+
 - Route pattern: `app/presentations/[name]/[slide]/page.tsx` with `generateStaticParams`
 - Layout: Client component with keyboard nav (ArrowRight/Left/Space), `SlideStepProvider` context, progress bar, Framer Motion fade transitions
 - Registry: `lib/presentations/[name].ts` with `Slide` interface (`slug`, `title`, `steps`), utility functions
@@ -14,14 +15,17 @@ Build a 19-slide presentation at `/presentations/voice-agents/` about building r
 - One existing presentation: `deep-research` with 22 slides
 
 ### Shared Components (do NOT exist)
+
 - No `components/presentations/shared/` directory
 - Title, About, Resources slides are hardcoded in deep-research
 
 ### Jarvis Backend (does NOT exist)
+
 - Podidex has a complete reference implementation at `/Users/emilwareus/Development/podidex/tts/voice_chat/`
 - Key patterns to adapt: `ModelManager` singleton, `SpeechPipeline`, binary WebSocket protocol, sentence-chunked TTS
 
 ### Key Discoveries
+
 - `app/presentations/deep-research/layout.tsx:19-63` — SlideStepProvider with keyboard nav
 - `lib/presentations/deep-research.ts:1-5` — Slide interface definition
 - `app/presentations/deep-research/[slide]/page.tsx:36-129` — switch/case dynamic import pattern
@@ -43,6 +47,7 @@ Build a 19-slide presentation at `/presentations/voice-agents/` about building r
 6. `pnpm build` succeeds, `pnpm lint` passes
 
 ### Verification
+
 - `pnpm build` succeeds with all 19 slides statically generated
 - `pnpm lint` passes
 - Navigate to `/presentations/voice-agents/` → redirects to first slide
@@ -72,6 +77,7 @@ Extract reusable presentation infrastructure first (Phase 1), then scaffold the 
 ## Phase 1: Extract Shared Presentation Components
 
 ### Overview
+
 Extract reusable components from the deep-research presentation so both presentations can share them. Refactor deep-research to use the shared components.
 
 ### Changes Required
@@ -90,17 +96,17 @@ export interface Slide {
 export function createSlideRegistry(slides: Slide[]) {
   return {
     getAllSlides: () => slides,
-    getSlideBySlug: (slug: string) => slides.find(s => s.slug === slug) ?? null,
-    getAllSlideSlugs: () => slides.map(s => s.slug),
-    getSlideIndex: (slug: string) => slides.findIndex(s => s.slug === slug),
+    getSlideBySlug: (slug: string) => slides.find((s) => s.slug === slug) ?? null,
+    getAllSlideSlugs: () => slides.map((s) => s.slug),
+    getSlideIndex: (slug: string) => slides.findIndex((s) => s.slug === slug),
     getAdjacentSlugs: (slug: string) => {
-      const idx = slides.findIndex(s => s.slug === slug);
+      const idx = slides.findIndex((s) => s.slug === slug);
       return {
         prev: idx > 0 ? slides[idx - 1].slug : null,
         next: idx < slides.length - 1 ? slides[idx + 1].slug : null,
       };
     },
-    getSlideSteps: (slug: string) => slides.find(s => s.slug === slug)?.steps ?? 0,
+    getSlideSteps: (slug: string) => slides.find((s) => s.slug === slug)?.steps ?? 0,
   };
 }
 ```
@@ -234,11 +240,13 @@ Export the `SlideStepContext` and `useSlideStep` hook from this shared file. The
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Build succeeds: `pnpm build`
 - [x] Linting passes: `pnpm lint`
 - [x] Type checks pass: `pnpm exec tsc --noEmit`
 
 #### Manual Verification:
+
 - [ ] Deep-research presentation still works identically at `/presentations/deep-research/`
 - [ ] All 22 slides render correctly with animations
 - [ ] Keyboard navigation and sub-steps still work
@@ -248,6 +256,7 @@ Export the `SlideStepContext` and `useSlideStep` hook from this shared file. The
 ## Phase 2: Voice Agents Slide Scaffolding
 
 ### Overview
+
 Create the full presentation scaffolding: slide registry, routes, redirect, index entry, and all 19 slide components with placeholder content.
 
 ### Changes Required
@@ -295,15 +304,18 @@ export const {
 #### 2. Presentation Routes
 
 **File**: `app/presentations/voice-agents/page.tsx` (NEW)
+
 - Redirect to `/presentations/voice-agents/01-title`
 - `export const dynamic = 'error'`
 
 **File**: `app/presentations/voice-agents/layout.tsx` (NEW)
+
 - Use shared `PresentationLayout` with `basePath="/presentations/voice-agents"`
 - Pass the voice-agents slide registry
 - Include `JarvisSidebar` as the `sidebar` prop (placeholder for now, wired in Phase 6)
 
 **File**: `app/presentations/voice-agents/[slide]/page.tsx` (NEW)
+
 - `generateStaticParams` from voice-agents registry
 - `generateMetadata` with title pattern
 - Switch/case for all 19 slides with dynamic imports
@@ -349,6 +361,7 @@ Add the voice-agents presentation to the `presentations` array:
 **Directory**: `public/presentations/voice-agents/` (NEW)
 
 Create directory structure:
+
 ```
 public/presentations/voice-agents/
 ├── logos/          # Tech logos (whisper, kokoro, groq, silero, etc.)
@@ -358,11 +371,13 @@ public/presentations/voice-agents/
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Build succeeds: `pnpm build` (all 19 slides statically generated)
 - [x] Linting passes: `pnpm lint`
 - [x] Type checks pass: `pnpm exec tsc --noEmit`
 
 #### Manual Verification:
+
 - [ ] `/presentations/` shows both presentations
 - [ ] `/presentations/voice-agents/` redirects to first slide
 - [ ] Arrow keys navigate through all 19 slides
@@ -374,6 +389,7 @@ public/presentations/voice-agents/
 ## Phase 3: Jarvis Python Backend
 
 ### Overview
+
 Build the local Python backend for Jarvis: a WebSocket server that runs the full voice pipeline (Silero VAD → faster-whisper STT → Groq LLM with tools → Kokoro TTS). Adapts patterns from Podidex's `tts/voice_chat/` but simplified for the presentation use case.
 
 ### File Structure
@@ -872,6 +888,7 @@ torch>=2.0.0
 **File**: `presentations/voice-agents/jarvis/README.md` (NEW)
 
 Quick setup guide:
+
 1. Install system deps (`brew install espeak-ng mkcert`)
 2. Setup mkcert SSL
 3. Create venv, install requirements
@@ -882,10 +899,12 @@ Quick setup guide:
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] `cd presentations/voice-agents/jarvis && python -c "from jarvis.config import *; print('Config OK')"` succeeds
 - [x] `python -c "from jarvis.models import ModelManager; print('Imports OK')"` succeeds
 
 #### Manual Verification:
+
 - [ ] `python -m jarvis.server` starts without errors, prints "Jarvis is ready"
 - [ ] WebSocket connection via `websocat wss://localhost:8765/ws` succeeds
 - [ ] Sending audio data results in transcription JSON messages back
@@ -897,6 +916,7 @@ Quick setup guide:
 ## Phase 4: Jarvis Frontend
 
 ### Overview
+
 Build the browser-side components: WebSocket client for audio I/O, the Jarvis sidebar UI, and the React context that manages state across slides.
 
 ### Changes Required
@@ -906,6 +926,7 @@ Build the browser-side components: WebSocket client for audio I/O, the Jarvis si
 **File**: `components/presentations/voice-agents/jarvis/jarvis-context.tsx` (NEW)
 
 React context that manages:
+
 - WebSocket connection lifecycle
 - Audio capture (mic → WebSocket)
 - Audio playback (WebSocket → speakers)
@@ -944,6 +965,7 @@ interface SlideContext {
 ```
 
 Key implementation details:
+
 - Uses `AudioWorklet` for mic capture (not deprecated `ScriptProcessorNode`)
 - Sends binary frames: 4-byte flags header (bit 0 = isTtsPlaying) + PCM int16 data
 - Receives JSON messages (transcript, thinking, status) and binary audio (TTS response)
@@ -955,6 +977,7 @@ Key implementation details:
 **File**: `public/presentations/voice-agents/audio-capture-worklet.js` (NEW)
 
 AudioWorklet processor that:
+
 - Captures mic audio at device sample rate
 - Resamples to 16kHz mono if needed
 - Buffers into 30ms frames (480 samples at 16kHz)
@@ -967,6 +990,7 @@ Based on the Podidex pattern at `apps/web/public/audio-capture-worklet.js`.
 Reuse the Web Audio API pattern from Podidex. Receive Int16 PCM at 24kHz from Kokoro, convert to Float32, create AudioBuffer, and play through AudioContext.
 
 Simple queue-based approach:
+
 ```typescript
 class AudioQueue {
   private queue: AudioBuffer[] = [];
@@ -974,8 +998,12 @@ class AudioQueue {
   private ctx: AudioContext;
   private onPlayingChange: (playing: boolean) => void;
 
-  enqueue(pcmInt16: ArrayBuffer) { /* ... */ }
-  private playNext() { /* chain AudioBufferSourceNode.onended */ }
+  enqueue(pcmInt16: ArrayBuffer) {
+    /* ... */
+  }
+  private playNext() {
+    /* chain AudioBufferSourceNode.onended */
+  }
 }
 ```
 
@@ -1006,7 +1034,7 @@ export function JarvisSidebar() {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         <AnimatePresence>
-          {messages.map(msg => (
+          {messages.map((msg) => (
             <motion.div
               key={msg.id}
               initial={{ opacity: 0, y: 10 }}
@@ -1025,7 +1053,10 @@ export function JarvisSidebar() {
       {/* Connect button (shown when disconnected) */}
       {!isConnected && (
         <div className="p-4 border-t border-primary/20">
-          <button onClick={connect} className="w-full py-2 bg-primary/20 hover:bg-primary/30 text-primary rounded text-sm font-mono">
+          <button
+            onClick={connect}
+            className="w-full py-2 bg-primary/20 hover:bg-primary/30 text-primary rounded text-sm font-mono"
+          >
             Activate Jarvis
           </button>
         </div>
@@ -1058,11 +1089,13 @@ useEffect(() => {
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Build succeeds: `pnpm build`
 - [x] Linting passes: `pnpm lint`
 - [x] Type checks pass: `pnpm exec tsc --noEmit`
 
 #### Manual Verification:
+
 - [ ] Jarvis sidebar renders on all slides (right side, 320px wide)
 - [ ] "Activate Jarvis" button connects to `wss://localhost:8765/ws`
 - [ ] Status indicator shows correct state (idle/listening/thinking/speaking)
@@ -1077,6 +1110,7 @@ useEffect(() => {
 ## Phase 5: Example Code Scripts
 
 ### Overview
+
 Write 5 standalone Python scripts for the code walkthrough slide. These are runnable demos the audience can try.
 
 ### Changes Required
@@ -1084,29 +1118,37 @@ Write 5 standalone Python scripts for the code walkthrough slide. These are runn
 **Directory**: `presentations/voice-agents/examples/` (NEW)
 
 #### 1. `01-whisper-basic.py`
+
 Record 5 seconds from mic, transcribe with faster-whisper. Print result.
 
 #### 2. `02-vad-streaming.py`
+
 Stream mic audio through Silero VAD, print "Speaking..." / "Silence..." in real-time.
 
 #### 3. `03-kokoro-tts.py`
+
 Synthesize a sentence with Kokoro, play through speakers.
 
 #### 4. `04-groq-streaming.py`
+
 Stream a Groq chat completion, print tokens as they arrive.
 
 #### 5. `05-full-pipeline.py`
+
 Minimal end-to-end: VAD → Whisper → Groq → Kokoro → speaker. ~100 lines.
 
 #### 6. `requirements.txt`
+
 Shared requirements for all examples.
 
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] All scripts parse without syntax errors: `python -m py_compile presentations/voice-agents/examples/01-whisper-basic.py` (for each)
 
 #### Manual Verification:
+
 - [ ] Each script runs successfully on macOS with the venv activated
 - [ ] `01-whisper-basic.py` transcribes spoken audio correctly
 - [ ] `03-kokoro-tts.py` produces audible speech
@@ -1117,6 +1159,7 @@ Shared requirements for all examples.
 ## Phase 6: Integration & Polish
 
 ### Overview
+
 Wire Jarvis into the presentation layout, flesh out slide content, and do final testing.
 
 ### Changes Required
@@ -1124,6 +1167,7 @@ Wire Jarvis into the presentation layout, flesh out slide content, and do final 
 #### 1. Wire Jarvis Sidebar into Layout
 
 Update `app/presentations/voice-agents/layout.tsx` to:
+
 - Wrap children with `JarvisProvider`
 - Pass `JarvisSidebar` as the sidebar prop
 - Adjust main content width to account for 320px sidebar
@@ -1168,11 +1212,13 @@ Create a slide content summary that gets loaded into the Jarvis agent's system p
 ### Success Criteria
 
 #### Automated Verification:
+
 - [x] Build succeeds: `pnpm build`
 - [x] Linting passes: `pnpm lint`
 - [x] Type checks pass: `pnpm exec tsc --noEmit`
 
 #### Manual Verification:
+
 - [ ] Complete presentation run-through with Jarvis active
 - [ ] Jarvis responds to "hey Jarvis" with audible speech
 - [ ] Jarvis shows thinking observations throughout the talk
@@ -1187,13 +1233,16 @@ Create a slide content summary that gets loaded into the Jarvis agent's system p
 ## Testing Strategy
 
 ### Unit Tests
+
 Not applicable — this is a presentation, not a library.
 
 ### Integration Tests
+
 - Python backend: Start server, connect WebSocket, send audio, verify transcription response
 - Frontend: Verify sidebar renders, WebSocket connects, messages display
 
 ### Manual Testing Steps
+
 1. Start Python backend: `cd presentations/voice-agents/jarvis && python -m jarvis.server`
 2. Start Next.js: `pnpm dev` (human-operated)
 3. Navigate to `/presentations/voice-agents/`

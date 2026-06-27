@@ -14,17 +14,17 @@ A monorepo can make the relevant world available at one commit.
 
 ## Source map
 
-| Ref | Source | Local text | Source quality | Role in this insight |
-|---|---|---|---|---|
-| D19 | Google: Why Google Stores Billions of Lines of Code in a Single Repository | `articles/google-monorepo.html` | official-doc evidence | Frames the monorepo as common source of truth with explicit tradeoffs and custom tooling. |
-| D20 | Code Simplicity: What is a Monorepo, Really? | `articles/code-simplicity-monorepo.html` | practitioner signal | Breaks monorepo value into concrete mechanisms: atomic commits, universal hierarchy, one-version rule. |
-| D21 | Write the Docs: Docs as Code | `articles/write-the-docs-docs-as-code.html` | practitioner signal | Docs should use same version control, review, and CI workflow as code. |
-| D22 | GitLab: Infrastructure as Code and GitOps | `articles/gitlab-iac-gitops.html` | official-doc evidence | Git as source of truth for infrastructure and application deployment code. |
-| D23 | Spacelift: Terraform Monorepo | `articles/spacelift-terraform-monorepo.html` | practitioner signal | Terraform monorepos centralize infrastructure code but change module-versioning tradeoffs. |
-| D24 | Dropbox: Reducing Our Monorepo Size | `articles/dropbox-monorepo-size.html` | practitioner signal | Warning: without active investment, large repos can slow clone, CI, and daily development. |
-| D18 | Nx: Enforce Module Boundaries | `articles/nx-enforce-module-boundaries.html` | official-doc evidence | Monorepo boundaries can be encoded as tags and enforced automatically. |
-| R13 | Repository Intelligence Graph | `paper-text/repository-intelligence-graph-2601.10112.txt` | paper evidence | Deterministic repo maps help agents orient in complex repositories; monorepos make such maps more complete. |
-| R15 | Codified Context | `paper-text/codified-context-2602.20478.txt` | paper evidence | Case study showing persistent context infrastructure scaled to 108,000 lines in a single repository. |
+| Ref | Source                                                                     | Local text                                                | Source quality        | Role in this insight                                                                                        |
+| --- | -------------------------------------------------------------------------- | --------------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- |
+| D19 | Google: Why Google Stores Billions of Lines of Code in a Single Repository | `articles/google-monorepo.html`                           | official-doc evidence | Frames the monorepo as common source of truth with explicit tradeoffs and custom tooling.                   |
+| D20 | Code Simplicity: What is a Monorepo, Really?                               | `articles/code-simplicity-monorepo.html`                  | practitioner signal   | Breaks monorepo value into concrete mechanisms: atomic commits, universal hierarchy, one-version rule.      |
+| D21 | Write the Docs: Docs as Code                                               | `articles/write-the-docs-docs-as-code.html`               | practitioner signal   | Docs should use same version control, review, and CI workflow as code.                                      |
+| D22 | GitLab: Infrastructure as Code and GitOps                                  | `articles/gitlab-iac-gitops.html`                         | official-doc evidence | Git as source of truth for infrastructure and application deployment code.                                  |
+| D23 | Spacelift: Terraform Monorepo                                              | `articles/spacelift-terraform-monorepo.html`              | practitioner signal   | Terraform monorepos centralize infrastructure code but change module-versioning tradeoffs.                  |
+| D24 | Dropbox: Reducing Our Monorepo Size                                        | `articles/dropbox-monorepo-size.html`                     | practitioner signal   | Warning: without active investment, large repos can slow clone, CI, and daily development.                  |
+| D18 | Nx: Enforce Module Boundaries                                              | `articles/nx-enforce-module-boundaries.html`              | official-doc evidence | Monorepo boundaries can be encoded as tags and enforced automatically.                                      |
+| R13 | Repository Intelligence Graph                                              | `paper-text/repository-intelligence-graph-2601.10112.txt` | paper evidence        | Deterministic repo maps help agents orient in complex repositories; monorepos make such maps more complete. |
+| R15 | Codified Context                                                           | `paper-text/codified-context-2602.20478.txt`              | paper evidence        | Case study showing persistent context infrastructure scaled to 108,000 lines in a single repository.        |
 
 ---
 
@@ -55,13 +55,13 @@ Source: D19, `articles/google-monorepo.html`.
 Code Simplicity (Max Kanat-Alexander, former Google) breaks monorepo value into discrete
 mechanisms relevant to any automated consumer:
 
-| Mechanism | What it means for agents |
-|---|---|
-| Atomic commits across projects | Agent can make a coherent cross-package change in one operation. |
-| Universal directory hierarchy | Agent can rely on consistent path conventions for discovery. |
-| One place to check out/commit | Agent needs one git clone, one working directory, one search index. |
-| Single view of history | Agent can trace when and why any artifact changed. |
-| One-version rule | Agent does not need to resolve which version of a shared dependency applies. |
+| Mechanism                      | What it means for agents                                                     |
+| ------------------------------ | ---------------------------------------------------------------------------- |
+| Atomic commits across projects | Agent can make a coherent cross-package change in one operation.             |
+| Universal directory hierarchy  | Agent can rely on consistent path conventions for discovery.                 |
+| One place to check out/commit  | Agent needs one git clone, one working directory, one search index.          |
+| Single view of history         | Agent can trace when and why any artifact changed.                           |
+| One-version rule               | Agent does not need to resolve which version of a shared dependency applies. |
 
 Source: D20, `articles/code-simplicity-monorepo.html`.
 
@@ -73,6 +73,7 @@ project's knowledge needs outgrew a single AGENTS.md file and evolved into a tie
 totaling approximately 26,000 lines of context infrastructure, all in the same repository.
 
 Key metrics from the paper:
+
 - 283 development sessions
 - 2,801 human prompts
 - 1,197 agent invocations
@@ -110,16 +111,16 @@ Source: R13, cross-reference to INSIGHT_21.
 
 ## Data table: monorepo properties and agent value
 
-| Monorepo property | Source | Agent-relevant mechanism | Without it, the agent must... |
-|---|---|---|---|
-| Atomic commits | D19, D20 | Multi-artifact changes are coherent at one commit | Coordinate across repos, risk version skew |
-| Universal directory hierarchy | D19, D20 | Predictable paths for search and navigation | Discover project layout per-repo |
-| One-version rule | D19, D20 | No diamond dependencies | Resolve version conflicts across packages |
-| Docs at code commit | D21 | Documentation matches code state | Hope docs are current (they often are not) |
-| Infra at code commit | D22 | Infrastructure and app changes reviewed together | Cross-repo PRs or stale deployment configs |
-| Boundary enforcement | D18 | Architectural rules are machine-checkable | Infer boundaries from convention or guesswork |
-| Test colocation | D19, D20 | Relevant tests are discoverable by path | Search multiple repos or rely on CI coordination |
-| Generated SDKs at code commit | D20, INSIGHT_20 | API client matches API schema at every commit | Regenerate or guess at stale types |
+| Monorepo property             | Source          | Agent-relevant mechanism                          | Without it, the agent must...                    |
+| ----------------------------- | --------------- | ------------------------------------------------- | ------------------------------------------------ |
+| Atomic commits                | D19, D20        | Multi-artifact changes are coherent at one commit | Coordinate across repos, risk version skew       |
+| Universal directory hierarchy | D19, D20        | Predictable paths for search and navigation       | Discover project layout per-repo                 |
+| One-version rule              | D19, D20        | No diamond dependencies                           | Resolve version conflicts across packages        |
+| Docs at code commit           | D21             | Documentation matches code state                  | Hope docs are current (they often are not)       |
+| Infra at code commit          | D22             | Infrastructure and app changes reviewed together  | Cross-repo PRs or stale deployment configs       |
+| Boundary enforcement          | D18             | Architectural rules are machine-checkable         | Infer boundaries from convention or guesswork    |
+| Test colocation               | D19, D20        | Relevant tests are discoverable by path           | Search multiple repos or rely on CI coordination |
+| Generated SDKs at code commit | D20, INSIGHT_20 | API client matches API schema at every commit     | Regenerate or guess at stale types               |
 
 ---
 
@@ -167,6 +168,7 @@ command, not a manual judgment call.
 ### Generated artifact policy
 
 Two workable patterns:
+
 1. Commit generated clients when they are consumed by many packages, need code review, or serve
    as readable local context for agents.
 2. Do not commit generated clients when the generator is fast, deterministic, and CI verifies
@@ -180,12 +182,12 @@ The key: the contract, generator config, and validation command are all in the r
 
 Without active investment, monorepos can become liabilities:
 
-| Problem | Dropbox's experience | Mitigation |
-|---|---|---|
-| Clone time | Grew to impractical sizes | Sparse checkout, partial clone, shallow clone |
-| CI time | Every change triggered too many builds | Affected-build tooling, caching |
-| Developer velocity | Large repo slowed daily operations | Custom tooling, repo segmentation |
-| Disk usage | Checkouts consumed excessive storage | Sparse checkout, virtual filesystems |
+| Problem            | Dropbox's experience                   | Mitigation                                    |
+| ------------------ | -------------------------------------- | --------------------------------------------- |
+| Clone time         | Grew to impractical sizes              | Sparse checkout, partial clone, shallow clone |
+| CI time            | Every change triggered too many builds | Affected-build tooling, caching               |
+| Developer velocity | Large repo slowed daily operations     | Custom tooling, repo segmentation             |
+| Disk usage         | Checkouts consumed excessive storage   | Sparse checkout, virtual filesystems          |
 
 For agents: the same problems apply. An agent that must clone 10GB and run 45 minutes of CI
 for a single-file change will be impractical. The monorepo needs the same tooling investments
@@ -207,13 +209,13 @@ flowchart LR
     Docs[Documentation]
     Tests[Tests]
   end
-  
+
   App --- Schema
   Schema --- SDK
   App --- Infra
   App --- Tests
   App --- Docs
-  
+
   Agent[AI Agent] --> Monorepo
 ```
 
@@ -227,7 +229,7 @@ flowchart LR
   Agent --> R3[SDK Repo v1.6 - stale]
   Agent --> R4[Infra Repo v3.1]
   Agent --> R5[Wiki - last updated 6mo ago]
-  
+
   R1 -.->|"version mismatch?"| R2
   R2 -.->|"generated from old schema?"| R3
 ```

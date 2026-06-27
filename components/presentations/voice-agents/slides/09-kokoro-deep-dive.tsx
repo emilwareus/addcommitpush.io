@@ -47,14 +47,14 @@ export function KokoroDeepDiveSlide() {
       <div className="w-full max-w-4xl bg-primary/10 border border-primary/30 rounded-lg p-5 mb-6">
         <h3 className="text-2xl font-bold text-primary text-center mb-3">iSTFTNet Vocoder</h3>
         <p className="text-base text-center text-muted-foreground max-w-3xl mx-auto">
-          Takes acoustic features plus predicted duration, pitch, and energy, then generates
-          audio by predicting spectral structure and reconstructing the waveform.
+          Takes acoustic features plus predicted duration, pitch, and energy, then generates audio
+          by predicting spectral structure and reconstructing the waveform.
         </p>
       </div>
 
       <p className="text-lg text-primary/80 font-mono text-center max-w-3xl">
-        Takeaway: Kokoro does not learn speech as one black box. It breaks the job into
-        what sounds to say, how to say them, and how to turn that plan into audio.
+        Takeaway: Kokoro does not learn speech as one black box. It breaks the job into what sounds
+        to say, how to say them, and how to turn that plan into audio.
       </p>
     </div>
   );

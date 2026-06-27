@@ -23,13 +23,13 @@ performs worse on already-bad code (Code for Machines).
 
 ## Source map
 
-| Ref | Source | Local file | Role in this insight |
-|---|---|---|---|
-| R77 | Code for Machines, Not Just Humans (Borg et al., 2026) | `papers/code-for-machines-2601.02200.pdf` | Primary source. Dataset, experiment, all quantitative results on CH and refactoring. |
-| R78 | Echoes of AI (Borg et al., 2025) | `papers/echoes-of-ai-2507.00788.pdf` | Complementary RCT: AI-assisted code shows no systematic maintainability difference, but code quality still matters for AI refactoring tasks. |
-| R59 | Smells of LLM Generated Code | `paper-text/smells-llm-generated-code-2510.03029.txt` | Cross-reference: LLM-generated code carries more smells than professional code; aligns with CH detecting smells. |
-| R72 | CODETASTE | `paper-text/codetaste-2603.04177.txt` | Cross-reference: refactoring evaluation combining tests with static rules. |
-| R71 | Constraint Decay | `paper-text/constraint-decay-2605.06445.txt` | Cross-reference: structural constraints reduce LLM success by ~30 pp. |
+| Ref | Source                                                 | Local file                                            | Role in this insight                                                                                                                         |
+| --- | ------------------------------------------------------ | ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| R77 | Code for Machines, Not Just Humans (Borg et al., 2026) | `papers/code-for-machines-2601.02200.pdf`             | Primary source. Dataset, experiment, all quantitative results on CH and refactoring.                                                         |
+| R78 | Echoes of AI (Borg et al., 2025)                       | `papers/echoes-of-ai-2507.00788.pdf`                  | Complementary RCT: AI-assisted code shows no systematic maintainability difference, but code quality still matters for AI refactoring tasks. |
+| R59 | Smells of LLM Generated Code                           | `paper-text/smells-llm-generated-code-2510.03029.txt` | Cross-reference: LLM-generated code carries more smells than professional code; aligns with CH detecting smells.                             |
+| R72 | CODETASTE                                              | `paper-text/codetaste-2603.04177.txt`                 | Cross-reference: refactoring evaluation combining tests with static rules.                                                                   |
+| R71 | Constraint Decay                                       | `paper-text/constraint-decay-2605.06445.txt`          | Cross-reference: structural constraints reduce LLM success by ~30 pp.                                                                        |
 
 ---
 
@@ -65,13 +65,13 @@ CodeScene.
 The 5,000-file dataset yielded these nine code smells (counts are per-file
 occurrences; files can have multiple smells):
 
-| Code smell | Count |
-|---|---:|
-| Bumpy Road Ahead | 4,901 |
-| Complex Method | 3,572 |
-| Deep, Nested Complexity | 2,433 |
-| Complex Conditionals | 1,328 |
-| Excessive Function Arguments | 724 |
+| Code smell                   | Count |
+| ---------------------------- | ----: |
+| Bumpy Road Ahead             | 4,901 |
+| Complex Method               | 3,572 |
+| Deep, Nested Complexity      | 2,433 |
+| Complex Conditionals         | 1,328 |
+| Excessive Function Arguments |   724 |
 
 Note: only the top 5 by count are listed above from the extracted data. The
 remaining four smells were not individually enumerated in the paper sections I
@@ -104,9 +104,9 @@ pipeline, from the paper's Section 3.1:
 8. **For each stratum, sample 2,500 using diversity sampling**:
    a. Sample a random candidate solution.
    b. Run its test cases; skip if any test fails (ensures all files are
-      initially correct).
+   initially correct).
    c. Compute CodeBLEU similarity to existing samples in the stratum; skip if
-      similarity >= 0.9 (ensures diversity).
+   similarity >= 0.9 (ensures diversity).
    d. Add to stratum.
 9. **Merge the two strata**: final dataset is 5,000 files (2,500 Healthy, 2,500
    Unhealthy).
@@ -129,15 +129,15 @@ a specific production codebase without knowing that codebase's CH distribution.
 
 Seven models total, tested at two capability tiers:
 
-| Model | Provider | Date | Size class | N (files) |
-|---|---|---|---|---:|
-| Gemma gemma-3-27b-it | Google | Mar 2025 | Medium (27B) | 5,000 |
-| GLM GLM-4-32B-0414 | Zhipu AI | Apr 2025 | Medium (32B) | 5,000 |
-| GPT gpt-oss-20b | OpenAI | Aug 2025 | Medium (20B) | 5,000 |
-| Granite Granite-4.0-H-Small | IBM | Oct 2025 | Medium | 5,000 |
-| Qwen Qwen3-Coder-30B-A3B-Instruct | Alibaba | Aug 2025 | Medium (30B) | 5,000 |
-| Sonnet claude-sonnet-4-5-20250929 | Anthropic | Sep 2025 | Frontier | 1,000 |
-| Claude v2.0.13 (agentic) | Anthropic | -- | Frontier/Agentic | 1,000 |
+| Model                             | Provider  | Date     | Size class       | N (files) |
+| --------------------------------- | --------- | -------- | ---------------- | --------: |
+| Gemma gemma-3-27b-it              | Google    | Mar 2025 | Medium (27B)     |     5,000 |
+| GLM GLM-4-32B-0414                | Zhipu AI  | Apr 2025 | Medium (32B)     |     5,000 |
+| GPT gpt-oss-20b                   | OpenAI    | Aug 2025 | Medium (20B)     |     5,000 |
+| Granite Granite-4.0-H-Small       | IBM       | Oct 2025 | Medium           |     5,000 |
+| Qwen Qwen3-Coder-30B-A3B-Instruct | Alibaba   | Aug 2025 | Medium (30B)     |     5,000 |
+| Sonnet claude-sonnet-4-5-20250929 | Anthropic | Sep 2025 | Frontier         |     1,000 |
+| Claude v2.0.13 (agentic)          | Anthropic | --       | Frontier/Agentic |     1,000 |
 
 The power asymmetry between medium-sized (N=5,000) and frontier (N=1,000) runs
 is a recognized internal validity threat. The smaller sample for Sonnet and
@@ -151,13 +151,13 @@ Claude reduces statistical power for detecting smaller effects.
 
 From page 4 of the paper, the exact prompt given to the five medium-sized LLMs:
 
-```
+````
 (A) Act as an expert software engineer. (B) Your task is to refactor the
 following Python code for maintainability and clean code. (C) Respond ONLY with
 the complete, refactored Python code block. Do not add any explanations,
 comments, or introductory sentences. (D) Original code to refactor:
 ``` python <CODE> ```
-```
+````
 
 Generation settings: Temperature 0.7, max 8,192 new tokens, all other settings
 at defaults.
@@ -197,22 +197,22 @@ still pass after refactoring.
 
 ### Table 2 -- Refactoring break rates (copied from the paper)
 
-| Model | Group | Total | Tests Passed N | Tests Passed % | p (chi-sq) | RD (pp) [95% CI] | RR [95% CI] |
-|---|---|---:|---:|---:|---:|---|---|
-| Sonnet | Healthy | 499 | 433 | 86.77 | 0.439 | -2.74 [-7.11, 1.63] | 0.828 [0.613, 1.120] |
-| Sonnet | Unhealthy | 501 | 421 | 84.03 | | | |
-| Qwen | Healthy | 2501 | 2019 | 80.72 | <0.001 | -8.58 [-10.92, -6.24] | 0.692 [0.625, 0.766] |
-| Qwen | Unhealthy | 2499 | 1803 | 72.16 | | | |
-| GPT | Healthy | 2501 | 1604 | 64.13 | <0.001 | -11.15 [-13.87, -8.44] | 0.763 [0.713, 0.816] |
-| GPT | Unhealthy | 2499 | 1324 | 52.98 | | | |
-| GLM | Healthy | 2501 | 1504 | 60.14 | <0.001 | -10.16 [-12.90, -7.41] | 0.797 [0.749, 0.848] |
-| GLM | Unhealthy | 2499 | 1249 | 50.02 | | | |
-| Gemma | Healthy | 2501 | 1394 | 55.74 | <0.001 | -15.12 [-17.86, -12.38] | 0.745 [0.706, 0.787] |
-| Gemma | Unhealthy | 2499 | 1015 | 40.58 | | | |
-| Granite | Healthy | 2501 | 1162 | 46.46 | <0.001 | -9.29 [-12.01, -6.56] | 0.852 [0.813, 0.894] |
-| Granite | Unhealthy | 2499 | 929 | 37.17 | | | |
-| Claude | Healthy | 499 | 480 | 96.19 | 0.439 | -1.38 [-3.95, 1.19] | 0.734 [0.411, 1.308] |
-| Claude | Unhealthy | 501 | 475 | 94.81 | | | |
+| Model   | Group     | Total | Tests Passed N | Tests Passed % | p (chi-sq) | RD (pp) [95% CI]        | RR [95% CI]          |
+| ------- | --------- | ----: | -------------: | -------------: | ---------: | ----------------------- | -------------------- |
+| Sonnet  | Healthy   |   499 |            433 |          86.77 |      0.439 | -2.74 [-7.11, 1.63]     | 0.828 [0.613, 1.120] |
+| Sonnet  | Unhealthy |   501 |            421 |          84.03 |            |                         |                      |
+| Qwen    | Healthy   |  2501 |           2019 |          80.72 |     <0.001 | -8.58 [-10.92, -6.24]   | 0.692 [0.625, 0.766] |
+| Qwen    | Unhealthy |  2499 |           1803 |          72.16 |            |                         |                      |
+| GPT     | Healthy   |  2501 |           1604 |          64.13 |     <0.001 | -11.15 [-13.87, -8.44]  | 0.763 [0.713, 0.816] |
+| GPT     | Unhealthy |  2499 |           1324 |          52.98 |            |                         |                      |
+| GLM     | Healthy   |  2501 |           1504 |          60.14 |     <0.001 | -10.16 [-12.90, -7.41]  | 0.797 [0.749, 0.848] |
+| GLM     | Unhealthy |  2499 |           1249 |          50.02 |            |                         |                      |
+| Gemma   | Healthy   |  2501 |           1394 |          55.74 |     <0.001 | -15.12 [-17.86, -12.38] | 0.745 [0.706, 0.787] |
+| Gemma   | Unhealthy |  2499 |           1015 |          40.58 |            |                         |                      |
+| Granite | Healthy   |  2501 |           1162 |          46.46 |     <0.001 | -9.29 [-12.01, -6.56]   | 0.852 [0.813, 0.894] |
+| Granite | Unhealthy |  2499 |            929 |          37.17 |            |                         |                      |
+| Claude  | Healthy   |   499 |            480 |          96.19 |      0.439 | -1.38 [-3.95, 1.19]     | 0.734 [0.411, 1.308] |
+| Claude  | Unhealthy |   501 |            475 |          94.81 |            |                         |                      |
 
 Units: Tests Passed % is percentage. RD is risk difference in percentage points.
 RR is relative risk ratio.
@@ -253,22 +253,22 @@ is the complete Table 3 from the paper.
 
 ### Full Table 3 -- CH deltas for ALL models (copied from the paper)
 
-| Model | Group | Total | Tests Passed N | Tests Passed % | CH up | CH up % | CH same | CH same % | CH down | CH down % | %Success |
-|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| Sonnet | Healthy | 499 | 433 | 86.77 | 250 | **57.74** | 69 | 15.94 | 114 | 26.33 | 50.10 |
-| Sonnet | Unhealthy | 501 | 421 | 84.03 | 347 | **82.42** | 30 | 7.13 | 44 | 10.45 | 69.26 |
-| Qwen | Healthy | 2501 | 2019 | 80.72 | 539 | 26.71 | 934 | **46.28** | 545 | 27.01 | 21.56 |
-| Qwen | Unhealthy | 2499 | 1803 | 72.16 | 853 | **47.28** | 581 | 32.21 | 370 | 20.51 | 34.12 |
-| GPT | Healthy | 2501 | 1604 | 64.12 | 961 | **59.95** | 305 | 19.03 | 337 | 21.02 | 38.44 |
-| GPT | Unhealthy | 2499 | 1324 | 53.00 | 1088 | **82.11** | 107 | 8.08 | 127 | 9.58 | 43.52 |
-| GLM | Healthy | 2501 | 1504 | 60.14 | 679 | **45.18** | 414 | 27.54 | 410 | 27.29 | 27.16 |
-| GLM | Unhealthy | 2499 | 1249 | 50.00 | 880 | **70.40** | 158 | 12.64 | 212 | 16.96 | 35.20 |
-| Gemma | Healthy | 2501 | 1394 | 55.76 | 627 | **44.98** | 426 | 30.56 | 341 | 24.46 | 25.08 |
-| Gemma | Unhealthy | 2499 | 1015 | 40.60 | 685 | **67.49** | 162 | 15.96 | 168 | 16.55 | 27.40 |
-| Granite | Healthy | 2501 | 1162 | 46.44 | 417 | 35.90 | 540 | **46.52** | 204 | 17.58 | 16.68 |
-| Granite | Unhealthy | 2499 | 929 | 37.17 | 454 | **48.82** | 347 | 37.31 | 129 | 13.87 | 18.16 |
-| Claude | Healthy | 499 | 480 | 96.19 | 96 | 20.00 | 331 | **68.96** | 53 | 11.04 | 19.24 |
-| Claude | Unhealthy | 501 | 475 | 94.81 | 124 | 24.75 | 288 | **60.63** | 63 | 13.26 | 24.75 |
+| Model   | Group     | Total | Tests Passed N | Tests Passed % | CH up |   CH up % | CH same | CH same % | CH down | CH down % | %Success |
+| ------- | --------- | ----: | -------------: | -------------: | ----: | --------: | ------: | --------: | ------: | --------: | -------: |
+| Sonnet  | Healthy   |   499 |            433 |          86.77 |   250 | **57.74** |      69 |     15.94 |     114 |     26.33 |    50.10 |
+| Sonnet  | Unhealthy |   501 |            421 |          84.03 |   347 | **82.42** |      30 |      7.13 |      44 |     10.45 |    69.26 |
+| Qwen    | Healthy   |  2501 |           2019 |          80.72 |   539 |     26.71 |     934 | **46.28** |     545 |     27.01 |    21.56 |
+| Qwen    | Unhealthy |  2499 |           1803 |          72.16 |   853 | **47.28** |     581 |     32.21 |     370 |     20.51 |    34.12 |
+| GPT     | Healthy   |  2501 |           1604 |          64.12 |   961 | **59.95** |     305 |     19.03 |     337 |     21.02 |    38.44 |
+| GPT     | Unhealthy |  2499 |           1324 |          53.00 |  1088 | **82.11** |     107 |      8.08 |     127 |      9.58 |    43.52 |
+| GLM     | Healthy   |  2501 |           1504 |          60.14 |   679 | **45.18** |     414 |     27.54 |     410 |     27.29 |    27.16 |
+| GLM     | Unhealthy |  2499 |           1249 |          50.00 |   880 | **70.40** |     158 |     12.64 |     212 |     16.96 |    35.20 |
+| Gemma   | Healthy   |  2501 |           1394 |          55.76 |   627 | **44.98** |     426 |     30.56 |     341 |     24.46 |    25.08 |
+| Gemma   | Unhealthy |  2499 |           1015 |          40.60 |   685 | **67.49** |     162 |     15.96 |     168 |     16.55 |    27.40 |
+| Granite | Healthy   |  2501 |           1162 |          46.44 |   417 |     35.90 |     540 | **46.52** |     204 |     17.58 |    16.68 |
+| Granite | Unhealthy |  2499 |            929 |          37.17 |   454 | **48.82** |     347 |     37.31 |     129 |     13.87 |    18.16 |
+| Claude  | Healthy   |   499 |            480 |          96.19 |    96 |     20.00 |     331 | **68.96** |      53 |     11.04 |    19.24 |
+| Claude  | Unhealthy |   501 |            475 |          94.81 |   124 |     24.75 |     288 | **60.63** |      63 |     13.26 |    24.75 |
 
 Units: Bold percentages indicate the dominant CH delta category for each
 model/group. %Success = percentage of total files where CH improved AND tests
@@ -306,16 +306,16 @@ passed. CH up/same/down percentages are computed over tests-passed files only.
 This comparison is methodologically significant. Both use
 claude-sonnet-4-5-20250929. The differences:
 
-| Metric | Sonnet (standard) | Claude (agentic) |
-|---|---|---|
-| Pass rate, Healthy | 86.77% | 96.19% |
-| Pass rate, Unhealthy | 84.03% | 94.81% |
-| CH improved, Healthy | 57.74% | 20.00% |
-| CH improved, Unhealthy | 82.42% | 24.75% |
-| CH unchanged, Healthy | 15.94% | 68.96% |
-| CH unchanged, Unhealthy | 7.13% | 60.63% |
-| %Success (improve + pass), Healthy | 50.10% | 19.24% |
-| %Success (improve + pass), Unhealthy | 69.26% | 24.75% |
+| Metric                               | Sonnet (standard) | Claude (agentic) |
+| ------------------------------------ | ----------------- | ---------------- |
+| Pass rate, Healthy                   | 86.77%            | 96.19%           |
+| Pass rate, Unhealthy                 | 84.03%            | 94.81%           |
+| CH improved, Healthy                 | 57.74%            | 20.00%           |
+| CH improved, Unhealthy               | 82.42%            | 24.75%           |
+| CH unchanged, Healthy                | 15.94%            | 68.96%           |
+| CH unchanged, Unhealthy              | 7.13%             | 60.63%           |
+| %Success (improve + pass), Healthy   | 50.10%            | 19.24%           |
+| %Success (improve + pass), Unhealthy | 69.26%            | 24.75%           |
 
 The agentic scaffold trades improvement aggressiveness for safety. Claude breaks
 far fewer tests but also improves far fewer files. Whether this trade-off is
@@ -369,13 +369,13 @@ features: CodeHealth, perplexity, and SLOC.
 
 ### Table 4 -- Decision tree results (copied from the paper)
 
-| LLM | %Break | AUC | CH importance | PPL importance | SLOC importance |
-|---|---:|---:|---:|---:|---:|
-| Qwen | 0.236 | 0.553 | **0.707** | 0.160 | 0.132 |
-| GPT | 0.414 | 0.559 | **0.683** | 0.268 | 0.049 |
-| GLM | 0.449 | 0.546 | **0.572** | 0.360 | 0.068 |
-| Gemma | 0.518 | 0.565 | **0.880** | 0.120 | <0.001 |
-| Granite | 0.582 | 0.544 | **0.583** | 0.417 | <0.001 |
+| LLM     | %Break |   AUC | CH importance | PPL importance | SLOC importance |
+| ------- | -----: | ----: | ------------: | -------------: | --------------: |
+| Qwen    |  0.236 | 0.553 |     **0.707** |          0.160 |           0.132 |
+| GPT     |  0.414 | 0.559 |     **0.683** |          0.268 |           0.049 |
+| GLM     |  0.449 | 0.546 |     **0.572** |          0.360 |           0.068 |
+| Gemma   |  0.518 | 0.565 |     **0.880** |          0.120 |          <0.001 |
+| Granite |  0.582 | 0.544 |     **0.583** |          0.417 |          <0.001 |
 
 Units: %Break is the fraction of files where refactoring broke tests. AUC is
 area under the ROC curve. Importance values are feature importances from the
@@ -386,13 +386,13 @@ decision tree (sum to 1.0 per model).
 CodeHealth is the root node in ALL five decision trees. The per-model split
 thresholds:
 
-| Model | CH threshold | Fraction below threshold |
-|---|---:|---:|
-| Qwen | <= 8.895 | 63% (1163 fail, 848 pass) |
-| GPT | <= 8.775 | 61% (1070 fail, 683 pass) |
-| GLM | <= 9.195 | 55% (1495 fail, 1230 pass) |
-| Gemma | <= 8.875 | 62% (866 fail, 572 pass) |
-| Granite | <= 8.285 | 60% (398 fail, 234 pass) |
+| Model   | CH threshold |   Fraction below threshold |
+| ------- | -----------: | -------------------------: |
+| Qwen    |     <= 8.895 |  63% (1163 fail, 848 pass) |
+| GPT     |     <= 8.775 |  61% (1070 fail, 683 pass) |
+| GLM     |     <= 9.195 | 55% (1495 fail, 1230 pass) |
+| Gemma   |     <= 8.875 |   62% (866 fail, 572 pass) |
+| Granite |     <= 8.285 |   60% (398 fail, 234 pass) |
 
 Inference: the thresholds cluster around CH ~9, which is exactly the
 Healthy/Warning boundary in the CodeScene scale. This is notable because the
@@ -444,13 +444,13 @@ marginal refinement.
 
 ### Odds ratios from logistic regression
 
-| Model | Odds ratio per 1-SD CH increase (0.65) |
-|---|---:|
-| Qwen | 1.347 |
-| GPT | 1.307 |
-| GLM | 1.215 |
-| Gemma | 1.420 |
-| Granite | 1.240 |
+| Model   | Odds ratio per 1-SD CH increase (0.65) |
+| ------- | -------------------------------------: |
+| Qwen    |                                  1.347 |
+| GPT     |                                  1.307 |
+| GLM     |                                  1.215 |
+| Gemma   |                                  1.420 |
+| Granite |                                  1.240 |
 
 Interpretation: a one-standard-deviation increase in CodeHealth (0.65 points)
 raises the odds of successful refactoring by 20-42%, depending on model. Gemma
@@ -507,13 +507,13 @@ outcome in this 60-120 SLOC range.
 
 Four models show small negative correlations between token count and perplexity:
 
-| Model | rho (token count vs PPL) |
-|---|---:|
-| Gemma | -0.197 |
-| GLM | -0.245 |
-| Granite | -0.242 |
-| Qwen | -0.223 |
-| GPT | +0.153 |
+| Model   | rho (token count vs PPL) |
+| ------- | -----------------------: |
+| Gemma   |                   -0.197 |
+| GLM     |                   -0.245 |
+| Granite |                   -0.242 |
+| Qwen    |                   -0.223 |
+| GPT     |                   +0.153 |
 
 Interpretation from the paper: "LLMs' PPL on the code tends to decrease slightly
 as token count increases." Longer files in this range tend to be slightly more
@@ -553,15 +553,15 @@ human-only code. This section presents the full quantitative results.
 
 AI tools used by participants in the AI-dev group:
 
-| Tool | N participants |
-|---|---:|
-| GitHub Copilot | 21 |
-| ChatGPT | 13 |
-| Cursor | 9 |
-| JetBrains AI | 5 |
-| Claude | 4 |
-| Tailwind AI | 2 |
-| VS IntelliCode | 2 |
+| Tool           | N participants |
+| -------------- | -------------: |
+| GitHub Copilot |             21 |
+| ChatGPT        |             13 |
+| Cursor         |              9 |
+| JetBrains AI   |              5 |
+| Claude         |              4 |
+| Tailwind AI    |              2 |
+| VS IntelliCode |              2 |
 
 Important: "No instances of fully autonomous agents" -- all usage was
 second-generation AI assistant (copilot/chat) usage, not agentic. This limits
@@ -581,14 +581,14 @@ human to evolve?
 
 #### Completion time results
 
-| Metric | Treatment | Control |
-|---|---|---|
-| Median completion time | 136 min (95% CI: 105.5-180.0) | 173 min (95% CI: 118.1-210.0) |
-| Cliff's delta | -0.079 (negligible) | |
-| Wilcoxon p-value | 0.56 (NOT significant) | |
-| Bayesian P(Delta<0) | 76% | |
-| Bayesian posterior mean | -12.59% | |
-| Bayesian CrI | [-45.77%, +32.68%] | |
+| Metric                  | Treatment                     | Control                       |
+| ----------------------- | ----------------------------- | ----------------------------- |
+| Median completion time  | 136 min (95% CI: 105.5-180.0) | 173 min (95% CI: 118.1-210.0) |
+| Cliff's delta           | -0.079 (negligible)           |                               |
+| Wilcoxon p-value        | 0.56 (NOT significant)        |                               |
+| Bayesian P(Delta<0)     | 76%                           |                               |
+| Bayesian posterior mean | -12.59%                       |                               |
+| Bayesian CrI            | [-45.77%, +32.68%]            |                               |
 
 Conclusion: "Both analyses are consistent with a null effect on Task 2
 completion time." The wide credible interval means the study cannot rule out
@@ -603,11 +603,11 @@ assistants."
 
 #### Perceived productivity results
 
-| Metric | Treatment | Control |
-|---|---|---|
+| Metric                      | Treatment                | Control                  |
+| --------------------------- | ------------------------ | ------------------------ |
 | Mean perceived productivity | 3.95 (95% CI: 3.77-4.12) | 4.06 (95% CI: 3.88-4.24) |
-| Cohen's d | -0.21 (small negative) | |
-| Welch's t-test p-value | 0.37 (NOT significant) | |
+| Cohen's d                   | -0.21 (small negative)   |                          |
+| Welch's t-test p-value      | 0.37 (NOT significant)   |                          |
 
 The small negative Cohen's d means treatment participants felt slightly less
 productive, but the effect is not significant. The overlapping confidence
@@ -801,15 +801,15 @@ flowchart TD
 
 ### Refactoring pass rate by model (Healthy vs Unhealthy)
 
-| Model (exact version) | Healthy pass % | Unhealthy pass % | Gap (pp) | p |
-|---|---:|---:|---:|---|
-| claude-sonnet-4-5-20250929 (standard) | 86.77 | 84.03 | 2.74 | 0.439 |
-| Qwen3-Coder-30B-A3B-Instruct | 80.72 | 72.16 | 8.56 | <0.001 |
-| gpt-oss-20b | 64.13 | 52.98 | 11.15 | <0.001 |
-| GLM-4-32B-0414 | 60.14 | 50.02 | 10.12 | <0.001 |
-| gemma-3-27b-it | 55.74 | 40.58 | 15.16 | <0.001 |
-| Granite-4.0-H-Small | 46.46 | 37.17 | 9.29 | <0.001 |
-| Claude v2.0.13 (agentic, claude-sonnet-4-5-20250929) | 96.19 | 94.81 | 1.38 | 0.439 |
+| Model (exact version)                                | Healthy pass % | Unhealthy pass % | Gap (pp) | p      |
+| ---------------------------------------------------- | -------------: | ---------------: | -------: | ------ |
+| claude-sonnet-4-5-20250929 (standard)                |          86.77 |            84.03 |     2.74 | 0.439  |
+| Qwen3-Coder-30B-A3B-Instruct                         |          80.72 |            72.16 |     8.56 | <0.001 |
+| gpt-oss-20b                                          |          64.13 |            52.98 |    11.15 | <0.001 |
+| GLM-4-32B-0414                                       |          60.14 |            50.02 |    10.12 | <0.001 |
+| gemma-3-27b-it                                       |          55.74 |            40.58 |    15.16 | <0.001 |
+| Granite-4.0-H-Small                                  |          46.46 |            37.17 |     9.29 | <0.001 |
+| Claude v2.0.13 (agentic, claude-sonnet-4-5-20250929) |          96.19 |            94.81 |     1.38 | 0.439  |
 
 Chart sketch (Mermaid xychart-beta renders bars stacked, not grouped. The table
 above is the authoritative comparison. This chart shows the Healthy pass rate
@@ -825,15 +825,15 @@ xychart-beta
 
 ### CH improvement rate by model (Healthy vs Unhealthy)
 
-| Model (exact version) | Healthy CH improved % | Unhealthy CH improved % |
-|---|---:|---:|
-| claude-sonnet-4-5-20250929 (standard) | 57.74 | 82.42 |
-| Qwen3-Coder-30B-A3B-Instruct | 26.71 | 47.28 |
-| gpt-oss-20b | 59.95 | 82.11 |
-| GLM-4-32B-0414 | 45.18 | 70.40 |
-| gemma-3-27b-it | 44.98 | 67.49 |
-| Granite-4.0-H-Small | 35.90 | 48.82 |
-| Claude v2.0.13 (agentic, claude-sonnet-4-5-20250929) | 20.00 | 24.75 |
+| Model (exact version)                                | Healthy CH improved % | Unhealthy CH improved % |
+| ---------------------------------------------------- | --------------------: | ----------------------: |
+| claude-sonnet-4-5-20250929 (standard)                |                 57.74 |                   82.42 |
+| Qwen3-Coder-30B-A3B-Instruct                         |                 26.71 |                   47.28 |
+| gpt-oss-20b                                          |                 59.95 |                   82.11 |
+| GLM-4-32B-0414                                       |                 45.18 |                   70.40 |
+| gemma-3-27b-it                                       |                 44.98 |                   67.49 |
+| Granite-4.0-H-Small                                  |                 35.90 |                   48.82 |
+| Claude v2.0.13 (agentic, claude-sonnet-4-5-20250929) |                 20.00 |                   24.75 |
 
 Chart sketch (Unhealthy-code CH improvement rate — all models improve CH more
 aggressively on unhealthy code):

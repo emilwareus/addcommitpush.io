@@ -1,13 +1,24 @@
 import type React from 'react';
 import type { Metadata } from 'next';
-import { Space_Grotesk } from 'next/font/google';
+import { IBM_Plex_Mono, Spectral } from 'next/font/google';
 import { Suspense } from 'react';
 import './globals.css';
 import { Navigation } from '@/components/navigation';
 import { PHProvider } from './providers';
 import { PostHogPageView } from './posthog-pageview';
 
-const spaceGrotesk = Space_Grotesk({ subsets: ['latin'] });
+const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--font-mono',
+});
+
+const spectral = Spectral({
+  subsets: ['latin'],
+  weight: ['500', '600', '700'],
+  style: ['normal', 'italic'],
+  variable: '--font-serif',
+});
 
 export const metadata: Metadata = {
   title: {
@@ -41,13 +52,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${spaceGrotesk.className} font-sans antialiased`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${ibmPlexMono.variable} ${spectral.variable}`}>
         <PHProvider>
           <Suspense fallback={null}>
             <PostHogPageView />
           </Suspense>
-          <div className="min-h-screen grid-bg">
+          <div className="site-shell">
             <Navigation />
             {children}
           </div>

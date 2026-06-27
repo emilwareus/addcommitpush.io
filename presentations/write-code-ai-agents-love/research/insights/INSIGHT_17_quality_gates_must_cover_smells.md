@@ -15,14 +15,14 @@ issues: complex methods, deep nesting, excessive arguments, complex conditionals
 
 ## Source map
 
-| Ref | Source | Local text | Source quality | Role in this insight |
-|---|---|---|---|---|
-| R59 | Investigating the Smells of LLM Generated Code (Ghosh Paul et al., 2025) | `paper-text/smells-llm-generated-code-2510.03029.txt` | paper evidence | Primary quantitative evidence: LLM code has 42-85% more smells than professional references. |
-| R60 | A Causal Perspective on Smells (Velasco et al., ICSE 2026) | `paper-text/causal-smells-llm-code-2511.15817.txt` | paper evidence | Shows smell propensity is measurable (PSC metric) and can be mitigated via prompt formulation and architecture choices. |
-| R67 | Rethinking Agent-Generated Tests (Chen et al., 2026) | `paper-text/rethinking-agent-generated-tests-2602.07900.txt` | paper evidence | Shows agent-written tests do not reliably improve patch success; tests mainly serve as observational feedback. |
-| R09 | SWE-CI (2026) | `paper-text/swe-ci-2603.03823.txt` | paper evidence | Shifts evaluation from one-shot correctness to long-term maintainability through CI loops. |
-| R46 | Needle in the Repo (2026) | `paper-text/needle-in-the-repo-2603.27745.txt` | paper evidence | Separates functional correctness from structural maintainability in evaluation. |
-| R77 | Code for Machines, Not Just Humans (Borg et al., 2026) | `papers/code-for-machines-2601.02200.pdf` | paper evidence | CodeHealth predicts AI refactoring break rates. See INSIGHT_30 for full treatment. |
+| Ref | Source                                                                   | Local text                                                   | Source quality | Role in this insight                                                                                                    |
+| --- | ------------------------------------------------------------------------ | ------------------------------------------------------------ | -------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| R59 | Investigating the Smells of LLM Generated Code (Ghosh Paul et al., 2025) | `paper-text/smells-llm-generated-code-2510.03029.txt`        | paper evidence | Primary quantitative evidence: LLM code has 42-85% more smells than professional references.                            |
+| R60 | A Causal Perspective on Smells (Velasco et al., ICSE 2026)               | `paper-text/causal-smells-llm-code-2511.15817.txt`           | paper evidence | Shows smell propensity is measurable (PSC metric) and can be mitigated via prompt formulation and architecture choices. |
+| R67 | Rethinking Agent-Generated Tests (Chen et al., 2026)                     | `paper-text/rethinking-agent-generated-tests-2602.07900.txt` | paper evidence | Shows agent-written tests do not reliably improve patch success; tests mainly serve as observational feedback.          |
+| R09 | SWE-CI (2026)                                                            | `paper-text/swe-ci-2603.03823.txt`                           | paper evidence | Shifts evaluation from one-shot correctness to long-term maintainability through CI loops.                              |
+| R46 | Needle in the Repo (2026)                                                | `paper-text/needle-in-the-repo-2603.27745.txt`               | paper evidence | Separates functional correctness from structural maintainability in evaluation.                                         |
+| R77 | Code for Machines, Not Just Humans (Borg et al., 2026)                   | `papers/code-for-machines-2601.02200.pdf`                    | paper evidence | CodeHealth predicts AI refactoring break rates. See INSIGHT_30 for full treatment.                                      |
 
 ---
 
@@ -59,6 +59,7 @@ probabilistic metric that estimates the likelihood of generating tokens associat
 They then identify which factors in the generation pipeline most influence smell propensity.
 
 Key findings:
+
 1. Prompt formulation and model architecture most strongly influence smell propensity.
 2. Targeted adjustments to prompt and architecture can significantly reduce smell introduction.
 3. PSC captures structural quality signals overlooked by traditional metrics (BLEU, CodeBLEU).
@@ -137,25 +138,25 @@ quality gate that catches these smells for human developers also protects AI age
 
 ### LLM smell increase over professional baseline (R59)
 
-| LLM | Smell increase over baseline | Implementation smell increase | Design smell increase |
-|---|---:|---:|---:|
-| Falcon | 42.28% | -- | -- |
-| Gemini Pro | 62.07% | -- | -- |
-| ChatGPT | 65.05% | -- | -- |
-| Codex | 84.97% | -- | -- |
-| **Average (all LLMs)** | **63.34%** | **73.35%** | **21.42%** |
+| LLM                    | Smell increase over baseline | Implementation smell increase | Design smell increase |
+| ---------------------- | ---------------------------: | ----------------------------: | --------------------: |
+| Falcon                 |                       42.28% |                            -- |                    -- |
+| Gemini Pro             |                       62.07% |                            -- |                    -- |
+| ChatGPT                |                       65.05% |                            -- |                    -- |
+| Codex                  |                       84.97% |                            -- |                    -- |
+| **Average (all LLMs)** |                   **63.34%** |                    **73.35%** |            **21.42%** |
 
 Source: R59, Abstract and Figure 3. Units: percentage increase in smell violations per solution
 compared to human-written reference code.
 
 ### Smell increase by topic complexity (R59, worst topics)
 
-| Topic | Average increase over baseline (all LLMs) |
-|---|---:|
-| Encapsulation | 138.53% |
-| Array | 101.88% |
-| OOP | 101.88% |
-| Regular Expression | -35.93% (improved by Gemini Pro) |
+| Topic              | Average increase over baseline (all LLMs) |
+| ------------------ | ----------------------------------------: |
+| Encapsulation      |                                   138.53% |
+| Array              |                                   101.88% |
+| OOP                |                                   101.88% |
+| Regular Expression |          -35.93% (improved by Gemini Pro) |
 
 Source: R59, Table 7 and surrounding discussion. The pattern: LLMs produce worse quality on
 more advanced/structural topics (OOP, encapsulation, inheritance) and comparable or better quality
@@ -163,24 +164,24 @@ on simpler/procedural topics.
 
 ### Agent test-writing does not predict resolution (R67)
 
-| Finding | Evidence |
-|---|---|
-| Resolved vs unresolved tasks have similar test-writing frequency | Within-model analysis on SWE-bench Verified |
-| Agent-written tests are mostly observational (prints > assertions) | AST parsing of test artifacts |
-| Prompt intervention to increase/reduce testing does not change outcomes | 4-model prompt intervention study |
-| GPT-5.2 writes almost no tests, matches top-ranking agents | Cross-model comparison |
+| Finding                                                                 | Evidence                                    |
+| ----------------------------------------------------------------------- | ------------------------------------------- |
+| Resolved vs unresolved tasks have similar test-writing frequency        | Within-model analysis on SWE-bench Verified |
+| Agent-written tests are mostly observational (prints > assertions)      | AST parsing of test artifacts               |
+| Prompt intervention to increase/reduce testing does not change outcomes | 4-model prompt intervention study           |
+| GPT-5.2 writes almost no tests, matches top-ranking agents              | Cross-model comparison                      |
 
 Source: R67, Abstract and RQ1-RQ3.
 
 ### Code smells that predict AI refactoring failure (R77, cross-ref INSIGHT_30)
 
-| Code smell | Count in 5,000-file dataset |
-|---|---:|
-| Bumpy Road Ahead | 4,901 |
-| Complex Method | 3,572 |
-| Deep, Nested Complexity | 2,433 |
-| Complex Conditionals | 1,328 |
-| Excessive Function Arguments | 724 |
+| Code smell                   | Count in 5,000-file dataset |
+| ---------------------------- | --------------------------: |
+| Bumpy Road Ahead             |                       4,901 |
+| Complex Method               |                       3,572 |
+| Deep, Nested Complexity      |                       2,433 |
+| Complex Conditionals         |                       1,328 |
+| Excessive Function Arguments |                         724 |
 
 Source: R77, Section 3.1. These are not exotic metrics. They are the same things most linters
 already detect.

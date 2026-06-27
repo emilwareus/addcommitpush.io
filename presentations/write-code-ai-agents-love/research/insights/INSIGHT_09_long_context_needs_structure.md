@@ -13,13 +13,13 @@ windows grow. A bigger room needs better maps.
 
 ## Source map
 
-| Ref | Source | Local text | Role in this insight |
-|---|---|---|---|
-| R32 | Lost in the Middle | `paper-text/lost-in-the-middle-2307.03172.txt` | Models underuse information depending on where it appears in long context (U-shaped curve). |
-| R37 | LongCodeBench | `paper-text/longcodebench-2505.07897.txt` | Evaluation at million-token scale shows severe performance drops for real coding tasks. |
-| R36 | YABLoCo | `paper-text/yabloco-2505.04406.txt` | Long-context code generation over very large C/C++ repositories (200K-2M LoC). |
-| R40 | Coding Agents are Effective Long-Context Processors | `paper-text/coding-agents-long-context-processors-2603.20432.txt` | Agents using tools/filesystem beat raw long-context baselines by 17.3% on average. |
-| R10 | ContextBench | `paper-text/contextbench-2602.05892.txt` | Agents retrieve too much context and still fail to use relevant material in final patches. |
+| Ref | Source                                              | Local text                                                        | Role in this insight                                                                        |
+| --- | --------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| R32 | Lost in the Middle                                  | `paper-text/lost-in-the-middle-2307.03172.txt`                    | Models underuse information depending on where it appears in long context (U-shaped curve). |
+| R37 | LongCodeBench                                       | `paper-text/longcodebench-2505.07897.txt`                         | Evaluation at million-token scale shows severe performance drops for real coding tasks.     |
+| R36 | YABLoCo                                             | `paper-text/yabloco-2505.04406.txt`                               | Long-context code generation over very large C/C++ repositories (200K-2M LoC).              |
+| R40 | Coding Agents are Effective Long-Context Processors | `paper-text/coding-agents-long-context-processors-2603.20432.txt` | Agents using tools/filesystem beat raw long-context baselines by 17.3% on average.          |
+| R10 | ContextBench                                        | `paper-text/contextbench-2602.05892.txt`                          | Agents retrieve too much context and still fail to use relevant material in final patches.  |
 
 ## Lost in the Middle: the positional attention problem
 
@@ -29,13 +29,13 @@ and significantly degraded when it is in the middle.
 
 ### Lost in the Middle data
 
-| Measurement | Value | Context |
-|---|---:|---|
-| Performance pattern | U-shaped curve | Best at beginning and end, worst in middle |
-| GPT-3.5-Turbo middle-context performance | Lower than closed-book (56.1%) | Model performs worse WITH documents than without |
-| Effect of more documents | Marginal improvement | 50 vs. 20 documents: ~1.5% gain (GPT-3.5-Turbo), ~1% (Claude-1.3) |
-| Extended-context models vs. standard | Often identical performance | Longer window does not mean better utilization |
-| Key-value retrieval | Some models struggle | Even for simple token matching from middle positions |
+| Measurement                              |                          Value | Context                                                           |
+| ---------------------------------------- | -----------------------------: | ----------------------------------------------------------------- |
+| Performance pattern                      |                 U-shaped curve | Best at beginning and end, worst in middle                        |
+| GPT-3.5-Turbo middle-context performance | Lower than closed-book (56.1%) | Model performs worse WITH documents than without                  |
+| Effect of more documents                 |           Marginal improvement | 50 vs. 20 documents: ~1.5% gain (GPT-3.5-Turbo), ~1% (Claude-1.3) |
+| Extended-context models vs. standard     |    Often identical performance | Longer window does not mean better utilization                    |
+| Key-value retrieval                      |           Some models struggle | Even for simple token matching from middle positions              |
 
 Source trace: R32, `paper-text/lost-in-the-middle-2307.03172.txt`.
 
@@ -68,14 +68,14 @@ thousands to one million tokens, using real GitHub issues.
 
 ### LongCodeBench data
 
-| Measurement | Value | Context |
-|---|---:|---|
-| Benchmark instances | 1,043 | From 108 real repositories |
-| Context range | Tens of thousands to 1M tokens | Stratified by complexity |
-| Claude 3.5 Sonnet performance drop | 29% to 3% | As context length increases to maximum |
-| Qwen2.5 performance drop | 70.2% to 40% | As context length increases |
-| Tasks | Comprehension (LongCodeQA) + Repair (LongSWE-Bench) | Both reading and fixing |
-| Maximum context tested | 1M tokens | Full benchmark scale |
+| Measurement                        |                                               Value | Context                                |
+| ---------------------------------- | --------------------------------------------------: | -------------------------------------- |
+| Benchmark instances                |                                               1,043 | From 108 real repositories             |
+| Context range                      |                      Tens of thousands to 1M tokens | Stratified by complexity               |
+| Claude 3.5 Sonnet performance drop |                                           29% to 3% | As context length increases to maximum |
+| Qwen2.5 performance drop           |                                        70.2% to 40% | As context length increases            |
+| Tasks                              | Comprehension (LongCodeQA) + Repair (LongSWE-Bench) | Both reading and fixing                |
+| Maximum context tested             |                                           1M tokens | Full benchmark scale                   |
 
 Source trace: R37, `paper-text/longcodebench-2505.07897.txt`.
 
@@ -94,13 +94,13 @@ of code. It explicitly includes context of dependencies at different levels and 
 
 ### YABLoCo data
 
-| Measurement | Value | Context |
-|---|---:|---|
-| Test functions | 215 | Selected from 4 large repositories |
-| Repository sizes | 200K to 2,000K | Lines of code |
-| Languages | C and C++ | Not covered by prior benchmarks |
-| Context types included | Metadata, dependency contexts, docstrings, call graphs | Multiple levels |
-| Key challenge | Inter-function dependencies in large repositories | Cross-file context |
+| Measurement            |                                                  Value | Context                            |
+| ---------------------- | -----------------------------------------------------: | ---------------------------------- |
+| Test functions         |                                                    215 | Selected from 4 large repositories |
+| Repository sizes       |                                         200K to 2,000K | Lines of code                      |
+| Languages              |                                              C and C++ | Not covered by prior benchmarks    |
+| Context types included | Metadata, dependency contexts, docstrings, call graphs | Multiple levels                    |
+| Key challenge          |      Inter-function dependencies in large repositories | Cross-file context                 |
 
 Source trace: R36, `paper-text/yabloco-2505.04406.txt`.
 
@@ -120,14 +120,14 @@ with native tools outperform published state-of-the-art across multiple benchmar
 
 ### Coding Agents Long-Context data
 
-| Benchmark | Corpus size | Improvement over best published | Context |
-|---|---:|---:|---|
-| BrowseComp-Plus | 750M tokens | +11% | Relative |
-| Oolong-Syn | 536K tokens | +10% | Relative |
-| Oolong-Real | 385K tokens | +11% | Relative |
-| LongBench | 188K tokens | -1% | Competitive, slight regression |
-| Natural Questions | 3T tokens | +56% | Massive corpus |
-| Average improvement | - | 17.3% | Across all benchmarks |
+| Benchmark           | Corpus size | Improvement over best published | Context                        |
+| ------------------- | ----------: | ------------------------------: | ------------------------------ |
+| BrowseComp-Plus     | 750M tokens |                            +11% | Relative                       |
+| Oolong-Syn          | 536K tokens |                            +10% | Relative                       |
+| Oolong-Real         | 385K tokens |                            +11% | Relative                       |
+| LongBench           | 188K tokens |                             -1% | Competitive, slight regression |
+| Natural Questions   |   3T tokens |                            +56% | Massive corpus                 |
+| Average improvement |           - |                           17.3% | Across all benchmarks          |
 
 Source trace: R40, `paper-text/coding-agents-long-context-processors-2603.20432.txt`.
 
@@ -154,12 +154,12 @@ pull too much context and fail to use what they find.
 
 ### ContextBench utilization gap
 
-| Finding | Detail |
-|---|---|
-| Explored vs. utilized gap | Agents inspect gold-relevant code but fail to retain or use it in patches |
-| Recall vs. precision | All LLMs favor recall (breadth) over precision (relevance) |
-| Cost of aggressive retrieval | Mainly increases token consumption without proportional success gains |
-| Balanced retrieval benefit | Higher Pass@1 at lower cost than aggressive retrieval |
+| Finding                      | Detail                                                                    |
+| ---------------------------- | ------------------------------------------------------------------------- |
+| Explored vs. utilized gap    | Agents inspect gold-relevant code but fail to retain or use it in patches |
+| Recall vs. precision         | All LLMs favor recall (breadth) over precision (relevance)                |
+| Cost of aggressive retrieval | Mainly increases token consumption without proportional success gains     |
+| Balanced retrieval benefit   | Higher Pass@1 at lower cost than aggressive retrieval                     |
 
 Source trace: R10, `paper-text/contextbench-2602.05892.txt`.
 
@@ -213,13 +213,13 @@ does not help.
 
 ## Codebase design for progressive disclosure
 
-| Level | Content | Agent use case | Artifact |
-|---|---|---|---|
-| L0: Root map | Module names, boundaries, entry points | Orient to codebase | CLAUDE.md, generated tree |
-| L1: Module summaries | Purpose, public API, dependencies | Decide which module to enter | README in each package, barrel files |
-| L2: File documentation | Function signatures, type exports, contracts | Understand specific file | JSDoc/TSDoc, type annotations |
-| L3: Implementation | Full function bodies, logic | Make specific changes | Source files |
-| L4: History | Commit messages, PR descriptions, changelogs | Understand intent of past changes | Git log, CHANGELOG |
+| Level                  | Content                                      | Agent use case                    | Artifact                             |
+| ---------------------- | -------------------------------------------- | --------------------------------- | ------------------------------------ |
+| L0: Root map           | Module names, boundaries, entry points       | Orient to codebase                | CLAUDE.md, generated tree            |
+| L1: Module summaries   | Purpose, public API, dependencies            | Decide which module to enter      | README in each package, barrel files |
+| L2: File documentation | Function signatures, type exports, contracts | Understand specific file          | JSDoc/TSDoc, type annotations        |
+| L3: Implementation     | Full function bodies, logic                  | Make specific changes             | Source files                         |
+| L4: History            | Commit messages, PR descriptions, changelogs | Understand intent of past changes | Git log, CHANGELOG                   |
 
 The agent should be able to work at L0-L1 for most decisions and descend to L2-L3 only for the
 files it needs to modify. If the codebase forces the agent to L3 for every decision (because there

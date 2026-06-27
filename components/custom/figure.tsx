@@ -22,17 +22,20 @@ export function Figure({
   ...props
 }: FigureProps) {
   return (
-    <figure className={cn('my-12 rounded-lg overflow-hidden', className)} {...props}>
+    <figure
+      className={cn('my-12 overflow-hidden border border-dashed border-border p-2', className)}
+      {...props}
+    >
       <Image
         src={src}
         alt={alt}
         width={width}
         height={height}
-        className="w-full h-auto"
+        className="h-auto w-full"
         priority={priority}
       />
       {caption && (
-        <figcaption className="text-sm text-muted-foreground text-center mt-3">
+        <figcaption className="mt-3 text-center text-xs text-muted-foreground">
           {caption}
         </figcaption>
       )}

@@ -50,7 +50,7 @@ test('WebSocket connects to Jarvis and receives ready message', async ({ page })
             error: `WebSocket closed: code=${e.code} reason=${e.reason}`,
           });
         };
-      },
+      }
     );
   }, WS_URL);
 
@@ -86,7 +86,7 @@ test('WebSocket accepts slide_context message', async ({ page }) => {
                     next_title: 'Next Slide',
                     remaining: 5,
                   },
-                }),
+                })
               );
               clearTimeout(timeout);
               ws.close();
@@ -108,7 +108,7 @@ test('WebSocket accepts slide_context message', async ({ page }) => {
             error: `WebSocket closed: code=${e.code}`,
           });
         };
-      },
+      }
     );
   }, WS_URL);
 

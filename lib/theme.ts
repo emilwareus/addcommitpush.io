@@ -11,6 +11,13 @@ export const ALLOWED_VARS = [
   'muted-foreground',
   'border',
   'ring',
+  'hair',
+  'hover',
+  'code',
+  'success',
+  'warning',
+  'danger',
+  'info',
   'radius',
   'card',
   'card-foreground',
@@ -166,4 +173,3 @@ export function saveThemeToStorage(theme: Theme) {
     // Ignore storage errors
   }
 }
-

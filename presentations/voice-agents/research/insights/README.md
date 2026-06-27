@@ -85,9 +85,9 @@ Every insight should include a source map near the top.
 ```md
 ## Source Map
 
-| Ref | Source | Local path | Role |
-|---|---|---|---|
-| R-VA-003 | Moonshine v2 | `../paper-text/moonshine-v2-2602.12241.txt` | Live ASR response-latency numbers. |
+| Ref      | Source                        | Local path                                       | Role                               |
+| -------- | ----------------------------- | ------------------------------------------------ | ---------------------------------- |
+| R-VA-003 | Moonshine v2                  | `../paper-text/moonshine-v2-2602.12241.txt`      | Live ASR response-latency numbers. |
 | R-VA-007 | OpenAI Realtime API reference | `../articles/openai-realtime-api-reference.html` | Turn-detection knobs and defaults. |
 ```
 
@@ -239,4 +239,3 @@ Before stopping:
 - External URLs and local paths are present.
 - Plot-ready data is in `../data/` when a graph is likely.
 - The insight is long enough to teach the subject, not just name the conclusion.
-

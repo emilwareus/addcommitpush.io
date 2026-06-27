@@ -13,12 +13,12 @@ maintainability signals.
 
 ## Source map
 
-| Ref | Source | Local text | Role in this insight |
-|---|---|---|---|
-| R41 | FixedBench | `paper-text/fixedbench-noop-2605.07769.txt` | Direct benchmark of no-op tasks; 35-65% undesirable change rate on already-fixed issues. |
-| R46 | Needle in the Repo | `paper-text/needle-in-the-repo-2603.27745.txt` | Separates functional correctness from structural maintainability; shows agents can pass tests while degrading structure. |
-| R09 | SWE-CI | `paper-text/swe-ci-2603.03823.txt` | Shows long-term maintainability depends on avoiding regressions across future changes, not just passing current tests. |
-| R22 | ABTest | `paper-text/abtest-agent-anomalies-2604.03362.txt` | Behavior-driven testing as a mechanism to catch agent anomalies. |
+| Ref | Source             | Local text                                         | Role in this insight                                                                                                     |
+| --- | ------------------ | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| R41 | FixedBench         | `paper-text/fixedbench-noop-2605.07769.txt`        | Direct benchmark of no-op tasks; 35-65% undesirable change rate on already-fixed issues.                                 |
+| R46 | Needle in the Repo | `paper-text/needle-in-the-repo-2603.27745.txt`     | Separates functional correctness from structural maintainability; shows agents can pass tests while degrading structure. |
+| R09 | SWE-CI             | `paper-text/swe-ci-2603.03823.txt`                 | Shows long-term maintainability depends on avoiding regressions across future changes, not just passing current tests.   |
+| R22 | ABTest             | `paper-text/abtest-agent-anomalies-2604.03362.txt` | Behavior-driven testing as a mechanism to catch agent anomalies.                                                         |
 
 ## FixedBench: the action bias is real and measurable
 
@@ -28,29 +28,29 @@ already resolved and submit an empty patch?
 
 ### FixedBench core data
 
-| Measurement | Value | Context |
-|---|---:|---|
-| Benchmark instances | 200 | Human-verified from SWE-Bench Verified |
-| Undesirable code changes on already-fixed tasks | 35-65% | Across models and harnesses |
-| Models evaluated | 5 | Recent frontier models |
-| Agent harnesses evaluated | 4 | Different scaffolding systems |
-| Expected behavior | Empty patch (abstention) | Only tests/docs may be changed |
+| Measurement                                     |                    Value | Context                                |
+| ----------------------------------------------- | -----------------------: | -------------------------------------- |
+| Benchmark instances                             |                      200 | Human-verified from SWE-Bench Verified |
+| Undesirable code changes on already-fixed tasks |                   35-65% | Across models and harnesses            |
+| Models evaluated                                |                        5 | Recent frontier models                 |
+| Agent harnesses evaluated                       |                        4 | Different scaffolding systems          |
+| Expected behavior                               | Empty patch (abstention) | Only tests/docs may be changed         |
 
 Source trace: R41, `paper-text/fixedbench-noop-2605.07769.txt`.
 
 ### FixedBench prompt ablation data
 
-| Model / Condition | Abstention rate | Delta from baseline |
-|---|---:|---:|
-| GPT-5.4 Mini baseline (BEST scenario) | 60.5% | - |
-| GPT-5.4 Mini with "edit" pressure prompt | 36.5% | -24.0 pp |
-| GPT-5.4 Mini with "reproduce only" prompt | 47.5% | -13.0 pp |
-| GPT-5.4 Mini with "abstain or fix" prompt | 88.5% | +28.0 pp |
-| Sonnet-4.6 baseline (BEST scenario) | 65.0% | - |
-| Sonnet-4.6 without git history/setup (WORST) | 50.0% | -15.0 pp |
-| GPT-5.4 Mini without git history/setup (WORST) | 52.5% | -8.0 pp |
-| Sonnet-4.6 with already-correct test added | 72.7% | +7.7 pp |
-| GPT-5.4 Mini with already-correct test added | 70.0% | +9.5 pp |
+| Model / Condition                              | Abstention rate | Delta from baseline |
+| ---------------------------------------------- | --------------: | ------------------: |
+| GPT-5.4 Mini baseline (BEST scenario)          |           60.5% |                   - |
+| GPT-5.4 Mini with "edit" pressure prompt       |           36.5% |            -24.0 pp |
+| GPT-5.4 Mini with "reproduce only" prompt      |           47.5% |            -13.0 pp |
+| GPT-5.4 Mini with "abstain or fix" prompt      |           88.5% |            +28.0 pp |
+| Sonnet-4.6 baseline (BEST scenario)            |           65.0% |                   - |
+| Sonnet-4.6 without git history/setup (WORST)   |           50.0% |            -15.0 pp |
+| GPT-5.4 Mini without git history/setup (WORST) |           52.5% |             -8.0 pp |
+| Sonnet-4.6 with already-correct test added     |           72.7% |             +7.7 pp |
+| GPT-5.4 Mini with already-correct test added   |           70.0% |             +9.5 pp |
 
 Source trace: R41, `paper-text/fixedbench-noop-2605.07769.txt`.
 
@@ -95,18 +95,18 @@ to verify that code changes preserve maintainability properties.
 
 ### NITR data
 
-| Measurement | Value | Context |
-|---|---:|---|
-| Total configurations evaluated | 23 | GPT, Claude, Gemini, Qwen families |
-| Average solve rate across all configs | 36.2% | Both functional + structural checks |
-| Best configuration solve rate | 57.1% | Still far from reliable |
-| Micro case performance | 53.5% | Isolated, small changes |
-| Multi-step case performance | 20.6% | Larger, cross-module changes |
-| Functional pass but structural fail | 64/483 outcomes (13.3%) | Correct behavior, degraded structure |
-| Dependency control pass rate | 4.3% | Hardest maintainability dimension |
-| Responsibility decomposition pass rate | 15.2% | Second hardest |
-| Extension structure pass rate | 26.1% | Third hardest |
-| Agent-mode improvement | 28.2% -> 45.0% | With scaffolding, but still fails structurally |
+| Measurement                            |                   Value | Context                                        |
+| -------------------------------------- | ----------------------: | ---------------------------------------------- |
+| Total configurations evaluated         |                      23 | GPT, Claude, Gemini, Qwen families             |
+| Average solve rate across all configs  |                   36.2% | Both functional + structural checks            |
+| Best configuration solve rate          |                   57.1% | Still far from reliable                        |
+| Micro case performance                 |                   53.5% | Isolated, small changes                        |
+| Multi-step case performance            |                   20.6% | Larger, cross-module changes                   |
+| Functional pass but structural fail    | 64/483 outcomes (13.3%) | Correct behavior, degraded structure           |
+| Dependency control pass rate           |                    4.3% | Hardest maintainability dimension              |
+| Responsibility decomposition pass rate |                   15.2% | Second hardest                                 |
+| Extension structure pass rate          |                   26.1% | Third hardest                                  |
+| Agent-mode improvement                 |          28.2% -> 45.0% | With scaffolding, but still fails structurally |
 
 Source trace: R46, `paper-text/needle-in-the-repo-2603.27745.txt`.
 
@@ -131,15 +131,15 @@ code quality changes across dozens of iterative modifications.
 
 ### SWE-CI data
 
-| Measurement | Value | Context |
-|---|---:|---|
-| Tasks | 100 | Real-world repositories |
-| Average development history per task | 233 days | Spans of real evolution |
-| Average consecutive commits per task | 71 | Real iteration depth |
-| Evaluation rounds | Dozens per task | Iterative CI loop |
-| Key insight | Maintainability revealed through functional correctness over time | Quality degrades if debt accumulates |
-| Metric | EvoScore (Evolution Score) | Measures sustained correctness |
-| Token consumption for experiments | >10 billion | Scale of evaluation |
+| Measurement                          |                                                             Value | Context                              |
+| ------------------------------------ | ----------------------------------------------------------------: | ------------------------------------ |
+| Tasks                                |                                                               100 | Real-world repositories              |
+| Average development history per task |                                                          233 days | Spans of real evolution              |
+| Average consecutive commits per task |                                                                71 | Real iteration depth                 |
+| Evaluation rounds                    |                                                   Dozens per task | Iterative CI loop                    |
+| Key insight                          | Maintainability revealed through functional correctness over time | Quality degrades if debt accumulates |
+| Metric                               |                                        EvoScore (Evolution Score) | Measures sustained correctness       |
+| Token consumption for experiments    |                                                       >10 billion | Scale of evaluation                  |
 
 Source trace: R09, `paper-text/swe-ci-2603.03823.txt`.
 
@@ -186,6 +186,7 @@ flowchart LR
 ```
 
 Each node in this flowchart represents a repository affordance:
+
 - Git history -> visible, structured commits with clear messages
 - Reproduction -> working test environment, runnable setup
 - Tests -> existing tests that verify the current contract
@@ -236,15 +237,15 @@ Each node in this flowchart represents a repository affordance:
 
 ## Codebase design for defensible abstention
 
-| Agent failure mode | Repository affordance | Concrete artifact |
-|---|---|---|
-| Edits already-fixed issue | Visible fix in git history | Clear commit messages referencing issues |
-| Cannot verify current behavior | Existing tests for the contract | Targeted unit/integration tests per feature |
-| No reproduction environment | Working setup | `make verify-setup` in fresh shell |
-| Framing pushes toward editing | Instruction context | CLAUDE.md: "no change is a valid outcome" |
-| Passes tests but degrades structure | Structural checks | Lint rules, dependency boundaries, module checks |
-| Introduces regression for future work | Long-term verification | CI that runs broad regression suite |
-| Over-abstains on partial fixes | Issue classification | Issue templates distinguish "bug" from "question" from "already fixed" |
+| Agent failure mode                    | Repository affordance           | Concrete artifact                                                      |
+| ------------------------------------- | ------------------------------- | ---------------------------------------------------------------------- |
+| Edits already-fixed issue             | Visible fix in git history      | Clear commit messages referencing issues                               |
+| Cannot verify current behavior        | Existing tests for the contract | Targeted unit/integration tests per feature                            |
+| No reproduction environment           | Working setup                   | `make verify-setup` in fresh shell                                     |
+| Framing pushes toward editing         | Instruction context             | CLAUDE.md: "no change is a valid outcome"                              |
+| Passes tests but degrades structure   | Structural checks               | Lint rules, dependency boundaries, module checks                       |
+| Introduces regression for future work | Long-term verification          | CI that runs broad regression suite                                    |
+| Over-abstains on partial fixes        | Issue classification            | Issue templates distinguish "bug" from "question" from "already fixed" |
 
 ## Minimal agent-ready abstention contract
 

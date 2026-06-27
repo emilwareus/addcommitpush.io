@@ -7,16 +7,16 @@ and convergent across multiple independent systems.
 
 ## Source map
 
-| Ref | Source | Local text | Role in this insight |
-|---|---|---|---|
-| R53 | GraphCodeAgent | `paper-text/graphcodeagent-2504.10046.txt` | Requirement Graph + Structural-Semantic Code Graph; up to 43.81% relative Pass@1 improvement. |
-| R55 | InlineCoder | `paper-text/inlinecoder-context-inlining-2601.00376.txt` | Call graph inlining (callers + callees); 29.73% relative EM improvement on RepoExec. |
-| R56 | SLICE | Not downloaded; abstract indexed | Backward slicing retrieves dependencies; 48-67% over no-retrieval, 32-48% over BM25. |
-| R12 | RepoGraph | `paper-text/repograph-2410.14684.txt` | Repository-level code graphs for software engineering agents. |
-| R13 | Repository Intelligence Graph | `paper-text/repository-intelligence-graph-2601.10112.txt` | Deterministic architectural map for build/test/dependency structure. |
-| R54 | CodeGRAG | `paper-text/codegrag-2405.02355.txt` | AST/control-flow/data-flow graphs bridge NL and code structure. |
-| R16 | CodePlan | `paper-text/codeplan-2309.12499.txt` | Planning over code dependencies enables multi-file edits. |
-| R30 | GraphCodeBERT | `paper-text/graphcodebert-2009.08366.txt` | Data-flow structure improves code representation. |
+| Ref | Source                        | Local text                                                | Role in this insight                                                                          |
+| --- | ----------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| R53 | GraphCodeAgent                | `paper-text/graphcodeagent-2504.10046.txt`                | Requirement Graph + Structural-Semantic Code Graph; up to 43.81% relative Pass@1 improvement. |
+| R55 | InlineCoder                   | `paper-text/inlinecoder-context-inlining-2601.00376.txt`  | Call graph inlining (callers + callees); 29.73% relative EM improvement on RepoExec.          |
+| R56 | SLICE                         | Not downloaded; abstract indexed                          | Backward slicing retrieves dependencies; 48-67% over no-retrieval, 32-48% over BM25.          |
+| R12 | RepoGraph                     | `paper-text/repograph-2410.14684.txt`                     | Repository-level code graphs for software engineering agents.                                 |
+| R13 | Repository Intelligence Graph | `paper-text/repository-intelligence-graph-2601.10112.txt` | Deterministic architectural map for build/test/dependency structure.                          |
+| R54 | CodeGRAG                      | `paper-text/codegrag-2405.02355.txt`                      | AST/control-flow/data-flow graphs bridge NL and code structure.                               |
+| R16 | CodePlan                      | `paper-text/codeplan-2309.12499.txt`                      | Planning over code dependencies enables multi-file edits.                                     |
+| R30 | GraphCodeBERT                 | `paper-text/graphcodebert-2009.08366.txt`                 | Data-flow structure improves code representation.                                             |
 
 ## GraphCodeAgent: dual graphs for repo-level generation
 
@@ -26,25 +26,27 @@ retrieve implicit code dependencies that are not directly expressed in requireme
 
 ### GraphCodeAgent results copied from the paper
 
-| Model | Benchmark | Relative Pass@1 improvement over best baseline |
-|---|---|---:|
-| GPT-4o | DevEval | 43.81% |
-| Gemini-1.5-Pro | DevEval | 39.15% |
-| GPT-4o | CoderEval | 31.91% |
-| Gemini-1.5-Pro | CoderEval | 8.25% |
-| QwQ-32B | DevEval | 10.65% |
+| Model          | Benchmark | Relative Pass@1 improvement over best baseline |
+| -------------- | --------- | ---------------------------------------------: |
+| GPT-4o         | DevEval   |                                         43.81% |
+| Gemini-1.5-Pro | DevEval   |                                         39.15% |
+| GPT-4o         | CoderEval |                                         31.91% |
+| Gemini-1.5-Pro | CoderEval |                                          8.25% |
+| QwQ-32B        | DevEval   |                                         10.65% |
 
 Source trace: R53, `paper-text/graphcodeagent-2504.10046.txt`, lines 71-73 and 220-223.
 
 ### What the graphs capture
 
 The SSCG encodes:
+
 - Class inheritance and composition
 - Function call edges (intra-class, intra-file, cross-file)
 - Import/dependency edges
 - Data flow within and across functions
 
 The RG encodes:
+
 - Sub-requirements of the target requirement
 - Semantic similarity between requirements
 - Mapping from requirements to code implementations
@@ -64,16 +66,17 @@ retrieval matters most when dependencies span files.
 
 InlineCoder (FSE 2026) reformulates repository-level generation by inlining the target function
 into its call graph. It uses:
+
 - **Upstream Inlining:** embedding the function into its callers to show usage patterns
 - **Downstream Retrieval:** incorporating callees to provide dependency context
 
 ### InlineCoder results copied from the paper
 
-| Metric | Relative gain over strongest baseline (RepoExec) |
-|---|---:|
-| Exact Match (EM) | 29.73% |
-| Edit Similarity (ES) | 20.82% |
-| BLEU | 49.34% |
+| Metric               | Relative gain over strongest baseline (RepoExec) |
+| -------------------- | -----------------------------------------------: |
+| Exact Match (EM)     |                                           29.73% |
+| Edit Similarity (ES) |                                           20.82% |
+| BLEU                 |                                           49.34% |
 
 Source trace: R55, `paper-text/inlinecoder-context-inlining-2601.00376.txt`, lines 25-27.
 
@@ -93,10 +96,10 @@ retrieve relevant code plus its dependencies.
 
 ### SLICE improvements (from abstract/indexed data)
 
-| Comparison | Improvement range |
-|---|---|
-| Over no-retrieval baseline | 48-67% |
-| Over BM25 text retrieval | 32-48% |
+| Comparison                 | Improvement range |
+| -------------------------- | ----------------- |
+| Over no-retrieval baseline | 48-67%            |
+| Over BM25 text retrieval   | 32-48%            |
 
 Source trace: R56, abstract indexed (paper not locally downloaded).
 
@@ -142,12 +145,12 @@ between natural language and code structure for retrieval-augmented generation.
 
 ## Comparative data: structure vs. text retrieval
 
-| System | Retrieval method | Improvement over text baseline |
-|---|---|---|
-| GraphCodeAgent | Requirement + Code graphs | 43.81% (GPT-4o, DevEval) |
-| InlineCoder | Call graph inlining | 29.73% EM (RepoExec) |
-| SLICE | Backward slicing | 32-48% over BM25 |
-| CodePlan | Dependency + may-impact | 5/6 vs 0/6 repos passing |
+| System         | Retrieval method          | Improvement over text baseline |
+| -------------- | ------------------------- | ------------------------------ |
+| GraphCodeAgent | Requirement + Code graphs | 43.81% (GPT-4o, DevEval)       |
+| InlineCoder    | Call graph inlining       | 29.73% EM (RepoExec)           |
+| SLICE          | Backward slicing          | 32-48% over BM25               |
+| CodePlan       | Dependency + may-impact   | 5/6 vs 0/6 repos passing       |
 
 All of these systems outperform text-similarity-only retrieval by large margins. The convergence
 across independent research groups (Peking/Wuhan, Shanghai Jiao Tong, NeurIPS, Microsoft
@@ -158,21 +161,22 @@ Research) strengthens the claim.
 If structure-aware retrieval consistently outperforms text retrieval, then codebases should make
 their structure easy to extract and navigate:
 
-| Codebase property | Why it helps agents |
-|---|---|
-| Explicit imports (no barrel re-exports that hide origin) | Graph builders can trace actual dependencies |
-| Typed function signatures | Static analyzers extract call graphs and type dependencies |
-| No hidden dynamic registration | Plan graphs remain accurate |
-| No monkeypatching or runtime mutation | Dependency analysis stays valid |
-| Predictable folder structure | Reduces false positives in structural search |
-| Generated dependency maps (for large systems) | Pre-computed graphs available without re-analysis |
-| Aligned folders with ownership | Module boundary = architectural boundary |
-| Entrypoints in predictable locations | Agents can find starting points for exploration |
+| Codebase property                                        | Why it helps agents                                        |
+| -------------------------------------------------------- | ---------------------------------------------------------- |
+| Explicit imports (no barrel re-exports that hide origin) | Graph builders can trace actual dependencies               |
+| Typed function signatures                                | Static analyzers extract call graphs and type dependencies |
+| No hidden dynamic registration                           | Plan graphs remain accurate                                |
+| No monkeypatching or runtime mutation                    | Dependency analysis stays valid                            |
+| Predictable folder structure                             | Reduces false positives in structural search               |
+| Generated dependency maps (for large systems)            | Pre-computed graphs available without re-analysis          |
+| Aligned folders with ownership                           | Module boundary = architectural boundary                   |
+| Entrypoints in predictable locations                     | Agents can find starting points for exploration            |
 
 ### What agents need from structure
 
 Agents do not need every graph dumped into context. They need compact, task-relevant slices
 of the graph. The research shows that:
+
 - InlineCoder uses only the immediate callers and callees (not the full call graph)
 - SLICE uses backward slicing from the target (not forward exploration of everything)
 - GraphCodeAgent traverses only paths relevant to the current requirement

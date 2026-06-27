@@ -45,7 +45,7 @@ export function GitHubChart({ data }: GitHubChartProps) {
         y1={padding.top}
         x2={padding.left}
         y2={height - padding.bottom}
-        stroke="oklch(0.7 0.14 195)"
+        stroke="var(--primary)"
         strokeWidth={1}
       />
 
@@ -59,7 +59,7 @@ export function GitHubChart({ data }: GitHubChartProps) {
               y1={y}
               x2={padding.left}
               y2={y}
-              stroke="oklch(0.7 0.14 195)"
+              stroke="var(--primary)"
               strokeWidth={1}
             />
             <text
@@ -67,7 +67,7 @@ export function GitHubChart({ data }: GitHubChartProps) {
               y={y}
               textAnchor="end"
               dominantBaseline="middle"
-              fill="oklch(0.7 0.14 195)"
+              fill="var(--primary)"
               fontSize={12}
             >
               {tick}
@@ -82,7 +82,7 @@ export function GitHubChart({ data }: GitHubChartProps) {
         y1={height - padding.bottom}
         x2={width - padding.right}
         y2={height - padding.bottom}
-        stroke="oklch(0.7 0.14 195)"
+        stroke="var(--primary)"
         strokeWidth={1}
       />
 
@@ -93,7 +93,7 @@ export function GitHubChart({ data }: GitHubChartProps) {
           x={x}
           y={height - padding.bottom + 16}
           textAnchor="start"
-          fill="oklch(0.7 0.14 195)"
+          fill="var(--primary)"
           fontSize={12}
         >
           {label}
@@ -113,8 +113,7 @@ export function GitHubChart({ data }: GitHubChartProps) {
             y={y}
             width={barWidth}
             height={barHeight}
-            fill="oklch(0.7 0.14 195)"
-            rx={2}
+            fill="var(--primary)"
           />
         );
       })}

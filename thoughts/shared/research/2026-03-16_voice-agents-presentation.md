@@ -4,8 +4,22 @@ researcher: Claude
 git_commit: 7551a68cc1c0e060223bc46eff0c0412a83a96a1
 branch: main
 repository: addcommitpush.io
-topic: "Voice Agents Presentation with Jarvis AI Co-Presenter"
-tags: [research, presentation, voice-agents, whisper, kokoro, groq, vad, webrtc, websockets, jarvis, stt, tts]
+topic: 'Voice Agents Presentation with Jarvis AI Co-Presenter'
+tags:
+  [
+    research,
+    presentation,
+    voice-agents,
+    whisper,
+    kokoro,
+    groq,
+    vad,
+    webrtc,
+    websockets,
+    jarvis,
+    stt,
+    tts,
+  ]
 status: complete
 last_updated: 2026-03-16
 last_updated_by: Claude
@@ -33,27 +47,27 @@ The presentation system already exists as a robust custom slide deck in Next.js 
 
 ### Proposed Slide Order (~30 minutes)
 
-| # | Slug | Title | Steps | Time | Type |
-|---|---|---|---|---|---|
-| 01 | `01-title` | Building Real-Time Voice Agents | 0 | 0:30 | Title (reusable) |
-| 02 | `02-about` | Emil Wåreus | 0 | 1:00 | About (reusable) |
-| 03 | `03-the-dream` | "Hey Jarvis..." — What We're Building | 1 | 1:30 | Hook: Show the Jarvis sidebar, explain the vision |
-| 04 | `04-architecture-overview` | The Voice Agent Pipeline | 3 | 2:00 | Pipeline diagram: Mic → VAD → STT → LLM → TTS → Speaker |
-| 05 | `05-stt-landscape` | Speech-to-Text: The Ears | 2 | 2:30 | Whisper, faster-whisper, Moonshine, cloud APIs |
-| 06 | `06-whisper-deep-dive` | Whisper: How It Works | 2 | 2:30 | Architecture, models, latency tradeoffs |
-| 07 | `07-tts-landscape` | Text-to-Speech: The Voice | 2 | 2:00 | Kokoro, Bark, XTTS, Piper, cloud APIs |
-| 08 | `08-kokoro-deep-dive` | Kokoro-82M: Fast & Open TTS | 2 | 2:30 | 82M params, streaming, voices, latency |
-| 09 | `09-vad` | Voice Activity Detection | 2 | 2:00 | Silero VAD, webrtcvad, energy-based, when to listen |
-| 10 | `10-realtime-transport` | Making It Feel Real-Time | 3 | 3:00 | WebSockets vs WebRTC, binary frames, AudioWorklet, echo cancellation |
-| 11 | `11-latency-budget` | The Latency Budget | 2 | 2:00 | End-to-end breakdown, speculative execution, sentence chunking |
-| 12 | `12-podidex-architecture` | Podidex: Talk to Your Podcast | 2 | 2:00 | Architecture overview, provider system |
-| 13 | `13-podidex-demo` | Live Demo: Podidex Voice Chat | 0 | 3:00 | Switch to Podidex app |
-| 14 | `14-homegrown-vs-api` | Homegrown vs API: Trade-offs | 2 | 2:00 | Whisper+Kokoro vs Gemini Native Audio |
-| 15 | `15-code-walkthrough` | Let's Build It | 0 | 3:00 | Live code walkthrough of the voice pipeline |
-| 16 | `16-jarvis-reveal` | "Jarvis, what have we talked about?" | 0 | 2:00 | The twist: Jarvis responds live |
-| 17 | `17-how-jarvis-works` | How Jarvis Was Built | 2 | 2:00 | Self-referential: the tech behind the co-presenter |
-| 18 | `18-takeaways` | What You Can Build Today | 0 | 1:30 | Key takeaways |
-| 19 | `19-resources` | Questions & Resources | 0 | 1:00 | Resources (reusable) |
+| #   | Slug                       | Title                                 | Steps | Time | Type                                                                 |
+| --- | -------------------------- | ------------------------------------- | ----- | ---- | -------------------------------------------------------------------- |
+| 01  | `01-title`                 | Building Real-Time Voice Agents       | 0     | 0:30 | Title (reusable)                                                     |
+| 02  | `02-about`                 | Emil Wåreus                           | 0     | 1:00 | About (reusable)                                                     |
+| 03  | `03-the-dream`             | "Hey Jarvis..." — What We're Building | 1     | 1:30 | Hook: Show the Jarvis sidebar, explain the vision                    |
+| 04  | `04-architecture-overview` | The Voice Agent Pipeline              | 3     | 2:00 | Pipeline diagram: Mic → VAD → STT → LLM → TTS → Speaker              |
+| 05  | `05-stt-landscape`         | Speech-to-Text: The Ears              | 2     | 2:30 | Whisper, faster-whisper, Moonshine, cloud APIs                       |
+| 06  | `06-whisper-deep-dive`     | Whisper: How It Works                 | 2     | 2:30 | Architecture, models, latency tradeoffs                              |
+| 07  | `07-tts-landscape`         | Text-to-Speech: The Voice             | 2     | 2:00 | Kokoro, Bark, XTTS, Piper, cloud APIs                                |
+| 08  | `08-kokoro-deep-dive`      | Kokoro-82M: Fast & Open TTS           | 2     | 2:30 | 82M params, streaming, voices, latency                               |
+| 09  | `09-vad`                   | Voice Activity Detection              | 2     | 2:00 | Silero VAD, webrtcvad, energy-based, when to listen                  |
+| 10  | `10-realtime-transport`    | Making It Feel Real-Time              | 3     | 3:00 | WebSockets vs WebRTC, binary frames, AudioWorklet, echo cancellation |
+| 11  | `11-latency-budget`        | The Latency Budget                    | 2     | 2:00 | End-to-end breakdown, speculative execution, sentence chunking       |
+| 12  | `12-podidex-architecture`  | Podidex: Talk to Your Podcast         | 2     | 2:00 | Architecture overview, provider system                               |
+| 13  | `13-podidex-demo`          | Live Demo: Podidex Voice Chat         | 0     | 3:00 | Switch to Podidex app                                                |
+| 14  | `14-homegrown-vs-api`      | Homegrown vs API: Trade-offs          | 2     | 2:00 | Whisper+Kokoro vs Gemini Native Audio                                |
+| 15  | `15-code-walkthrough`      | Let's Build It                        | 0     | 3:00 | Live code walkthrough of the voice pipeline                          |
+| 16  | `16-jarvis-reveal`         | "Jarvis, what have we talked about?"  | 0     | 2:00 | The twist: Jarvis responds live                                      |
+| 17  | `17-how-jarvis-works`      | How Jarvis Was Built                  | 2     | 2:00 | Self-referential: the tech behind the co-presenter                   |
+| 18  | `18-takeaways`             | What You Can Build Today              | 0     | 1:30 | Key takeaways                                                        |
+| 19  | `19-resources`             | Questions & Resources                 | 0     | 1:00 | Resources (reusable)                                                 |
 
 **Total: ~33 minutes** (buffer for Jarvis interactions throughout)
 
@@ -74,6 +88,7 @@ The presentation system already exists as a robust custom slide deck in Next.js 
 ### Existing Presentation System
 
 The presentation system is at:
+
 - **Routes**: `app/presentations/[presentation-name]/[slide]/page.tsx`
 - **Layouts**: `app/presentations/[presentation-name]/layout.tsx` (client, keyboard nav, progress bar)
 - **Slide registry**: `lib/presentations/[presentation-name].ts`
@@ -156,6 +171,7 @@ public/presentations/voice-agents/
 ### Jarvis Sidebar Component
 
 The Jarvis sidebar is a persistent UI element rendered in the **layout** (not individual slides). It shows:
+
 - Current transcription (what the mic is hearing) — streaming tokens
 - Jarvis thinking/processing state
 - Jarvis responses (text + audio playback indicator)
@@ -169,12 +185,10 @@ The Jarvis sidebar is a persistent UI element rendered in the **layout** (not in
     <StatusIndicator status={status} /> {/* listening | thinking | speaking | idle */}
   </div>
   <div className="flex-1 overflow-y-auto p-4 space-y-3">
-    {messages.map(msg => (
+    {messages.map((msg) => (
       <ChatBubble key={msg.id} role={msg.role} content={msg.content} />
     ))}
-    {currentTranscript && (
-      <ChatBubble role="user" content={currentTranscript} partial />
-    )}
+    {currentTranscript && <ChatBubble role="user" content={currentTranscript} partial />}
   </div>
 </div>
 ```
@@ -217,6 +231,7 @@ The Jarvis sidebar is a persistent UI element rendered in the **layout** (not in
 ### Backend: Jarvis Voice Server
 
 **Stack:**
+
 - Python 3.12 + FastAPI + uvicorn
 - `faster-whisper` (small model, CPU int8) — STT
 - `kokoro-onnx` (~80MB quantized model) — TTS
@@ -335,6 +350,7 @@ export default function VoiceAgentsLayout({ children }: { children: React.ReactN
 **Solutions (ranked):**
 
 1. **mkcert + WSS (recommended for demo):**
+
    ```bash
    brew install mkcert
    mkcert -install
@@ -342,6 +358,7 @@ export default function VoiceAgentsLayout({ children }: { children: React.ReactN
    # Run backend with SSL
    uvicorn main:app --port 8765 --ssl-keyfile localhost+1-key.pem --ssl-certfile localhost+1.pem
    ```
+
    Then connect to `wss://localhost:8765`. Works from any HTTPS origin.
 
 2. **Run everything on localhost:** Both Next.js and Python backend on localhost. No mixed content. Simplest but can't use Vercel.
@@ -352,17 +369,18 @@ export default function VoiceAgentsLayout({ children }: { children: React.ReactN
 
 ### Latency Budget
 
-| Stage | Latency | Cumulative |
-|---|---|---|
-| VAD silence detection | ~900ms | 900ms |
-| Whisper STT (small, CPU, 3s utterance) | ~300ms | 1200ms |
-| Groq TTFT (streaming) | ~150ms | 1350ms |
-| First sentence buffer | ~100ms | 1450ms |
-| Kokoro TTS (first sentence) | ~200ms | 1650ms |
-| WebSocket round-trip | ~1ms | ~1650ms |
-| **Total to first audio** | **~1.7s** | from end of speech |
+| Stage                                  | Latency   | Cumulative         |
+| -------------------------------------- | --------- | ------------------ |
+| VAD silence detection                  | ~900ms    | 900ms              |
+| Whisper STT (small, CPU, 3s utterance) | ~300ms    | 1200ms             |
+| Groq TTFT (streaming)                  | ~150ms    | 1350ms             |
+| First sentence buffer                  | ~100ms    | 1450ms             |
+| Kokoro TTS (first sentence)            | ~200ms    | 1650ms             |
+| WebSocket round-trip                   | ~1ms      | ~1650ms            |
+| **Total to first audio**               | **~1.7s** | from end of speech |
 
 Optimizations:
+
 - Reduce VAD silence threshold to 500ms for faster turn detection
 - Use speculative execution (start LLM before final STT, like Podidex does)
 - Use filler words ("So," "Well,") to get first TTS chunk out faster
@@ -419,15 +437,15 @@ The podidex codebase at `/Users/emilwareus/Development/podidex` has a complete p
 
 ### Key Files to Reference
 
-| File | What It Shows |
-|---|---|
-| `tts/voice_chat/pipeline.py` | Full STT→LLM→TTS pipeline with speculative execution, echo suppression, barge-in |
-| `tts/voice_chat/models.py` | Model loading (faster-whisper + Kokoro) with GPU/CPU detection |
-| `tts/voice_chat/server.py` | WebSocket server with binary audio protocol |
-| `tts/voice_chat/audio_processing.py` | Audio resampling (48k→16k, 24k→48k) |
-| `apps/web/src/features/voice-conversation/services/ws-voice-service.ts` | Frontend VAD + WebSocket audio streaming |
-| `apps/web/src/features/voice-conversation/services/pcm-audio-player.ts` | PCM playback with AudioWorklet |
-| `apps/web/public/pcm-playback-worklet.js` | Ring buffer playback worklet |
+| File                                                                    | What It Shows                                                                    |
+| ----------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `tts/voice_chat/pipeline.py`                                            | Full STT→LLM→TTS pipeline with speculative execution, echo suppression, barge-in |
+| `tts/voice_chat/models.py`                                              | Model loading (faster-whisper + Kokoro) with GPU/CPU detection                   |
+| `tts/voice_chat/server.py`                                              | WebSocket server with binary audio protocol                                      |
+| `tts/voice_chat/audio_processing.py`                                    | Audio resampling (48k→16k, 24k→48k)                                              |
+| `apps/web/src/features/voice-conversation/services/ws-voice-service.ts` | Frontend VAD + WebSocket audio streaming                                         |
+| `apps/web/src/features/voice-conversation/services/pcm-audio-player.ts` | PCM playback with AudioWorklet                                                   |
+| `apps/web/public/pcm-playback-worklet.js`                               | Ring buffer playback worklet                                                     |
 
 ### Patterns to Reuse from Podidex
 
@@ -439,15 +457,15 @@ The podidex codebase at `/Users/emilwareus/Development/podidex` has a complete p
 
 ### Differences from Podidex for Jarvis
 
-| Aspect | Podidex | Jarvis |
-|---|---|---|
-| Backend hosting | RunPod GPU | Local macOS CPU |
-| STT model | faster-whisper base.en | faster-whisper small |
-| TTS library | kokoro (PyTorch) | kokoro-onnx (ONNX, no PyTorch needed) |
-| LLM | Groq (openai SDK) | Groq (groq SDK with tools) |
-| VAD | Frontend RMS + backend barge-in | Silero VAD on backend |
-| Conversation mode | Always responds | Only responds when asked |
-| Context | Episode scripts | Presentation slides |
+| Aspect            | Podidex                         | Jarvis                                |
+| ----------------- | ------------------------------- | ------------------------------------- |
+| Backend hosting   | RunPod GPU                      | Local macOS CPU                       |
+| STT model         | faster-whisper base.en          | faster-whisper small                  |
+| TTS library       | kokoro (PyTorch)                | kokoro-onnx (ONNX, no PyTorch needed) |
+| LLM               | Groq (openai SDK)               | Groq (groq SDK with tools)            |
+| VAD               | Frontend RMS + backend barge-in | Silero VAD on backend                 |
+| Conversation mode | Always responds                 | Only responds when asked              |
+| Context           | Episode scripts                 | Presentation slides                   |
 
 ---
 

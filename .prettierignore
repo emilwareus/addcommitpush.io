@@ -28,9 +28,13 @@ build
 
 # Testing
 coverage
+test-results
 
 # Vercel
 .vercel
+
+# Archived scraped research pages
+presentations/voice-agents/research/articles/*.html
 
 # TypeScript
 *.tsbuildinfo
@@ -42,5 +46,4 @@ yarn.lock
 
 # Claude AI files
 .claude
-
 

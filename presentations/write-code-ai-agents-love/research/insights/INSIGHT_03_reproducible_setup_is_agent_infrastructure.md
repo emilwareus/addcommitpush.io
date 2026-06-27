@@ -8,15 +8,15 @@ project, neither can a fresh agent.
 
 ## Source map
 
-| Ref | Source | Local text | Role |
-|---|---|---|---|
-| R27 | Beyond pip install / Installamatic (2024-12) | `paper-text/installamatic-2412.06294.txt` | Evaluates LLM agents installing 40 Python projects; 55% success rate. |
-| R28 | SetupBench (2025-07) | `paper-text/setupbench-2507.09063.txt` | 93-instance benchmark isolating environment-bootstrap skill; 34.4-62.4% overall success. |
-| R01 | SWE-bench (2023-10) | `paper-text/swe-bench-2310.06770.txt` | Relies on pre-baked Docker images; setup is assumed, not tested. |
-| R06 | SWE-bench Live (2025-05) | `paper-text/swe-bench-live-2505.23419.txt` | Addresses freshness but still provides pre-configured environments. |
-| D05 | Anthropic: Claude Code best practices | `articles/anthropic-claude-code-best-practices.html` | Official-doc evidence: emphasizes test and setup commands. |
-| D06 | GitHub Copilot coding agent best practices | `articles/github-copilot-coding-agent-best-practices.html` | Official-doc evidence: setup instructions in repository. |
-| R75 | GitTaskBench (AAAI 2026) | `papers/gittaskbench-aaai-2026.pdf` | End-to-end repo reuse benchmark with autonomous environment setup. |
+| Ref | Source                                       | Local text                                                 | Role                                                                                     |
+| --- | -------------------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| R27 | Beyond pip install / Installamatic (2024-12) | `paper-text/installamatic-2412.06294.txt`                  | Evaluates LLM agents installing 40 Python projects; 55% success rate.                    |
+| R28 | SetupBench (2025-07)                         | `paper-text/setupbench-2507.09063.txt`                     | 93-instance benchmark isolating environment-bootstrap skill; 34.4-62.4% overall success. |
+| R01 | SWE-bench (2023-10)                          | `paper-text/swe-bench-2310.06770.txt`                      | Relies on pre-baked Docker images; setup is assumed, not tested.                         |
+| R06 | SWE-bench Live (2025-05)                     | `paper-text/swe-bench-live-2505.23419.txt`                 | Addresses freshness but still provides pre-configured environments.                      |
+| D05 | Anthropic: Claude Code best practices        | `articles/anthropic-claude-code-best-practices.html`       | Official-doc evidence: emphasizes test and setup commands.                               |
+| D06 | GitHub Copilot coding agent best practices   | `articles/github-copilot-coding-agent-best-practices.html` | Official-doc evidence: setup instructions in repository.                                 |
+| R75 | GitTaskBench (AAAI 2026)                     | `papers/gittaskbench-aaai-2026.pdf`                        | End-to-end repo reuse benchmark with autonomous environment setup.                       |
 
 ## Installamatic (R27): installation is a hard agent task
 
@@ -31,17 +31,18 @@ project, neither can a fresh agent.
 
 ### Key results
 
-| Metric | Value |
-|---|---:|
-| Repositories tested | 40 |
-| Successfully installed (at least 1/10 attempts) | 21 (55%) |
-| Installation method diversity | multiple (pip, conda, docker, manual) |
+| Metric                                          |                                 Value |
+| ----------------------------------------------- | ------------------------------------: |
+| Repositories tested                             |                                    40 |
+| Successfully installed (at least 1/10 attempts) |                              21 (55%) |
+| Installation method diversity                   | multiple (pip, conda, docker, manual) |
 
 Source trace: R27, `paper-text/installamatic-2412.06294.txt`.
 
 ### Failure causes identified
 
 The paper identifies common causes for installation failure:
+
 - Inadequate or missing documentation (68% of developers cite this as an issue per Aghajani et al.)
 - Inappropriate installation instructions (63% cite this)
 - Agent difficulty gathering task-relevant information from the repository
@@ -57,6 +58,7 @@ The paper identifies common causes for installation failure:
 
 The benchmark reveals that installation is not a trivial prerequisite that can be assumed. Even when
 documentation exists, agents struggle to:
+
 1. Find the right documentation files
 2. Distinguish install-relevant from non-relevant documentation
 3. Handle cases where instructions are incomplete or environment-specific
@@ -66,38 +68,38 @@ documentation exists, agents struggle to:
 
 ### Benchmark composition
 
-| Category | Instances | Ecosystems / Engines |
-|---|---:|---|
-| Repo Setup | 54 | Python, TypeScript, JavaScript, Go, Rust, Java, C++ |
-| Dependency Resolution | 16 | npm, pip/Poetry, Bundler |
-| Database Setup | 15 | PostgreSQL, MySQL, SQLite, Redis, MongoDB |
-| Background-Service Setup | 8 | Gunicorn, Celery, NGINX, file-watchers, autossh |
-| **Total** | **93** | 7 languages, 5 DB engines |
+| Category                 | Instances | Ecosystems / Engines                                |
+| ------------------------ | --------: | --------------------------------------------------- |
+| Repo Setup               |        54 | Python, TypeScript, JavaScript, Go, Rust, Java, C++ |
+| Dependency Resolution    |        16 | npm, pip/Poetry, Bundler                            |
+| Database Setup           |        15 | PostgreSQL, MySQL, SQLite, Redis, MongoDB           |
+| Background-Service Setup |         8 | Gunicorn, Celery, NGINX, file-watchers, autossh     |
+| **Total**                |    **93** | 7 languages, 5 DB engines                           |
 
 Source trace: R28, `paper-text/setupbench-2507.09063.txt`, Table 1.
 
 ### Success rates by task category and model
 
-| Task family | GPT 4o | GPT 4.1 | Claude 3.5 | Claude 3.7 | Claude 4 |
-|---|---:|---:|---:|---:|---:|
-| Background-service setup | 50.0% | 62.5% | 75.0% | 87.5% | 75.0% |
-| Local-DB setup | 20.0% | 33.3% | 40.0% | 53.3% | 46.7% |
-| Repo setup | 38.9% | 46.3% | 50.0% | 44.4% | 57.4% |
-| Dependency resolution | 25.0% | 75.0% | 68.8% | 87.5% | 87.5% |
-| **Overall** | **34.4%** | **50.5%** | **53.8%** | **57.0%** | **62.4%** |
+| Task family              |    GPT 4o |   GPT 4.1 | Claude 3.5 | Claude 3.7 |  Claude 4 |
+| ------------------------ | --------: | --------: | ---------: | ---------: | --------: |
+| Background-service setup |     50.0% |     62.5% |      75.0% |      87.5% |     75.0% |
+| Local-DB setup           |     20.0% |     33.3% |      40.0% |      53.3% |     46.7% |
+| Repo setup               |     38.9% |     46.3% |      50.0% |      44.4% |     57.4% |
+| Dependency resolution    |     25.0% |     75.0% |      68.8% |      87.5% |     87.5% |
+| **Overall**              | **34.4%** | **50.5%** |  **53.8%** |  **57.0%** | **62.4%** |
 
 Source trace: R28, `paper-text/setupbench-2507.09063.txt`, Table 2.
 
 ### Token usage and step count (average)
 
-| Task family | Model | Avg tokens | Avg steps |
-|---|---|---:|---:|
-| Repo setup | Claude 4 | 1,158K | 42.9 |
-| Repo setup | GPT 4o | 323K | 21.3 |
-| Dependency resolution | Claude 4 | 1,847K | 74.3 |
-| Dependency resolution | GPT 4o | 435K | 34.1 |
-| Overall | Claude 4 | 1,129K | 47.1 |
-| Overall | GPT 4o | 303K | 23.2 |
+| Task family           | Model    | Avg tokens | Avg steps |
+| --------------------- | -------- | ---------: | --------: |
+| Repo setup            | Claude 4 |     1,158K |      42.9 |
+| Repo setup            | GPT 4o   |       323K |      21.3 |
+| Dependency resolution | Claude 4 |     1,847K |      74.3 |
+| Dependency resolution | GPT 4o   |       435K |      34.1 |
+| Overall               | Claude 4 |     1,129K |      47.1 |
+| Overall               | GPT 4o   |       303K |      23.2 |
 
 ### Three critical failure modes
 
@@ -152,6 +154,7 @@ where the agent would need to set up its own environment -- which is most real p
 ### Inference (author conclusion):
 
 Agent-friendly repositories must treat setup as infrastructure:
+
 - **Pinned package manager and lockfile** -- eliminates version resolution ambiguity
 - **One-command install/bootstrap** -- reduces the search problem to a single known command
 - **One-command test** -- provides a verification oracle

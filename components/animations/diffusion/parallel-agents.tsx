@@ -349,8 +349,8 @@ export function ParallelAgents({ className }: ParallelAgentsProps) {
           <div className="flex items-start gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5" />
             <div>
-              <span className="font-medium">1. Assign:</span> Supervisor calls ConductResearch
-              tool to delegate topics (max 3 parallel)
+              <span className="font-medium">1. Assign:</span> Supervisor calls ConductResearch tool
+              to delegate topics (max 3 parallel)
             </div>
           </div>
           <div className="flex items-start gap-2">

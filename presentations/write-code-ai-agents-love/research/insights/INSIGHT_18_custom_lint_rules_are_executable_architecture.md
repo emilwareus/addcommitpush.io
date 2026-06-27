@@ -14,21 +14,21 @@ Plot-ready data for nearby claims lives in
 
 ## Source map
 
-| Ref | Source | Local text | Role in this insight |
-|---|---|---|---|
-| D13 | ESLint custom rules | `articles/eslint-custom-rules.html` | Mainstream proof that teams can encode project-specific JS/TS policy when stock rules do not cover it. |
-| D14 | typescript-eslint custom rules | `articles/typescript-eslint-custom-rules.html` | Type-aware rule authoring path for richer TypeScript constraints. |
-| D15 | Semgrep custom guardrails | `articles/semgrep-custom-guardrails.html` | Practitioner pattern: organization-specific rules in IDE, PR, and pre-commit flows. |
-| D16 | Semgrep rule ideas | `articles/semgrep-rule-ideas.html` | Shows prose guidance can often be turned into authentication, validation, or security rules. |
-| D17 | ast-grep lint rule | `articles/ast-grep-lint-rule.html` | AST-pattern rules with globs, messages, severity, and fixes. |
-| D18 | Nx enforce module boundaries | `articles/nx-enforce-module-boundaries.html` | Mature architecture-boundary lint pattern in monorepos. |
-| D31 | polint README | `articles/polint-readme.md` | Local option: repo-owned rule code with scan/fact/diagnostic infrastructure. |
-| D32 | polint Agent Playbook | `articles/polint-agent-playbook.md` | Agent-facing JSON output, focused remediation, baselines, ignores, and loop commands. |
-| D33 | polint ignore comments | `articles/polint-ignore-comments.md` | Suppression/debt tracking for gradual adoption. |
-| R18 | Evaluating AGENTS.md | `paper-text/evaluating-agents-md-2602.11988.txt` | Counterweight: context/prose files can add cost and noise. |
-| R59 | Smells of LLM Generated Code | `paper-text/smells-llm-generated-code-2510.03029.txt` | Static quality signals matter because LLM code can carry more smell risk. |
-| R60 | Causal Smells | `paper-text/causal-smells-llm-code-2511.15817.txt` | Static smell signals are measurable but need careful interpretation. |
-| Local | polint/plint case study | `notes/polint-plint-case-study.md` | Real local example of architecture policy as code. |
+| Ref   | Source                         | Local text                                            | Role in this insight                                                                                   |
+| ----- | ------------------------------ | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| D13   | ESLint custom rules            | `articles/eslint-custom-rules.html`                   | Mainstream proof that teams can encode project-specific JS/TS policy when stock rules do not cover it. |
+| D14   | typescript-eslint custom rules | `articles/typescript-eslint-custom-rules.html`        | Type-aware rule authoring path for richer TypeScript constraints.                                      |
+| D15   | Semgrep custom guardrails      | `articles/semgrep-custom-guardrails.html`             | Practitioner pattern: organization-specific rules in IDE, PR, and pre-commit flows.                    |
+| D16   | Semgrep rule ideas             | `articles/semgrep-rule-ideas.html`                    | Shows prose guidance can often be turned into authentication, validation, or security rules.           |
+| D17   | ast-grep lint rule             | `articles/ast-grep-lint-rule.html`                    | AST-pattern rules with globs, messages, severity, and fixes.                                           |
+| D18   | Nx enforce module boundaries   | `articles/nx-enforce-module-boundaries.html`          | Mature architecture-boundary lint pattern in monorepos.                                                |
+| D31   | polint README                  | `articles/polint-readme.md`                           | Local option: repo-owned rule code with scan/fact/diagnostic infrastructure.                           |
+| D32   | polint Agent Playbook          | `articles/polint-agent-playbook.md`                   | Agent-facing JSON output, focused remediation, baselines, ignores, and loop commands.                  |
+| D33   | polint ignore comments         | `articles/polint-ignore-comments.md`                  | Suppression/debt tracking for gradual adoption.                                                        |
+| R18   | Evaluating AGENTS.md           | `paper-text/evaluating-agents-md-2602.11988.txt`      | Counterweight: context/prose files can add cost and noise.                                             |
+| R59   | Smells of LLM Generated Code   | `paper-text/smells-llm-generated-code-2510.03029.txt` | Static quality signals matter because LLM code can carry more smell risk.                              |
+| R60   | Causal Smells                  | `paper-text/causal-smells-llm-code-2511.15817.txt`    | Static smell signals are measurable but need careful interpretation.                                   |
+| Local | polint/plint case study        | `notes/polint-plint-case-study.md`                    | Real local example of architecture policy as code.                                                     |
 
 ## Why prose is the weak form of architecture
 
@@ -55,14 +55,14 @@ the rule; executable tools should enforce the rule when the rule is mechanical.
 The custom-rule ecosystem matters because it prevents this insight from turning
 into a polint pitch. The pattern is broader than any one tool.
 
-| Tool family | What it makes executable | Why it matters for agents |
-|---|---|---|
-| ESLint custom rules | JavaScript/TypeScript AST patterns and project conventions | Agents get exact file/span failures in a tool they already run. |
-| typescript-eslint | Type-aware lint rules through TypeScript parser/checker services | Rules can reason about symbols and types, not just syntax. |
-| Semgrep | Organization-specific security and correctness guardrails | Prose security guidance can become IDE/PR/pre-commit feedback. |
-| ast-grep | Structural AST search, lint, and rewrite rules | Useful when the check is a syntactic pattern plus optional fix. |
-| Nx module boundaries | Dependency constraints between tagged projects/packages | Architecture layering becomes a dependency graph rule. |
-| dependency-cruiser / similar | Import graph policies | Agents cannot silently cross forbidden package/layer edges. |
+| Tool family                  | What it makes executable                                         | Why it matters for agents                                       |
+| ---------------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------- |
+| ESLint custom rules          | JavaScript/TypeScript AST patterns and project conventions       | Agents get exact file/span failures in a tool they already run. |
+| typescript-eslint            | Type-aware lint rules through TypeScript parser/checker services | Rules can reason about symbols and types, not just syntax.      |
+| Semgrep                      | Organization-specific security and correctness guardrails        | Prose security guidance can become IDE/PR/pre-commit feedback.  |
+| ast-grep                     | Structural AST search, lint, and rewrite rules                   | Useful when the check is a syntactic pattern plus optional fix. |
+| Nx module boundaries         | Dependency constraints between tagged projects/packages          | Architecture layering becomes a dependency graph rule.          |
+| dependency-cruiser / similar | Import graph policies                                            | Agents cannot silently cross forbidden package/layer edges.     |
 
 This tooling evidence is not causal agent-performance evidence. It is
 feasibility evidence: the industry already accepts executable local policy as a
@@ -74,16 +74,16 @@ The high-value rules are not formatting preferences. They are the conventions
 that keep a codebase understandable and safe while agents make fast multi-file
 edits.
 
-| Policy family | Example rule | Needed facts |
-|---|---|---|
-| Architecture boundaries | `apps/web` cannot import `backend/internal/persistence` | paths, imports, resolved module graph |
-| Public API discipline | packages must import through public exports, not deep internals | imports, package exports, symbol resolution |
-| Generated code policy | do not edit generated SDK output by hand | paths, generated markers, CI generation check |
-| API integration | internal HTTP calls must use generated clients | imports, call expressions, string literals, type facts |
-| Security middleware | mutating routes require CSRF/auth middleware | route registration syntax, call chains, path metadata |
-| Validation-before-use | external input must pass schema validation before persistence | dataflow, call graph, validator facts |
-| Context propagation | request context must flow into database/service calls | function signatures, call graph, dataflow |
-| Test evidence | new routes/branches need matching component/unit tests | routes, symbols, test facts, coverage or naming conventions |
+| Policy family           | Example rule                                                    | Needed facts                                                |
+| ----------------------- | --------------------------------------------------------------- | ----------------------------------------------------------- |
+| Architecture boundaries | `apps/web` cannot import `backend/internal/persistence`         | paths, imports, resolved module graph                       |
+| Public API discipline   | packages must import through public exports, not deep internals | imports, package exports, symbol resolution                 |
+| Generated code policy   | do not edit generated SDK output by hand                        | paths, generated markers, CI generation check               |
+| API integration         | internal HTTP calls must use generated clients                  | imports, call expressions, string literals, type facts      |
+| Security middleware     | mutating routes require CSRF/auth middleware                    | route registration syntax, call chains, path metadata       |
+| Validation-before-use   | external input must pass schema validation before persistence   | dataflow, call graph, validator facts                       |
+| Context propagation     | request context must flow into database/service calls           | function signatures, call graph, dataflow                   |
+| Test evidence           | new routes/branches need matching component/unit tests          | routes, symbols, test facts, coverage or naming conventions |
 
 The table also shows why simple YAML pattern matching is sometimes enough and
 sometimes not. A forbidden import can be a pattern. Context propagation or test
@@ -107,15 +107,15 @@ The important product shape:
 The real `plint` usage is a strong case study because the rules are not toy
 style checks. The local notes list 17 warning-level rules during adoption:
 
-| Rule area | Examples from plint notes |
-|---|---|
-| Layer imports | `backend-layer-imports`, app/domain/adapter purity checks |
-| Route security | mutating routes require CSRF; active-school routes require guard |
-| Context propagation | backend context must flow through service/repository calls |
-| Typed errors | adapter/domain typed error discipline |
-| UUID boundaries | UUID usage stays at boundary layers |
-| Repository placement | repository interfaces in expected locations |
-| Test evidence | HTTP route component tests, GORM adapter coverage, domain tests |
+| Rule area            | Examples from plint notes                                        |
+| -------------------- | ---------------------------------------------------------------- |
+| Layer imports        | `backend-layer-imports`, app/domain/adapter purity checks        |
+| Route security       | mutating routes require CSRF; active-school routes require guard |
+| Context propagation  | backend context must flow through service/repository calls       |
+| Typed errors         | adapter/domain typed error discipline                            |
+| UUID boundaries      | UUID usage stays at boundary layers                              |
+| Repository placement | repository interfaces in expected locations                      |
+| Test evidence        | HTTP route component tests, GORM adapter coverage, domain tests  |
 
 This is the talk-safe phrasing:
 

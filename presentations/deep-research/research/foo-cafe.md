@@ -80,11 +80,13 @@ Foo Café is a tech meetup venue operating as a foundation focused on building a
 ## Emil Wåreus's Previous Talks at Foo Cafe
 
 ### 1. "The State of AI"
+
 - Introduction to semantic code search
 - Finding code using natural language
 - Event page: https://foocafe.org/event/state-ai
 
 ### 2. "Inside Debricked: Lessons from a Startup's Tech Journey"
+
 - Structured presentation about startup experience
 - Included Q&A and networking components
 - Event page: https://foocafe.org/event/inside-debricked-lessons-startups-tech-journey
@@ -92,6 +94,7 @@ Foo Café is a tech meetup venue operating as a foundation focused on building a
 ### Other Speaking Experience
 
 Beyond Foo Café, Emil has spoken at major conferences on topics including:
+
 - Open source security vulnerabilities
 - The cry wolf paradox in security
 - The explosion of open source software's impact on performance
@@ -129,6 +132,7 @@ Beyond Foo Café, Emil has spoken at major conferences on topics including:
 ### Debricked Connection
 
 Emil is Co-founder and Head of Data Science at Debricked:
+
 - Company focuses on open source security
 - Technical credibility established in community
 - Previous Foo Cafe talks built audience relationship

@@ -21,28 +21,52 @@ const models: Model[] = [
   // Whisper -- WER & latency from Moonshine v2 paper (arXiv:2602.12241) Tables 2 & 3
   // Large-v3 WER from Whisper paper (arXiv:2212.04356) Table 2 (reports large-v2 at 2.7%)
   {
-    name: 'Whisper tiny', family: 'Whisper', params: 39, werClean: 7.54, latencyMs: 289, rtfx: null, color: '#a78bfa',
+    name: 'Whisper tiny',
+    family: 'Whisper',
+    params: 39,
+    werClean: 7.54,
+    latencyMs: 289,
+    rtfx: null,
+    color: '#a78bfa',
     werSource: 'Moonshine v2 paper, Table 3',
     werUrl: 'https://arxiv.org/abs/2602.12241',
     speedSource: 'Moonshine v2 paper, Table 2 (faster-whisper, Apple M3)',
     speedUrl: 'https://arxiv.org/abs/2602.12241',
   },
   {
-    name: 'Whisper base', family: 'Whisper', params: 74, werClean: 5.66, latencyMs: 553, rtfx: null, color: '#a78bfa',
+    name: 'Whisper base',
+    family: 'Whisper',
+    params: 74,
+    werClean: 5.66,
+    latencyMs: 553,
+    rtfx: null,
+    color: '#a78bfa',
     werSource: 'Moonshine v2 paper, Table 3',
     werUrl: 'https://arxiv.org/abs/2602.12241',
     speedSource: 'Moonshine v2 paper, Table 2 (faster-whisper, Apple M3)',
     speedUrl: 'https://arxiv.org/abs/2602.12241',
   },
   {
-    name: 'Whisper small', family: 'Whisper', params: 244, werClean: 3.43, latencyMs: 1940, rtfx: null, color: '#a78bfa',
+    name: 'Whisper small',
+    family: 'Whisper',
+    params: 244,
+    werClean: 3.43,
+    latencyMs: 1940,
+    rtfx: null,
+    color: '#a78bfa',
     werSource: 'Moonshine v2 paper, Table 3',
     werUrl: 'https://arxiv.org/abs/2602.12241',
     speedSource: 'Moonshine v2 paper, Table 2 (faster-whisper, Apple M3)',
     speedUrl: 'https://arxiv.org/abs/2602.12241',
   },
   {
-    name: 'Whisper large-v3', family: 'Whisper', params: 1550, werClean: 2.7, latencyMs: 11286, rtfx: null, color: '#a78bfa',
+    name: 'Whisper large-v3',
+    family: 'Whisper',
+    params: 1550,
+    werClean: 2.7,
+    latencyMs: 11286,
+    rtfx: null,
+    color: '#a78bfa',
     werSource: 'Whisper paper, Table 2 (large-v2)',
     werUrl: 'https://arxiv.org/abs/2212.04356',
     speedSource: 'Moonshine v2 paper, Table 2 (faster-whisper, Apple M3)',
@@ -50,21 +74,39 @@ const models: Model[] = [
   },
   // Moonshine v2 -- all from Moonshine v2 paper (arXiv:2602.12241) Tables 2 & 3
   {
-    name: 'Moonshine v2 Tiny', family: 'Moonshine', params: 34, werClean: 4.49, latencyMs: 50, rtfx: null, color: '#34d399',
+    name: 'Moonshine v2 Tiny',
+    family: 'Moonshine',
+    params: 34,
+    werClean: 4.49,
+    latencyMs: 50,
+    rtfx: null,
+    color: '#34d399',
     werSource: 'Moonshine v2 paper, Table 3',
     werUrl: 'https://arxiv.org/abs/2602.12241',
     speedSource: 'Moonshine v2 paper, Table 2 (ONNX, Apple M3)',
     speedUrl: 'https://arxiv.org/abs/2602.12241',
   },
   {
-    name: 'Moonshine v2 Small', family: 'Moonshine', params: 123, werClean: 2.49, latencyMs: 148, rtfx: null, color: '#34d399',
+    name: 'Moonshine v2 Small',
+    family: 'Moonshine',
+    params: 123,
+    werClean: 2.49,
+    latencyMs: 148,
+    rtfx: null,
+    color: '#34d399',
     werSource: 'Moonshine v2 paper, Table 3',
     werUrl: 'https://arxiv.org/abs/2602.12241',
     speedSource: 'Moonshine v2 paper, Table 2 (ONNX, Apple M3)',
     speedUrl: 'https://arxiv.org/abs/2602.12241',
   },
   {
-    name: 'Moonshine v2 Medium', family: 'Moonshine', params: 245, werClean: 2.08, latencyMs: 258, rtfx: null, color: '#34d399',
+    name: 'Moonshine v2 Medium',
+    family: 'Moonshine',
+    params: 245,
+    werClean: 2.08,
+    latencyMs: 258,
+    rtfx: null,
+    color: '#34d399',
     werSource: 'Moonshine v2 paper, Table 3',
     werUrl: 'https://arxiv.org/abs/2602.12241',
     speedSource: 'Moonshine v2 paper, Table 2 (ONNX, Apple M3)',
@@ -72,28 +114,52 @@ const models: Model[] = [
   },
   // NVIDIA NeMo -- WER from HuggingFace model cards, RTFx from model cards / Open ASR Leaderboard
   {
-    name: 'Parakeet-TDT-1.1B', family: 'NVIDIA', params: 1100, werClean: 1.39, latencyMs: null, rtfx: null, color: '#38bdf8',
+    name: 'Parakeet-TDT-1.1B',
+    family: 'NVIDIA',
+    params: 1100,
+    werClean: 1.39,
+    latencyMs: null,
+    rtfx: null,
+    color: '#38bdf8',
     werSource: 'HuggingFace model card',
     werUrl: 'https://huggingface.co/nvidia/parakeet-tdt-1.1b',
     speedSource: 'No official RTFx published',
     speedUrl: '',
   },
   {
-    name: 'Parakeet-TDT-0.6B', family: 'NVIDIA', params: 600, werClean: 1.93, latencyMs: null, rtfx: 3332, color: '#38bdf8',
+    name: 'Parakeet-TDT-0.6B',
+    family: 'NVIDIA',
+    params: 600,
+    werClean: 1.93,
+    latencyMs: null,
+    rtfx: 3332,
+    color: '#38bdf8',
     werSource: 'HuggingFace model card',
     werUrl: 'https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3',
     speedSource: 'Open ASR Leaderboard paper, A100-SXM4-80GB',
     speedUrl: 'https://arxiv.org/abs/2510.06961',
   },
   {
-    name: 'Canary-1B-v2', family: 'NVIDIA', params: 978, werClean: 2.18, latencyMs: null, rtfx: 749, color: '#38bdf8',
+    name: 'Canary-1B-v2',
+    family: 'NVIDIA',
+    params: 978,
+    werClean: 2.18,
+    latencyMs: null,
+    rtfx: 749,
+    color: '#38bdf8',
     werSource: 'HuggingFace model card',
     werUrl: 'https://huggingface.co/nvidia/canary-1b-v2',
     speedSource: 'HuggingFace model card / Open ASR Leaderboard, A100',
     speedUrl: 'https://huggingface.co/nvidia/canary-1b-v2',
   },
   {
-    name: 'Canary-Qwen-2.5B', family: 'NVIDIA', params: 2500, werClean: 1.6, latencyMs: null, rtfx: 418, color: '#38bdf8',
+    name: 'Canary-Qwen-2.5B',
+    family: 'NVIDIA',
+    params: 2500,
+    werClean: 1.6,
+    latencyMs: null,
+    rtfx: 418,
+    color: '#38bdf8',
     werSource: 'HuggingFace model card',
     werUrl: 'https://huggingface.co/nvidia/canary-qwen-2.5b',
     speedSource: 'HuggingFace model card / Open ASR Leaderboard, A100',
@@ -102,14 +168,26 @@ const models: Model[] = [
   // Voxtral family -- WER from Voxtral arXiv paper (2507.13264) Table 3
   // Self-reported, not independently reproduced (community has requested eval code)
   {
-    name: 'Voxtral Mini (3B)', family: 'Voxtral', params: 3000, werClean: 1.86, latencyMs: null, rtfx: null, color: '#fb923c',
+    name: 'Voxtral Mini (3B)',
+    family: 'Voxtral',
+    params: 3000,
+    werClean: 1.86,
+    latencyMs: null,
+    rtfx: null,
+    color: '#fb923c',
     werSource: 'Voxtral paper, Table 3 (self-reported)',
     werUrl: 'https://arxiv.org/abs/2507.13264',
     speedSource: 'No official latency/RTFx published',
     speedUrl: '',
   },
   {
-    name: 'Voxtral Small (24B)', family: 'Voxtral', params: 24000, werClean: 1.53, latencyMs: null, rtfx: null, color: '#fb923c',
+    name: 'Voxtral Small (24B)',
+    family: 'Voxtral',
+    params: 24000,
+    werClean: 1.53,
+    latencyMs: null,
+    rtfx: null,
+    color: '#fb923c',
     werSource: 'Voxtral paper, Table 3 (self-reported)',
     werUrl: 'https://arxiv.org/abs/2507.13264',
     speedSource: 'No official latency/RTFx published',
@@ -120,9 +198,24 @@ const models: Model[] = [
 type ViewMode = 'error-vs-speed' | 'params-vs-error' | 'error-vs-rtfx';
 
 const views: { key: ViewMode; label: string; xLabel: string; yLabel: string }[] = [
-  { key: 'error-vs-speed', label: 'Error vs Latency (M3)', xLabel: 'Latency ms on Apple M3 (lower is better)', yLabel: 'WER % LibriSpeech clean (lower is better)' },
-  { key: 'params-vs-error', label: 'Size vs Error', xLabel: 'Parameters, log scale (smaller is better)', yLabel: 'WER % LibriSpeech clean (lower is better)' },
-  { key: 'error-vs-rtfx', label: 'Error vs Throughput (A100)', xLabel: 'RTFx on A100 (higher is better)', yLabel: 'WER % LibriSpeech clean (lower is better)' },
+  {
+    key: 'error-vs-speed',
+    label: 'Error vs Latency (M3)',
+    xLabel: 'Latency ms on Apple M3 (lower is better)',
+    yLabel: 'WER % LibriSpeech clean (lower is better)',
+  },
+  {
+    key: 'params-vs-error',
+    label: 'Size vs Error',
+    xLabel: 'Parameters, log scale (smaller is better)',
+    yLabel: 'WER % LibriSpeech clean (lower is better)',
+  },
+  {
+    key: 'error-vs-rtfx',
+    label: 'Error vs Throughput (A100)',
+    xLabel: 'RTFx on A100 (higher is better)',
+    yLabel: 'WER % LibriSpeech clean (lower is better)',
+  },
 ];
 
 function getModelsForView(view: ViewMode): Model[] {
@@ -178,7 +271,7 @@ function formatTick(val: number): string {
 }
 
 function formatParamTick(val: number): string {
-  if (val >= 1000) return `${(val / 1000)}B`;
+  if (val >= 1000) return `${val / 1000}B`;
   return `${val}M`;
 }
 
@@ -209,7 +302,9 @@ export function SttBenchmarksSlide() {
   }
 
   function toSvgY(val: number): number {
-    return chartBottom - ((val - range.yMin) / (range.yMax - range.yMin)) * (chartBottom - chartTop);
+    return (
+      chartBottom - ((val - range.yMin) / (range.yMax - range.yMin)) * (chartBottom - chartTop)
+    );
   }
 
   const hiddenCount = models.length - visibleModels.length;
@@ -233,7 +328,10 @@ export function SttBenchmarksSlide() {
           {views.map((v) => (
             <button
               key={v.key}
-              onClick={() => { setView(v.key); setHovered(null); }}
+              onClick={() => {
+                setView(v.key);
+                setHovered(null);
+              }}
               className={`px-3 py-1.5 rounded-md text-sm font-mono transition-colors ${
                 view === v.key
                   ? 'bg-primary text-primary-foreground'
@@ -256,35 +354,94 @@ export function SttBenchmarksSlide() {
         <svg viewBox="0 0 100 62" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
           {/* Grid lines */}
           {yTicks.map((tick) => (
-            <line key={`y-${tick}`} x1={chartLeft} y1={toSvgY(tick)} x2={chartRight} y2={toSvgY(tick)} stroke="#27272a" strokeWidth="0.12" />
+            <line
+              key={`y-${tick}`}
+              x1={chartLeft}
+              y1={toSvgY(tick)}
+              x2={chartRight}
+              y2={toSvgY(tick)}
+              stroke="#27272a"
+              strokeWidth="0.12"
+            />
           ))}
           {xTicks.map((tick) => (
-            <line key={`x-${tick}`} x1={toSvgX(tick)} y1={chartTop} x2={toSvgX(tick)} y2={chartBottom} stroke="#27272a" strokeWidth="0.12" />
+            <line
+              key={`x-${tick}`}
+              x1={toSvgX(tick)}
+              y1={chartTop}
+              x2={toSvgX(tick)}
+              y2={chartBottom}
+              stroke="#27272a"
+              strokeWidth="0.12"
+            />
           ))}
 
           {/* Axes */}
-          <line x1={chartLeft} y1={chartBottom} x2={chartRight} y2={chartBottom} stroke="#52525b" strokeWidth="0.15" />
-          <line x1={chartLeft} y1={chartTop} x2={chartLeft} y2={chartBottom} stroke="#52525b" strokeWidth="0.15" />
+          <line
+            x1={chartLeft}
+            y1={chartBottom}
+            x2={chartRight}
+            y2={chartBottom}
+            stroke="#52525b"
+            strokeWidth="0.15"
+          />
+          <line
+            x1={chartLeft}
+            y1={chartTop}
+            x2={chartLeft}
+            y2={chartBottom}
+            stroke="#52525b"
+            strokeWidth="0.15"
+          />
 
           {/* Y-axis ticks */}
           {yTicks.map((tick) => (
-            <text key={`yl-${tick}`} x={chartLeft - 1} y={toSvgY(tick) + 0.5} textAnchor="end" className="fill-muted-foreground" fontSize="1.6">
+            <text
+              key={`yl-${tick}`}
+              x={chartLeft - 1}
+              y={toSvgY(tick) + 0.5}
+              textAnchor="end"
+              className="fill-muted-foreground"
+              fontSize="1.6"
+            >
               {formatTick(tick)}
             </text>
           ))}
 
           {/* X-axis ticks */}
           {xTicks.map((tick) => (
-            <text key={`xl-${tick}`} x={toSvgX(tick)} y={chartBottom + 2} textAnchor="middle" className="fill-muted-foreground" fontSize="1.6">
+            <text
+              key={`xl-${tick}`}
+              x={toSvgX(tick)}
+              y={chartBottom + 2}
+              textAnchor="middle"
+              className="fill-muted-foreground"
+              fontSize="1.6"
+            >
               {useLogX ? formatParamTick(tick) : formatTick(tick)}
             </text>
           ))}
 
           {/* Axis labels */}
-          <text x={(chartLeft + chartRight) / 2} y={chartBottom + 4.5} textAnchor="middle" className="fill-muted-foreground" fontSize="1.6" fontFamily="monospace">
+          <text
+            x={(chartLeft + chartRight) / 2}
+            y={chartBottom + 4.5}
+            textAnchor="middle"
+            className="fill-muted-foreground"
+            fontSize="1.6"
+            fontFamily="monospace"
+          >
             {currentView.xLabel}
           </text>
-          <text x={3} y={(chartTop + chartBottom) / 2} textAnchor="middle" className="fill-muted-foreground" fontSize="1.6" fontFamily="monospace" transform={`rotate(-90, 3, ${(chartTop + chartBottom) / 2})`}>
+          <text
+            x={3}
+            y={(chartTop + chartBottom) / 2}
+            textAnchor="middle"
+            className="fill-muted-foreground"
+            fontSize="1.6"
+            fontFamily="monospace"
+            transform={`rotate(-90, 3, ${(chartTop + chartBottom) / 2})`}
+          >
             {currentView.yLabel}
           </text>
 
@@ -310,7 +467,13 @@ export function SttBenchmarksSlide() {
                 <circle cx={cx} cy={cy} r={isHovered ? 1.4 : 1} fill={model.color} opacity={0.9} />
 
                 {/* Label next to dot */}
-                <text x={cx + 1.8} y={cy + 0.5} fontSize={isHovered ? '1.8' : '1.3'} className={isHovered ? 'fill-white' : 'fill-muted-foreground'} fontFamily="monospace">
+                <text
+                  x={cx + 1.8}
+                  y={cy + 0.5}
+                  fontSize={isHovered ? '1.8' : '1.3'}
+                  className={isHovered ? 'fill-white' : 'fill-muted-foreground'}
+                  fontFamily="monospace"
+                >
                   {model.name}
                 </text>
               </g>
@@ -319,60 +482,75 @@ export function SttBenchmarksSlide() {
         </svg>
 
         {/* HTML tooltip -- rendered outside SVG for proper sizing */}
-        {hovered && (() => {
-          const model = visibleModels.find((m) => m.name === hovered);
-          if (!model) return null;
-          return (
-            <div className="absolute top-4 right-4 bg-zinc-900 border border-zinc-700 rounded-lg p-6 shadow-xl max-w-md z-10 scale-150 origin-top-right">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: model.color }} />
-                <span className="text-base font-bold text-white">{model.name}</span>
-                <span className="text-sm font-mono text-muted-foreground">{model.params}M params</span>
-              </div>
-              <div className="space-y-1.5 text-sm font-mono">
-                <div>
-                  <span className="text-muted-foreground">WER: </span>
-                  <span className="text-white">{model.werClean}%</span>
-                  <span className="text-muted-foreground"> -- </span>
-                  {model.werUrl ? (
-                    <a href={model.werUrl} target="_blank" rel="noopener noreferrer" className="text-primary/70 hover:text-primary hover:underline">
-                      {model.werSource}
-                    </a>
-                  ) : (
-                    <span className="text-muted-foreground/60">{model.werSource}</span>
-                  )}
+        {hovered &&
+          (() => {
+            const model = visibleModels.find((m) => m.name === hovered);
+            if (!model) return null;
+            return (
+              <div className="absolute top-4 right-4 bg-zinc-900 border border-zinc-700 rounded-lg p-6 shadow-xl max-w-md z-10 scale-150 origin-top-right">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: model.color }} />
+                  <span className="text-base font-bold text-white">{model.name}</span>
+                  <span className="text-sm font-mono text-muted-foreground">
+                    {model.params}M params
+                  </span>
                 </div>
-                <div>
-                  {model.latencyMs !== null && (
-                    <>
-                      <span className="text-muted-foreground">Latency: </span>
-                      <span className="text-white">{model.latencyMs}ms</span>
-                      <span className="text-muted-foreground"> (M3)</span>
-                    </>
-                  )}
-                  {model.rtfx !== null && (
-                    <>
-                      {model.latencyMs !== null && <span className="text-muted-foreground"> | </span>}
-                      <span className="text-muted-foreground">RTFx: </span>
-                      <span className="text-white">{model.rtfx}x</span>
-                      <span className="text-muted-foreground"> (A100)</span>
-                    </>
-                  )}
-                  {model.latencyMs === null && model.rtfx === null && (
-                    <span className="text-muted-foreground/60">No official speed data</span>
-                  )}
-                </div>
-                {model.speedUrl && (
+                <div className="space-y-1.5 text-sm font-mono">
                   <div>
-                    <a href={model.speedUrl} target="_blank" rel="noopener noreferrer" className="text-primary/70 hover:text-primary hover:underline text-xs">
-                      {model.speedSource}
-                    </a>
+                    <span className="text-muted-foreground">WER: </span>
+                    <span className="text-white">{model.werClean}%</span>
+                    <span className="text-muted-foreground"> -- </span>
+                    {model.werUrl ? (
+                      <a
+                        href={model.werUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary/70 hover:text-primary hover:underline"
+                      >
+                        {model.werSource}
+                      </a>
+                    ) : (
+                      <span className="text-muted-foreground/60">{model.werSource}</span>
+                    )}
                   </div>
-                )}
+                  <div>
+                    {model.latencyMs !== null && (
+                      <>
+                        <span className="text-muted-foreground">Latency: </span>
+                        <span className="text-white">{model.latencyMs}ms</span>
+                        <span className="text-muted-foreground"> (M3)</span>
+                      </>
+                    )}
+                    {model.rtfx !== null && (
+                      <>
+                        {model.latencyMs !== null && (
+                          <span className="text-muted-foreground"> | </span>
+                        )}
+                        <span className="text-muted-foreground">RTFx: </span>
+                        <span className="text-white">{model.rtfx}x</span>
+                        <span className="text-muted-foreground"> (A100)</span>
+                      </>
+                    )}
+                    {model.latencyMs === null && model.rtfx === null && (
+                      <span className="text-muted-foreground/60">No official speed data</span>
+                    )}
+                  </div>
+                  {model.speedUrl && (
+                    <div>
+                      <a
+                        href={model.speedUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary/70 hover:text-primary hover:underline text-xs"
+                      >
+                        {model.speedSource}
+                      </a>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })()}
+            );
+          })()}
       </div>
 
       {/* Legend + Sources */}
@@ -391,11 +569,46 @@ export function SttBenchmarksSlide() {
           ))}
         </div>
         <div className="flex gap-3 text-xs font-mono">
-          <a href="https://arxiv.org/abs/2602.12241" target="_blank" rel="noopener noreferrer" className="text-primary/50 hover:text-primary hover:underline">Moonshine v2 paper</a>
-          <a href="https://arxiv.org/abs/2212.04356" target="_blank" rel="noopener noreferrer" className="text-primary/50 hover:text-primary hover:underline">Whisper paper</a>
-          <a href="https://arxiv.org/abs/2510.06961" target="_blank" rel="noopener noreferrer" className="text-primary/50 hover:text-primary hover:underline">Open ASR Leaderboard</a>
-          <a href="https://huggingface.co/nvidia" target="_blank" rel="noopener noreferrer" className="text-primary/50 hover:text-primary hover:underline">NVIDIA HF cards</a>
-          <a href="https://arxiv.org/abs/2507.13264" target="_blank" rel="noopener noreferrer" className="text-primary/50 hover:text-primary hover:underline">Voxtral paper</a>
+          <a
+            href="https://arxiv.org/abs/2602.12241"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary/50 hover:text-primary hover:underline"
+          >
+            Moonshine v2 paper
+          </a>
+          <a
+            href="https://arxiv.org/abs/2212.04356"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary/50 hover:text-primary hover:underline"
+          >
+            Whisper paper
+          </a>
+          <a
+            href="https://arxiv.org/abs/2510.06961"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary/50 hover:text-primary hover:underline"
+          >
+            Open ASR Leaderboard
+          </a>
+          <a
+            href="https://huggingface.co/nvidia"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary/50 hover:text-primary hover:underline"
+          >
+            NVIDIA HF cards
+          </a>
+          <a
+            href="https://arxiv.org/abs/2507.13264"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary/50 hover:text-primary hover:underline"
+          >
+            Voxtral paper
+          </a>
         </div>
       </div>
     </div>

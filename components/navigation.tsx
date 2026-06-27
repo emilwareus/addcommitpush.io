@@ -2,147 +2,87 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import { Activity, Brain, Cpu, Earth, Menu, Presentation, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
-import Image from 'next/image';
 import { ThemeSelector } from '@/components/theme-selector';
+import { cn } from '@/lib/utils';
+
+const links = [
+  { href: '/', label: 'Blog' },
+  { href: '/brain', label: 'Brain' },
+  { href: '/presentations', label: 'Presentations' },
+  { href: '/about', label: 'About' },
+  { href: '/status', label: 'Status' },
+];
 
 export function Navigation() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const links = [
-    { href: '/', label: 'Blog', icon: Earth },
-    { href: '/brain', label: 'Brain', icon: Brain },
-    { href: '/presentations', label: 'Presentations', icon: Presentation },
-    { href: '/about', label: 'About', icon: Cpu },
-    { href: '/status', label: 'Status', icon: Activity },
-  ];
-
   const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
 
   return (
-    <nav
-      className="border-b backdrop-blur-sm sticky top-0 z-50"
-      style={{
-        backgroundColor: 'var(--navbar)',
-        borderColor: 'var(--navbar-border)',
-        color: 'var(--navbar-foreground)',
-      }}
-    >
-      <div className="container mx-auto px-4 sm:px-6 py-4">
-        <div className="flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group">
-            <Image
-              src="/code-icon.svg"
-              alt="Code Icon"
-              width={24}
-              height={24}
-              className="w-5 h-5 md:w-6 md:h-6"
-            />
-            <span
-              className="text-base md:text-xl font-bold neon-glow"
-              style={{ color: 'var(--navbar-active)' }}
+    <header className="sticky top-0 z-40 border-b border-dashed border-[var(--navbar-border)] bg-[color-mix(in_srgb,var(--navbar)_84%,transparent)] backdrop-blur-md">
+      <div className="site-container flex h-16 items-center justify-between gap-6">
+        <Link
+          href="/"
+          className="shrink-0 text-[14.5px] font-semibold text-primary no-underline"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          addcommitpush<span className="opacity-60">.io</span>
+        </Link>
+
+        <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary navigation">
+          {links.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                'px-3 py-2 text-xs font-medium uppercase tracking-[0.08em] no-underline transition-colors',
+                isActive(link.href)
+                  ? 'font-semibold text-[var(--navbar-active)]'
+                  : 'text-[var(--navbar-foreground)] hover:text-[var(--navbar-hover)]'
+              )}
             >
-              <span className="hidden sm:inline">addcommitpush.io</span>
-              <span className="sm:hidden">acp.io</span>
-            </span>
-          </Link>
+              {link.label}
+            </Link>
+          ))}
+          <ThemeSelector />
+        </nav>
 
-          <div className="hidden lg:flex items-center gap-8">
-            {links.map((link) => {
-              const Icon = link.icon;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className={cn(
-                    'flex items-center gap-2 text-sm font-medium transition-colors',
-                    isActive(link.href) ? '' : ''
-                  )}
-                  style={{
-                    color: isActive(link.href)
-                      ? 'var(--navbar-active)'
-                      : 'var(--navbar-foreground)',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive(link.href)) {
-                      e.currentTarget.style.color = 'var(--navbar-hover)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive(link.href)) {
-                      e.currentTarget.style.color = 'var(--navbar-foreground)';
-                    }
-                  }}
-                >
-                  <Icon className="w-4 h-4" />
-                  {link.label}
-                </Link>
-              );
-            })}
-            <ThemeSelector />
-          </div>
+        <button
+          type="button"
+          className="inline-flex h-10 w-10 items-center justify-center border border-dashed border-border text-primary lg:hidden"
+          onClick={() => setMobileMenuOpen((open) => !open)}
+          aria-label="Toggle menu"
+          aria-expanded={mobileMenuOpen}
+        >
+          {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+        </button>
+      </div>
 
-          <button
-            className="lg:hidden transition-colors"
-            style={{ color: 'var(--navbar-foreground)' }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = 'var(--navbar-hover)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = 'var(--navbar-foreground)';
-            }}
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle menu"
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-        </div>
-
-        {mobileMenuOpen && (
-          <div
-            className="lg:hidden mt-4 pb-4 space-y-3 border-t pt-4"
-            style={{ borderColor: 'var(--navbar-border)' }}
-          >
-            {links.map((link) => {
-              const Icon = link.icon;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={cn(
-                    'flex items-center gap-3 text-base font-medium transition-colors py-2'
-                  )}
-                  style={{
-                    color: isActive(link.href)
-                      ? 'var(--navbar-active)'
-                      : 'var(--navbar-foreground)',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive(link.href)) {
-                      e.currentTarget.style.color = 'var(--navbar-hover)';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive(link.href)) {
-                      e.currentTarget.style.color = 'var(--navbar-foreground)';
-                    }
-                  }}
-                >
-                  <Icon className="w-5 h-5" />
-                  {link.label}
-                </Link>
-              );
-            })}
-            <div className="pt-2">
+      {mobileMenuOpen && (
+        <div className="site-container border-t border-dashed border-[var(--navbar-border)] py-4 lg:hidden">
+          <nav className="flex flex-col gap-1" aria-label="Mobile navigation">
+            {links.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setMobileMenuOpen(false)}
+                className={cn(
+                  'px-1 py-2 text-xs font-medium uppercase tracking-[0.1em] no-underline',
+                  isActive(link.href) ? 'text-primary' : 'text-muted-foreground'
+                )}
+              >
+                {link.label}
+              </Link>
+            ))}
+            <div className="pt-3">
               <ThemeSelector />
             </div>
-          </div>
-        )}
-      </div>
-    </nav>
+          </nav>
+        </div>
+      )}
+    </header>
   );
 }
