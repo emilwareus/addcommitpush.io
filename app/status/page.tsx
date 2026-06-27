@@ -63,20 +63,21 @@ export default async function StatusPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-12 max-w-7xl">
-      <div className="mb-8">
-        <h1 className="text-4xl sm:text-5xl font-bold mb-4 neon-glow">Status</h1>
-        <p className="text-muted-foreground text-lg">
+    <main className="site-container py-16">
+      <section className="mb-12">
+        <div className="section-kicker mb-6">Live-ish systems</div>
+        <h1 className="display-heading text-[clamp(3.25rem,9vw,6.5rem)]">Status</h1>
+        <p className="mt-8 max-w-3xl text-[15px] leading-[1.75] text-muted-foreground">
           What I&apos;m working on, listening to, and doing right now.
         </p>
-      </div>
+      </section>
 
       <Suspense fallback={<div>Loading activity...</div>}>
         <StatusGrid data={combinedData} />
       </Suspense>
 
-      <div className="mt-12">
-        <h2 className="text-2xl font-bold mb-6">Current Activity</h2>
+      <section className="mt-12">
+        <h2 className="display-heading mb-6 text-3xl">Current Activity</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* GitHub Stats - Server Rendered, Cached */}
           <div className="lg:col-span-2">
@@ -88,7 +89,7 @@ export default async function StatusPage() {
             <SpotifyCard />
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

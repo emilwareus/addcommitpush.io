@@ -55,9 +55,9 @@ function getIssueColor(count: number): string {
 
 function getReviewColor(count: number): string {
   if (count === 0) return 'bg-muted';
-  if (count < 3) return 'bg-violet-500/60';
-  if (count < 5) return 'bg-violet-500/80';
-  return 'bg-violet-500';
+  if (count < 3) return 'bg-primary/40';
+  if (count < 5) return 'bg-primary/70';
+  return 'bg-primary';
 }
 
 function formatDate(date: string): string {
@@ -80,15 +80,15 @@ function formatDateRange(startDate: string, endDate?: string): string {
 function getSeverityColor(severity: IncidentReport['severity']): string {
   switch (severity) {
     case 'critical':
-      return 'bg-red-500';
+      return 'bg-primary';
     case 'major':
-      return 'bg-orange-500';
+      return 'bg-primary/80';
     case 'minor':
-      return 'bg-yellow-500';
+      return 'bg-primary/60';
     case 'maintenance':
-      return 'bg-blue-500';
+      return 'bg-primary/40';
     default:
-      return 'bg-gray-500';
+      return 'bg-muted-foreground';
   }
 }
 
@@ -140,19 +140,17 @@ export function StatusGrid({ data }: StatusGridProps) {
   return (
     <div className="w-full">
       <div className="mb-6">
-        <div className="flex items-center gap-3 mb-2">
-          <h2 className="text-2xl font-bold">Uptime</h2>
-        </div>
+        <h2 className="display-heading mb-2 text-3xl">Uptime</h2>
         <p className="text-sm text-muted-foreground">
           Service status, uptime, and incident reports.
         </p>
       </div>
 
       {/* Status Banner */}
-      <div className="mb-4 px-4 py-2 bg-green-500/20 border border-green-500/30 rounded-lg">
+      <div className="mb-4 border border-dashed border-border bg-[var(--hover)] px-4 py-2">
         <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <p className="text-sm font-medium text-green-400">
+          <div className="h-2 w-2 animate-pulse bg-primary" />
+          <p className="text-sm font-medium text-primary">
             All systems operational and fully caffeinated
           </p>
         </div>
@@ -170,7 +168,7 @@ export function StatusGrid({ data }: StatusGridProps) {
               {[...data.commitsByDay].reverse().map((day, i) => (
                 <div
                   key={i}
-                  className={`w-3 h-10 rounded flex-shrink-0 ${getCommitColor(day.count)} transition-all cursor-pointer`}
+                  className={`h-10 w-3 flex-shrink-0 ${getCommitColor(day.count)} cursor-pointer transition-all`}
                   onMouseEnter={(e) => handleBarHover(e, day, 'commit')}
                   onMouseLeave={handleBarLeave}
                 />
@@ -188,7 +186,7 @@ export function StatusGrid({ data }: StatusGridProps) {
               {[...data.prsByDay].reverse().map((day, i) => (
                 <div
                   key={i}
-                  className={`w-3 h-10 rounded flex-shrink-0 ${getPRColor(day.count)} transition-all cursor-pointer`}
+                  className={`h-10 w-3 flex-shrink-0 ${getPRColor(day.count)} cursor-pointer transition-all`}
                   onMouseEnter={(e) => handleBarHover(e, day, 'PR')}
                   onMouseLeave={handleBarLeave}
                 />
@@ -206,7 +204,7 @@ export function StatusGrid({ data }: StatusGridProps) {
               {[...data.issuesByDay].reverse().map((day, i) => (
                 <div
                   key={i}
-                  className={`w-3 h-10 rounded flex-shrink-0 ${getIssueColor(day.count)} transition-all cursor-pointer`}
+                  className={`h-10 w-3 flex-shrink-0 ${getIssueColor(day.count)} cursor-pointer transition-all`}
                   onMouseEnter={(e) => handleBarHover(e, day, 'issue')}
                   onMouseLeave={handleBarLeave}
                 />
@@ -224,7 +222,7 @@ export function StatusGrid({ data }: StatusGridProps) {
               {[...data.reviewsByDay].reverse().map((day, i) => (
                 <div
                   key={i}
-                  className={`w-3 h-10 rounded flex-shrink-0 ${getReviewColor(day.count)} transition-all cursor-pointer`}
+                  className={`h-10 w-3 flex-shrink-0 ${getReviewColor(day.count)} cursor-pointer transition-all`}
                   onMouseEnter={(e) => handleBarHover(e, day, 'review')}
                   onMouseLeave={handleBarLeave}
                 />
@@ -234,7 +232,7 @@ export function StatusGrid({ data }: StatusGridProps) {
         </div>
 
         {/* Incident Reports */}
-        <div className="mt-6 pt-6 border-t border-border/50">
+        <div className="mt-6 border-t border-dashed border-[var(--hair)] pt-6">
           <div className="mb-4">
             <h3 className="text-lg font-semibold mb-2">Incident Reports</h3>
             <p className="text-xs text-muted-foreground">
@@ -245,12 +243,10 @@ export function StatusGrid({ data }: StatusGridProps) {
             {INCIDENTS.map((incident, index) => (
               <div
                 key={index}
-                className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg border border-border/50"
+                className="flex items-start gap-3 border border-dashed border-border bg-[var(--hover)] p-3"
               >
                 <div className="flex-shrink-0">
-                  <div
-                    className={`w-2 h-2 rounded-full ${getSeverityColor(incident.severity)} mt-1.5`}
-                  />
+                  <div className={`mt-1.5 h-2 w-2 ${getSeverityColor(incident.severity)}`} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
@@ -266,25 +262,25 @@ export function StatusGrid({ data }: StatusGridProps) {
             ))}
           </div>
         </div>
-        <div className="mt-4 pt-4 border-t border-border/50">
+        <div className="mt-4 border-t border-dashed border-[var(--hair)] pt-4">
           <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground">
             <div>
               <p className="font-medium mb-2">Commits:</p>
               <div className="flex flex-wrap gap-2">
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded bg-muted" />
+                  <div className="h-3 w-3 bg-muted" />
                   <span>0</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded bg-primary/50" />
+                  <div className="h-3 w-3 bg-primary/50" />
                   <span>1-4</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded bg-primary/80" />
+                  <div className="h-3 w-3 bg-primary/80" />
                   <span>5-9</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded bg-primary" />
+                  <div className="h-3 w-3 bg-primary" />
                   <span>10+</span>
                 </div>
               </div>
@@ -293,19 +289,19 @@ export function StatusGrid({ data }: StatusGridProps) {
               <p className="font-medium mb-2">Pull Requests:</p>
               <div className="flex flex-wrap gap-2">
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded bg-muted" />
+                  <div className="h-3 w-3 bg-muted" />
                   <span>0</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded bg-secondary/60" />
+                  <div className="h-3 w-3 bg-secondary/60" />
                   <span>1</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded bg-secondary/80" />
+                  <div className="h-3 w-3 bg-secondary/80" />
                   <span>2</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded bg-secondary" />
+                  <div className="h-3 w-3 bg-secondary" />
                   <span>3+</span>
                 </div>
               </div>
@@ -314,19 +310,19 @@ export function StatusGrid({ data }: StatusGridProps) {
               <p className="font-medium mb-2">Issues Created:</p>
               <div className="flex flex-wrap gap-2">
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded bg-muted" />
+                  <div className="h-3 w-3 bg-muted" />
                   <span>0</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded bg-accent/60" />
+                  <div className="h-3 w-3 bg-accent/60" />
                   <span>1</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded bg-accent/80" />
+                  <div className="h-3 w-3 bg-accent/80" />
                   <span>2</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded bg-accent" />
+                  <div className="h-3 w-3 bg-accent" />
                   <span>3+</span>
                 </div>
               </div>
@@ -335,19 +331,19 @@ export function StatusGrid({ data }: StatusGridProps) {
               <p className="font-medium mb-2">PR Reviews:</p>
               <div className="flex flex-wrap gap-2">
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded bg-muted" />
+                  <div className="h-3 w-3 bg-muted" />
                   <span>0</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded bg-violet-500/60" />
+                  <div className="h-3 w-3 bg-primary/40" />
                   <span>1-2</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded bg-violet-500/80" />
+                  <div className="h-3 w-3 bg-primary/70" />
                   <span>3-4</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded bg-violet-500" />
+                  <div className="h-3 w-3 bg-primary" />
                   <span>5+</span>
                 </div>
               </div>
@@ -359,7 +355,7 @@ export function StatusGrid({ data }: StatusGridProps) {
       {/* Fixed Tooltip - rendered outside Card to avoid overflow clipping */}
       {tooltip.visible && (
         <div
-          className="fixed px-2 py-1 bg-popover text-popover-foreground text-xs rounded shadow-lg whitespace-nowrap z-[9999] border border-border pointer-events-none"
+          className="fixed z-[9999] whitespace-nowrap border border-dashed border-border bg-popover px-2 py-1 text-xs text-popover-foreground shadow-none pointer-events-none"
           style={{
             left: `${tooltip.x}px`,
             top: `${tooltip.y}px`,

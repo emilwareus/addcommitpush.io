@@ -8,11 +8,11 @@ interface GitHubCardProps {
 
 export function GitHubCard({ data }: GitHubCardProps) {
   return (
-    <Card className="h-full flex flex-col hover:border-primary/40 transition-all duration-300">
+    <Card className="flex h-full flex-col transition-colors hover:bg-[var(--hover)]">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <div className="flex flex-col">
-            <span>GitHub Activity</span>
+            <span className="display-heading text-2xl">GitHub Activity</span>
             <span className="text-xs font-normal text-muted-foreground">Past year</span>
           </div>
         </CardTitle>

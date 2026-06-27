@@ -8,21 +8,17 @@ interface MarkdownInsightProps {
 
 const markdownComponents: Components = {
   h1({ children }) {
-    return (
-      <h1 className="mb-6 text-3xl font-semibold leading-tight text-balance md:text-5xl">
-        {children}
-      </h1>
-    );
+    return <h1 className="display-heading mb-6 text-[clamp(2.4rem,6vw,4rem)]">{children}</h1>;
   },
   h2({ children }) {
     return (
-      <h2 className="mb-5 mt-12 text-2xl font-semibold leading-tight text-balance md:text-3xl">
+      <h2 className="display-heading mt-12 mb-5 text-2xl leading-tight text-balance md:text-3xl">
         {children}
       </h2>
     );
   },
   h3({ children }) {
-    return <h3 className="mb-4 mt-10 text-xl font-semibold leading-tight">{children}</h3>;
+    return <h3 className="display-heading mt-10 mb-4 text-xl leading-tight">{children}</h3>;
   },
   p({ children }) {
     return <p className="my-5 text-base leading-8 md:text-lg">{children}</p>;
@@ -56,14 +52,14 @@ const markdownComponents: Components = {
   },
   blockquote({ children }) {
     return (
-      <blockquote className="my-8 border-l-2 border-primary/70 pl-5 text-muted-foreground">
+      <blockquote className="my-8 border border-dashed border-border px-5 py-4 font-serif text-lg italic leading-relaxed text-primary">
         {children}
       </blockquote>
     );
   },
   table({ children }) {
     return (
-      <div className="my-8 overflow-x-auto rounded-md border border-border">
+      <div className="my-8 overflow-x-auto border border-dashed border-border">
         <table className="min-w-full border-collapse text-left text-sm leading-relaxed">
           {children}
         </table>
@@ -71,21 +67,25 @@ const markdownComponents: Components = {
     );
   },
   thead({ children }) {
-    return <thead className="bg-muted/70 text-foreground">{children}</thead>;
+    return <thead className="bg-[var(--hover)] text-foreground">{children}</thead>;
   },
   tbody({ children }) {
-    return <tbody className="divide-y divide-border">{children}</tbody>;
+    return <tbody className="divide-y divide-dashed divide-border">{children}</tbody>;
   },
   tr({ children }) {
     return <tr className="align-top">{children}</tr>;
   },
   th({ children }) {
     return (
-      <th className="border-r border-border px-4 py-3 font-semibold last:border-r-0">{children}</th>
+      <th className="border-r border-dashed border-border px-4 py-3 font-semibold last:border-r-0">
+        {children}
+      </th>
     );
   },
   td({ children }) {
-    return <td className="border-r border-border px-4 py-3 last:border-r-0">{children}</td>;
+    return (
+      <td className="border-r border-dashed border-border px-4 py-3 last:border-r-0">{children}</td>
+    );
   },
   pre({ children }) {
     return <>{children}</>;
@@ -100,8 +100,8 @@ const markdownComponents: Components = {
 
     if (language) {
       return (
-        <div className="my-8 overflow-hidden rounded-md border border-border bg-muted/50">
-          <div className="border-b border-border px-4 py-2 font-mono text-xs text-muted-foreground">
+        <div className="my-8 overflow-hidden border border-dashed border-border bg-[var(--hover)]">
+          <div className="border-b border-dashed border-border px-4 py-2 font-mono text-xs text-muted-foreground">
             {language}
           </div>
           <pre className="overflow-x-auto p-4">
@@ -112,7 +112,7 @@ const markdownComponents: Components = {
     }
 
     return (
-      <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-sm text-foreground">
+      <code className="bg-[var(--code)] px-1.5 py-0.5 font-mono text-sm text-foreground">
         {children}
       </code>
     );

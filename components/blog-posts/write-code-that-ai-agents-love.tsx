@@ -19,10 +19,7 @@ import { CustomRulesSlide } from '@/components/presentations/write-code-ai-agent
 import { ImpactEffortSlide } from '@/components/presentations/write-code-ai-agents-love/slides/14-impact-effort';
 import { SlideShell } from '@/components/presentations/write-code-ai-agents-love/slides/shared';
 
-const blogMarkdownPath = path.join(
-  process.cwd(),
-  'blog/write-code-that-ai-loves/blog.md'
-);
+const blogMarkdownPath = path.join(process.cwd(), 'blog/write-code-that-ai-loves/blog.md');
 
 const blogMarkdown = fs.readFileSync(blogMarkdownPath, 'utf8');
 
@@ -274,11 +271,11 @@ function PaperReferences({ references, insights }: CollectedReferences) {
   if (references.length === 0 && insights.length === 0) return null;
 
   return (
-    <section className="not-prose mt-20 border-t border-primary/30 pt-8">
-      <h2 className="mb-5 text-2xl font-bold text-primary">References</h2>
+    <section className="not-prose mt-16 border-t border-dashed border-[var(--hair)] pt-8">
+      <h2 className="display-heading mb-5 text-2xl">References</h2>
 
       {insights.length > 0 ? (
-        <div className="mb-7 rounded-md border border-primary/25 bg-primary/5 p-4">
+        <div className="mb-7 border border-dashed border-border bg-[var(--hover)] p-4">
           <h3 className="mb-3 font-mono text-xs uppercase tracking-[0.18em] text-primary/75">
             Insights
           </h3>
@@ -369,8 +366,8 @@ const testVisuals: { mode: TestMode; caption: ReactNode }[] = [
     caption: (
       <>
         <strong>Component tests</strong> run the public API through the whole service, with real
-        owned infrastructure and only external services mocked. This is the agent sweet spot: easy to
-        read, easy to keep stable, and they test user behavior instead of implementation details.
+        owned infrastructure and only external services mocked. This is the agent sweet spot: easy
+        to read, easy to keep stable, and they test user behavior instead of implementation details.
       </>
     ),
   },
@@ -465,20 +462,16 @@ const visualsByHeading = new Map<string, ReactNode>([
 const markdownComponents: Components = {
   h1({ children }) {
     return (
-      <h2 className="mt-16 mb-6 border-b border-primary/30 pb-3 text-3xl font-bold text-primary neon-glow sm:text-4xl">
+      <h2 className="display-heading mt-16 mb-6 border-b border-dashed border-[var(--hair)] pb-3 text-3xl sm:text-4xl">
         {children}
       </h2>
     );
   },
   h2({ children }) {
-    return (
-      <h3 className="mt-14 mb-5 text-2xl font-bold text-primary neon-glow sm:text-3xl">
-        {children}
-      </h3>
-    );
+    return <h3 className="display-heading mt-14 mb-5 text-2xl sm:text-3xl">{children}</h3>;
   },
   h3({ children }) {
-    return <h4 className="mt-12 mb-4 text-xl font-bold text-primary sm:text-2xl">{children}</h4>;
+    return <h4 className="display-heading mt-12 mb-4 text-xl sm:text-2xl">{children}</h4>;
   },
   a({ href, children }) {
     return (
@@ -509,7 +502,7 @@ const markdownComponents: Components = {
   },
   blockquote({ children }) {
     return (
-      <blockquote className="not-prose my-8 rounded-r-lg border-l-4 border-primary bg-primary/5 py-4 pr-6 pl-6 text-xl font-semibold italic leading-relaxed text-primary neon-glow sm:text-2xl">
+      <blockquote className="not-prose my-8 border border-dashed border-border px-5 py-4 font-serif text-xl font-semibold italic leading-relaxed text-primary sm:text-2xl">
         {children}
       </blockquote>
     );
@@ -525,15 +518,15 @@ const markdownComponents: Components = {
     }
 
     return (
-      <code className="rounded border border-primary/20 bg-primary/10 px-1.5 py-0.5 font-mono text-[0.85em] text-primary before:content-none after:content-none">
+      <code className="border border-dashed border-border bg-[var(--code)] px-1.5 py-0.5 font-mono text-[0.85em] text-primary before:content-none after:content-none">
         {children}
       </code>
     );
   },
   table({ children }) {
     return (
-      <div className="not-prose my-8 overflow-x-auto rounded-lg border border-border bg-card/30">
-        <table className="w-full border-collapse text-sm [&_tbody_tr:nth-child(even)]:bg-muted/20">
+      <div className="not-prose my-8 overflow-x-auto border border-dashed border-border">
+        <table className="w-full border-collapse text-sm [&_tbody_tr:nth-child(even)]:bg-[var(--hover)]">
           {children}
         </table>
       </div>
@@ -541,7 +534,7 @@ const markdownComponents: Components = {
   },
   th({ children }) {
     return (
-      <th className="border-b border-border bg-muted/40 p-3 text-left font-semibold text-primary">
+      <th className="border-b border-dashed border-border bg-[var(--hover)] p-3 text-left font-semibold text-primary">
         {children}
       </th>
     );
@@ -571,19 +564,7 @@ export function WriteCodeThatAiAgentsLoveContent() {
   const sections = splitMarkdownIntoSections(blogMarkdown);
 
   return (
-    <div
-      className="prose prose-invert prose-base sm:prose-lg md:prose-xl max-w-none
-      prose-headings:text-primary prose-headings:font-bold prose-headings:mt-12 prose-headings:mb-6
-      prose-h1:text-4xl prose-h2:text-3xl prose-h3:text-2xl
-      prose-p:text-foreground prose-p:leading-relaxed prose-p:mb-6
-      prose-a:text-secondary prose-a:no-underline hover:prose-a:underline
-      prose-strong:text-accent
-      prose-ul:text-foreground prose-ul:my-6
-      prose-li:text-foreground prose-li:my-2
-      prose-blockquote:border-primary prose-blockquote:text-foreground
-      prose-code:text-sm prose-code:bg-muted prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:font-mono
-      prose-pre:bg-muted prose-pre:border prose-pre:border-border prose-pre:p-4 prose-pre:rounded-lg"
-    >
+    <div>
       {sections.map((section) => (
         <RenderSection key={section.heading} section={section} />
       ))}

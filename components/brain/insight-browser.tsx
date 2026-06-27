@@ -277,13 +277,13 @@ function getRequiredNode(nodeById: ReadonlyMap<string, GraphNode>, nodeId: strin
 
 function getNodeClassName(node: GraphNode, active: boolean, selected: boolean) {
   return cn(
-    'absolute flex -translate-x-1/2 -translate-y-1/2 flex-col justify-center rounded-lg border px-2.5 text-left shadow-sm outline-none transition-all',
+    'absolute flex -translate-x-1/2 -translate-y-1/2 flex-col justify-center border border-dashed px-2.5 text-left outline-none transition-all',
     'focus-visible:ring-2 focus-visible:ring-primary',
-    node.kind === 'insight' && 'bg-card/95 text-foreground',
-    node.kind === 'blog-post' && 'border-primary/70 bg-primary/15 text-primary',
-    node.kind === 'presentation' && 'border-secondary/70 bg-secondary/15 text-secondary',
+    node.kind === 'insight' && 'bg-background text-foreground',
+    node.kind === 'blog-post' && 'border-primary bg-[var(--hover)] text-primary',
+    node.kind === 'presentation' && 'border-primary bg-[var(--hover)] text-primary',
     active ? 'opacity-100' : 'opacity-35',
-    selected && 'scale-105 border-primary shadow-primary/20'
+    selected && 'scale-105 border-primary bg-[var(--hover)]'
   );
 }
 
@@ -302,8 +302,7 @@ function GraphView({
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const defaultNodeId = nodes[0]?.id ?? null;
   const requestedActiveNodeId = hoveredNodeId ?? selectedNodeId ?? defaultNodeId;
-  const activeNode =
-    nodes.find((node) => node.id === requestedActiveNodeId) ?? nodes[0] ?? null;
+  const activeNode = nodes.find((node) => node.id === requestedActiveNodeId) ?? nodes[0] ?? null;
   const activeNodeId = activeNode?.id ?? null;
   const activeEdges = activeNode
     ? edges.filter((edge) => edge.sourceId === activeNode.id || edge.targetId === activeNode.id)
@@ -311,7 +310,7 @@ function GraphView({
 
   if (filteredInsights.length === 0) {
     return (
-      <div className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">
+      <div className="border border-dashed border-border bg-[var(--hover)] p-6 text-sm text-muted-foreground">
         No graph nodes match this query.
       </div>
     );
@@ -319,7 +318,7 @@ function GraphView({
 
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px]">
-      <div className="overflow-x-auto rounded-lg border bg-card/40">
+      <div className="overflow-x-auto border border-dashed border-border bg-[var(--hover)]">
         <div className="relative h-[620px] min-w-[560px] md:min-w-[760px] lg:min-w-0">
           <svg
             className="absolute inset-0 h-full w-full"
@@ -344,7 +343,7 @@ function GraphView({
                   strokeLinecap="round"
                   strokeWidth={1 + edge.strength * 0.8}
                   className={cn(
-                    'text-border transition-opacity',
+                    'text-primary transition-opacity',
                     active ? 'opacity-80' : 'opacity-15'
                   )}
                 />
@@ -386,7 +385,7 @@ function GraphView({
         </div>
       </div>
 
-      <aside className="rounded-lg border bg-card p-4">
+      <aside className="border border-dashed border-border bg-[var(--hover)] p-4">
         {activeNode ? (
           <>
             <p className="mb-2 font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
@@ -400,14 +399,14 @@ function GraphView({
             {activeNode.href && (
               <Link
                 href={activeNode.href}
-                className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-primary underline underline-offset-4"
+                className="mt-4 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-primary underline decoration-dashed underline-offset-4"
               >
                 Open node
                 <ExternalLink className="h-3.5 w-3.5" />
               </Link>
             )}
 
-            <div className="mt-5 border-t pt-4">
+            <div className="mt-5 border-t border-dashed border-[var(--hair)] pt-4">
               <h4 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 Connected edges
               </h4>
@@ -475,26 +474,26 @@ export function InsightBrowser({ insights, topics, graphDocuments }: InsightBrow
   }, [activeTopic, documentSearchById, insights, normalizedQuery]);
 
   return (
-    <section aria-labelledby="brain-insights">
+    <section aria-labelledby="brain-insights" className="pb-8">
       <div className="mb-5">
         <label htmlFor="brain-search" className="sr-only">
           Search insights
         </label>
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             id="brain-search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search insights, graph edges, sources, blog posts..."
-            className="h-11 w-full rounded-lg border bg-card pl-10 pr-10 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
+            className="h-11 w-full border border-dashed border-border bg-transparent pr-10 pl-10 text-sm outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
           />
           {query && (
             <button
               type="button"
               onClick={() => setQuery('')}
               aria-label="Clear search"
-              className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="absolute top-1/2 right-2 grid h-7 w-7 -translate-y-1/2 place-items-center text-muted-foreground transition-colors hover:bg-[var(--hover)] hover:text-foreground"
             >
               <X className="h-4 w-4" />
             </button>
@@ -508,10 +507,10 @@ export function InsightBrowser({ insights, topics, graphDocuments }: InsightBrow
             type="button"
             onClick={() => setActiveTopic(null)}
             className={cn(
-              'rounded-md border px-2.5 py-1 text-xs transition-colors',
+              'border border-dashed px-2.5 py-1 text-xs uppercase tracking-[0.08em] transition-colors',
               activeTopic
-                ? 'text-muted-foreground hover:border-primary/50 hover:text-foreground'
-                : 'border-primary bg-primary/10 text-primary'
+                ? 'text-muted-foreground hover:border-primary hover:text-foreground'
+                : 'border-primary bg-[var(--hover)] text-primary'
             )}
           >
             all
@@ -524,10 +523,10 @@ export function InsightBrowser({ insights, topics, graphDocuments }: InsightBrow
                 setActiveTopic((currentTopic) => (currentTopic === topic ? null : topic))
               }
               className={cn(
-                'rounded-md border px-2.5 py-1 text-xs transition-colors',
+                'border border-dashed px-2.5 py-1 text-xs uppercase tracking-[0.08em] transition-colors',
                 activeTopic === topic
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'text-muted-foreground hover:border-primary/50 hover:text-foreground'
+                  ? 'border-primary bg-[var(--hover)] text-primary'
+                  : 'text-muted-foreground hover:border-primary hover:text-foreground'
               )}
             >
               {topic}
@@ -535,14 +534,14 @@ export function InsightBrowser({ insights, topics, graphDocuments }: InsightBrow
           ))}
         </div>
 
-        <div className="flex shrink-0 rounded-lg border bg-card p-1" aria-label="View mode">
+        <div className="flex shrink-0 border border-dashed border-border" aria-label="View mode">
           <button
             type="button"
             onClick={() => setViewMode('list')}
             className={cn(
-              'inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs transition-colors',
+              'inline-flex items-center gap-2 px-3 py-1.5 text-xs uppercase tracking-[0.08em] transition-colors',
               viewMode === 'list'
-                ? 'bg-primary/10 text-primary'
+                ? 'bg-[var(--hover)] text-primary'
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
@@ -553,9 +552,9 @@ export function InsightBrowser({ insights, topics, graphDocuments }: InsightBrow
             type="button"
             onClick={() => setViewMode('graph')}
             className={cn(
-              'inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs transition-colors',
+              'inline-flex items-center gap-2 border-l border-dashed border-border px-3 py-1.5 text-xs uppercase tracking-[0.08em] transition-colors',
               viewMode === 'graph'
-                ? 'bg-primary/10 text-primary'
+                ? 'bg-[var(--hover)] text-primary'
                 : 'text-muted-foreground hover:text-foreground'
             )}
           >
@@ -566,8 +565,8 @@ export function InsightBrowser({ insights, topics, graphDocuments }: InsightBrow
       </div>
 
       <div className="mb-3 flex items-center justify-between gap-4">
-        <h2 id="brain-insights" className="text-sm font-semibold uppercase tracking-wide">
-          Insight traces
+        <h2 id="brain-insights" className="section-kicker">
+          Notes / links / insights
         </h2>
         <p className="text-xs text-muted-foreground">
           {filteredInsights.length} / {insights.length} insights
@@ -577,21 +576,23 @@ export function InsightBrowser({ insights, topics, graphDocuments }: InsightBrow
       {viewMode === 'graph' ? (
         <GraphView filteredInsights={filteredInsights} graphDocuments={graphDocuments} />
       ) : filteredInsights.length > 0 ? (
-        <div className="divide-y rounded-lg border">
+        <div className="divide-y divide-dashed divide-[var(--hair)] border border-dashed border-border">
           {filteredInsights.map((insight) => (
             <Link
               key={insight.slug}
               href={`/brain/${insight.slug}`}
-              className="block p-3 transition-colors hover:bg-muted/30 sm:p-4"
+              className="block p-4 no-underline transition-colors hover:bg-[var(--hover)] sm:p-5"
             >
-              <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-                <h3 className="text-sm font-semibold leading-snug text-balance">{insight.title}</h3>
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-baseline sm:justify-between">
+                <h3 className="font-serif text-xl font-bold leading-tight text-primary uppercase text-balance">
+                  {insight.title}
+                </h3>
                 <p className="shrink-0 font-mono text-[11px] text-muted-foreground">
                   sources={insight.sources.length} edges={insight.graph.edges.length}
                 </p>
               </div>
 
-              <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+              <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
                 {insight.summary}
               </p>
 
@@ -602,7 +603,7 @@ export function InsightBrowser({ insights, topics, graphDocuments }: InsightBrow
           ))}
         </div>
       ) : (
-        <div className="rounded-lg border bg-card p-6 text-sm text-muted-foreground">
+        <div className="border border-dashed border-border bg-[var(--hover)] p-6 text-sm text-muted-foreground">
           No insight traces match this query.
         </div>
       )}

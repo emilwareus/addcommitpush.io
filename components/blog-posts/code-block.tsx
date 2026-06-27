@@ -9,12 +9,12 @@ export function CodeBlock({ code, language }: { code: string; language: string }
   ) as Language;
 
   return (
-    <div className="not-prose my-7 overflow-hidden rounded-lg border border-border bg-zinc-950 shadow-lg shadow-black/20">
+    <div className="not-prose my-7 overflow-hidden border border-dashed border-border bg-transparent">
       <Highlight theme={themes.vsDark} code={trimmed} language={highlightLanguage}>
         {({ className, style, tokens, getLineProps, getTokenProps }) => (
           <pre
-            className={`${className} overflow-x-auto p-5 font-mono text-[13px] leading-relaxed sm:text-sm`}
-            style={{ ...style, background: 'transparent' }}
+            className={`${className} overflow-x-auto p-4 font-mono text-[12.5px] leading-relaxed`}
+            style={{ ...style, background: 'transparent', color: 'var(--foreground)' }}
           >
             {tokens.map((line, lineIndex) => {
               const lineProps = getLineProps({ line });

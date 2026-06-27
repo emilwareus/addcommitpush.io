@@ -80,9 +80,9 @@ export function SpotifyCard() {
 
   if (rateLimitError || isRateLimited) {
     return (
-      <Card className="h-full flex flex-col items-center justify-center hover:border-secondary/40 transition-all duration-300">
+      <Card className="flex h-full flex-col items-center justify-center transition-colors hover:bg-[var(--hover)]">
         <CardContent className="text-center pt-6">
-          <span className="text-4xl mb-2 block">🎵</span>
+          <span className="mb-2 block text-4xl">♪</span>
           <p className="text-muted-foreground">Rate limited</p>
           <p className="text-xs text-muted-foreground mt-2">Please wait a moment...</p>
         </CardContent>
@@ -92,9 +92,9 @@ export function SpotifyCard() {
 
   if (error || !data) {
     return (
-      <Card className="h-full flex flex-col items-center justify-center hover:border-secondary/40 transition-all duration-300">
+      <Card className="flex h-full flex-col items-center justify-center transition-colors hover:bg-[var(--hover)]">
         <CardContent className="text-center pt-6">
-          <span className="text-4xl mb-2 block">🎵</span>
+          <span className="mb-2 block text-4xl">♪</span>
           {isLoading ? (
             <p className="text-muted-foreground">Loading...</p>
           ) : (
@@ -107,9 +107,9 @@ export function SpotifyCard() {
 
   if (!data.isPlaying) {
     return (
-      <Card className="h-full flex flex-col items-center justify-center hover:border-secondary/40 transition-all duration-300">
+      <Card className="flex h-full flex-col items-center justify-center transition-colors hover:bg-[var(--hover)]">
         <CardContent className="text-center pt-6">
-          <span className="text-4xl mb-2 block">🎵</span>
+          <span className="mb-2 block text-4xl">♪</span>
           <p className="text-muted-foreground">Not playing anything</p>
         </CardContent>
       </Card>
@@ -117,17 +117,16 @@ export function SpotifyCard() {
   }
 
   return (
-    <Card className="h-full flex flex-col hover:border-secondary/40 transition-all duration-300">
+    <Card className="flex h-full flex-col transition-colors hover:bg-[var(--hover)]">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <span className="text-xl">🎧</span>
-          Now Playing
+          <span className="display-heading text-2xl">Now Playing</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col justify-between gap-3">
         <div className="flex gap-3">
           {data.albumImageUrl && (
-            <div className="relative w-16 h-16 rounded overflow-hidden shrink-0">
+            <div className="relative h-16 w-16 shrink-0 overflow-hidden border border-dashed border-border">
               <Image
                 src={data.albumImageUrl}
                 alt={data.album || 'Album art'}
@@ -153,9 +152,9 @@ export function SpotifyCard() {
         {/* Progress Bar */}
         {data.progressMs && data.durationMs && (
           <div className="space-y-1">
-            <div className="w-full bg-muted rounded-full h-1.5">
+            <div className="h-1.5 w-full bg-muted">
               <div
-                className="bg-secondary h-1.5 rounded-full transition-all duration-1000"
+                className="h-1.5 bg-secondary transition-all duration-1000"
                 style={{ width: `${(data.progressMs / data.durationMs) * 100}%` }}
               />
             </div>

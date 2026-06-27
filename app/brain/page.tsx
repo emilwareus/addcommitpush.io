@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { Brain } from 'lucide-react';
 import { InsightBrowser } from '@/components/brain/insight-browser';
 import { getAllBrainGraphDocuments, getAllInsights, getAllInsightTopics } from '@/lib/insights';
 
@@ -18,25 +17,22 @@ export default function BrainPage() {
   const graphDocuments = getAllBrainGraphDocuments();
 
   return (
-    <main className="min-h-screen">
-      <div className="container mx-auto px-4 sm:px-6 py-12 md:py-20">
-        <div className="max-w-5xl mx-auto">
-          <div className="mb-12 md:mb-16">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 md:mb-8 text-balance">
-              <span className="text-primary neon-glow flex items-center gap-4">
-                <Brain className="w-10 h-10 md:w-14 md:h-14" />
-                Brain
-              </span>
-            </h1>
-            <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl text-pretty leading-relaxed">
-              Raw insight traces: claims, caveats, source files, and open questions before they
-              become polished blog posts.
-            </p>
-          </div>
+    <main className="site-container">
+      <section className="py-20 sm:py-24">
+        <div className="section-kicker mb-8">Second Brain</div>
+        <h1 className="display-heading text-[clamp(4rem,12vw,8.5rem)]">Brain</h1>
+        <p className="mt-10 max-w-3xl text-[15px] leading-[1.75] text-muted-foreground">
+          A working collection of links, claims, caveats, source files, graph edges, and rough
+          conclusions before they become polished posts.
+        </p>
+      </section>
 
-          <InsightBrowser insights={insights} topics={topics} graphDocuments={graphDocuments} />
-        </div>
-      </div>
+      <InsightBrowser insights={insights} topics={topics} graphDocuments={graphDocuments} />
+
+      <footer className="mt-16 flex flex-wrap justify-between gap-4 border-t border-dashed border-[var(--hair)] py-10 text-[11.5px] text-muted-foreground">
+        <span>{insights.length} insight traces</span>
+        <span>{graphDocuments.length} connected documents</span>
+      </footer>
     </main>
   );
 }

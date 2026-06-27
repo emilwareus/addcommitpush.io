@@ -1,7 +1,4 @@
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 import { getPostBySlug, getAllSlugs } from '@/lib/posts';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
@@ -9,6 +6,7 @@ import type { ReactNode } from 'react';
 
 // Fully static: error if dynamic APIs are used
 export const dynamic = 'error';
+export const revalidate = false;
 
 export async function generateStaticParams() {
   const slugs = getAllSlugs();
@@ -53,7 +51,6 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
     notFound();
   }
 
-  // Dynamic content import
   const postContent = await (async (): Promise<{
     content: ReactNode;
     references: ReactNode;
@@ -93,54 +90,52 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   })();
 
   return (
-    <main className="min-h-screen">
-      <div className="container mx-auto px-4 sm:px-6 py-12 md:py-20">
-        <div className="max-w-3xl mx-auto">
-          <Link href="/">
-            <Button variant="ghost" className="mb-8 md:mb-12 -ml-2 md:-ml-4">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              <span className="hidden sm:inline">Back to Blog</span>
-              <span className="sm:hidden">Back</span>
-            </Button>
-          </Link>
+    <main className="site-container-narrow">
+      <Link
+        href="/"
+        className="mt-11 inline-flex items-center gap-2 text-xs uppercase tracking-[0.04em] text-muted-foreground no-underline transition-colors hover:text-primary"
+      >
+        ← Index
+      </Link>
 
-          <article>
-            <header className="mb-12 md:mb-16">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 md:mb-8 text-balance leading-tight">
-                {post.title}
-              </h1>
+      <article className="pt-8">
+        <header>
+          <h1 className="display-heading text-[clamp(2.35rem,6vw,3.75rem)]">{post.title}</h1>
 
-              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mb-8">
-                <time dateTime={post.publishedAt}>
-                  {new Date(post.publishedAt).toLocaleDateString('en-US', {
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric',
-                  })}
-                </time>
-                <span>·</span>
-                <span>{post.readTime}</span>
-                <span>·</span>
-                <span>Emil Wåreus</span>
-              </div>
-            </header>
+          <div className="mt-6 flex flex-wrap items-center gap-3 border-b border-dashed border-[var(--hair)] pb-6 text-xs uppercase tracking-[0.04em] text-muted-foreground">
+            <time dateTime={post.publishedAt}>
+              {new Date(post.publishedAt).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })}
+            </time>
+            <span>·</span>
+            <span>{post.readTime}</span>
+            {post.tags?.map((tag) => (
+              <span key={tag}>· {tag}</span>
+            ))}
+          </div>
+        </header>
 
-            {postContent.content}
+        <div className="article-body">{postContent.content}</div>
 
-            <footer className="mt-12 pt-8 border-t border-border">
-              <div className="flex flex-wrap gap-2">
-                {post.tags?.map((tag) => (
-                  <Badge key={tag} variant="secondary" className="text-sm px-3 py-1">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-            </footer>
-
-            {postContent.references}
-          </article>
+        <div className="my-12 border border-dashed border-border p-5">
+          <div className="font-serif text-lg font-bold uppercase text-primary">Emil Wåreus</div>
+          <div className="mt-1 text-xs text-muted-foreground">
+            coder, founder, researcher, investor
+          </div>
         </div>
-      </div>
+
+        {postContent.references && <div className="article-body">{postContent.references}</div>}
+      </article>
+
+      <Link
+        href="/"
+        className="mb-16 flex items-center justify-center border border-dashed border-border p-4 text-xs uppercase tracking-[0.06em] text-muted-foreground no-underline transition-colors hover:bg-[var(--hover)] hover:text-primary"
+      >
+        ← All Posts
+      </Link>
     </main>
   );
 }

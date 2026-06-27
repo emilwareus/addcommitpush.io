@@ -1,31 +1,31 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Play, Pause, Volume2, VolumeX, Headphones } from 'lucide-react';
-import { Slider } from '@/components/ui/slider';
+import { Pause, Play } from 'lucide-react';
+import { useEffect, useRef, useState, type MouseEvent } from 'react';
 
 interface AudioPlayerProps {
   audioUrl: string;
   title: string;
 }
 
-export function AudioPlayer({ audioUrl }: AudioPlayerProps) {
+const playbackRates = [1, 1.25, 1.5, 2] as const;
+
+export function AudioPlayer({ audioUrl, title }: AudioPlayerProps) {
+  const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(1);
-  const [isMuted, setIsMuted] = useState(false);
-  const [playbackRate, setPlaybackRate] = useState(1);
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playbackRateIndex, setPlaybackRateIndex] = useState(0);
+  const playbackRate = playbackRates[playbackRateIndex];
 
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio) {
+      return;
+    }
 
     const updateTime = () => setCurrentTime(audio.currentTime);
-    const updateDuration = () => setDuration(audio.duration);
+    const updateDuration = () => setDuration(Number.isFinite(audio.duration) ? audio.duration : 0);
     const handleEnded = () => setIsPlaying(false);
 
     audio.addEventListener('timeupdate', updateTime);
@@ -39,119 +39,93 @@ export function AudioPlayer({ audioUrl }: AudioPlayerProps) {
     };
   }, []);
 
-  const togglePlay = () => {
-    if (!audioRef.current) return;
+  async function togglePlay() {
+    const audio = audioRef.current;
+    if (!audio) {
+      return;
+    }
 
     if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play();
+      audio.pause();
+      setIsPlaying(false);
+      return;
     }
-    setIsPlaying(!isPlaying);
-  };
 
-  const handleSeek = (value: number[]) => {
-    if (!audioRef.current) return;
-    audioRef.current.currentTime = value[0];
-    setCurrentTime(value[0]);
-  };
+    await audio.play();
+    setIsPlaying(true);
+  }
 
-  const handleVolumeChange = (value: number[]) => {
-    if (!audioRef.current) return;
-    const newVolume = value[0];
-    audioRef.current.volume = newVolume;
-    setVolume(newVolume);
-    setIsMuted(newVolume === 0);
-  };
-
-  const toggleMute = () => {
-    if (!audioRef.current) return;
-    if (isMuted) {
-      audioRef.current.volume = volume || 0.5;
-      setIsMuted(false);
-    } else {
-      audioRef.current.volume = 0;
-      setIsMuted(true);
+  function seekTo(event: MouseEvent<HTMLButtonElement>) {
+    const audio = audioRef.current;
+    if (!audio || duration === 0) {
+      return;
     }
-  };
 
-  const handlePlaybackRateChange = (rate: number) => {
-    if (!audioRef.current) return;
-    audioRef.current.playbackRate = rate;
-    setPlaybackRate(rate);
-  };
+    const rect = event.currentTarget.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+    const nextTime = ratio * duration;
+    audio.currentTime = nextTime;
+    setCurrentTime(nextTime);
+  }
 
-  const formatTime = (time: number) => {
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
+  function cycleRate() {
+    const audio = audioRef.current;
+    const nextIndex = (playbackRateIndex + 1) % playbackRates.length;
+    const nextRate = playbackRates[nextIndex];
+
+    if (audio) {
+      audio.playbackRate = nextRate;
+    }
+
+    setPlaybackRateIndex(nextIndex);
+  }
+
+  const progress = duration > 0 ? `${(currentTime / duration) * 100}%` : '0%';
 
   return (
-    <Card className="p-6 bg-card/50 backdrop-blur border-primary/30">
-      <div className="flex items-center gap-3 mb-4">
-        <Headphones className="w-5 h-5 text-secondary" />
-        <h3 className="font-semibold text-sm text-secondary">Listen to this post</h3>
-      </div>
-
+    <div className="not-prose my-8 flex items-center gap-3 border border-dashed border-border px-4 py-3 sm:gap-4">
       <audio ref={audioRef} src={audioUrl} preload="metadata" />
+      <button
+        type="button"
+        onClick={() => void togglePlay()}
+        className="flex h-9 w-9 shrink-0 items-center justify-center border border-dashed border-border text-primary transition-colors hover:border-primary hover:bg-[var(--hover)]"
+        aria-label={isPlaying ? `Pause ${title}` : `Play ${title}`}
+      >
+        {isPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+      </button>
 
-      <div className="space-y-4">
-        {/* Progress Bar */}
-        <div className="space-y-2">
-          <Slider
-            value={[currentTime]}
-            max={duration || 100}
-            step={0.1}
-            onValueChange={handleSeek}
-            className="cursor-pointer"
-          />
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
-          </div>
+      <div className="min-w-0 flex-1">
+        <div className="mb-2 text-[10.5px] uppercase tracking-[0.14em] text-muted-foreground">
+          Audio narration · {formatTime(duration)}
         </div>
-
-        {/* Playback Speed Controls */}
-        <div className="flex items-center justify-center gap-2">
-          <span className="text-xs text-muted-foreground mr-2">Speed:</span>
-          {[1, 1.25, 1.5, 2].map((rate) => (
-            <Button
-              key={rate}
-              onClick={() => handlePlaybackRateChange(rate)}
-              variant={playbackRate === rate ? 'default' : 'ghost'}
-              size="sm"
-              className="text-xs px-3 py-1 h-7"
-            >
-              {rate}x
-            </Button>
-          ))}
-        </div>
-
-        {/* Controls */}
-        <div className="flex items-center justify-between">
-          <Button
-            onClick={togglePlay}
-            size="lg"
-            className="bg-primary hover:bg-primary/80 text-primary-foreground"
-          >
-            {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
-          </Button>
-
-          <div className="flex items-center gap-2 flex-1 max-w-xs ml-4">
-            <Button onClick={toggleMute} variant="ghost" size="icon" className="flex-shrink-0">
-              {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-            </Button>
-            <Slider
-              value={[isMuted ? 0 : volume]}
-              max={1}
-              step={0.01}
-              onValueChange={handleVolumeChange}
-              className="cursor-pointer"
-            />
-          </div>
-        </div>
+        <button
+          type="button"
+          onClick={seekTo}
+          className="block h-[3px] w-full overflow-hidden bg-[var(--hair)]"
+          aria-label="Seek audio"
+        >
+          <span className="block h-full bg-primary" style={{ width: progress }} />
+        </button>
       </div>
-    </Card>
+
+      <button
+        type="button"
+        onClick={cycleRate}
+        className="shrink-0 text-[11.5px] text-muted-foreground transition-colors hover:text-primary"
+        aria-label="Change playback speed"
+      >
+        {playbackRate.toFixed(playbackRate === 1 ? 1 : 2).replace(/0$/, '')}x
+      </button>
+    </div>
   );
+}
+
+function formatTime(time: number) {
+  if (!Number.isFinite(time) || time <= 0) {
+    return '0:00';
+  }
+
+  const minutes = Math.floor(time / 60);
+  const seconds = Math.floor(time % 60);
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }

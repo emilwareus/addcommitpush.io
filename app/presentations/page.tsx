@@ -1,13 +1,4 @@
 import Link from 'next/link';
-import { Presentation, MapPin, Calendar, ArrowRight } from 'lucide-react';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from '@/components/ui/card';
 import type { Metadata } from 'next';
 
 export const dynamic = 'error';
@@ -25,86 +16,110 @@ interface PresentationEntry {
   href: string;
   venue: string;
   date: string;
+  kind: string;
+  actions: readonly { label: string; href: string }[];
 }
 
 const presentations: PresentationEntry[] = [
   {
     title: 'Write Code That AI Agents Love',
     description:
-      'A practical talk on shaping repositories for AI coding agents: instructions, architecture, SDKs, tests, and custom rules.',
+      'Making codebases legible to agents and humans. Naming, blast radius, and the signals you leave in the code.',
     href: '/presentations/write-code-ai-agents-love',
     venue: 'Working draft',
     date: '2026',
+    kind: 'Talk',
+    actions: [
+      { label: 'Slides →', href: '/presentations/write-code-ai-agents-love' },
+      { label: 'Post →', href: '/blog/write-code-that-ai-agents-love' },
+    ],
   },
   {
     title: 'Building Real-Time Voice Agents',
     description:
-      'Explore STT, TTS, VAD, and WebSockets — and meet Jarvis, the AI co-presenter built with Whisper, Kokoro, and Groq.',
+      'STT, TTS, VAD, and WebSockets with Jarvis, the AI co-presenter built with Whisper, Kokoro, and Groq.',
     href: '/presentations/voice-agents',
     venue: 'Malmö AI Devs',
     date: 'TBD 2026',
+    kind: 'Deck',
+    actions: [{ label: 'Slides →', href: '/presentations/voice-agents' }],
   },
   {
-    title: 'Deep Research Agents — Architecture Walkthrough',
+    title: 'Deep Research Agents',
     description:
-      'An exploration of STORM, ReACT, and diffusion-based architectures for autonomous deep research agents. Includes live demos and benchmark comparisons.',
+      'Architecture walkthrough of STORM, ReACT, and diffusion-based approaches for autonomous deep research agents.',
     href: '/presentations/deep-research',
     venue: 'Foo Cafe, Malmö',
-    date: 'February 5, 2026',
+    date: 'Feb 5, 2026',
+    kind: 'Talk',
+    actions: [{ label: 'Slides →', href: '/presentations/deep-research' }],
   },
 ];
 
 export default function PresentationsPage() {
   return (
-    <main className="min-h-screen">
-      <div className="container mx-auto px-4 sm:px-6 py-12 md:py-20">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-16 md:mb-24">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold mb-6 md:mb-8 text-balance">
-              <span className="text-primary neon-glow flex items-center gap-4">
-                <Presentation className="w-10 h-10 md:w-14 md:h-14" />
-                Presentations
-              </span>
-            </h1>
-            <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl text-pretty leading-relaxed">
-              Talks and walkthroughs on AI, software architecture, and engineering leadership.
-            </p>
-          </div>
+    <main className="site-container">
+      <section className="py-20 sm:py-24">
+        <div className="section-kicker mb-8">Slides & Talks</div>
+        <h1 className="display-heading text-[clamp(4rem,12vw,8.5rem)]">Presentations</h1>
+        <p className="mt-10 max-w-3xl text-[15px] leading-[1.75] text-muted-foreground">
+          Decks and talks on AI agents, data, and building. Mostly the same arguments as the blog,
+          with more diagrams and worse jokes.
+        </p>
+      </section>
 
-          <div className="space-y-8 md:space-y-10">
-            {presentations.map((p) => (
-              <Link key={p.href} href={p.href} className="block group">
-                <Card className="transition-colors hover:border-primary/50">
-                  <CardHeader>
-                    <CardTitle className="text-xl md:text-2xl group-hover:text-primary transition-colors">
-                      {p.title}
-                    </CardTitle>
-                    <CardDescription className="flex flex-wrap gap-4 mt-1 text-sm">
-                      <span className="flex items-center gap-1.5">
-                        <MapPin className="w-3.5 h-3.5" />
-                        {p.venue}
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5" />
-                        {p.date}
-                      </span>
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">{p.description}</p>
-                  </CardContent>
-                  <CardFooter>
-                    <span className="text-sm text-primary flex items-center gap-1.5 group-hover:gap-2.5 transition-all">
-                      View presentation
-                      <ArrowRight className="w-4 h-4" />
-                    </span>
-                  </CardFooter>
-                </Card>
-              </Link>
-            ))}
+      <section className="grid gap-6 pb-20 md:grid-cols-2">
+        {presentations.map((presentation) => (
+          <article
+            key={presentation.href}
+            className="flex min-h-[280px] flex-col border border-dashed border-border p-7"
+          >
+            <div className="flex justify-between gap-5 text-xs uppercase tracking-[0.12em] text-muted-foreground">
+              <span>{presentation.date}</span>
+              <span>{presentation.kind}</span>
+            </div>
+            <h2 className="display-heading mt-8 text-[clamp(1.55rem,3vw,2rem)] leading-[1.12]">
+              {presentation.title}
+            </h2>
+            <p className="mt-6 text-[13.5px] leading-[1.65] text-foreground">
+              {presentation.description}
+            </p>
+            <p className="mt-3 text-xs uppercase tracking-[0.08em] text-muted-foreground">
+              {presentation.venue}
+            </p>
+            <div className="mt-auto flex flex-wrap gap-5 pt-8">
+              {presentation.actions.map((action) => (
+                <Link
+                  key={action.href}
+                  href={action.href}
+                  className="text-xs uppercase tracking-[0.08em] text-primary underline decoration-dashed underline-offset-4"
+                >
+                  {action.label}
+                </Link>
+              ))}
+            </div>
+          </article>
+        ))}
+
+        <div className="flex min-h-[280px] flex-col items-center justify-center border border-dashed border-[var(--hair)] p-7 text-center">
+          <div className="font-serif text-lg italic text-muted-foreground">
+            your next talk here...
           </div>
+          <a
+            href="mailto:emil@addcommitpush.io"
+            className="mt-5 text-xs uppercase tracking-[0.14em] text-muted-foreground no-underline hover:text-primary"
+          >
+            send me the decks
+          </a>
         </div>
-      </div>
+      </section>
+
+      <footer className="flex flex-wrap justify-between gap-4 border-t border-dashed border-[var(--hair)] py-10 text-[11.5px] text-muted-foreground">
+        <span>© 2026 Emil Wåreus</span>
+        <Link href="/" className="no-underline hover:text-primary">
+          ← back to blog
+        </Link>
+      </footer>
     </main>
   );
 }

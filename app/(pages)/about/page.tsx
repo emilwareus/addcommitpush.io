@@ -1,33 +1,18 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ExternalLink, FileText, BookOpen, Mic, Code2, FlaskConical } from 'lucide-react';
-import Image from 'next/image';
 import { patents } from '@/lib/patents';
 
 export default function AboutPage() {
   return (
-    <main className="min-h-screen">
-      <div className="container mx-auto px-4 sm:px-6 py-12 md:py-20">
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <div className="mb-16 md:mb-24 text-center">
-            <div className="w-28 h-28 sm:w-36 sm:h-36 mx-auto mb-8 rounded-full bg-gradient-to-br from-primary via-secondary to-accent p-1">
-              <div className="w-full h-full rounded-full bg-background flex items-center justify-center">
-                <Image
-                  src="/code-icon.svg"
-                  alt="Code Icon"
-                  width={80}
-                  height={80}
-                  className="w-14 h-14 sm:w-20 sm:h-20"
-                />
-              </div>
-            </div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 text-balance">
-              <span className="text-primary neon-glow">Hey, I&apos;m</span>{' '}
-              <span className="text-secondary neon-glow">Emil</span>
-            </h1>
-            <div className="prose prose-lg max-w-none text-foreground/90">
-              <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto text-pretty leading-relaxed">
+    <main className="site-container">
+      <div className="py-16 md:py-20">
+        <div className="mx-auto max-w-4xl">
+          <div className="mb-16 md:mb-20">
+            <div className="section-kicker mb-6">Whoami</div>
+            <h1 className="display-heading text-[clamp(3.25rem,9vw,6.5rem)]">Emil Wåreus</h1>
+            <div className="mt-8 max-w-3xl space-y-5 text-[15px] leading-[1.8] text-muted-foreground">
+              <p>
                 I&apos;m a business-savvy data nerd who spends way too much time in front of a
                 screen. I run a few different companies, invest, advise, and hack. My most notable
                 achievement was founding, scaling, and exiting Debricked, a startup I co-founded in
@@ -35,14 +20,10 @@ export default function AboutPage() {
                 teams developing application security solutions using machine learning, graph
                 algorithms, and static analysis techniques.
               </p>
-              <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto text-pretty leading-relaxed mt-4">
-                I also enjoy writing spaghetti code while drinking wine. 🍷
-              </p>
-              <p className="text-base sm:text-lg md:text-xl text-foreground max-w-3xl mx-auto text-balance leading-relaxed mt-6 font-medium">
-                Current projects
-              </p>
-              <div className="mt-3 grid grid-cols-1 gap-3 text-left sm:text-center">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center gap-1 sm:gap-2">
+              <p>I also enjoy writing spaghetti code while drinking wine. 🍷</p>
+              <p className="font-semibold text-foreground">Current projects</p>
+              <div className="grid grid-cols-1 gap-3">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
                   <Badge asChild variant="outline">
                     <a
                       href="https://oaiz.io"
@@ -56,7 +37,7 @@ export default function AboutPage() {
                   </Badge>
                   <span className="text-sm text-muted-foreground">AI that builds AI agents</span>
                 </div>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center gap-1 sm:gap-2">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
                   <Badge asChild variant="outline">
                     <a
                       href="https://valkompass.ai"
@@ -72,7 +53,7 @@ export default function AboutPage() {
                     Neo4j + Gemini for Swedish political data
                   </span>
                 </div>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-center gap-1 sm:gap-2">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
                   <Badge asChild variant="outline">
                     <a
                       href="https://podidex.com"
