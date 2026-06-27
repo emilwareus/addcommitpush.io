@@ -1,6 +1,7 @@
 'use client';
 
 import { Highlight, type Language, themes } from 'prism-react-renderer';
+import { ArticleCodePanel } from '@/components/blog-posts/article-code-panel';
 
 export function CodeBlock({ code, language }: { code: string; language: string }) {
   const trimmed = code.replace(/\n$/, '');
@@ -8,12 +9,22 @@ export function CodeBlock({ code, language }: { code: string; language: string }
     language === 'text' || language === 'txt' ? 'plain' : language
   ) as Language;
 
+  if (highlightLanguage === 'plain') {
+    return (
+      <ArticleCodePanel label={language}>
+        <pre className="m-0 overflow-x-auto whitespace-pre-wrap break-words font-mono text-sm leading-relaxed text-foreground">
+          {trimmed}
+        </pre>
+      </ArticleCodePanel>
+    );
+  }
+
   return (
-    <div className="not-prose my-7 overflow-hidden border border-dashed border-border bg-transparent">
+    <ArticleCodePanel label={language}>
       <Highlight theme={themes.vsDark} code={trimmed} language={highlightLanguage}>
         {({ className, style, tokens, getLineProps, getTokenProps }) => (
           <pre
-            className={`${className} overflow-x-auto p-4 font-mono text-[12.5px] leading-relaxed`}
+            className={`${className} m-0 overflow-x-auto whitespace-pre-wrap break-words font-mono text-sm leading-relaxed`}
             style={{ ...style, background: 'transparent', color: 'var(--foreground)' }}
           >
             {tokens.map((line, lineIndex) => {
@@ -36,6 +47,6 @@ export function CodeBlock({ code, language }: { code: string; language: string }
           </pre>
         )}
       </Highlight>
-    </div>
+    </ArticleCodePanel>
   );
 }

@@ -366,6 +366,13 @@
   padding: 0;
 }
 
+.article-code-panel pre {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
 .article-body img,
 .article-body figure {
   border-radius: 0;
