@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "check": "pnpm format && pnpm lint && pnpm build",
     "check-links": "tsx scripts/check-about-links.ts",
     "generate-insight-articles": "tsx scripts/generate-insight-articles.ts",
     "optimize-images": "tsx scripts/optimize-images.ts",
