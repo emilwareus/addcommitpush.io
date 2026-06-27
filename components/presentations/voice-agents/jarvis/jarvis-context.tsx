@@ -40,13 +40,7 @@ export interface VadConfig {
 
 export type Transport = 'websocket' | 'webrtc';
 
-type JarvisStatus =
-  | 'disconnected'
-  | 'connecting'
-  | 'idle'
-  | 'listening'
-  | 'thinking'
-  | 'speaking';
+type JarvisStatus = 'disconnected' | 'connecting' | 'idle' | 'listening' | 'thinking' | 'speaking';
 
 interface JarvisContextType {
   messages: JarvisMessage[];
@@ -211,7 +205,7 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
         },
       ]);
     },
-    [],
+    []
   );
 
   // ── Shared message handler ────────────────────────────────────────────────
@@ -277,9 +271,7 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
               const deltaId = streamingDeltaIdRef.current;
               streamingDeltaIdRef.current = null;
               setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === deltaId ? { ...m, text: msg.text } : m,
-                ),
+                prev.map((m) => (m.id === deltaId ? { ...m, text: msg.text } : m))
               );
               break;
             }
@@ -290,9 +282,7 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
             setMessages((prev) => {
               const existing = prev.find((m) => m.type === 'partial');
               if (existing) {
-                return prev.map((m) =>
-                  m.type === 'partial' ? { ...m, text: msg.text } : m,
-                );
+                return prev.map((m) => (m.type === 'partial' ? { ...m, text: msg.text } : m));
               }
               return [
                 ...prev,
@@ -311,9 +301,7 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
             const deltaId = streamingDeltaIdRef.current;
             if (deltaId) {
               setMessages((prev) =>
-                prev.map((m) =>
-                  m.id === deltaId ? { ...m, text: m.text + msg.text } : m,
-                ),
+                prev.map((m) => (m.id === deltaId ? { ...m, text: m.text + msg.text } : m))
               );
             } else {
               const newId = `delta-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
@@ -337,11 +325,7 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
             break;
 
           case 'status':
-            if (
-              msg.status === 'idle' ||
-              msg.status === 'thinking' ||
-              msg.status === 'speaking'
-            ) {
+            if (msg.status === 'idle' || msg.status === 'thinking' || msg.status === 'speaking') {
               if (msg.status === 'idle') {
                 suppressTtsRef.current = false;
               }
@@ -363,7 +347,7 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
         }
       }
     },
-    [addMessage],
+    [addMessage]
   );
 
   // ── Send control message (works on both transports) ───────────────────────
@@ -377,31 +361,50 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const setStreamingConfig = useCallback((config: StreamingConfig) => {
-    setStreamingConfigState(config);
-    sendControlMessage({ type: 'set_streaming', ...config });
-  }, [sendControlMessage]);
+  const setStreamingConfig = useCallback(
+    (config: StreamingConfig) => {
+      setStreamingConfigState(config);
+      sendControlMessage({ type: 'set_streaming', ...config });
+    },
+    [sendControlMessage]
+  );
 
-  const setVadConfig = useCallback((config: VadConfig) => {
-    setVadConfigState(config);
-    sendControlMessage({ type: 'set_vad_config', threshold: config.threshold, silence_ms: config.silenceMs });
-  }, [sendControlMessage]);
+  const setVadConfig = useCallback(
+    (config: VadConfig) => {
+      setVadConfigState(config);
+      sendControlMessage({
+        type: 'set_vad_config',
+        threshold: config.threshold,
+        silence_ms: config.silenceMs,
+      });
+    },
+    [sendControlMessage]
+  );
 
-  const setSttModel = useCallback((model: string) => {
-    setSttModelState(model);
-    sendControlMessage({ type: 'set_stt_model', model });
-  }, [sendControlMessage]);
+  const setSttModel = useCallback(
+    (model: string) => {
+      setSttModelState(model);
+      sendControlMessage({ type: 'set_stt_model', model });
+    },
+    [sendControlMessage]
+  );
 
-  const setLlmModel = useCallback((model: string) => {
-    setLlmModelState(model);
-    sendControlMessage({ type: 'set_llm_model', model });
-  }, [sendControlMessage]);
+  const setLlmModel = useCallback(
+    (model: string) => {
+      setLlmModelState(model);
+      sendControlMessage({ type: 'set_llm_model', model });
+    },
+    [sendControlMessage]
+  );
 
-  const setBargeInEnabled = useCallback((enabled: boolean) => {
-    setBargeInEnabledState(enabled);
-    bargeInEnabledRef.current = enabled;
-    sendControlMessage({ type: 'set_barge_in', enabled });
-  }, [sendControlMessage]);
+  const setBargeInEnabled = useCallback(
+    (enabled: boolean) => {
+      setBargeInEnabledState(enabled);
+      bargeInEnabledRef.current = enabled;
+      sendControlMessage({ type: 'set_barge_in', enabled });
+    },
+    [sendControlMessage]
+  );
 
   // ── Cleanup ──────────────────────────────────────────────────────────────
 
@@ -476,9 +479,7 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
       isTtsPlayingRef.current = playing;
     });
 
-    await audioCtx.audioWorklet.addModule(
-      '/presentations/voice-agents/audio-capture-worklet.js',
-    );
+    await audioCtx.audioWorklet.addModule('/presentations/voice-agents/audio-capture-worklet.js');
 
     const source = audioCtx.createMediaStreamSource(stream);
     const workletNode = new AudioWorkletNode(audioCtx, 'audio-capture-processor');
@@ -669,9 +670,7 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify({ sdp: pc.localDescription!.sdp }),
     });
     const answer = await response.json();
-    await pc.setRemoteDescription(
-      new RTCSessionDescription({ type: 'answer', sdp: answer.sdp }),
-    );
+    await pc.setRemoteDescription(new RTCSessionDescription({ type: 'answer', sdp: answer.sdp }));
   }, [handleServerMessage, cleanup, sendControlMessage, streamingConfig]);
 
   // ── Public connect (dispatches based on transport) ────────────────────
@@ -693,31 +692,37 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
 
   // ── Send slide context ───────────────────────────────────────────────────
 
-  const sendSlideContext = useCallback((context: SlideContext) => {
-    sendControlMessage({ type: 'slide_context', context });
-  }, [sendControlMessage]);
+  const sendSlideContext = useCallback(
+    (context: SlideContext) => {
+      sendControlMessage({ type: 'slide_context', context });
+    },
+    [sendControlMessage]
+  );
 
   // ── Set transport (hot-swap if connected) ─────────────────────────────
 
-  const setTransport = useCallback((t: Transport) => {
-    if (t === transport) return;
-    const wasConnected = isConnected;
-    if (wasConnected) {
-      sendControlMessage({ type: 'shutdown' });
-      cleanup();
-    }
-    setTransportState(t);
-    // Reconnect in the next tick if was connected
-    if (wasConnected) {
-      setTimeout(async () => {
-        if (t === 'webrtc') {
-          await connectWebRTC();
-        } else {
-          await connectWebSocket();
-        }
-      }, 100);
-    }
-  }, [transport, isConnected, sendControlMessage, cleanup, connectWebRTC, connectWebSocket]);
+  const setTransport = useCallback(
+    (t: Transport) => {
+      if (t === transport) return;
+      const wasConnected = isConnected;
+      if (wasConnected) {
+        sendControlMessage({ type: 'shutdown' });
+        cleanup();
+      }
+      setTransportState(t);
+      // Reconnect in the next tick if was connected
+      if (wasConnected) {
+        setTimeout(async () => {
+          if (t === 'webrtc') {
+            await connectWebRTC();
+          } else {
+            await connectWebSocket();
+          }
+        }, 100);
+      }
+    },
+    [transport, isConnected, sendControlMessage, cleanup, connectWebRTC, connectWebSocket]
+  );
 
   // ── Cleanup on unmount ───────────────────────────────────────────────────
 
@@ -727,7 +732,28 @@ export function JarvisProvider({ children }: { children: ReactNode }) {
 
   return (
     <JarvisContext.Provider
-      value={{ messages, status, isConnected, streamingConfig, vadConfig, sttModel, sttModels, llmModel, llmModels, transport, bargeInEnabled, connect, disconnect, sendSlideContext, setStreamingConfig, setVadConfig, setSttModel, setLlmModel, setTransport, setBargeInEnabled }}
+      value={{
+        messages,
+        status,
+        isConnected,
+        streamingConfig,
+        vadConfig,
+        sttModel,
+        sttModels,
+        llmModel,
+        llmModels,
+        transport,
+        bargeInEnabled,
+        connect,
+        disconnect,
+        sendSlideContext,
+        setStreamingConfig,
+        setVadConfig,
+        setSttModel,
+        setLlmModel,
+        setTransport,
+        setBargeInEnabled,
+      }}
     >
       {children}
     </JarvisContext.Provider>

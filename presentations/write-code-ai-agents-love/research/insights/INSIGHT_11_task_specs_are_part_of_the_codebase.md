@@ -7,14 +7,14 @@ hallucinates constraints that do not exist.
 
 ## Source map
 
-| Ref | Source | Local text | Role in this insight |
-|---|---|---|---|
-| R16 | CodePlan | `paper-text/codeplan-2309.12499.txt` | Shows repository-level tasks need planning over dependency structure; seed specifications drive the plan graph. |
-| R25 | SWE-Search | `paper-text/swe-search-iclr-2025.txt` | MCTS-based iterative refinement improves agent outcomes; clear initial problem descriptions feed the search tree. |
-| R17 | On the Impact of AGENTS.md | `paper-text/agents-md-impact-2601.20404.txt` | Paired study: AGENTS.md reduced median runtime 28.64% and output tokens 16.58%. |
-| R73 | OctoBench | `paper-text/octobench-2601.10343.txt` | Scaffold-aware instruction following; persistent constraints and task specs measured via 7,098 checklist items. |
-| D01-D09 | Vendor docs (OpenAI, Anthropic, GitHub, Cursor, Aider, etc.) | Various articles/ files | Converge on bounded tasks, explicit validation, file paths, and examples. |
-| D35 | Builder.io AGENTS.md guide | `articles/builder-agents-md.html` | Practitioner signal: small project instructions reduce repeated repo rediscovery. |
+| Ref     | Source                                                       | Local text                                   | Role in this insight                                                                                              |
+| ------- | ------------------------------------------------------------ | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| R16     | CodePlan                                                     | `paper-text/codeplan-2309.12499.txt`         | Shows repository-level tasks need planning over dependency structure; seed specifications drive the plan graph.   |
+| R25     | SWE-Search                                                   | `paper-text/swe-search-iclr-2025.txt`        | MCTS-based iterative refinement improves agent outcomes; clear initial problem descriptions feed the search tree. |
+| R17     | On the Impact of AGENTS.md                                   | `paper-text/agents-md-impact-2601.20404.txt` | Paired study: AGENTS.md reduced median runtime 28.64% and output tokens 16.58%.                                   |
+| R73     | OctoBench                                                    | `paper-text/octobench-2601.10343.txt`        | Scaffold-aware instruction following; persistent constraints and task specs measured via 7,098 checklist items.   |
+| D01-D09 | Vendor docs (OpenAI, Anthropic, GitHub, Cursor, Aider, etc.) | Various articles/ files                      | Converge on bounded tasks, explicit validation, file paths, and examples.                                         |
+| D35     | Builder.io AGENTS.md guide                                   | `articles/builder-agents-md.html`            | Practitioner signal: small project instructions reduce repeated repo rediscovery.                                 |
 
 ## CodePlan: task specs as seed specifications
 
@@ -30,10 +30,10 @@ Source trace: R16, `paper-text/codeplan-2309.12499.txt`, lines 156-160.
 
 ### CodePlan results copied from the paper
 
-| Evaluation criterion | CodePlan | Baselines (without planning) |
-|---|---:|---:|
-| Repositories passing validity checks | 5/6 | 0/6 |
-| Repository sizes (files changed) | 2-97 files | Same repos |
+| Evaluation criterion                 |   CodePlan | Baselines (without planning) |
+| ------------------------------------ | ---------: | ---------------------------: |
+| Repositories passing validity checks |        5/6 |                          0/6 |
+| Repository sizes (files changed)     | 2-97 files |                   Same repos |
 
 The paper demonstrates that well-specified seed tasks plus dependency-aware planning can get
 5/6 repositories to pass build oracles, while baselines with the same contextual information but
@@ -60,11 +60,11 @@ Source trace: R25, `paper-text/swe-search-iclr-2025.txt`, lines 22-26.
 
 ### SWE-Search data from the paper
 
-| Metric | Value |
-|---|---:|
-| Relative improvement over standard agents | 23% |
-| Number of models tested | 5 |
-| Benchmark | SWE-bench-lite |
+| Metric                                    |          Value |
+| ----------------------------------------- | -------------: |
+| Relative improvement over standard agents |            23% |
+| Number of models tested                   |              5 |
+| Benchmark                                 | SWE-bench-lite |
 
 The relevance to task specs: MCTS exploration is only as good as the root node definition. The
 problem formalization (Section 3.1) defines M = (S, C, A, V, P, p0, rho) where C includes
@@ -79,13 +79,13 @@ repository-level instructions on agent efficiency.
 
 ### AGENTS.md efficiency data copied from the paper
 
-| Metric | Without AGENTS.md | With AGENTS.md | Delta % |
-|---|---:|---:|---:|
-| Wall-clock time median (s) | 98.57 | 70.34 | -28.64% |
-| Wall-clock time mean (s) | 162.94 | 129.91 | -20.27% |
-| Output tokens mean | 5,744.81 | 4,798.60 | -16.58% |
-| Output tokens median | 2,925.00 | 2,440.00 | -16.58% |
-| Total tokens mean | 687,632 | 632,000 (approx) | ~8% |
+| Metric                     | Without AGENTS.md |   With AGENTS.md | Delta % |
+| -------------------------- | ----------------: | ---------------: | ------: |
+| Wall-clock time median (s) |             98.57 |            70.34 | -28.64% |
+| Wall-clock time mean (s)   |            162.94 |           129.91 | -20.27% |
+| Output tokens mean         |          5,744.81 |         4,798.60 | -16.58% |
+| Output tokens median       |          2,925.00 |         2,440.00 | -16.58% |
+| Total tokens mean          |           687,632 | 632,000 (approx) |     ~8% |
 
 Source trace: R17, `paper-text/agents-md-impact-2601.20404.txt`, Table 1.
 
@@ -109,14 +109,14 @@ and 217 tasks with 7,098 objective checklist items across three scaffold types.
 
 ### OctoBench statistics
 
-| Metric | Value |
-|---|---:|
-| Scaffold types | 3 |
-| Environments | 34 |
-| Task instances | 217 |
-| Checklist items total | 7,098 |
-| Avg. checklist items per instance | 32.7 |
-| Median checklist items per instance | 34 |
+| Metric                              | Value |
+| ----------------------------------- | ----: |
+| Scaffold types                      |     3 |
+| Environments                        |    34 |
+| Task instances                      |   217 |
+| Checklist items total               | 7,098 |
+| Avg. checklist items per instance   |  32.7 |
+| Median checklist items per instance |    34 |
 
 Source trace: R73, `paper-text/octobench-2601.10343.txt`, Table 1.
 
@@ -130,14 +130,14 @@ build" but "what rules to follow while building it."
 Multiple vendor docs independently converge on the same task spec elements. This is not paper
 evidence but practitioner signal from production agent systems:
 
-| Vendor / Tool | Key guidance | Source |
-|---|---|---|
-| OpenAI Codex | Layered instruction discovery; AGENTS.md + task description | D01, D04 |
-| Anthropic Claude Code | CLAUDE.md; verification workflows; context management | D05 |
-| GitHub Copilot | Repository-wide + path-specific instructions | D06 |
-| Cursor | Rule files injected into model context, scoped by path | D07 |
-| Aider | Coding conventions codified; repo map for navigation | D08, D09 |
-| Builder.io guide | Concise rules, copy-paste commands, progressive disclosure | D35 |
+| Vendor / Tool         | Key guidance                                                | Source   |
+| --------------------- | ----------------------------------------------------------- | -------- |
+| OpenAI Codex          | Layered instruction discovery; AGENTS.md + task description | D01, D04 |
+| Anthropic Claude Code | CLAUDE.md; verification workflows; context management       | D05      |
+| GitHub Copilot        | Repository-wide + path-specific instructions                | D06      |
+| Cursor                | Rule files injected into model context, scoped by path      | D07      |
+| Aider                 | Coding conventions codified; repo map for navigation        | D08, D09 |
+| Builder.io guide      | Concise rules, copy-paste commands, progressive disclosure  | D35      |
 
 All recommend: bounded scope, explicit validation commands, relevant file paths, and examples.
 None recommend "just describe what you want in a sentence."
@@ -162,17 +162,17 @@ The evidence supports treating task specifications as first-class code artifacts
 
 Every task that spans more than one local edit cycle should include:
 
-| Element | Why |
-|---|---|
-| Goal | Seeds the plan graph (CodePlan) |
-| Scope | Bounds MCTS exploration (SWE-Search) |
-| Relevant files | Reduces retrieval noise, cuts runtime (AGENTS.md study) |
-| Canonical example | Anchors expected behavior |
-| Constraints | Prevents compliance violations (OctoBench) |
-| Non-goals | Prevents over-engineering and scope creep |
-| Validation commands | Provides the oracle (CodePlan: build, test, lint) |
-| Expected output | Enables automated acceptance checking |
-| Rollback / risk notes | Signals when to abort rather than expand |
+| Element               | Why                                                     |
+| --------------------- | ------------------------------------------------------- |
+| Goal                  | Seeds the plan graph (CodePlan)                         |
+| Scope                 | Bounds MCTS exploration (SWE-Search)                    |
+| Relevant files        | Reduces retrieval noise, cuts runtime (AGENTS.md study) |
+| Canonical example     | Anchors expected behavior                               |
+| Constraints           | Prevents compliance violations (OctoBench)              |
+| Non-goals             | Prevents over-engineering and scope creep               |
+| Validation commands   | Provides the oracle (CodePlan: build, test, lint)       |
+| Expected output       | Enables automated acceptance checking                   |
+| Rollback / risk notes | Signals when to abort rather than expand                |
 
 ## What I should not claim
 

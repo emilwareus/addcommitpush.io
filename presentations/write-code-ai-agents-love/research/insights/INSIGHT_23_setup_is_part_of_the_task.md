@@ -14,15 +14,15 @@ Plot-ready data lives in `presentations/write-code-ai-agents-love/research/data/
 
 ## Source map
 
-| Ref | Source | Local text | Role in this insight |
-|---|---|---|---|
-| R28 | SetupBench | `paper-text/setupbench-2507.09063.txt` | Direct benchmark of agent repository/environment setup. |
-| R27 | Installamatic | `paper-text/installamatic-2412.06294.txt` | Measures AI agents installing Python repositories from docs. |
-| R04 | Long Code Arena | `paper-text/long-code-arena-2406.11612.txt` | Includes real CI-build repair where environment and repo context matter. |
-| R09 | SWE-CI | `paper-text/swe-ci-2603.03823.txt` | Shows regression/maintainability over CI iteration, not just one-shot tests. |
-| R41 | FixedBench | `paper-text/fixedbench-noop-2605.07769.txt` | Shows setup and git signals affect whether agents know not to edit. |
-| R67 | Rethinking Agent-Generated Tests | `paper-text/rethinking-agent-generated-tests-2602.07900.txt` | Shows "write more tests" is not equivalent to better validation. |
-| R75 | GitTaskBench | `paper-text/gittaskbench-aaai-2026.txt` | End-to-end real repo reuse benchmark with autonomous environment setup. |
+| Ref | Source                           | Local text                                                   | Role in this insight                                                         |
+| --- | -------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| R28 | SetupBench                       | `paper-text/setupbench-2507.09063.txt`                       | Direct benchmark of agent repository/environment setup.                      |
+| R27 | Installamatic                    | `paper-text/installamatic-2412.06294.txt`                    | Measures AI agents installing Python repositories from docs.                 |
+| R04 | Long Code Arena                  | `paper-text/long-code-arena-2406.11612.txt`                  | Includes real CI-build repair where environment and repo context matter.     |
+| R09 | SWE-CI                           | `paper-text/swe-ci-2603.03823.txt`                           | Shows regression/maintainability over CI iteration, not just one-shot tests. |
+| R41 | FixedBench                       | `paper-text/fixedbench-noop-2605.07769.txt`                  | Shows setup and git signals affect whether agents know not to edit.          |
+| R67 | Rethinking Agent-Generated Tests | `paper-text/rethinking-agent-generated-tests-2602.07900.txt` | Shows "write more tests" is not equivalent to better validation.             |
+| R75 | GitTaskBench                     | `paper-text/gittaskbench-aaai-2026.txt`                      | End-to-end real repo reuse benchmark with autonomous environment setup.      |
 
 ## SetupBench: setup deserves its own benchmark
 
@@ -37,15 +37,15 @@ the outcome.
 
 ### SetupBench data copied from the paper
 
-| Measurement | Value | Interpretation |
-|---|---:|---|
-| Setup tasks | 93 | Setup is large enough to benchmark directly. |
-| Best OpenHands overall success | 62.4% | Even strong scaffolds do not reliably finish setup. |
-| Repository setup success range | 38.9-57.4% | Plain repo bootstrap is still fragile. |
-| Local DB setup success range | 20.0-53.3% | Services/databases are particularly hard. |
-| Wasted steps range vs optimal human behavior | 38.17-68.77% | Ambiguous setup creates exploration waste. |
-| Hidden test tooling share of unsuccessful repo-setup failures | about 17-26% | Missing dev/test tooling is a concrete failure cause. |
-| `--user` executable visibility risk from Installamatic comparison | 45% | Non-persistent shell/PATH changes break later sessions. |
+| Measurement                                                       |        Value | Interpretation                                          |
+| ----------------------------------------------------------------- | -----------: | ------------------------------------------------------- |
+| Setup tasks                                                       |           93 | Setup is large enough to benchmark directly.            |
+| Best OpenHands overall success                                    |        62.4% | Even strong scaffolds do not reliably finish setup.     |
+| Repository setup success range                                    |   38.9-57.4% | Plain repo bootstrap is still fragile.                  |
+| Local DB setup success range                                      |   20.0-53.3% | Services/databases are particularly hard.               |
+| Wasted steps range vs optimal human behavior                      | 38.17-68.77% | Ambiguous setup creates exploration waste.              |
+| Hidden test tooling share of unsuccessful repo-setup failures     | about 17-26% | Missing dev/test tooling is a concrete failure cause.   |
+| `--user` executable visibility risk from Installamatic comparison |          45% | Non-persistent shell/PATH changes break later sessions. |
 
 Source trace: R28, `paper-text/setupbench-2507.09063.txt`.
 
@@ -78,16 +78,16 @@ miss extras, flags, test exclusions, system packages, or package-manager details
 
 ### Installamatic data copied from the paper
 
-| Measurement | Value | Interpretation |
-|---|---:|---|
-| Repositories | 40 | Python repo sample. |
-| Unique install/test tag combinations | 31 | Setup practices vary heavily. |
-| Distinct install/test tags | 17 | Agents cannot assume one convention. |
-| Repos installed at least once | 21/40 | About half never reached a successful install in tested attempts. |
-| Average installation rate | 28.8% | Most attempts fail. |
-| Perfect recall installation rate | 34.7% | Finding docs is not enough. |
-| Average attempt time | 501 seconds | Setup failures are expensive. |
-| Longest run | almost 80 minutes | Bad setup can dominate the whole task budget. |
+| Measurement                          |             Value | Interpretation                                                    |
+| ------------------------------------ | ----------------: | ----------------------------------------------------------------- |
+| Repositories                         |                40 | Python repo sample.                                               |
+| Unique install/test tag combinations |                31 | Setup practices vary heavily.                                     |
+| Distinct install/test tags           |                17 | Agents cannot assume one convention.                              |
+| Repos installed at least once        |             21/40 | About half never reached a successful install in tested attempts. |
+| Average installation rate            |             28.8% | Most attempts fail.                                               |
+| Perfect recall installation rate     |             34.7% | Finding docs is not enough.                                       |
+| Average attempt time                 |       501 seconds | Setup failures are expensive.                                     |
+| Longest run                          | almost 80 minutes | Bad setup can dominate the whole task budget.                     |
 
 Source trace: R27, `paper-text/installamatic-2412.06294.txt`.
 
@@ -106,28 +106,28 @@ These are not setup-only benchmarks, but they show setup as a recurring underlyi
 
 ### Long Code Arena CI data copied from the paper
 
-| Measurement | Value |
-|---|---:|
-| Real CI failures | 77 |
-| Open-source model fix range | 4-9% |
-| GPT-3.5 fix rate | 17% |
+| Measurement                  |                  Value |
+| ---------------------------- | ---------------------: |
+| Real CI failures             |                     77 |
+| Open-source model fix range  |                   4-9% |
+| GPT-3.5 fix rate             |                    17% |
 | Average repo size in CI data | 610 files / 170K lines |
 
 Source trace: R04, `paper-text/long-code-arena-2406.11612.txt`.
 
 ### GitTaskBench data copied from the paper
 
-| Measurement | Value |
-|---|---:|
-| Tasks | 54 |
-| GitHub projects | 18 |
-| Domains | 7 |
-| Modalities | 7 |
-| Best setting | OpenHands + Claude 3.7 |
-| Best execution completion rate | 72.22% |
-| Best task pass rate | 48.15% |
-| Best-setting input tokens | 9,501.25K |
-| Best-setting cost | $29.80 |
+| Measurement                    |                  Value |
+| ------------------------------ | ---------------------: |
+| Tasks                          |                     54 |
+| GitHub projects                |                     18 |
+| Domains                        |                      7 |
+| Modalities                     |                      7 |
+| Best setting                   | OpenHands + Claude 3.7 |
+| Best execution completion rate |                 72.22% |
+| Best task pass rate            |                 48.15% |
+| Best-setting input tokens      |              9,501.25K |
+| Best-setting cost              |                 $29.80 |
 
 Source trace: R75, `paper-text/gittaskbench-aaai-2026.txt`.
 
@@ -150,10 +150,10 @@ result.
 
 ### Test-generation data copied from the paper
 
-| Model | Tasks with agent-written tests | Resolved |
-|---|---:|---:|
-| Claude Opus 4.5 | 83.0% | 74.4% |
-| GPT-5.2 | 0.6% | 71.8% |
+| Model           | Tasks with agent-written tests | Resolved |
+| --------------- | -----------------------------: | -------: |
+| Claude Opus 4.5 |                          83.0% |    74.4% |
+| GPT-5.2         |                           0.6% |    71.8% |
 
 Source trace: R67, `paper-text/rethinking-agent-generated-tests-2602.07900.txt`.
 
@@ -175,17 +175,17 @@ setup signals lowers abstention. Existing correct tests help but do not fully so
 
 ### FixedBench data copied from the paper
 
-| Condition / prompt | Abstention or edit behavior |
-|---|---:|
-| Undesirable code changes on already-fixed tasks | 35-65% |
-| GPT-5.4 Mini baseline abstention | 60.5% |
-| GPT-5.4 Mini with "edit" pressure | 36.5% |
-| GPT-5.4 Mini with "reproduce" only | 47.5% |
-| GPT-5.4 Mini with "abstain or fix" | 88.5% |
-| Sonnet-4.6 without git history/setup | 65.0% -> 50.0% abstention |
-| GPT-5.4 Mini without git history/setup | 60.5% -> 52.5% abstention |
-| Already-correct test added, Sonnet-4.6 | 65.0% -> 72.7% abstention |
-| Already-correct test added, GPT-5.4 Mini | 60.5% -> 70.0% abstention |
+| Condition / prompt                              | Abstention or edit behavior |
+| ----------------------------------------------- | --------------------------: |
+| Undesirable code changes on already-fixed tasks |                      35-65% |
+| GPT-5.4 Mini baseline abstention                |                       60.5% |
+| GPT-5.4 Mini with "edit" pressure               |                       36.5% |
+| GPT-5.4 Mini with "reproduce" only              |                       47.5% |
+| GPT-5.4 Mini with "abstain or fix"              |                       88.5% |
+| Sonnet-4.6 without git history/setup            |   65.0% -> 50.0% abstention |
+| GPT-5.4 Mini without git history/setup          |   60.5% -> 52.5% abstention |
+| Already-correct test added, Sonnet-4.6          |   65.0% -> 72.7% abstention |
+| Already-correct test added, GPT-5.4 Mini        |   60.5% -> 70.0% abstention |
 
 Source trace: R41, `paper-text/fixedbench-noop-2605.07769.txt`.
 
@@ -194,16 +194,16 @@ also helps the agent decide that no change is needed.
 
 ## Codebase design implications
 
-| Agent failure | Setup/verification affordance | Concrete repo artifact |
-|---|---|---|
-| Cannot install dependencies | One canonical setup command | `make setup`, `pnpm install --frozen-lockfile`, `scripts/setup.sh` |
-| PATH/env changes vanish | Fresh-shell verification | `make verify-setup` run from a clean shell |
-| Missing DB/service | Scripted local services | Docker Compose, dev containers, seed commands |
-| Hidden dev/test extras | Dev/test dependencies in main setup path | lockfile, extras command, package scripts |
-| Runs full suite too often | Targeted test slices | `pnpm test path/to/file`, package-level test commands |
-| Cannot tell already fixed | Reproduction and no-op path | issue-specific verify command, explicit abstention allowed |
-| Passes behavior but violates structure | Structural checks | lint rules, dependency rules, generated-code drift checks |
-| CI failure cannot reproduce locally | Local equivalent CI command | `make ci-local`, documented env vars |
+| Agent failure                          | Setup/verification affordance            | Concrete repo artifact                                             |
+| -------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------ |
+| Cannot install dependencies            | One canonical setup command              | `make setup`, `pnpm install --frozen-lockfile`, `scripts/setup.sh` |
+| PATH/env changes vanish                | Fresh-shell verification                 | `make verify-setup` run from a clean shell                         |
+| Missing DB/service                     | Scripted local services                  | Docker Compose, dev containers, seed commands                      |
+| Hidden dev/test extras                 | Dev/test dependencies in main setup path | lockfile, extras command, package scripts                          |
+| Runs full suite too often              | Targeted test slices                     | `pnpm test path/to/file`, package-level test commands              |
+| Cannot tell already fixed              | Reproduction and no-op path              | issue-specific verify command, explicit abstention allowed         |
+| Passes behavior but violates structure | Structural checks                        | lint rules, dependency rules, generated-code drift checks          |
+| CI failure cannot reproduce locally    | Local equivalent CI command              | `make ci-local`, documented env vars                               |
 
 ## Minimal agent-ready setup contract
 

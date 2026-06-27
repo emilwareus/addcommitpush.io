@@ -22,7 +22,12 @@ const models: Model[] = [
   // Not a direct UTMOS measurement but the closest quality proxy available
   // RTF from community benchmark gist
   {
-    name: 'Kokoro-82M', family: 'Kokoro', params: 82, utmos: 3.87, wer: null, rtf: 0.2,
+    name: 'Kokoro-82M',
+    family: 'Kokoro',
+    params: 82,
+    utmos: 3.87,
+    wer: null,
+    rtf: 0.2,
     color: '#f472b6',
     qualitySource: 'StyleTTS 2 paper, Table 2 MOS OOD (estimate)',
     qualityUrl: 'https://arxiv.org/abs/2306.07691',
@@ -30,7 +35,12 @@ const models: Model[] = [
     speedUrl: 'https://gist.github.com/efemaer/23d9a3b949b751dde315192b4dcf0653',
   },
   {
-    name: 'Kokoro-82M (A10G)', family: 'Kokoro', params: 82, utmos: 3.87, wer: null, rtf: 0.0104,
+    name: 'Kokoro-82M (A10G)',
+    family: 'Kokoro',
+    params: 82,
+    utmos: 3.87,
+    wer: null,
+    rtf: 0.0104,
     color: '#f472b6',
     qualitySource: 'StyleTTS 2 paper, Table 2 MOS OOD (estimate)',
     qualityUrl: 'https://arxiv.org/abs/2306.07691',
@@ -39,7 +49,12 @@ const models: Model[] = [
   },
   // F5-TTS -- all from arXiv 2410.06885
   {
-    name: 'F5-TTS (32 NFE)', family: 'F5-TTS', params: 336, utmos: 3.90, wer: 2.42, rtf: 0.31,
+    name: 'F5-TTS (32 NFE)',
+    family: 'F5-TTS',
+    params: 336,
+    utmos: 3.9,
+    wer: 2.42,
+    rtf: 0.31,
     color: '#a78bfa',
     qualitySource: 'F5-TTS paper, Table 1 & 5 (LibriSpeech-PC)',
     qualityUrl: 'https://arxiv.org/abs/2410.06885',
@@ -47,7 +62,12 @@ const models: Model[] = [
     speedUrl: 'https://arxiv.org/abs/2410.06885',
   },
   {
-    name: 'F5-TTS (16 NFE)', family: 'F5-TTS', params: 336, utmos: 3.88, wer: 2.53, rtf: 0.15,
+    name: 'F5-TTS (16 NFE)',
+    family: 'F5-TTS',
+    params: 336,
+    utmos: 3.88,
+    wer: 2.53,
+    rtf: 0.15,
     color: '#a78bfa',
     qualitySource: 'F5-TTS paper, Table 1 & 5 (LibriSpeech-PC)',
     qualityUrl: 'https://arxiv.org/abs/2410.06885',
@@ -56,7 +76,12 @@ const models: Model[] = [
   },
   // Spark-TTS -- from arXiv 2503.01710
   {
-    name: 'Spark-TTS', family: 'Spark-TTS', params: 500, utmos: 4.35, wer: 1.98, rtf: null,
+    name: 'Spark-TTS',
+    family: 'Spark-TTS',
+    params: 500,
+    utmos: 4.35,
+    wer: 1.98,
+    rtf: null,
     color: '#34d399',
     qualitySource: 'Spark-TTS paper, Table 4 & 5 (LibriSpeech/Seed-TTS)',
     qualityUrl: 'https://arxiv.org/abs/2503.01710',
@@ -65,7 +90,12 @@ const models: Model[] = [
   },
   // XTTS v2 -- from arXiv 2406.04904
   {
-    name: 'XTTS v2', family: 'XTTS', params: 482, utmos: 4.007, wer: null, rtf: null,
+    name: 'XTTS v2',
+    family: 'XTTS',
+    params: 482,
+    utmos: 4.007,
+    wer: null,
+    rtf: null,
     color: '#fb923c',
     qualitySource: 'XTTS paper, Table 2 (English zero-shot)',
     qualityUrl: 'https://arxiv.org/abs/2406.04904',
@@ -74,7 +104,12 @@ const models: Model[] = [
   },
   // Fish Audio S2 -- from arXiv 2603.08823
   {
-    name: 'Fish Audio S2', family: 'Fish Audio', params: 4400, utmos: null, wer: 0.99, rtf: 0.195,
+    name: 'Fish Audio S2',
+    family: 'Fish Audio',
+    params: 4400,
+    utmos: null,
+    wer: 0.99,
+    rtf: 0.195,
     color: '#38bdf8',
     qualitySource: 'Fish Audio S2 report (Seed-TTS-Eval en)',
     qualityUrl: 'https://arxiv.org/abs/2603.08823',
@@ -83,7 +118,12 @@ const models: Model[] = [
   },
   // Fish Speech v1.5 -- from arXiv 2411.01156
   {
-    name: 'Fish Speech v1.5', family: 'Fish Audio', params: 500, utmos: null, wer: 6.89, rtf: 0.2,
+    name: 'Fish Speech v1.5',
+    family: 'Fish Audio',
+    params: 500,
+    utmos: null,
+    wer: 6.89,
+    rtf: 0.2,
     color: '#38bdf8',
     qualitySource: 'Fish Speech paper, Table 1',
     qualityUrl: 'https://arxiv.org/abs/2411.01156',
@@ -93,7 +133,12 @@ const models: Model[] = [
   // Dia -- from GitHub README benchmark table (RTX 4090, fp16 + torch.compile)
   // 2.2x real-time means RTF = 1/2.2 = 0.45
   {
-    name: 'Dia', family: 'Dia', params: 1600, utmos: null, wer: null, rtf: 0.45,
+    name: 'Dia',
+    family: 'Dia',
+    params: 1600,
+    utmos: null,
+    wer: null,
+    rtf: 0.45,
     color: '#facc15',
     qualitySource: 'No official quality benchmarks',
     qualityUrl: '',
@@ -102,7 +147,12 @@ const models: Model[] = [
   },
   // Piper -- third-party estimates
   {
-    name: 'Piper', family: 'Piper', params: 20, utmos: null, wer: null, rtf: 0.2,
+    name: 'Piper',
+    family: 'Piper',
+    params: 20,
+    utmos: null,
+    wer: null,
+    rtf: 0.2,
     color: '#94a3b8',
     qualitySource: 'No official quality benchmarks',
     qualityUrl: '',
@@ -114,9 +164,24 @@ const models: Model[] = [
 type ViewMode = 'utmos-vs-params' | 'wer-vs-params' | 'rtf-vs-params';
 
 const views: { key: ViewMode; label: string; xLabel: string; yLabel: string }[] = [
-  { key: 'utmos-vs-params', label: 'Quality vs Size', xLabel: 'Parameters, log scale', yLabel: 'UTMOS (higher is better)' },
-  { key: 'wer-vs-params', label: 'Intelligibility vs Size', xLabel: 'Parameters, log scale', yLabel: 'WER % (lower is better)' },
-  { key: 'rtf-vs-params', label: 'Speed vs Size', xLabel: 'Parameters, log scale', yLabel: 'RTF (lower is faster)' },
+  {
+    key: 'utmos-vs-params',
+    label: 'Quality vs Size',
+    xLabel: 'Parameters, log scale',
+    yLabel: 'UTMOS (higher is better)',
+  },
+  {
+    key: 'wer-vs-params',
+    label: 'Intelligibility vs Size',
+    xLabel: 'Parameters, log scale',
+    yLabel: 'WER % (lower is better)',
+  },
+  {
+    key: 'rtf-vs-params',
+    label: 'Speed vs Size',
+    xLabel: 'Parameters, log scale',
+    yLabel: 'RTF (lower is faster)',
+  },
 ];
 
 function getModelsForView(view: ViewMode): Model[] {
@@ -158,22 +223,28 @@ const LOG_TICKS_SPEED = [10, 30, 100, 300, 1000, 3000];
 
 function getXTicks(view: ViewMode): number[] {
   switch (view) {
-    case 'utmos-vs-params': return LOG_TICKS_QUALITY;
-    case 'wer-vs-params': return LOG_TICKS_WER;
-    case 'rtf-vs-params': return LOG_TICKS_SPEED;
+    case 'utmos-vs-params':
+      return LOG_TICKS_QUALITY;
+    case 'wer-vs-params':
+      return LOG_TICKS_WER;
+    case 'rtf-vs-params':
+      return LOG_TICKS_SPEED;
   }
 }
 
 function getYTicks(view: ViewMode): number[] {
   switch (view) {
-    case 'utmos-vs-params': return [3.5, 3.7, 3.9, 4.1, 4.3, 4.5];
-    case 'wer-vs-params': return [0, 2, 4, 6, 8];
-    case 'rtf-vs-params': return [0, 0.1, 0.2, 0.3, 0.4, 0.5];
+    case 'utmos-vs-params':
+      return [3.5, 3.7, 3.9, 4.1, 4.3, 4.5];
+    case 'wer-vs-params':
+      return [0, 2, 4, 6, 8];
+    case 'rtf-vs-params':
+      return [0, 0.1, 0.2, 0.3, 0.4, 0.5];
   }
 }
 
 function formatParamTick(val: number): string {
-  if (val >= 1000) return `${(val / 1000)}B`;
+  if (val >= 1000) return `${val / 1000}B`;
   return `${val}M`;
 }
 
@@ -206,7 +277,9 @@ export function TtsBenchmarksSlide() {
   }
 
   function toSvgY(val: number): number {
-    return chartBottom - ((val - range.yMin) / (range.yMax - range.yMin)) * (chartBottom - chartTop);
+    return (
+      chartBottom - ((val - range.yMin) / (range.yMax - range.yMin)) * (chartBottom - chartTop)
+    );
   }
 
   const hiddenCount = models.length - visibleModels.length;
@@ -222,7 +295,10 @@ export function TtsBenchmarksSlide() {
           {views.map((v) => (
             <button
               key={v.key}
-              onClick={() => { setView(v.key); setHovered(null); }}
+              onClick={() => {
+                setView(v.key);
+                setHovered(null);
+              }}
               className={`px-3 py-1.5 rounded-md text-sm font-mono transition-colors ${
                 view === v.key
                   ? 'bg-primary text-primary-foreground'
@@ -245,43 +321,117 @@ export function TtsBenchmarksSlide() {
         <svg viewBox="0 0 100 62" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
           {/* Grid lines */}
           {yTicks.map((tick) => (
-            <line key={`y-${tick}`} x1={chartLeft} y1={toSvgY(tick)} x2={chartRight} y2={toSvgY(tick)} stroke="#27272a" strokeWidth="0.12" />
+            <line
+              key={`y-${tick}`}
+              x1={chartLeft}
+              y1={toSvgY(tick)}
+              x2={chartRight}
+              y2={toSvgY(tick)}
+              stroke="#27272a"
+              strokeWidth="0.12"
+            />
           ))}
           {xTicks.map((tick) => (
-            <line key={`x-${tick}`} x1={toSvgX(tick)} y1={chartTop} x2={toSvgX(tick)} y2={chartBottom} stroke="#27272a" strokeWidth="0.12" />
+            <line
+              key={`x-${tick}`}
+              x1={toSvgX(tick)}
+              y1={chartTop}
+              x2={toSvgX(tick)}
+              y2={chartBottom}
+              stroke="#27272a"
+              strokeWidth="0.12"
+            />
           ))}
 
           {/* Axes */}
-          <line x1={chartLeft} y1={chartBottom} x2={chartRight} y2={chartBottom} stroke="#52525b" strokeWidth="0.15" />
-          <line x1={chartLeft} y1={chartTop} x2={chartLeft} y2={chartBottom} stroke="#52525b" strokeWidth="0.15" />
+          <line
+            x1={chartLeft}
+            y1={chartBottom}
+            x2={chartRight}
+            y2={chartBottom}
+            stroke="#52525b"
+            strokeWidth="0.15"
+          />
+          <line
+            x1={chartLeft}
+            y1={chartTop}
+            x2={chartLeft}
+            y2={chartBottom}
+            stroke="#52525b"
+            strokeWidth="0.15"
+          />
 
           {/* Y-axis ticks */}
           {yTicks.map((tick) => (
-            <text key={`yl-${tick}`} x={chartLeft - 1} y={toSvgY(tick) + 0.5} textAnchor="end" className="fill-muted-foreground" fontSize="1.6">
+            <text
+              key={`yl-${tick}`}
+              x={chartLeft - 1}
+              y={toSvgY(tick) + 0.5}
+              textAnchor="end"
+              className="fill-muted-foreground"
+              fontSize="1.6"
+            >
               {formatYTick(tick, view)}
             </text>
           ))}
 
           {/* X-axis ticks */}
           {xTicks.map((tick) => (
-            <text key={`xl-${tick}`} x={toSvgX(tick)} y={chartBottom + 2} textAnchor="middle" className="fill-muted-foreground" fontSize="1.6">
+            <text
+              key={`xl-${tick}`}
+              x={toSvgX(tick)}
+              y={chartBottom + 2}
+              textAnchor="middle"
+              className="fill-muted-foreground"
+              fontSize="1.6"
+            >
               {formatParamTick(tick)}
             </text>
           ))}
 
           {/* Axis labels */}
-          <text x={(chartLeft + chartRight) / 2} y={chartBottom + 4.5} textAnchor="middle" className="fill-muted-foreground" fontSize="1.6" fontFamily="monospace">
+          <text
+            x={(chartLeft + chartRight) / 2}
+            y={chartBottom + 4.5}
+            textAnchor="middle"
+            className="fill-muted-foreground"
+            fontSize="1.6"
+            fontFamily="monospace"
+          >
             {currentView.xLabel}
           </text>
-          <text x={3} y={(chartTop + chartBottom) / 2} textAnchor="middle" className="fill-muted-foreground" fontSize="1.6" fontFamily="monospace" transform={`rotate(-90, 3, ${(chartTop + chartBottom) / 2})`}>
+          <text
+            x={3}
+            y={(chartTop + chartBottom) / 2}
+            textAnchor="middle"
+            className="fill-muted-foreground"
+            fontSize="1.6"
+            fontFamily="monospace"
+            transform={`rotate(-90, 3, ${(chartTop + chartBottom) / 2})`}
+          >
             {currentView.yLabel}
           </text>
 
           {/* Ground truth line for UTMOS */}
           {view === 'utmos-vs-params' && (
             <>
-              <line x1={chartLeft} y1={toSvgY(4.08)} x2={chartRight} y2={toSvgY(4.08)} stroke="#34d399" strokeWidth="0.12" strokeDasharray="0.5 0.3" />
-              <text x={chartRight - 1} y={toSvgY(4.08) - 0.8} textAnchor="end" className="fill-emerald-400/70" fontSize="1.3" fontFamily="monospace">
+              <line
+                x1={chartLeft}
+                y1={toSvgY(4.08)}
+                x2={chartRight}
+                y2={toSvgY(4.08)}
+                stroke="#34d399"
+                strokeWidth="0.12"
+                strokeDasharray="0.5 0.3"
+              />
+              <text
+                x={chartRight - 1}
+                y={toSvgY(4.08) - 0.8}
+                textAnchor="end"
+                className="fill-emerald-400/70"
+                fontSize="1.3"
+                fontFamily="monospace"
+              >
                 Ground truth (4.08)
               </text>
             </>
@@ -307,7 +457,13 @@ export function TtsBenchmarksSlide() {
                 {isHovered && <circle cx={cx} cy={cy} r={4} fill={model.color} opacity={0.12} />}
                 <circle cx={cx} cy={cy} r={isHovered ? 1.4 : 1} fill={model.color} opacity={0.9} />
 
-                <text x={cx + 1.8} y={cy + 0.5} fontSize={isHovered ? '1.8' : '1.3'} className={isHovered ? 'fill-white' : 'fill-muted-foreground'} fontFamily="monospace">
+                <text
+                  x={cx + 1.8}
+                  y={cy + 0.5}
+                  fontSize={isHovered ? '1.8' : '1.3'}
+                  className={isHovered ? 'fill-white' : 'fill-muted-foreground'}
+                  fontFamily="monospace"
+                >
                   {model.name}
                 </text>
               </g>
@@ -316,67 +472,94 @@ export function TtsBenchmarksSlide() {
         </svg>
 
         {/* HTML tooltip */}
-        {hovered && (() => {
-          const model = visibleModels.find((m) => m.name === hovered);
-          if (!model) return null;
-          return (
-            <div className="absolute top-4 right-4 bg-zinc-900 border border-zinc-700 rounded-lg p-6 shadow-xl max-w-md z-10 scale-150 origin-top-right">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: model.color }} />
-                <span className="text-base font-bold text-white">{model.name}</span>
-                <span className="text-sm font-mono text-muted-foreground">{model.params}M params</span>
+        {hovered &&
+          (() => {
+            const model = visibleModels.find((m) => m.name === hovered);
+            if (!model) return null;
+            return (
+              <div className="absolute top-4 right-4 bg-zinc-900 border border-zinc-700 rounded-lg p-6 shadow-xl max-w-md z-10 scale-150 origin-top-right">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: model.color }} />
+                  <span className="text-base font-bold text-white">{model.name}</span>
+                  <span className="text-sm font-mono text-muted-foreground">
+                    {model.params}M params
+                  </span>
+                </div>
+                <div className="space-y-1.5 text-sm font-mono">
+                  {model.utmos !== null && (
+                    <div>
+                      <span className="text-muted-foreground">UTMOS: </span>
+                      <span className="text-white">{model.utmos}</span>
+                      {model.qualityUrl && (
+                        <>
+                          <span className="text-muted-foreground"> -- </span>
+                          <a
+                            href={model.qualityUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary/70 hover:text-primary hover:underline"
+                          >
+                            {model.qualitySource}
+                          </a>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  {model.wer !== null && (
+                    <div>
+                      <span className="text-muted-foreground">WER: </span>
+                      <span className="text-white">{model.wer}%</span>
+                      {model.qualityUrl && (
+                        <>
+                          <span className="text-muted-foreground"> -- </span>
+                          <a
+                            href={model.qualityUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary/70 hover:text-primary hover:underline"
+                          >
+                            {model.qualitySource}
+                          </a>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  {model.rtf !== null && (
+                    <div>
+                      <span className="text-muted-foreground">RTF: </span>
+                      <span className="text-white">{model.rtf}</span>
+                      <span className="text-muted-foreground">
+                        {' '}
+                        (
+                        {model.rtf < 1
+                          ? `${(1 / model.rtf).toFixed(0)}x real-time`
+                          : 'slower than real-time'}
+                        )
+                      </span>
+                      {model.speedUrl && (
+                        <>
+                          <span className="text-muted-foreground"> -- </span>
+                          <a
+                            href={model.speedUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary/70 hover:text-primary hover:underline text-xs"
+                          >
+                            {model.speedSource}
+                          </a>
+                        </>
+                      )}
+                    </div>
+                  )}
+                  {model.utmos === null && model.wer === null && model.rtf === null && (
+                    <span className="text-muted-foreground/60">
+                      No official benchmarks published
+                    </span>
+                  )}
+                </div>
               </div>
-              <div className="space-y-1.5 text-sm font-mono">
-                {model.utmos !== null && (
-                  <div>
-                    <span className="text-muted-foreground">UTMOS: </span>
-                    <span className="text-white">{model.utmos}</span>
-                    {model.qualityUrl && (
-                      <>
-                        <span className="text-muted-foreground"> -- </span>
-                        <a href={model.qualityUrl} target="_blank" rel="noopener noreferrer" className="text-primary/70 hover:text-primary hover:underline">
-                          {model.qualitySource}
-                        </a>
-                      </>
-                    )}
-                  </div>
-                )}
-                {model.wer !== null && (
-                  <div>
-                    <span className="text-muted-foreground">WER: </span>
-                    <span className="text-white">{model.wer}%</span>
-                    {model.qualityUrl && (
-                      <>
-                        <span className="text-muted-foreground"> -- </span>
-                        <a href={model.qualityUrl} target="_blank" rel="noopener noreferrer" className="text-primary/70 hover:text-primary hover:underline">
-                          {model.qualitySource}
-                        </a>
-                      </>
-                    )}
-                  </div>
-                )}
-                {model.rtf !== null && (
-                  <div>
-                    <span className="text-muted-foreground">RTF: </span>
-                    <span className="text-white">{model.rtf}</span>
-                    <span className="text-muted-foreground"> ({model.rtf < 1 ? `${(1/model.rtf).toFixed(0)}x real-time` : 'slower than real-time'})</span>
-                    {model.speedUrl && (
-                      <>
-                        <span className="text-muted-foreground"> -- </span>
-                        <a href={model.speedUrl} target="_blank" rel="noopener noreferrer" className="text-primary/70 hover:text-primary hover:underline text-xs">
-                          {model.speedSource}
-                        </a>
-                      </>
-                    )}
-                  </div>
-                )}
-                {model.utmos === null && model.wer === null && model.rtf === null && (
-                  <span className="text-muted-foreground/60">No official benchmarks published</span>
-                )}
-              </div>
-            </div>
-          );
-        })()}
+            );
+          })()}
       </div>
 
       {/* Legend + Sources */}
@@ -398,10 +581,38 @@ export function TtsBenchmarksSlide() {
           ))}
         </div>
         <div className="flex gap-3 text-xs font-mono">
-          <a href="https://arxiv.org/abs/2410.06885" target="_blank" rel="noopener noreferrer" className="text-primary/50 hover:text-primary hover:underline">F5-TTS</a>
-          <a href="https://arxiv.org/abs/2503.01710" target="_blank" rel="noopener noreferrer" className="text-primary/50 hover:text-primary hover:underline">Spark-TTS</a>
-          <a href="https://arxiv.org/abs/2406.04904" target="_blank" rel="noopener noreferrer" className="text-primary/50 hover:text-primary hover:underline">XTTS v2</a>
-          <a href="https://arxiv.org/abs/2603.08823" target="_blank" rel="noopener noreferrer" className="text-primary/50 hover:text-primary hover:underline">Fish Audio S2</a>
+          <a
+            href="https://arxiv.org/abs/2410.06885"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary/50 hover:text-primary hover:underline"
+          >
+            F5-TTS
+          </a>
+          <a
+            href="https://arxiv.org/abs/2503.01710"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary/50 hover:text-primary hover:underline"
+          >
+            Spark-TTS
+          </a>
+          <a
+            href="https://arxiv.org/abs/2406.04904"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary/50 hover:text-primary hover:underline"
+          >
+            XTTS v2
+          </a>
+          <a
+            href="https://arxiv.org/abs/2603.08823"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary/50 hover:text-primary hover:underline"
+          >
+            Fish Audio S2
+          </a>
         </div>
       </div>
     </div>

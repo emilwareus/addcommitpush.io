@@ -15,16 +15,16 @@ This is the note that should become the "what to measure before shipping" sectio
 
 ## Source Map
 
-| Ref | Source | Local path | Role |
-|---|---|---|---|
-| R-VA-001 | Local STT deep dive | `../STT-DEEP-DIVE.md` | WER/CER/RTF/latency metric definitions. |
-| R-VA-002 | Local VAD deep dive | `../VAD-DEEP-DIVE.md` | VAD false positive/negative and endpointing framing. |
-| R-VA-003 | Moonshine v2: Ergodic Streaming Encoder ASR | `../paper-text/moonshine-v2-2602.12241.txt` | Response latency and compute-load data; illustrates latency vs WER tradeoff. |
-| R-VA-004 | Open ASR Leaderboard | `../paper-text/open-asr-leaderboard-2510.06961.txt` | WER + RTFx benchmark methodology; dataset selection. |
-| R-VA-012 | F5-TTS | `../paper-text/f5-tts-2410.06885.txt` | TTS WER/SIM/UTMOS/RTF example. |
-| R-VA-014 | Fish Audio S2 | `../paper-text/fish-audio-s2-2603.08823.txt` | TTFA/RTF/concurrency example; illustrates TTFA vs RTF distinction. |
-| R-VA-020 | Deepgram Flux | `../articles/deepgram-flux-*.html` | EOT metrics and latency framing. |
-| R-VA-028 | Local transport deep dive | `../TRANSPORT-DEEP-DIVE.md` | WebSocket/WebRTC and media behavior. |
+| Ref      | Source                                      | Local path                                          | Role                                                                         |
+| -------- | ------------------------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------- |
+| R-VA-001 | Local STT deep dive                         | `../STT-DEEP-DIVE.md`                               | WER/CER/RTF/latency metric definitions.                                      |
+| R-VA-002 | Local VAD deep dive                         | `../VAD-DEEP-DIVE.md`                               | VAD false positive/negative and endpointing framing.                         |
+| R-VA-003 | Moonshine v2: Ergodic Streaming Encoder ASR | `../paper-text/moonshine-v2-2602.12241.txt`         | Response latency and compute-load data; illustrates latency vs WER tradeoff. |
+| R-VA-004 | Open ASR Leaderboard                        | `../paper-text/open-asr-leaderboard-2510.06961.txt` | WER + RTFx benchmark methodology; dataset selection.                         |
+| R-VA-012 | F5-TTS                                      | `../paper-text/f5-tts-2410.06885.txt`               | TTS WER/SIM/UTMOS/RTF example.                                               |
+| R-VA-014 | Fish Audio S2                               | `../paper-text/fish-audio-s2-2603.08823.txt`        | TTFA/RTF/concurrency example; illustrates TTFA vs RTF distinction.           |
+| R-VA-020 | Deepgram Flux                               | `../articles/deepgram-flux-*.html`                  | EOT metrics and latency framing.                                             |
+| R-VA-028 | Local transport deep dive                   | `../TRANSPORT-DEEP-DIVE.md`                         | WebSocket/WebRTC and media behavior.                                         |
 
 ## The Failure Of Single-Number Evaluation
 
@@ -48,14 +48,14 @@ The Moonshine v2 paper (R-VA-003) reports response latency (time from VAD end-of
 transcript return) in Table 2, and WER on Open ASR benchmarks in Table 3. Both measured on
 an Apple MacBook M3.
 
-| Model | Response Latency (ms) | Avg WER (%) | Source |
-|---|---:|---:|---|
-| Moonshine v2 Tiny (34M) | 50 | 12.01 | R-VA-003, Tables 2 and 3 |
-| Moonshine v2 Small (123M) | 148 | 7.84 | R-VA-003, Tables 2 and 3 |
-| Moonshine v2 Medium (245M) | 258 | 6.65 | R-VA-003, Tables 2 and 3 |
-| Whisper Tiny | 289 | (see Open ASR) | R-VA-003, Table 2 |
-| Whisper Small | 1940 | (see Open ASR) | R-VA-003, Table 2 |
-| Whisper Large v3 | 11286 | (see Open ASR) | R-VA-003, Table 2 |
+| Model                      | Response Latency (ms) |    Avg WER (%) | Source                   |
+| -------------------------- | --------------------: | -------------: | ------------------------ |
+| Moonshine v2 Tiny (34M)    |                    50 |          12.01 | R-VA-003, Tables 2 and 3 |
+| Moonshine v2 Small (123M)  |                   148 |           7.84 | R-VA-003, Tables 2 and 3 |
+| Moonshine v2 Medium (245M) |                   258 |           6.65 | R-VA-003, Tables 2 and 3 |
+| Whisper Tiny               |                   289 | (see Open ASR) | R-VA-003, Table 2        |
+| Whisper Small              |                  1940 | (see Open ASR) | R-VA-003, Table 2        |
+| Whisper Large v3           |                 11286 | (see Open ASR) | R-VA-003, Table 2        |
 
 (`paper evidence`, R-VA-003, Tables 2 and 3.)
 
@@ -70,10 +70,10 @@ latency makes it unusable for real-time voice interaction.
 
 The Fish Audio S2 paper (R-VA-014) reports on an NVIDIA H200 GPU:
 
-| Metric | Value | Unit | Source |
-|---|---:|---|---|
-| RTF | 0.195 | ratio | R-VA-014, Section on production serving |
-| TTFA | 100 | ms | R-VA-014, Section on production serving |
+| Metric         | Value | Unit       | Source                                  |
+| -------------- | ----: | ---------- | --------------------------------------- |
+| RTF            | 0.195 | ratio      | R-VA-014, Section on production serving |
+| TTFA           |   100 | ms         | R-VA-014, Section on production serving |
 | Max throughput | 3000+ | tokens/sec | R-VA-014, Section on production serving |
 
 (`paper evidence`, R-VA-014.)
@@ -102,48 +102,48 @@ user-perceived metric is closer to Moonshine's "response latency" definition tha
 
 ### Summary Of The Single-Number Problem
 
-| Metric | What it measures | What it misses for voice agents | Source example |
-|---|---|---|---|
-| WER | Transcript accuracy | Latency, turn-taking, acoustic robustness | R-VA-003 (Moonshine v2) |
-| RTFx | Processing throughput | First-token latency, end-of-turn latency | R-VA-004 (Open ASR Leaderboard) |
-| RTF (TTS) | Generation speed | TTFA, voice quality, barge-in behavior | R-VA-014 (Fish Audio S2) |
-| TTFA | First audio chunk arrival | Total generation quality, RTF | R-VA-014 (Fish Audio S2) |
-| MOS/UTMOS | Voice naturalness | Latency, content accuracy, turn-taking | R-VA-012 (F5-TTS) |
-| Response latency | End-to-end user wait time | Transcript accuracy, robustness | R-VA-003 (Moonshine v2) |
+| Metric           | What it measures          | What it misses for voice agents           | Source example                  |
+| ---------------- | ------------------------- | ----------------------------------------- | ------------------------------- |
+| WER              | Transcript accuracy       | Latency, turn-taking, acoustic robustness | R-VA-003 (Moonshine v2)         |
+| RTFx             | Processing throughput     | First-token latency, end-of-turn latency  | R-VA-004 (Open ASR Leaderboard) |
+| RTF (TTS)        | Generation speed          | TTFA, voice quality, barge-in behavior    | R-VA-014 (Fish Audio S2)        |
+| TTFA             | First audio chunk arrival | Total generation quality, RTF             | R-VA-014 (Fish Audio S2)        |
+| MOS/UTMOS        | Voice naturalness         | Latency, content accuracy, turn-taking    | R-VA-012 (F5-TTS)               |
+| Response latency | End-to-end user wait time | Transcript accuracy, robustness           | R-VA-003 (Moonshine v2)         |
 
 ## Core Metric Table
 
-| Layer | Metric | Unit | Why it matters |
-|---|---|---:|---|
-| Capture | audio start latency | ms | Mic pipeline and permissions can dominate first turn. |
-| VAD | start-of-speech latency | ms | Determines barge-in and listening responsiveness. |
-| VAD | false positive/false negative rate | percent | Noise can trigger or suppress the agent. |
-| Endpointing | end-of-turn latency | ms | Controls dead air vs interruption. |
-| Endpointing | false EOT / missed EOT | percent | Measures turn-taking correctness. |
-| STT | WER/CER | percent | Base transcript quality. |
-| STT | entity WER | percent | Names, IDs, numbers, domain terms. |
-| STT | partial churn | edit distance / second | Whether speculative reasoning is safe. |
-| LLM | first token | ms | Earliest useful response generation. |
-| TTS | TTFA | ms | When audio can start. |
-| TTS | RTF | ratio | Whether synthesis stays ahead of playback. |
-| Transport | jitter / loss / reconnect | ms / percent / count | Media stability. |
-| Barge-in | interruption success | percent | Whether users can stop the agent. |
-| System | P95/P99 round-trip | ms | Tail UX. |
-| Product | task success | percent | Whether the user got the thing done. |
-| Cost | live concurrent minute cost | dollars | Whether it can scale. |
+| Layer       | Metric                             |                   Unit | Why it matters                                        |
+| ----------- | ---------------------------------- | ---------------------: | ----------------------------------------------------- |
+| Capture     | audio start latency                |                     ms | Mic pipeline and permissions can dominate first turn. |
+| VAD         | start-of-speech latency            |                     ms | Determines barge-in and listening responsiveness.     |
+| VAD         | false positive/false negative rate |                percent | Noise can trigger or suppress the agent.              |
+| Endpointing | end-of-turn latency                |                     ms | Controls dead air vs interruption.                    |
+| Endpointing | false EOT / missed EOT             |                percent | Measures turn-taking correctness.                     |
+| STT         | WER/CER                            |                percent | Base transcript quality.                              |
+| STT         | entity WER                         |                percent | Names, IDs, numbers, domain terms.                    |
+| STT         | partial churn                      | edit distance / second | Whether speculative reasoning is safe.                |
+| LLM         | first token                        |                     ms | Earliest useful response generation.                  |
+| TTS         | TTFA                               |                     ms | When audio can start.                                 |
+| TTS         | RTF                                |                  ratio | Whether synthesis stays ahead of playback.            |
+| Transport   | jitter / loss / reconnect          |   ms / percent / count | Media stability.                                      |
+| Barge-in    | interruption success               |                percent | Whether users can stop the agent.                     |
+| System      | P95/P99 round-trip                 |                     ms | Tail UX.                                              |
+| Product     | task success                       |                percent | Whether the user got the thing done.                  |
+| Cost        | live concurrent minute cost        |                dollars | Whether it can scale.                                 |
 
 ## Metrics Not Commonly Measured But Critical For Voice Agents
 
 The metrics above cover what papers and benchmarks currently report. The following metrics
 are rarely or never reported in the source papers but matter for production voice agents:
 
-| Metric | Unit | Why it matters | Why it is rarely measured |
-|---|---|---|---|
-| Barge-in success rate | percent | Whether the user can successfully interrupt the agent mid-speech. If barge-in fails, the agent feels unresponsive. | Requires a test harness that plays audio during agent output and measures whether the agent stops. No standard benchmark exists. |
-| Backchannel false positive rate | percent | Whether the agent interprets "uh-huh," "yeah," or "okay" as an interruption. High false positives make the agent stop mid-sentence. | Requires labeled backchannel vs interruption data. Moshi's multi-stream architecture models this but does not report a metric for it. |
-| Echo-triggered VAD rate | percent | Whether the agent's own audio output (played through the user's speakers) triggers the VAD, causing self-transcription or false interruption. | Requires a real media path (speakers + microphone) or echo simulation. Most academic evals use clean audio input. |
-| Turn-gap consistency | ms (std dev) | Whether the agent's response timing is consistent or erratic. High variance in turn gaps feels unnatural even if the mean is acceptable. | Requires per-turn timing logs and statistical analysis. Most papers report p50 or mean only. |
-| Graceful degradation under load | latency delta at N concurrent sessions | Whether latency increases linearly or exponentially as concurrency grows. | Requires load testing infrastructure. Fish Audio S2 (R-VA-014) reports throughput under concurrency but most papers do not. |
+| Metric                          | Unit                                   | Why it matters                                                                                                                                | Why it is rarely measured                                                                                                             |
+| ------------------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Barge-in success rate           | percent                                | Whether the user can successfully interrupt the agent mid-speech. If barge-in fails, the agent feels unresponsive.                            | Requires a test harness that plays audio during agent output and measures whether the agent stops. No standard benchmark exists.      |
+| Backchannel false positive rate | percent                                | Whether the agent interprets "uh-huh," "yeah," or "okay" as an interruption. High false positives make the agent stop mid-sentence.           | Requires labeled backchannel vs interruption data. Moshi's multi-stream architecture models this but does not report a metric for it. |
+| Echo-triggered VAD rate         | percent                                | Whether the agent's own audio output (played through the user's speakers) triggers the VAD, causing self-transcription or false interruption. | Requires a real media path (speakers + microphone) or echo simulation. Most academic evals use clean audio input.                     |
+| Turn-gap consistency            | ms (std dev)                           | Whether the agent's response timing is consistent or erratic. High variance in turn gaps feels unnatural even if the mean is acceptable.      | Requires per-turn timing logs and statistical analysis. Most papers report p50 or mean only.                                          |
+| Graceful degradation under load | latency delta at N concurrent sessions | Whether latency increases linearly or exponentially as concurrency grows.                                                                     | Requires load testing infrastructure. Fish Audio S2 (R-VA-014) reports throughput under concurrency but most papers do not.           |
 
 Inference: The absence of these metrics from published benchmarks does not mean they are
 unimportant. It means the evaluation infrastructure for voice agents is immature. A team
@@ -182,6 +182,7 @@ meeting rooms (AMI), telephony-adjacent audio (Earnings-22), noisy web audio (Gi
 clean studio conditions (LibriSpeech clean), and multi-speaker parliamentary proceedings
 (VoxPopuli). However, they are ASR benchmarks, not voice agent benchmarks. None of them
 include:
+
 - agent-side audio output that could cause echo
 - barge-in or interruption scenarios
 - backchannel events during model speech
@@ -279,16 +280,16 @@ traces.
 
 For Jarvis/local presentation:
 
-| Test | Expected measurement |
-|---|---|
-| Clean short command | baseline STT final latency and TTS TTFA |
-| Long pause before object | false EOT risk |
-| Speaker playback echo | VAD false positive and self-transcription |
-| "stop" during assistant speech | barge-in stop latency |
-| Backchannel during assistant speech | false interruption rate |
-| Domain terms from slides | entity WER |
-| Slow network/provider call | P95/P99 behavior |
-| Restart/reconnect | state consistency |
+| Test                                | Expected measurement                      |
+| ----------------------------------- | ----------------------------------------- |
+| Clean short command                 | baseline STT final latency and TTS TTFA   |
+| Long pause before object            | false EOT risk                            |
+| Speaker playback echo               | VAD false positive and self-transcription |
+| "stop" during assistant speech      | barge-in stop latency                     |
+| Backchannel during assistant speech | false interruption rate                   |
+| Domain terms from slides            | entity WER                                |
+| Slow network/provider call          | P95/P99 behavior                          |
+| Restart/reconnect                   | state consistency                         |
 
 This is also a good public article angle: the evaluation harness is where the "real-time"
 claim becomes defensible.

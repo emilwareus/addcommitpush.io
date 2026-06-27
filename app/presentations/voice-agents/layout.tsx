@@ -3,7 +3,10 @@
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { PresentationLayout } from '@/components/presentations/shared/presentation-layout';
-import { JarvisProvider, useJarvis } from '@/components/presentations/voice-agents/jarvis/jarvis-context';
+import {
+  JarvisProvider,
+  useJarvis,
+} from '@/components/presentations/voice-agents/jarvis/jarvis-context';
 import { JarvisSidebar } from '@/components/presentations/voice-agents/jarvis/jarvis-sidebar';
 import {
   getAllSlides,

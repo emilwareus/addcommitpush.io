@@ -3,6 +3,7 @@
 WebSockets vs WebRTC for streaming audio in voice agents: protocol internals, latency characteristics, code examples, and why the choice matters less than you think.
 
 **Table of contents:**
+
 1. [The Transport Problem](#1-the-transport-problem) -- what the transport layer actually does in a voice agent
 2. [WebSocket Protocol Internals](#2-websocket-protocol-internals) -- TCP, framing, head-of-line blocking
 3. [WebRTC Protocol Stack](#3-webrtc-protocol-stack) -- ICE, STUN/TURN, DTLS-SRTP, SDP, RTCP
@@ -72,6 +73,7 @@ After the handshake, the HTTP connection becomes a persistent, full-duplex TCP c
 ```
 
 Key details:
+
 - **Opcodes:** 0x1 = text (UTF-8), 0x2 = binary, 0x8 = close, 0x9 = ping, 0xA = pong
 - **Masking:** Client-to-server frames MUST be masked (XOR with 4-byte key). Server-to-client frames are NOT masked.
 - **Overhead:** 2-14 bytes per frame. For a 960-byte audio chunk (30ms at 16kHz, int16), that's 0.2-1.5% overhead. Negligible.
@@ -81,6 +83,7 @@ For voice agents, we use **binary frames (opcode 0x2) for audio** and **text fra
 ### TCP: The Foundation (and the Problem)
 
 WebSockets run over TCP. TCP provides:
+
 - **Reliable delivery:** Every byte arrives, guaranteed.
 - **In-order delivery:** Bytes arrive in the order sent.
 - **Flow control:** Receiver advertises buffer space (TCP window).
@@ -100,6 +103,7 @@ Receiver: [pkt1] ...waiting... ...waiting... [pkt2][pkt3][pkt4][pkt5] (burst)
 ```
 
 For audio streaming at 30ms frames:
+
 - **1 lost packet** = all subsequent frames stall for 1 RTT (20-100ms on internet)
 - **Effect:** Brief silence, then a burst of queued audio playing back compressed
 - **Perception:** Variable delay (jitter) is worse than consistent delay
@@ -108,13 +112,13 @@ For audio streaming at 30ms frames:
 
 In practice, for server-authoritative voice agents, HOL blocking is often irrelevant:
 
-| Scenario | Packet loss | HOL stall | Impact |
-|----------|-------------|-----------|--------|
-| Localhost | ~0% | N/A | No impact |
-| LAN (same network) | <0.01% | N/A | No impact |
-| Internet (good connection) | <0.1% | ~50ms once per 30s | Imperceptible |
-| Internet (poor / mobile) | 1-5% | 50-200ms frequently | Noticeable jitter |
-| Corporate VPN | 0.1-1% | Variable | Depends on VPN |
+| Scenario                   | Packet loss | HOL stall           | Impact            |
+| -------------------------- | ----------- | ------------------- | ----------------- |
+| Localhost                  | ~0%         | N/A                 | No impact         |
+| LAN (same network)         | <0.01%      | N/A                 | No impact         |
+| Internet (good connection) | <0.1%       | ~50ms once per 30s  | Imperceptible     |
+| Internet (poor / mobile)   | 1-5%        | 50-200ms frequently | Noticeable jitter |
+| Corporate VPN              | 0.1-1%      | Variable            | Depends on VPN    |
 
 The pipeline latency (1-2s for VAD+STT+LLM+TTS) dominates by 100x. A 50ms HOL stall is noise.
 
@@ -163,11 +167,11 @@ The hardest problem WebRTC solves: finding a network path between two peers, bot
 
 **Candidate types:**
 
-| Type | Source | Latency | Reliability |
-|------|--------|---------|-------------|
-| **host** | Local IP address | Best | Only works on same network |
-| **srflx** (server-reflexive) | Public IP via STUN | Good | Fails with symmetric NAT |
-| **relay** | TURN server relays traffic | Worst (+hop) | Always works |
+| Type                         | Source                     | Latency      | Reliability                |
+| ---------------------------- | -------------------------- | ------------ | -------------------------- |
+| **host**                     | Local IP address           | Best         | Only works on same network |
+| **srflx** (server-reflexive) | Public IP via STUN         | Good         | Fails with symmetric NAT   |
+| **relay**                    | TURN server relays traffic | Worst (+hop) | Always works               |
 
 **The ICE process:**
 
@@ -202,6 +206,7 @@ Client A --> TURN Server --> Client B
 ```
 
 TURN always works but adds:
+
 - **Latency:** Extra network hop (typically 10-50ms)
 - **Bandwidth cost:** TURN server sees all media traffic
 - **Infrastructure cost:** You must run or pay for TURN servers
@@ -247,6 +252,7 @@ Carries the actual audio/video data:
 ```
 
 Key properties:
+
 - **Sequence numbers** for reordering detection and packet loss counting
 - **Timestamps** for jitter buffer management
 - **Payload types** negotiated via SDP (e.g., Opus = PT 111)
@@ -314,35 +320,37 @@ WebRTC takes 3-5x longer to establish a connection. But once established, audio 
 
 ## 4. Head-to-Head Comparison
 
-| Dimension | WebSocket | WebRTC |
-|-----------|-----------|--------|
-| **Transport** | TCP | UDP (SRTP over DTLS) |
-| **Latency (LAN)** | ~1ms | ~1ms |
-| **Latency (internet)** | 5-50ms + HOL risk | 5-50ms, no HOL blocking |
-| **Connection setup** | ~100ms | ~500ms (ICE + DTLS) |
-| **NAT traversal** | Not needed (client-server) | ICE/STUN/TURN required |
-| **Echo cancellation** | Manual (flag-based suppression) | Built-in AEC in browser |
-| **Noise suppression** | getUserMedia constraint (variable quality) | Integrated with media pipeline |
-| **Encryption** | WSS (TLS over TCP) | DTLS-SRTP (mandatory) |
-| **Codec support** | Raw PCM, you choose | Opus, G.711, etc. (negotiated via SDP) |
-| **Adaptive bitrate** | Not built-in | RTCP feedback loop (automatic) |
-| **Packet loss handling** | TCP retransmits (causes stalls) | Tolerated (concealment / FEC) |
-| **Jitter buffer** | You build it | Built-in in browser |
-| **Data channel** | Text frames (native JSON) | RTCDataChannel (SCTP over DTLS) |
-| **Server complexity** | Low (any WS library) | High (SFU or aiortc) |
-| **Infrastructure** | Any web server | STUN/TURN servers needed |
-| **Browser support** | Universal since 2012 | Universal but quirky across browsers |
-| **Lines of code (transport only)** | ~50 | ~200+ |
-| **Server-side libraries** | Mature everywhere (ws, fastapi, gorilla) | Limited (aiortc for Python, pion for Go) |
+| Dimension                          | WebSocket                                  | WebRTC                                   |
+| ---------------------------------- | ------------------------------------------ | ---------------------------------------- |
+| **Transport**                      | TCP                                        | UDP (SRTP over DTLS)                     |
+| **Latency (LAN)**                  | ~1ms                                       | ~1ms                                     |
+| **Latency (internet)**             | 5-50ms + HOL risk                          | 5-50ms, no HOL blocking                  |
+| **Connection setup**               | ~100ms                                     | ~500ms (ICE + DTLS)                      |
+| **NAT traversal**                  | Not needed (client-server)                 | ICE/STUN/TURN required                   |
+| **Echo cancellation**              | Manual (flag-based suppression)            | Built-in AEC in browser                  |
+| **Noise suppression**              | getUserMedia constraint (variable quality) | Integrated with media pipeline           |
+| **Encryption**                     | WSS (TLS over TCP)                         | DTLS-SRTP (mandatory)                    |
+| **Codec support**                  | Raw PCM, you choose                        | Opus, G.711, etc. (negotiated via SDP)   |
+| **Adaptive bitrate**               | Not built-in                               | RTCP feedback loop (automatic)           |
+| **Packet loss handling**           | TCP retransmits (causes stalls)            | Tolerated (concealment / FEC)            |
+| **Jitter buffer**                  | You build it                               | Built-in in browser                      |
+| **Data channel**                   | Text frames (native JSON)                  | RTCDataChannel (SCTP over DTLS)          |
+| **Server complexity**              | Low (any WS library)                       | High (SFU or aiortc)                     |
+| **Infrastructure**                 | Any web server                             | STUN/TURN servers needed                 |
+| **Browser support**                | Universal since 2012                       | Universal but quirky across browsers     |
+| **Lines of code (transport only)** | ~50                                        | ~200+                                    |
+| **Server-side libraries**          | Mature everywhere (ws, fastapi, gorilla)   | Limited (aiortc for Python, pion for Go) |
 
 ### Codec Implications
 
 WebSocket: you send raw PCM. This means:
+
 - **No compression.** 16kHz int16 mono = 32 KB/s = 256 kbps. Fine for LAN, wasteful for internet.
 - **Full control.** Your STT model gets exactly the samples it expects. No codec artifacts.
 - **You can compress yourself** (e.g., send Opus-encoded frames), but then you reimplement what WebRTC gives you for free.
 
 WebRTC: codec negotiated via SDP. Typically Opus:
+
 - **Opus at 16kHz:** ~16-32 kbps (10-20x compression vs raw PCM)
 - **Built-in FEC** (forward error correction) for packet loss resilience
 - **The caveat:** You receive decoded PCM from the browser's media pipeline, but the server gets encoded Opus packets that need decoding before feeding to STT. This adds a decode step and potential quality loss from the encode/decode cycle.
@@ -421,6 +429,7 @@ async def websocket_endpoint(ws: WebSocket) -> None:
 ```
 
 Key design decisions:
+
 - **Binary frames for audio.** No base64 encoding. Zero overhead beyond the 2-byte WebSocket header.
 - **4-byte flags header.** Future-proof -- 32 bits of flags, currently only bit 0 used. Costs 4 bytes per 960-byte audio frame (0.4% overhead).
 - **Text frames for control.** JSON is human-readable, easy to debug. Control messages are infrequent (a few per second), so text overhead doesn't matter.
@@ -491,6 +500,7 @@ registerProcessor('audio-capture-processor', AudioCaptureProcessor);
 ```
 
 Why AudioWorklet, not ScriptProcessorNode:
+
 - ScriptProcessorNode runs on the **main thread**. GC pauses, DOM updates, or any JavaScript work causes audio dropouts.
 - AudioWorklet runs on a **dedicated audio rendering thread**. Completely decoupled from main-thread jank.
 - ScriptProcessorNode is deprecated. AudioWorklet is the standard.
@@ -564,7 +574,7 @@ class AudioQueue {
 
   constructor(
     private ctx: AudioContext,
-    private onPlayingChange: (playing: boolean) => void,
+    private onPlayingChange: (playing: boolean) => void
   ) {}
 
   enqueue(pcmInt16: ArrayBuffer): void {
@@ -729,7 +739,7 @@ async function connectWebRTC(signalingUrl: string) {
   // Get mic with browser's built-in audio processing
   const stream = await navigator.mediaDevices.getUserMedia({
     audio: {
-      echoCancellation: true,   // AEC works best with WebRTC playback
+      echoCancellation: true, // AEC works best with WebRTC playback
       noiseSuppression: true,
       autoGainControl: true,
     },
@@ -786,6 +796,7 @@ async function connectWebRTC(signalingUrl: string) {
 ### Complexity Comparison
 
 The WebRTC version requires:
+
 - A signaling endpoint (HTTP or WebSocket) separate from the media path
 - ICE candidate handling (or waiting for gathering to complete)
 - SDP offer/answer exchange
@@ -822,6 +833,7 @@ Clean signal (echo removed)
 ```
 
 The AEC needs two inputs:
+
 1. **The microphone signal** (speech + echo + noise)
 2. **The reference signal** (what the speakers are playing -- the agent's voice)
 
@@ -885,13 +897,13 @@ def process_frame(mic_frame, reference_frame):
 
 ### When Echo Cancellation Matters
 
-| Scenario | Echo risk | Recommendation |
-|----------|-----------|----------------|
-| Agent speaks, user waits, user speaks | None | Mute-during-playback works |
-| User can interrupt agent (barge-in) | High | Need real AEC (WebRTC or server-side) |
-| Headphones required | None | No echo path exists |
-| Speakerphone / laptop speakers | High | AEC essential |
-| Smart speaker / far-field mic | Very high | Hardware AEC + software AEC |
+| Scenario                              | Echo risk | Recommendation                        |
+| ------------------------------------- | --------- | ------------------------------------- |
+| Agent speaks, user waits, user speaks | None      | Mute-during-playback works            |
+| User can interrupt agent (barge-in)   | High      | Need real AEC (WebRTC or server-side) |
+| Headphones required                   | None      | No echo path exists                   |
+| Speakerphone / laptop speakers        | High      | AEC essential                         |
+| Smart speaker / far-field mic         | Very high | Hardware AEC + software AEC           |
 
 ---
 
@@ -920,6 +932,7 @@ WebRTC round-trip:             ~50ms    (3.3% of 1500ms)
 ```
 
 Both protocols add the same network latency. The theoretical advantage of WebRTC (no HOL blocking) would only manifest if:
+
 - Packet loss rate >1% (unusual on modern networks)
 - AND pipeline latency is very low (<200ms), making the 50ms HOL stall proportionally significant
 
@@ -993,14 +1006,14 @@ Ranked by latency reduction potential:
 
 ### Summary
 
-| Platform | Transport | Why |
-|----------|-----------|-----|
-| OpenAI Realtime | Both (WebRTC preferred for browser) | Flexibility across use cases |
-| LiveKit | WebRTC | Core product is real-time communication |
-| Daily / Pipecat | WebRTC (with WS abstraction) | Production infrastructure |
-| Twilio | WebSocket | Telephony bridge, not browser-native |
-| Gemini Live | WebSocket | Simplicity, native multimodal |
-| Vapi / Retell | WebRTC (abstracted) | Built on LiveKit/Daily |
+| Platform        | Transport                           | Why                                     |
+| --------------- | ----------------------------------- | --------------------------------------- |
+| OpenAI Realtime | Both (WebRTC preferred for browser) | Flexibility across use cases            |
+| LiveKit         | WebRTC                              | Core product is real-time communication |
+| Daily / Pipecat | WebRTC (with WS abstraction)        | Production infrastructure               |
+| Twilio          | WebSocket                           | Telephony bridge, not browser-native    |
+| Gemini Live     | WebSocket                           | Simplicity, native multimodal           |
+| Vapi / Retell   | WebRTC (abstracted)                 | Built on LiveKit/Daily                  |
 
 ---
 
@@ -1066,12 +1079,12 @@ Five concrete things:
 
 This is the most visible behavioral difference between the two transports:
 
-| | WebSocket | WebRTC |
-|---|-----------|--------|
-| **Echo suppression** | `is_tts_playing` flag in binary header | Browser AEC (native) |
-| **During TTS playback** | Mic frames skipped on server | Mic frames processed normally |
-| **Barge-in** | Not possible | Works (AEC removes echo) |
-| **Implementation** | Browser tracks `AudioQueue.isPlaying`, sends flag per frame | `is_tts_playing=False` always -- AEC handles it |
+|                         | WebSocket                                                   | WebRTC                                          |
+| ----------------------- | ----------------------------------------------------------- | ----------------------------------------------- |
+| **Echo suppression**    | `is_tts_playing` flag in binary header                      | Browser AEC (native)                            |
+| **During TTS playback** | Mic frames skipped on server                                | Mic frames processed normally                   |
+| **Barge-in**            | Not possible                                                | Works (AEC removes echo)                        |
+| **Implementation**      | Browser tracks `AudioQueue.isPlaying`, sends flag per frame | `is_tts_playing=False` always -- AEC handles it |
 
 ### Architecture
 
@@ -1106,10 +1119,12 @@ The server creates `JarvisPipeline(models, send_json, send_audio)` for both. The
 ## Sources
 
 **WebSocket:**
+
 - [RFC 6455 -- The WebSocket Protocol](https://datatracker.ietf.org/doc/html/rfc6455)
 - [MDN WebSocket API](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)
 
 **WebRTC:**
+
 - [RFC 8825 -- Overview: Real-Time Protocols for Browser-Based Applications](https://datatracker.ietf.org/doc/html/rfc8825)
 - [RFC 8445 -- Interactive Connectivity Establishment (ICE)](https://datatracker.ietf.org/doc/html/rfc8445)
 - [RFC 8489 -- Session Traversal Utilities for NAT (STUN)](https://datatracker.ietf.org/doc/html/rfc8489)
@@ -1120,9 +1135,11 @@ The server creates `JarvisPipeline(models, send_json, send_audio)` for both. The
 - [MDN WebRTC API](https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API)
 
 **AudioWorklet:**
+
 - [MDN AudioWorklet](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorklet)
 
 **Industry:**
+
 - [OpenAI Realtime API Guide](https://platform.openai.com/docs/guides/realtime)
 - [LiveKit Agents](https://docs.livekit.io/agents/)
 - [Daily Pipecat](https://github.com/pipecat-ai/pipecat)
@@ -1130,5 +1147,6 @@ The server creates `JarvisPipeline(models, send_json, send_audio)` for both. The
 - [Google Gemini Multimodal Live](https://ai.google.dev/gemini-api/docs/multimodal-live)
 
 **Echo Cancellation:**
+
 - [WebRTC Echo Cancellation -- webrtc.org](https://webrtc.org/)
 - [SpeexDSP Echo Cancellation](https://www.speex.org/docs/manual/speex-manual/node7.html)

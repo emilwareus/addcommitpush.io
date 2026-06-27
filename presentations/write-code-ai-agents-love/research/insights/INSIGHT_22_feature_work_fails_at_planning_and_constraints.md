@@ -23,12 +23,12 @@ Plot-ready data lives in `presentations/write-code-ai-agents-love/research/data/
 
 ## Source map
 
-| Ref | Source | Local text | Why it matters |
-|---|---|---|---|
-| R68 | RACE-bench | `paper-text/race-bench-feature-addition-2603.26337.txt` | Measures feature-addition planning quality and reasoning recall. |
-| R71 | Constraint Decay | `paper-text/constraint-decay-2605.06445.txt` | Controlled backend experiment showing structural constraints degrade agent success. |
-| R72 | CODETASTE | `paper-text/codetaste-2603.04177.txt` | Real large refactoring benchmark with tests plus static rules. |
-| R44 | FeatureBench | `paper-text/featurebench-2602.10975.txt` | Feature implementation remains hard even for strong agents. |
+| Ref | Source           | Local text                                              | Why it matters                                                                      |
+| --- | ---------------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| R68 | RACE-bench       | `paper-text/race-bench-feature-addition-2603.26337.txt` | Measures feature-addition planning quality and reasoning recall.                    |
+| R71 | Constraint Decay | `paper-text/constraint-decay-2605.06445.txt`            | Controlled backend experiment showing structural constraints degrade agent success. |
+| R72 | CODETASTE        | `paper-text/codetaste-2603.04177.txt`                   | Real large refactoring benchmark with tests plus static rules.                      |
+| R44 | FeatureBench     | `paper-text/featurebench-2602.10975.txt`                | Feature implementation remains hard even for strong agents.                         |
 
 ## RACE-bench: patches apply before reasoning is correct
 
@@ -43,21 +43,21 @@ agent can manipulate the repository successfully while still misunderstanding th
 
 ### RACE-bench data copied from the paper
 
-| Agent | Patch apply | Resolved | Gap: apply - resolved |
-|---|---:|---:|---:|
-| AutoCodeRover | 96.21% | 28.79% | 67.42 pp |
-| TraeAgent | 78.98% | 52.65% | 26.33 pp |
-| mini-SWE-Agent | 95.83% | 70.08% | 25.75 pp |
+| Agent          | Patch apply | Resolved | Gap: apply - resolved |
+| -------------- | ----------: | -------: | --------------------: |
+| AutoCodeRover  |      96.21% |   28.79% |              67.42 pp |
+| TraeAgent      |      78.98% |   52.65% |              26.33 pp |
+| mini-SWE-Agent |      95.83% |   70.08% |              25.75 pp |
 
 | mini-SWE-Agent reasoning level | Recall |
-|---|---:|
-| Files | 0.890 |
-| Tasks | 0.751 |
-| Steps | 0.445 |
+| ------------------------------ | -----: |
+| Files                          |  0.890 |
+| Tasks                          |  0.751 |
+| Steps                          |  0.445 |
 
-| Failure comparison | Value |
-|---|---:|
-| Applied-but-failing patches: lower reasoning recall vs success | 35.7% lower |
+| Failure comparison                                             |        Value |
+| -------------------------------------------------------------- | -----------: |
+| Applied-but-failing patches: lower reasoning recall vs success |  35.7% lower |
 | Applied-but-failing patches: higher over-prediction vs success | 94.1% higher |
 
 Source trace: R68, `paper-text/race-bench-feature-addition-2603.26337.txt`.
@@ -91,26 +91,26 @@ making code production-shaped.
 
 ### Constraint Decay data copied from the paper
 
-| Measurement | Value | Interpretation |
-|---|---:|---|
-| Greenfield generation tasks | 80 | Controlled combinations across frameworks/constraints. |
-| Feature implementation tasks | 20 | Existing-codebase sanity check. |
-| API operations in contract | 19 | Non-trivial CRUD-style backend surface. |
-| Assertions in test suite | 291 | Behavioral checks for API behavior. |
-| Capable-config L0 -> L3 A% drop | 30 pp | Structural constraints materially reduce success. |
-| Relative loss from baseline | 40% | Constraint cost is large relative to baseline performance. |
-| Full-set vs subset Pearson correlation | 0.98 | Cost-reduced subset tracked full benchmark well. |
-| Full-set vs subset Spearman correlation | 0.95 | Rank ordering also tracked well. |
+| Measurement                             | Value | Interpretation                                             |
+| --------------------------------------- | ----: | ---------------------------------------------------------- |
+| Greenfield generation tasks             |    80 | Controlled combinations across frameworks/constraints.     |
+| Feature implementation tasks            |    20 | Existing-codebase sanity check.                            |
+| API operations in contract              |    19 | Non-trivial CRUD-style backend surface.                    |
+| Assertions in test suite                |   291 | Behavioral checks for API behavior.                        |
+| Capable-config L0 -> L3 A% drop         | 30 pp | Structural constraints materially reduce success.          |
+| Relative loss from baseline             |   40% | Constraint cost is large relative to baseline performance. |
+| Full-set vs subset Pearson correlation  |  0.98 | Cost-reduced subset tracked full benchmark well.           |
+| Full-set vs subset Spearman correlation |  0.95 | Rank ordering also tracked well.                           |
 
 ### Marginal constraint effects copied from the paper
 
-| Constraint | Average A% effect |
-|---|---:|
-| Clean architecture | -9.1 pp |
-| PostgreSQL | -19.3 pp |
-| SQLite | -14.3 pp |
-| SQLAlchemy | -1.5 pp |
-| Sequelize | -0.6 pp |
+| Constraint         | Average A% effect |
+| ------------------ | ----------------: |
+| Clean architecture |           -9.1 pp |
+| PostgreSQL         |          -19.3 pp |
+| SQLite             |          -14.3 pp |
+| SQLAlchemy         |           -1.5 pp |
+| Sequelize          |           -0.6 pp |
 
 The database result matters. It says the agent problem is not only syntax or routing. Data-layer
 interaction is a core failure surface: query composition, ORM runtime behavior, dialect mismatches,
@@ -119,15 +119,15 @@ state propagation, and auth state all become places where plausible code fails.
 ### Framework sensitivity copied from the paper
 
 | Framework | Average assertion pass rate |
-|---|---:|
-| Express | 51.4% |
-| Koa | 50.7% |
-| Flask | 49.3% |
-| aiohttp | 38.4% |
-| Fastify | 31.7% |
-| Django | 25.4% |
-| FastAPI | 24.2% |
-| Hono | 18.5% |
+| --------- | --------------------------: |
+| Express   |                       51.4% |
+| Koa       |                       50.7% |
+| Flask     |                       49.3% |
+| aiohttp   |                       38.4% |
+| Fastify   |                       31.7% |
+| Django    |                       25.4% |
+| FastAPI   |                       24.2% |
+| Hono      |                       18.5% |
 
 Source trace: R71, `paper-text/constraint-decay-2605.06445.txt`.
 
@@ -158,30 +158,30 @@ vague focus area and must infer the human architectural choice. The performance 
 
 ### CODETASTE benchmark scale copied from the paper
 
-| Benchmark property | Value |
-|---|---:|
-| Instances | 100 |
-| Repositories | 87 |
-| Programming languages | 6 |
-| Average files edited by human refactor | 91.52 |
-| Average LOC changed | 2,605.39 |
-| Maximum LOC changed | 18,821 |
-| Maximum files changed | 290 |
-| Average tests per instance | 1,638.53 |
-| Average additive static rules | 29.66 |
-| Average reductive static rules | 63.41 |
+| Benchmark property                     |    Value |
+| -------------------------------------- | -------: |
+| Instances                              |      100 |
+| Repositories                           |       87 |
+| Programming languages                  |        6 |
+| Average files edited by human refactor |    91.52 |
+| Average LOC changed                    | 2,605.39 |
+| Maximum LOC changed                    |   18,821 |
+| Maximum files changed                  |      290 |
+| Average tests per instance             | 1,638.53 |
+| Average additive static rules          |    29.66 |
+| Average reductive static rules         |    63.41 |
 
 ### CODETASTE result data copied from the paper
 
-| Model / mode | PASS | Alignment A | Instruction-following rate |
-|---|---:|---:|---:|
-| GPT-5.2 instructed | 76.0% | 69.6% | 89.3% |
-| GPT-5.2 open direct | 87.0% | 7.7% | about 9-10% components |
-| GPT-5.2 open plan | 87.0% | 14.1% | higher than direct |
-| GPT-5.2 open multiplan oracle | 81.0% | 19.4% | highest open-track alignment |
-| GPT-5.1 Codex Mini instructed | 47.0% | 34.6% | 72.2% |
-| Claude Sonnet 4.5 instructed | 43.0% | 32.4% | 69.2% |
-| Qwen3 instructed | 30.0% | 11.8% | lower than frontier systems |
+| Model / mode                  |  PASS | Alignment A |   Instruction-following rate |
+| ----------------------------- | ----: | ----------: | ---------------------------: |
+| GPT-5.2 instructed            | 76.0% |       69.6% |                        89.3% |
+| GPT-5.2 open direct           | 87.0% |        7.7% |       about 9-10% components |
+| GPT-5.2 open plan             | 87.0% |       14.1% |           higher than direct |
+| GPT-5.2 open multiplan oracle | 81.0% |       19.4% | highest open-track alignment |
+| GPT-5.1 Codex Mini instructed | 47.0% |       34.6% |                        72.2% |
+| Claude Sonnet 4.5 instructed  | 43.0% |       32.4% |                        69.2% |
+| Qwen3 instructed              | 30.0% |       11.8% |  lower than frontier systems |
 
 Source trace: R72, `paper-text/codetaste-2603.04177.txt`.
 
@@ -208,15 +208,15 @@ more context.
 
 ### FeatureBench data copied from the paper
 
-| Measurement | Value |
-|---|---:|
-| Tasks | 200 |
-| Executable environments | 3,825 |
-| Repositories | 24 |
-| Claude Opus 4.5 resolved | 11.0% |
-| GPT-5.1-Codex resolved | 12.5% |
-| Approximate FeatureBench task LOC | 790.2 |
-| Approximate SWE-Dev comparison LOC | 190 |
+| Measurement                        | Value |
+| ---------------------------------- | ----: |
+| Tasks                              |   200 |
+| Executable environments            | 3,825 |
+| Repositories                       |    24 |
+| Claude Opus 4.5 resolved           | 11.0% |
+| GPT-5.1-Codex resolved             | 12.5% |
+| Approximate FeatureBench task LOC  | 790.2 |
+| Approximate SWE-Dev comparison LOC |   190 |
 
 Source trace: R44, `paper-text/featurebench-2602.10975.txt`.
 
@@ -249,15 +249,15 @@ recoveries. A codebase can help at each point.
 
 ## What code patterns follow from this
 
-| Failure mode | Repo pattern that helps | Why |
-|---|---|---|
-| Wrong extension point | Canonical examples and small public interfaces | The agent sees where new behavior belongs. |
-| Hidden architecture rule | Custom lint/static rules and import boundaries | The rule becomes executable feedback. |
-| Missing data-layer convention | Typed repository/service layer and integration tests | Query/ORM mistakes are caught locally. |
-| Step recall collapse | Task specs with file/task/checklist structure | The plan survives context and implementation. |
-| Inferred refactor is wrong | Explicit migration/refactor spec and static rules | The desired transformation is named. |
-| Feature breaks old behavior | Pass-to-pass tests | The agent sees preservation requirements. |
-| Raw API guessing | Generated SDKs and typed clients | API contracts become local symbols. |
+| Failure mode                  | Repo pattern that helps                              | Why                                           |
+| ----------------------------- | ---------------------------------------------------- | --------------------------------------------- |
+| Wrong extension point         | Canonical examples and small public interfaces       | The agent sees where new behavior belongs.    |
+| Hidden architecture rule      | Custom lint/static rules and import boundaries       | The rule becomes executable feedback.         |
+| Missing data-layer convention | Typed repository/service layer and integration tests | Query/ORM mistakes are caught locally.        |
+| Step recall collapse          | Task specs with file/task/checklist structure        | The plan survives context and implementation. |
+| Inferred refactor is wrong    | Explicit migration/refactor spec and static rules    | The desired transformation is named.          |
+| Feature breaks old behavior   | Pass-to-pass tests                                   | The agent sees preservation requirements.     |
+| Raw API guessing              | Generated SDKs and typed clients                     | API contracts become local symbols.           |
 
 ## What I should not claim
 

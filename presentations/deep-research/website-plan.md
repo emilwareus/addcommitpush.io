@@ -54,6 +54,7 @@ A storytelling-driven web presentation that flows like a narrative. Each "page" 
 ```
 
 **Elements:**
+
 - Large typography, minimal design
 - Subtle animated background (maybe flowing particles or gradient)
 - Cover image faded in background
@@ -96,6 +97,7 @@ A storytelling-driven web presentation that flows like a narrative. Each "page" 
 ```
 
 **Elements:**
+
 - Animated diagram showing isolated work → merge
 - Relatable, slightly humorous tone
 - Pause before revealing the connection
@@ -137,6 +139,7 @@ A storytelling-driven web presentation that flows like a narrative. Each "page" 
 ```
 
 **Elements:**
+
 - Items fade in sequentially (staggered animation)
 - Clean, stark presentation
 - Let it sink in before next page
@@ -179,6 +182,7 @@ A storytelling-driven web presentation that flows like a narrative. Each "page" 
 ```
 
 **Elements:**
+
 - Animated pipeline diagram
 - Problems appear below with red/warning styling
 - "Today: How we fixed this" appears last as hook
@@ -221,6 +225,7 @@ A storytelling-driven web presentation that flows like a narrative. Each "page" 
 ```
 
 **Elements:**
+
 - Interactive timeline (click/hover for details)
 - Two stars indicate what we'll demo
 - Bottom shows the evolution pattern
@@ -264,6 +269,7 @@ A storytelling-driven web presentation that flows like a narrative. Each "page" 
 ```
 
 **Elements:**
+
 - Expert personas with icons
 - Speech bubbles showing different questions
 - Clean, educational layout
@@ -309,6 +315,7 @@ A storytelling-driven web presentation that flows like a narrative. Each "page" 
 ```
 
 **Elements:**
+
 - Animated flow diagram (phases highlight sequentially)
 - Parallel conversations visually branch out
 - Clean, technical but accessible
@@ -352,6 +359,7 @@ A storytelling-driven web presentation that flows like a narrative. Each "page" 
 ```
 
 **Elements:**
+
 - Full-width terminal embed
 - Dark terminal theme
 - Instruction below for what to watch
@@ -397,6 +405,7 @@ A storytelling-driven web presentation that flows like a narrative. Each "page" 
 ```
 
 **Elements:**
+
 - Dramatic pause/transition
 - Problems highlighted in warning box
 - Final question creates anticipation
@@ -442,6 +451,7 @@ A storytelling-driven web presentation that flows like a narrative. Each "page" 
 ```
 
 **Elements:**
+
 - Side-by-side animated comparison
 - Visual noise → clean transformation
 - Analogy made explicit
@@ -493,6 +503,7 @@ A storytelling-driven web presentation that flows like a narrative. Each "page" 
 ```
 
 **Elements:**
+
 - Loop phase highlighted/boxed differently
 - Warning callout at bottom (critical insight)
 - Reuse `diffusion-overview` component with modifications
@@ -538,6 +549,7 @@ A storytelling-driven web presentation that flows like a narrative. Each "page" 
 ```
 
 **Elements:**
+
 - Reuse `draft-denoising` component
 - Interactive slider to show progression
 - Clear before/after comparison
@@ -590,6 +602,7 @@ A storytelling-driven web presentation that flows like a narrative. Each "page" 
 ```
 
 **Elements:**
+
 - Reuse `parallel-agents` component
 - Lock icons to emphasize isolation
 - Clear supervisor → agents → supervisor flow
@@ -633,6 +646,7 @@ A storytelling-driven web presentation that flows like a narrative. Each "page" 
 ```
 
 **Elements:**
+
 - Same terminal style as STORM demo
 - Different command (/think_deep)
 - Instruction emphasizes what's different to watch
@@ -677,6 +691,7 @@ A storytelling-driven web presentation that flows like a narrative. Each "page" 
 ```
 
 **Elements:**
+
 - Big win rate number (animated count-up)
 - Clean table of reasons
 - Reuse `race-metrics` component if showing full benchmarks
@@ -722,6 +737,7 @@ A storytelling-driven web presentation that flows like a narrative. Each "page" 
 ```
 
 **Elements:**
+
 - Clean numbered list
 - Each item fades in sequentially
 - Most important items (1-3) have descriptions
@@ -769,6 +785,7 @@ A storytelling-driven web presentation that flows like a narrative. Each "page" 
 ```
 
 **Elements:**
+
 - Clean, minimal
 - Links are clickable
 - QR codes could be added for mobile
@@ -807,6 +824,7 @@ A storytelling-driven web presentation that flows like a narrative. Each "page" 
 6. **ComparisonSlider** - For iteration scrubbing
 
 **Reuse from blog:**
+
 - `DiffusionOverview`
 - `DraftDenoising`
 - `ParallelAgents`
@@ -817,25 +835,25 @@ A storytelling-driven web presentation that flows like a narrative. Each "page" 
 
 ## Page Summary
 
-| # | Page | Purpose | Duration |
-|---|------|---------|----------|
-| 1 | Title | Set the stage | 30s |
-| 2 | Group Project | Emotional hook | 1m |
-| 3 | The Result | Name the pain | 30s |
-| 4 | The Reveal | Connect to AI | 1m |
-| 5 | Timeline | Context | 3m |
-| 6 | STORM Intro | First solution | 2m |
-| 7 | STORM Architecture | How it works | 2m |
-| 8 | STORM Demo | See it work | 5m |
-| 9 | The Limitation | Create tension | 1m |
-| 10 | Diffusion Insight | Breakthrough | 2m |
-| 11 | Diffusion Architecture | How it works | 2m |
-| 12 | Loop Visualized | Show evolution | 2m |
-| 13 | Parallel Agents | Key pattern | 1m |
-| 14 | Diffusion Demo | See it work | 6m |
-| 15 | Why It Wins | Evidence | 2m |
-| 16 | Takeaways | Actionable | 2m |
-| 17 | Resources + Q&A | Close | 15m+ |
+| #   | Page                   | Purpose        | Duration |
+| --- | ---------------------- | -------------- | -------- |
+| 1   | Title                  | Set the stage  | 30s      |
+| 2   | Group Project          | Emotional hook | 1m       |
+| 3   | The Result             | Name the pain  | 30s      |
+| 4   | The Reveal             | Connect to AI  | 1m       |
+| 5   | Timeline               | Context        | 3m       |
+| 6   | STORM Intro            | First solution | 2m       |
+| 7   | STORM Architecture     | How it works   | 2m       |
+| 8   | STORM Demo             | See it work    | 5m       |
+| 9   | The Limitation         | Create tension | 1m       |
+| 10  | Diffusion Insight      | Breakthrough   | 2m       |
+| 11  | Diffusion Architecture | How it works   | 2m       |
+| 12  | Loop Visualized        | Show evolution | 2m       |
+| 13  | Parallel Agents        | Key pattern    | 1m       |
+| 14  | Diffusion Demo         | See it work    | 6m       |
+| 15  | Why It Wins            | Evidence       | 2m       |
+| 16  | Takeaways              | Actionable     | 2m       |
+| 17  | Resources + Q&A        | Close          | 15m+     |
 
 **Total: 17 pages, ~48 min content + Q&A**
 

@@ -8,15 +8,15 @@ slow, flaky, or poorly structured, agent performance degrades measurably.
 
 ## Source map
 
-| Ref | Source | Local text | Role |
-|---|---|---|---|
-| R01 | SWE-bench (2023-10) | `paper-text/swe-bench-2310.06770.txt` | Established executable issue resolution as the core evaluation paradigm. |
-| R09 | SWE-CI (2026-03) | `paper-text/swe-ci-2603.03823.txt` | Shifts evaluation from one-shot correctness to long-term maintainability via CI loops. |
-| R23 | Agentless (2024-07) | `paper-text/agentless-2407.01489.txt` | localize-repair-validate workflow shows validation is central even in simple systems. |
-| R22 | ABTest (2026-04) | `paper-text/abtest-agent-anomalies-2604.03362.txt` | Behavior-driven testing for detecting agent anomalies. |
-| R67 | Rethinking Agent-Generated Tests (2026-02) | `paper-text/rethinking-agent-generated-tests-2602.07900.txt` | Counter-evidence on agent self-testing. |
-| R46 | Needle in the Repo (2026-03) | `paper-text/needle-in-the-repo-2603.27745.txt` | Shows functional tests alone miss structural/maintainability failures. |
-| D05 | Anthropic: Claude Code best practices | `articles/anthropic-claude-code-best-practices.html` | Official-doc evidence: verification workflows. |
+| Ref | Source                                     | Local text                                                   | Role                                                                                   |
+| --- | ------------------------------------------ | ------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| R01 | SWE-bench (2023-10)                        | `paper-text/swe-bench-2310.06770.txt`                        | Established executable issue resolution as the core evaluation paradigm.               |
+| R09 | SWE-CI (2026-03)                           | `paper-text/swe-ci-2603.03823.txt`                           | Shifts evaluation from one-shot correctness to long-term maintainability via CI loops. |
+| R23 | Agentless (2024-07)                        | `paper-text/agentless-2407.01489.txt`                        | localize-repair-validate workflow shows validation is central even in simple systems.  |
+| R22 | ABTest (2026-04)                           | `paper-text/abtest-agent-anomalies-2604.03362.txt`           | Behavior-driven testing for detecting agent anomalies.                                 |
+| R67 | Rethinking Agent-Generated Tests (2026-02) | `paper-text/rethinking-agent-generated-tests-2602.07900.txt` | Counter-evidence on agent self-testing.                                                |
+| R46 | Needle in the Repo (2026-03)               | `paper-text/needle-in-the-repo-2603.27745.txt`               | Shows functional tests alone miss structural/maintainability failures.                 |
+| D05 | Anthropic: Claude Code best practices      | `articles/anthropic-claude-code-best-practices.html`         | Official-doc evidence: verification workflows.                                         |
 
 ## SWE-bench (R01): tests as the paradigm's foundation
 
@@ -30,15 +30,16 @@ executable tests that can verify the change.**
 
 ### SWE-bench design properties relevant to testing
 
-| Property | Value |
-|---|---|
-| Evaluation oracle | Repository test suite (fail-to-pass + pass-to-pass) |
-| Test requirement | Each task requires tests that fail before fix and pass after |
-| Pass-to-pass requirement | Existing tests must continue passing (regression check) |
-| Environment | Pre-baked Docker with all dependencies installed |
+| Property                 | Value                                                        |
+| ------------------------ | ------------------------------------------------------------ |
+| Evaluation oracle        | Repository test suite (fail-to-pass + pass-to-pass)          |
+| Test requirement         | Each task requires tests that fail before fix and pass after |
+| Pass-to-pass requirement | Existing tests must continue passing (regression check)      |
+| Environment              | Pre-baked Docker with all dependencies installed             |
 
 The dual test requirement (fail-to-pass AND pass-to-pass) is the standard that all subsequent
 agent benchmarks have adopted. It encodes two distinct feedback signals:
+
 1. **Fail-to-pass:** Does the patch actually fix the issue?
 2. **Pass-to-pass:** Does the patch avoid breaking existing behavior?
 
@@ -57,16 +58,17 @@ phase. The three-phase workflow is:
 
 Agentless generates multiple candidate patches (not just one). Without test-based validation, it
 would have no way to select the correct patch from candidates. The validation phase uses:
+
 - **Generated reproduction tests:** Tests that reproduce the original error
 - **Regression tests:** The project's existing test suite
 
 ### Agentless results
 
-| Metric | Value |
-|---|---|
-| SWE-bench Lite performance | 32.00% (96/300 correct fixes) |
-| Cost per issue | $0.70 |
-| Approach | No autonomous agent; pure localize-repair-validate |
+| Metric                     | Value                                              |
+| -------------------------- | -------------------------------------------------- |
+| SWE-bench Lite performance | 32.00% (96/300 correct fixes)                      |
+| Cost per issue             | $0.70                                              |
+| Approach                   | No autonomous agent; pure localize-repair-validate |
 
 Source trace: R23, `paper-text/agentless-2407.01489.txt`.
 
@@ -81,25 +83,27 @@ tests whether agent-generated code remains functional through long-term evolutio
 
 ### SWE-CI benchmark design
 
-| Property | Value |
-|---|---|
-| Total tasks | 100 |
-| Average development history per task | 233 days |
-| Average consecutive commits per task | 71 |
-| Evaluation protocol | Architect-Programmer dual-agent CI loop |
-| Metric | EvoScore (future-weighted normalized change) |
+| Property                             | Value                                        |
+| ------------------------------------ | -------------------------------------------- |
+| Total tasks                          | 100                                          |
+| Average development history per task | 233 days                                     |
+| Average consecutive commits per task | 71                                           |
+| Evaluation protocol                  | Architect-Programmer dual-agent CI loop      |
+| Metric                               | EvoScore (future-weighted normalized change) |
 
 Source trace: R09, `paper-text/swe-ci-2603.03823.txt`.
 
 ### The EvoScore insight
 
 EvoScore measures functional correctness on future modifications. It uses a future-weighted mean:
+
 - Early iterations receive less weight
 - Later iterations receive more weight (gamma >= 1)
 - An agent that sacrifices short-term speed for cleaner design scores higher
 - An agent that accumulates technical debt sees progressively declining performance
 
 The formal definition (normalized change):
+
 - If the agent improves on the base codebase: normalized by total gap to target
 - If the agent regresses below baseline: normalized by baseline passing tests
 - Result: a(c) in [-1, 1] where 1 = fully closed gap, -1 = broke all passing tests
@@ -108,6 +112,7 @@ The formal definition (normalized change):
 
 SWE-CI's key insight: "Maintainability can be revealed by tracking how functional correctness
 changes over time." This means:
+
 - A brittle patch and an extensible patch may both pass the same initial tests
 - The difference only appears when the next change arrives
 - Tests must cover not just the current behavior but the stability of that behavior under evolution
@@ -122,16 +127,16 @@ functional tests yet fail structural/maintainability oracles.
 
 ### NITR results
 
-| Metric | Value |
-|---|---|
-| Average solve rate across all AI configurations | 36.2% |
-| Best configuration solve rate | 57.1% |
-| Micro cases solve rate | 53.5% |
-| Multi-step cases solve rate | 20.6% |
+| Metric                                               | Value          |
+| ---------------------------------------------------- | -------------- |
+| Average solve rate across all AI configurations      | 36.2%          |
+| Best configuration solve rate                        | 57.1%          |
+| Micro cases solve rate                               | 53.5%          |
+| Multi-step cases solve rate                          | 20.6%          |
 | Outcomes passing tests but failing structural oracle | 64/483 (13.3%) |
-| Hardest pressure: dependency control | 4.3% |
-| Hardest pressure: responsibility decomposition | 15.2% |
-| Agent-mode average (vs direct inference) | 45.0% vs 28.2% |
+| Hardest pressure: dependency control                 | 4.3%           |
+| Hardest pressure: responsibility decomposition       | 15.2%          |
+| Agent-mode average (vs direct inference)             | 45.0% vs 28.2% |
 
 Source trace: R46, `paper-text/needle-in-the-repo-2603.27745.txt`.
 
@@ -139,10 +144,12 @@ Source trace: R46, `paper-text/needle-in-the-repo-2603.27745.txt`.
 
 The 13.3% "false positive" rate means that relying solely on behavioral tests creates a systematic
 blind spot for structural quality. NITR uses dual oracles:
+
 1. Functional tests for required behavior
 2. Structural oracles that encode targeted maintainability constraints
 
 This suggests that agent-friendly test suites should include:
+
 - Behavioral tests (does it work?)
 - Structural tests or lints (does it maintain the architecture?)
 - Both must be automated and fast enough for agent iteration loops
@@ -152,6 +159,7 @@ This suggests that agent-friendly test suites should include:
 R67 provides counter-evidence that simply making agents write more tests reliably improves
 patch success. The evidence is nuanced -- agent-generated tests can help as validation oracles
 during patch selection, but they can also be:
+
 - Over-specified (testing implementation details)
 - Under-specified (not capturing the actual bug behavior)
 - Flaky or environment-dependent
@@ -166,15 +174,15 @@ supplementary signals that need their own validation.
 
 Combining evidence from multiple sources, the failure modes for agent-test interaction include:
 
-| Bad test property | How it confuses the agent |
-|---|---|
-| Hidden requirements in tests | Agent cannot infer what the test actually checks |
-| Tests enforce implementation details | Correct behavioral change fails structurally different tests |
-| Flaky tests | Agent cannot distinguish its failure from test unreliability |
-| Slow all-or-nothing suites | Agent gets no feedback during iteration (timeout or binary) |
-| No targeted test path for small changes | Agent must run entire suite, burning tokens and time |
-| Missing fail-to-pass tests | Agent has no signal for whether its patch actually fixes the issue |
-| Tests with external dependencies | Failures from network/service issues, not code issues |
+| Bad test property                       | How it confuses the agent                                          |
+| --------------------------------------- | ------------------------------------------------------------------ |
+| Hidden requirements in tests            | Agent cannot infer what the test actually checks                   |
+| Tests enforce implementation details    | Correct behavioral change fails structurally different tests       |
+| Flaky tests                             | Agent cannot distinguish its failure from test unreliability       |
+| Slow all-or-nothing suites              | Agent gets no feedback during iteration (timeout or binary)        |
+| No targeted test path for small changes | Agent must run entire suite, burning tokens and time               |
+| Missing fail-to-pass tests              | Agent has no signal for whether its patch actually fixes the issue |
+| Tests with external dependencies        | Failures from network/service issues, not code issues              |
 
 ## Inference
 
@@ -199,6 +207,7 @@ Combining evidence from multiple sources, the failure modes for agent-test inter
 ### Inference (author conclusion):
 
 Agent-friendly test suites should provide layered verification:
+
 - **Fast unit tests** for local iteration (seconds, targeted, deterministic)
 - **Behavior/regression tests** for user-visible behavior (pass-to-pass preservation)
 - **Structural tests/lints** for architecture compliance (dependency boundaries, modularity)

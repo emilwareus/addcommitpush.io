@@ -22,36 +22,127 @@ export function ReactSlide() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 w-full max-w-5xl items-start">
         {/* Loop diagram */}
         <div className="flex flex-col items-center justify-center">
-          <svg viewBox="0 0 260 230" className="w-80 h-auto" aria-label="Think Act Observe loop diagram">
+          <svg
+            viewBox="0 0 260 230"
+            className="w-80 h-auto"
+            aria-label="Think Act Observe loop diagram"
+          >
             {/* Arrows */}
             <defs>
-              <marker id="arrowPrimary" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+              <marker
+                id="arrowPrimary"
+                markerWidth="8"
+                markerHeight="6"
+                refX="8"
+                refY="3"
+                orient="auto"
+              >
                 <path d="M0,0 L8,3 L0,6" className="fill-primary" />
               </marker>
-              <marker id="arrowSecondary" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+              <marker
+                id="arrowSecondary"
+                markerWidth="8"
+                markerHeight="6"
+                refX="8"
+                refY="3"
+                orient="auto"
+              >
                 <path d="M0,0 L8,3 L0,6" className="fill-secondary" />
               </marker>
-              <marker id="arrowAccent" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+              <marker
+                id="arrowAccent"
+                markerWidth="8"
+                markerHeight="6"
+                refX="8"
+                refY="3"
+                orient="auto"
+              >
                 <path d="M0,0 L8,3 L0,6" className="fill-accent" />
               </marker>
             </defs>
 
             {/* Think -> Act */}
-            <line x1="155" y1="55" x2="220" y2="145" className="stroke-primary" strokeWidth="2" markerEnd="url(#arrowPrimary)" />
+            <line
+              x1="155"
+              y1="55"
+              x2="220"
+              y2="145"
+              className="stroke-primary"
+              strokeWidth="2"
+              markerEnd="url(#arrowPrimary)"
+            />
             {/* Act -> Observe */}
-            <line x1="200" y1="175" x2="60" y2="175" className="stroke-secondary" strokeWidth="2" markerEnd="url(#arrowSecondary)" />
+            <line
+              x1="200"
+              y1="175"
+              x2="60"
+              y2="175"
+              className="stroke-secondary"
+              strokeWidth="2"
+              markerEnd="url(#arrowSecondary)"
+            />
             {/* Observe -> Think */}
-            <line x1="45" y1="145" x2="110" y2="55" className="stroke-accent" strokeWidth="2" markerEnd="url(#arrowAccent)" />
+            <line
+              x1="45"
+              y1="145"
+              x2="110"
+              y2="55"
+              className="stroke-accent"
+              strokeWidth="2"
+              markerEnd="url(#arrowAccent)"
+            />
 
             {/* Nodes */}
-            <circle cx="130" cy="40" r="32" className="fill-primary/15 stroke-primary" strokeWidth="2" />
-            <text x="130" y="45" textAnchor="middle" className="fill-primary text-sm font-bold" fontSize="14">Think</text>
+            <circle
+              cx="130"
+              cy="40"
+              r="32"
+              className="fill-primary/15 stroke-primary"
+              strokeWidth="2"
+            />
+            <text
+              x="130"
+              y="45"
+              textAnchor="middle"
+              className="fill-primary text-sm font-bold"
+              fontSize="14"
+            >
+              Think
+            </text>
 
-            <circle cx="225" cy="170" r="32" className="fill-secondary/15 stroke-secondary" strokeWidth="2" />
-            <text x="225" y="175" textAnchor="middle" className="fill-secondary text-sm font-bold" fontSize="14">Act</text>
+            <circle
+              cx="225"
+              cy="170"
+              r="32"
+              className="fill-secondary/15 stroke-secondary"
+              strokeWidth="2"
+            />
+            <text
+              x="225"
+              y="175"
+              textAnchor="middle"
+              className="fill-secondary text-sm font-bold"
+              fontSize="14"
+            >
+              Act
+            </text>
 
-            <circle cx="35" cy="170" r="32" className="fill-accent/15 stroke-accent" strokeWidth="2" />
-            <text x="35" y="175" textAnchor="middle" className="fill-accent text-sm font-bold" fontSize="13">Observe</text>
+            <circle
+              cx="35"
+              cy="170"
+              r="32"
+              className="fill-accent/15 stroke-accent"
+              strokeWidth="2"
+            />
+            <text
+              x="35"
+              y="175"
+              textAnchor="middle"
+              className="fill-accent text-sm font-bold"
+              fontSize="13"
+            >
+              Observe
+            </text>
           </svg>
         </div>
 

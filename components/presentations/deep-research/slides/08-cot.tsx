@@ -18,7 +18,8 @@ export function CotSlide() {
           <h3 className="text-2xl font-semibold text-muted-foreground mb-5">Standard Prompt</h3>
           <div className="space-y-4 text-lg">
             <p className="text-muted-foreground italic">
-              &ldquo;Roger has 5 tennis balls. He buys 2 cans of 3. How many does he have now?&rdquo;
+              &ldquo;Roger has 5 tennis balls. He buys 2 cans of 3. How many does he have
+              now?&rdquo;
             </p>
             <div className="mt-5 pt-4 border-t border-border">
               <span className="font-mono text-muted-foreground text-xl">Answer: </span>
@@ -38,11 +39,16 @@ export function CotSlide() {
           <div className="space-y-4 text-lg">
             <p className="text-muted-foreground italic">
               &ldquo;Roger has 5 tennis balls. He buys 2 cans of 3. How many does he have now?
-              <span className="text-primary font-semibold"> Let&apos;s think step by step.&rdquo;</span>
+              <span className="text-primary font-semibold">
+                {' '}
+                Let&apos;s think step by step.&rdquo;
+              </span>
             </p>
             <div className="mt-5 pt-4 border-t border-primary/20 space-y-3">
               <p className="text-primary font-mono text-base">1. Roger starts with 5 balls</p>
-              <p className="text-primary font-mono text-base">2. 2 cans &times; 3 balls = 6 new balls</p>
+              <p className="text-primary font-mono text-base">
+                2. 2 cans &times; 3 balls = 6 new balls
+              </p>
               <p className="text-primary font-mono text-base">3. 5 + 6 = 11</p>
               <p className="font-mono font-bold text-xl mt-3">Answer: 11</p>
             </div>

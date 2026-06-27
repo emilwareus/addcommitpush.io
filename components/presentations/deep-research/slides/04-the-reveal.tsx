@@ -3,11 +3,7 @@
 import { motion } from 'framer-motion';
 import { useSlideStep } from '@/app/presentations/deep-research/layout';
 
-const problems = [
-  "Can't see each other",
-  "Can't update the plan",
-  'One shot — hope it works',
-];
+const problems = ["Can't see each other", "Can't update the plan", 'One shot — hope it works'];
 
 export function TheRevealSlide() {
   const step = useSlideStep();

@@ -56,17 +56,17 @@ Master index: `[../../presentations/write-code-ai-agents-love/research/reference
 
 These are the files that your coding agent automatically loads into context when it hits the right filepaths.
 
-I have a love hate relationship to my CLAUDE/AGENTS.md. First off, I hate that Claude Code refuse to officially support AGENTS.md. Secondly it does not follow instructions properly. But this is probably because it is very hard to verbally describe clear instructions to my agent. It works really well for things like: 
+I have a love hate relationship to my CLAUDE/AGENTS.md. First off, I hate that Claude Code refuse to officially support AGENTS.md. Secondly it does not follow instructions properly. But this is probably because it is very hard to verbally describe clear instructions to my agent. It works really well for things like:
 
-- Run make test-e2e to run all integrations tests, this properly seeds the database. 
+- Run make test-e2e to run all integrations tests, this properly seeds the database.
 - Read the architecture/good-to-know-patterns.md when reviewing.
 
-etc. Clear prompts of what commands / things to do when. But stuff I like to work better, but frankly does not: 
+etc. Clear prompts of what commands / things to do when. But stuff I like to work better, but frankly does not:
 
 - Follow the hexagonal architecture guidelines.
 - We use DDD in our codebase, make sure to define all business behavior in the domain.
 
-Writing good behavioral prompts, patterns + anti-patterns are often forgotten. Research also shows that the runtime is cut by roughly 30% and output tokens is cut by 16% ish where [AGENTS.md](http://AGENTS.md) are present. This makes sense to me, as these files can remove a bit of the "exploring" of the codebase with some initial guidance. BUT, a counter-study found that can also reduce the success rate by ~20%. But, real code is hard to measure in a controlled study, and both these studies used benchmarks that the models have potentially trained on (OSS) or synthetic codebases. So, my personal tips are: 
+Writing good behavioral prompts, patterns + anti-patterns are often forgotten. Research also shows that the runtime is cut by roughly 30% and output tokens is cut by 16% ish where [AGENTS.md](http://AGENTS.md) are present. This makes sense to me, as these files can remove a bit of the "exploring" of the codebase with some initial guidance. BUT, a counter-study found that can also reduce the success rate by ~20%. But, real code is hard to measure in a controlled study, and both these studies used benchmarks that the models have potentially trained on (OSS) or synthetic codebases. So, my personal tips are:
 
 1. These files will not fix everything, don't try to.
 2. Code is better docs than these files, write good code to learn from instead.
@@ -94,7 +94,7 @@ Writing good behavioral prompts, patterns + anti-patterns are often forgotten. R
 
 ### Layered context
 
-More context is absolutely not always better. Better context is better. Layered context or "cold loaded" context, such as skills, documentation, CLI stuff, etc., can absolutely be valuable! Especially as a codebase grows it becomes a very bad idea to shove everything into the root AGENTS.md. Letting the model choose when to read what docs, readmes, etc. have improved performance quite a bit for my. The layout I run is in the root monorepo:   
+More context is absolutely not always better. Better context is better. Layered context or "cold loaded" context, such as skills, documentation, CLI stuff, etc., can absolutely be valuable! Especially as a codebase grows it becomes a very bad idea to shove everything into the root AGENTS.md. Letting the model choose when to read what docs, readmes, etc. have improved performance quite a bit for my. The layout I run is in the root monorepo:
 
 For main architectural / cross spanning knowledge.
 
@@ -133,14 +133,14 @@ Trying to keep things pretty thin here. and IMO for the local things, the code s
 
 ### Setup commands
 
-You onboard your agent 100 times a day. Make it VERY easy. My personal favorites are: 
+You onboard your agent 100 times a day. Make it VERY easy. My personal favorites are:
 
 - Creating a new worktree spins up the dockerized service fully and seeds the database + starts web
 - make check runs ALL checks, and this makes it easy to just say "run check and iterate until all green"
-- make setup-mac/linux/server/etc. that just completely install everything to get coding working in your env. 
+- make setup-mac/linux/server/etc. that just completely install everything to get coding working in your env.
 - devcontainers have actually been useful here :)
 
-Research states "machine-checkable contracts" agents can run in a fresh environment. I agree. 
+Research states "machine-checkable contracts" agents can run in a fresh environment. I agree.
 
 **Insights:** [INSIGHT_03](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_03_reproducible_setup_is_agent_infrastructure.md) · [INSIGHT_23](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_23_setup_is_part_of_the_task.md)
 
@@ -149,7 +149,7 @@ Research states "machine-checkable contracts" agents can run in a fresh environm
 - [Beyond pip install / Installamatic](https://arxiv.org/abs/2412.06294) — `[installamatic-2412.06294.pdf](../../presentations/write-code-ai-agents-love/research/papers/installamatic-2412.06294.pdf)` · `[installamatic-2412.06294.txt](../../presentations/write-code-ai-agents-love/research/paper-text/installamatic-2412.06294.txt)`
 - [SetupBench](https://arxiv.org/abs/2507.09063) — `[setupbench-2507.09063.pdf](../../presentations/write-code-ai-agents-love/research/papers/setupbench-2507.09063.pdf)` · `[setupbench-2507.09063.txt](../../presentations/write-code-ai-agents-love/research/paper-text/setupbench-2507.09063.txt)`
 - [GitTaskBench](https://ojs.aaai.org/index.php/AAAI/article/download/40533/44494) — `[gittaskbench-aaai-2026.pdf](../../presentations/write-code-ai-agents-love/research/papers/gittaskbench-aaai-2026.pdf)` · `[gittaskbench-aaai-2026.txt](../../presentations/write-code-ai-agents-love/research/paper-text/gittaskbench-aaai-2026.txt)`
-- [SWE-bench](https://arxiv.org/abs/2310.06770) — `[swe-bench-2310.06770.pdf](../../presentations/write-code-ai-agents-love/research/papers/swe-bench-2310.06770.pdf)` · `[swe-bench-2310.06770.txt](../../presentations/write-code-ai-agents-love/research/paper-text/swe-bench-2310.06770.txt)` *(pre-baked envs; setup assumed)*
+- [SWE-bench](https://arxiv.org/abs/2310.06770) — `[swe-bench-2310.06770.pdf](../../presentations/write-code-ai-agents-love/research/papers/swe-bench-2310.06770.pdf)` · `[swe-bench-2310.06770.txt](../../presentations/write-code-ai-agents-love/research/paper-text/swe-bench-2310.06770.txt)` _(pre-baked envs; setup assumed)_
 
 **Practitioner**
 
@@ -161,7 +161,7 @@ Plot data: `[setup_verification.csv](../../presentations/write-code-ai-agents-lo
 
 ### Subagents
 
-Subagents are agents your main agent can spin up to perform work with an isolated context window. In most coding agents, it is like hiring a team of juniors, telling them to work on the same thing and **not** communicating with each other. Great! Trying to force a "human way of working" into subagents, like a designer, backend engineer, etc., is wrong in my opinion. 
+Subagents are agents your main agent can spin up to perform work with an isolated context window. In most coding agents, it is like hiring a team of juniors, telling them to work on the same thing and **not** communicating with each other. Great! Trying to force a "human way of working" into subagents, like a designer, backend engineer, etc., is wrong in my opinion.
 
 The root context window has more power than the parallelized agents, and your underlying LLM is already an "expert" in these things. Where subagents shine is in "context compression": you need to perform a context-heavy task and compress the results back to the main agent. That means searching the codebase, locating relevant files/patterns, searching the web for things with a high noise-to-signal ratio. Your main context window does not need to be filled with the steps of how it got to the result—it just needs the insight. The main window should still do the code editing IMO. There are other ways to handle retrieval, like a well-structured codebase probably has higher impact.
 
@@ -205,7 +205,7 @@ Claude delegates from `description`; Cursor via `@research-codebase` or natural 
 
 ### RepoMap / Architecture map
 
-The research here is pretty clear, if your agents understand the "Graph" of your codebase, the performance improves. Concretely, this is: who calls whom, what depends on what, what builds what, what tests leads to where, does this test branch where I want it to, and so on. Research are not as clear what to build and how to inject it into the agentic loop, and there are a few approaches. 
+The research here is pretty clear, if your agents understand the "Graph" of your codebase, the performance improves. Concretely, this is: who calls whom, what depends on what, what builds what, what tests leads to where, does this test branch where I want it to, and so on. Research are not as clear what to build and how to inject it into the agentic loop, and there are a few approaches.
 
 - Call graph slices in the prompt. Parse the repo, pull a small neighborhood around the suspect symbol. Dumping a huge subgraph hurts; query it.
 - Build/test map at session start. What builds what, what tests cover what. Extract from CMake, CTest, package files. Ground truth so the agent stops wandering build scripts.
@@ -214,7 +214,7 @@ The research here is pretty clear, if your agents understand the "Graph" of your
 
 But you are probably not building a code agent harness, you are probably build a good ol' code-thingy. So, to make this actionable: make sure your coding agent has access to the LSP/IDE-plugin. This gives some of this power to the agents, helping it navigate your codebase and sometimes powering retrieval.
 
-BUT, if you are building an agentic harness (who isn't??), the call graph slice seems to have the highest impact. Making it queryable, extracting neighborhoods that typically impact each other. I learned on my last startup that call graphs are hard to build, so I'll (probably) just keep to LSP's for now. 
+BUT, if you are building an agentic harness (who isn't??), the call graph slice seems to have the highest impact. Making it queryable, extracting neighborhoods that typically impact each other. I learned on my last startup that call graphs are hard to build, so I'll (probably) just keep to LSP's for now.
 
 **Insights:** [INSIGHT_01](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_01_context_maps.md) · [INSIGHT_21](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_21_repository_graphs_need_selective_slices.md)
 
@@ -238,9 +238,9 @@ Plot data: `[repository_graph_context.csv](../../presentations/write-code-ai-age
 
 ### Monorepo
 
-MONOREPO, you can stop reading now. That's it. 
+MONOREPO, you can stop reading now. That's it.
 
-Jokes aside, I loved monorepos before AI took my job. It just makes everything soo much easier to maintain and ship. Sure, if you are Google (which has a monorepo) this is probably hard. But for the average startup, go! And by mono I really mean MONO. Here is a quick-list of what to put in your repo: 
+Jokes aside, I loved monorepos before AI took my job. It just makes everything soo much easier to maintain and ship. Sure, if you are Google (which has a monorepo) this is probably hard. But for the average startup, go! And by mono I really mean MONO. Here is a quick-list of what to put in your repo:
 
 - Frontend
 - Backend
@@ -257,7 +257,7 @@ Jokes aside, I loved monorepos before AI took my job. It just makes everything s
 - The best place to eat ice cream in town
 - All .env secrets (encrypted + committed using SOPS)
 
-Sure, MCPs makes stuff searchable and retrievable in other systems. Have fun. Don't use a no-code-tool to build your blog, teach your marketing people how to prompt with claude code instead of ChatJippety.   
+Sure, MCPs makes stuff searchable and retrievable in other systems. Have fun. Don't use a no-code-tool to build your blog, teach your marketing people how to prompt with claude code instead of ChatJippety.
 
 Additionally, this means that you have a completely co-versioned company. Keeping things in sync becomes much easier when everything is on the same SHA.
 
@@ -273,7 +273,7 @@ Additionally, this means that you have a completely co-versioned company. Keepin
 
 ### Bounded Context / Layout
 
-There is actually not a lot of research that finds that "good architecture = good code generation". And there is also a the debate of "what is even good architecture"... but I do think there are some wins here, and it is not about the agent. As a developer working with AI generated code we need to have a mental model of the work we are doing. This mental model was something we used to build by crying over our keyboards for hours on end. But now it cry in tokens instead of tears, and the mental model of the codebase becomes harder to form. We get cognitive debt.   
+There is actually not a lot of research that finds that "good architecture = good code generation". And there is also a the debate of "what is even good architecture"... but I do think there are some wins here, and it is not about the agent. As a developer working with AI generated code we need to have a mental model of the work we are doing. This mental model was something we used to build by crying over our keyboards for hours on end. But now it cry in tokens instead of tears, and the mental model of the codebase becomes harder to form. We get cognitive debt.
 
 I think that a good bounded contexts within the codebase reduces the cognitive debt, makes it easier to grasp and understand the code, and therefore makes the developers take better decisions = better code gen in the long run. It may not improve the token shotgun today, but it improves your ability to aim it.
 
@@ -390,13 +390,11 @@ But it has to be the right example. The nearest random file is not a spec. It mi
 
 The pattern I trust is example plus contract plus check:
 
-
 | Context                    | What it gives the agent          |
 | -------------------------- | -------------------------------- |
 | Canonical example          | The local shape to copy          |
 | Contract or type           | Why that shape is valid          |
 | Test or validation command | Proof that the shape still works |
-
 
 So examples become specs when they are clear enough to copy:
 
@@ -530,13 +528,11 @@ That makes the feedback loop for agents tremendously fast. If I change something
 
 The research here is adjacent, not direct, but the failure modes line up:
 
-
 | Signal                                                                                                     | Why it matters for SDKs                                 |
 | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
 | ToolGen improved dependency coverage by 31.4-39.1% and static validity by 44.9-57.7%                       | Visible symbols reduce invented dependencies            |
 | Type-constrained code generation found about 94% of TypeScript compilation errors were type-check failures | Typed API shapes catch wrong payloads and fields        |
 | DocPrompting improved CodeT5 pass@1 by 2.85 points, a 52% relative gain                                    | API usage context helps models call unfamiliar surfaces |
-
 
 None of these papers proves generated SDKs by itself. I would state it as an inference: if API docs, valid symbols, and type facts help models avoid wrong calls, then generated clients are the practical way to put those signals directly in the repo.
 
@@ -578,10 +574,10 @@ So side effects need static handles.
 
 ```ts
 // Hard for agents: importing this file changes the application.
-import "@/billing/register-invoice-events";
+import '@/billing/register-invoice-events';
 
 // Somewhere else:
-register("invoice.paid", async payload => {
+register('invoice.paid', async (payload) => {
   const handler = handlers[payload.type];
   return handler(payload);
 });
@@ -593,7 +589,7 @@ Prefer an exported, typed manifest:
 
 ```ts
 export const invoicePaidEvent = defineEvent({
-  name: "invoice.paid",
+  name: 'invoice.paid',
   payload: InvoicePaidPayloadSchema,
 });
 
@@ -721,13 +717,13 @@ So this is agent-hostile:
 export async function enrollPupil(pupilId: string, courseId: string) {}
 
 // db/schema.ts
-export const learnerEnrollments = table("learner_enrollments", {});
+export const learnerEnrollments = table('learner_enrollments', {});
 
 // tests/course-membership.test.ts
-it("adds a member to a course", async () => {});
+it('adds a member to a course', async () => {});
 
 // events.ts
-export const participantJoinedCourse = "participant.joined_course";
+export const participantJoinedCourse = 'participant.joined_course';
 ```
 
 Prefer this:
@@ -737,13 +733,13 @@ Prefer this:
 export async function enrollStudent(studentId: string, courseId: string) {}
 
 // db/schema.ts
-export const studentEnrollments = table("student_enrollments", {});
+export const studentEnrollments = table('student_enrollments', {});
 
 // tests/student-enrollment.test.ts
-it("enrolls a student in a course", async () => {});
+it('enrolls a student in a course', async () => {});
 
 // events.ts
-export const studentEnrolledInCourse = "student.enrolled_in_course";
+export const studentEnrolledInCourse = 'student.enrolled_in_course';
 ```
 
 Now search, tests, types, and events all point at `student`. The agent does not have to decide whether `participant` means `student` or a different role.
@@ -788,14 +784,14 @@ That is much easier for an agent to fix than a paragraph in `AGENTS.md`.
 
 The enforcement I would start with:
 
-| Enforcement | Why it helps agents |
-| --- | --- |
-| Routes cannot import ORM/database packages | Keeps the edit inside the application boundary instead of patching persistence from the edge. |
-| Feature code cannot call raw HTTP when a generated SDK exists | Prevents hallucinated endpoints and stringly typed service calls. |
-| Generated SDK files cannot be edited by hand | Forces the agent back to the OpenAPI/schema source. |
-| E2E tests cannot use sleep-based waits | Turns flaky verification into event-based verification. |
-| Cross-context imports are denied except through approved boundaries | Stops a local fix from creating a hidden architecture dependency. |
-| Config code cannot silently fall back to defaults in production paths | Makes setup failures loud instead of mysterious. |
+| Enforcement                                                           | Why it helps agents                                                                           |
+| --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Routes cannot import ORM/database packages                            | Keeps the edit inside the application boundary instead of patching persistence from the edge. |
+| Feature code cannot call raw HTTP when a generated SDK exists         | Prevents hallucinated endpoints and stringly typed service calls.                             |
+| Generated SDK files cannot be edited by hand                          | Forces the agent back to the OpenAPI/schema source.                                           |
+| E2E tests cannot use sleep-based waits                                | Turns flaky verification into event-based verification.                                       |
+| Cross-context imports are denied except through approved boundaries   | Stops a local fix from creating a hidden architecture dependency.                             |
+| Config code cannot silently fall back to defaults in production paths | Makes setup failures loud instead of mysterious.                                              |
 
 This is the right level for `polint`: mechanical, repo-specific checks that normal linters do not know. "Write clean code" is a bad rule. "Do not import `database/sql` from `*/ports/http.go`" is a good one. The best rules are boring enough that a reviewer should not have to explain them twice.
 

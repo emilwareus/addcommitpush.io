@@ -5,16 +5,16 @@ and intended to become a future blog article and/or richer presentation sections
 
 ## Current Insight Map
 
-| Insight | Main claim | Plot/table data |
-|---|---|---|
-| `INSIGHT_01_latency_budget_is_the_product.md` | A real-time voice agent is judged by the delay between user intent and audible agent behavior, not by any single model benchmark. | `data/turn_detection.csv`, `data/stt_models.csv`, `data/tts_models.csv` |
-| `INSIGHT_02_endpointing_is_turn_taking.md` | VAD detects speech; endpointing decides when the agent is allowed to talk; production systems increasingly add semantic EOU models. | `data/turn_detection.csv` |
-| `INSIGHT_03_streaming_stt_is_not_batch_stt.md` | WER is necessary but insufficient; voice agents need end-of-turn latency, TTFT, partial stability, entity accuracy, and tails. | `data/stt_models.csv` |
-| `INSIGHT_04_tts_latency_is_architecture.md` | TTS quality metrics miss the agent problem; TTFA, RTF headroom, streaming shape, and interruption behavior matter more. | `data/tts_models.csv` |
-| `INSIGHT_05_transport_is_media_correctness.md` | WebRTC wins for browser/mobile voice because it solves media behavior, not because it is always lower latency. | `data/transport_tradeoffs.csv` |
-| `INSIGHT_06_barge_in_is_the_real_system_test.md` | A voice agent is not conversational until it can hear true interruptions, stop itself cleanly, and keep state coherent. | `data/turn_detection.csv`, `data/transport_tradeoffs.csv` |
-| `INSIGHT_07_native_speech_models_change_the_boundary.md` | Native speech-to-speech models attack the cascade itself, but cascaded systems remain easier to debug, evaluate, and control. | `data/native_speech_models.csv` |
-| `INSIGHT_08_voice_agent_eval_needs_multiple_metrics.md` | Voice-agent evaluation needs a harness across speech accuracy, turn-taking, latency tails, barge-in, transport, cost, and downstream task success. | All CSVs |
+| Insight                                                  | Main claim                                                                                                                                         | Plot/table data                                                         |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `INSIGHT_01_latency_budget_is_the_product.md`            | A real-time voice agent is judged by the delay between user intent and audible agent behavior, not by any single model benchmark.                  | `data/turn_detection.csv`, `data/stt_models.csv`, `data/tts_models.csv` |
+| `INSIGHT_02_endpointing_is_turn_taking.md`               | VAD detects speech; endpointing decides when the agent is allowed to talk; production systems increasingly add semantic EOU models.                | `data/turn_detection.csv`                                               |
+| `INSIGHT_03_streaming_stt_is_not_batch_stt.md`           | WER is necessary but insufficient; voice agents need end-of-turn latency, TTFT, partial stability, entity accuracy, and tails.                     | `data/stt_models.csv`                                                   |
+| `INSIGHT_04_tts_latency_is_architecture.md`              | TTS quality metrics miss the agent problem; TTFA, RTF headroom, streaming shape, and interruption behavior matter more.                            | `data/tts_models.csv`                                                   |
+| `INSIGHT_05_transport_is_media_correctness.md`           | WebRTC wins for browser/mobile voice because it solves media behavior, not because it is always lower latency.                                     | `data/transport_tradeoffs.csv`                                          |
+| `INSIGHT_06_barge_in_is_the_real_system_test.md`         | A voice agent is not conversational until it can hear true interruptions, stop itself cleanly, and keep state coherent.                            | `data/turn_detection.csv`, `data/transport_tradeoffs.csv`               |
+| `INSIGHT_07_native_speech_models_change_the_boundary.md` | Native speech-to-speech models attack the cascade itself, but cascaded systems remain easier to debug, evaluate, and control.                      | `data/native_speech_models.csv`                                         |
+| `INSIGHT_08_voice_agent_eval_needs_multiple_metrics.md`  | Voice-agent evaluation needs a harness across speech accuracy, turn-taking, latency tails, barge-in, transport, cost, and downstream task success. | All CSVs                                                                |
 
 ## High-Level Findings
 

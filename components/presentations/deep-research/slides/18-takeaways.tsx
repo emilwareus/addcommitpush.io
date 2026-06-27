@@ -3,11 +3,24 @@
 import { motion } from 'framer-motion';
 
 const takeaways = [
-  { title: 'Start with a draft', description: 'Even rough \u2014 reveals gaps faster than blank page' },
-  { title: 'Completion = evidence, not aesthetics', description: 'Stop when queries yield no new facts' },
+  {
+    title: 'Start with a draft',
+    description: 'Even rough \u2014 reveals gaps faster than blank page',
+  },
+  {
+    title: 'Completion = evidence, not aesthetics',
+    description: 'Stop when queries yield no new facts',
+  },
   { title: 'Information first, generation second', description: "Don't polish hallucinations" },
-  { title: 'Isolate sub-agent contexts', description: 'Context Engineering is key! Make sure that only high signal content make it to the main agent loop.' },
-  { title: 'Read the reports and verify references', description: 'Your human judgement > LLM as a judge/metrics.' },
+  {
+    title: 'Isolate sub-agent contexts',
+    description:
+      'Context Engineering is key! Make sure that only high signal content make it to the main agent loop.',
+  },
+  {
+    title: 'Read the reports and verify references',
+    description: 'Your human judgement > LLM as a judge/metrics.',
+  },
 ];
 
 export function TakeawaysSlide() {

@@ -12,15 +12,15 @@ protocol.
 
 ## Source map
 
-| Ref | Source | Local text | Role in this insight |
-|---|---|---|---|
-| R43 | Type-Constrained Code Generation | `paper-text/type-constrained-codegen-2504.09246.txt` | Type diagnostics attack the dominant generated TypeScript compile-error class. |
-| R51 | ToolGen | `paper-text/toolgen-autocomplete-repo-codegen-2401.06391.txt` | Shows static/autocomplete-like symbol tools reduce dependency and validity errors. |
-| R64 | A3-CodGen | `paper-text/a3-codgen-2312.05772.txt` | Shows curated API candidates help; too much context can hurt. |
-| D12 | Windsurf Cascade docs | `articles/windsurf-cascade-docs.html` | Practitioner signal: coding agents integrate editor/linter feedback into checkpoints. |
-| D31 | polint README | `articles/polint-readme.md` | Local static-analysis framework with JSON/SARIF output and deterministic diagnostics. |
-| D32 | polint Agent Playbook | `articles/polint-agent-playbook.md` | Explicit agent loop around JSON diagnostics, focused rules, baselines, and ignores. |
-| D33 | polint ignore comments | `articles/polint-ignore-comments.md` | Suppression state as inspectable debt rather than invisible local exception. |
+| Ref | Source                           | Local text                                                    | Role in this insight                                                                  |
+| --- | -------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| R43 | Type-Constrained Code Generation | `paper-text/type-constrained-codegen-2504.09246.txt`          | Type diagnostics attack the dominant generated TypeScript compile-error class.        |
+| R51 | ToolGen                          | `paper-text/toolgen-autocomplete-repo-codegen-2401.06391.txt` | Shows static/autocomplete-like symbol tools reduce dependency and validity errors.    |
+| R64 | A3-CodGen                        | `paper-text/a3-codgen-2312.05772.txt`                         | Shows curated API candidates help; too much context can hurt.                         |
+| D12 | Windsurf Cascade docs            | `articles/windsurf-cascade-docs.html`                         | Practitioner signal: coding agents integrate editor/linter feedback into checkpoints. |
+| D31 | polint README                    | `articles/polint-readme.md`                                   | Local static-analysis framework with JSON/SARIF output and deterministic diagnostics. |
+| D32 | polint Agent Playbook            | `articles/polint-agent-playbook.md`                           | Explicit agent loop around JSON diagnostics, focused rules, baselines, and ignores.   |
+| D33 | polint ignore comments           | `articles/polint-ignore-comments.md`                          | Suppression state as inspectable debt rather than invisible local exception.          |
 
 ## The diagnostic is a more precise prompt
 
@@ -70,17 +70,17 @@ the point of need.
 
 ### ToolGen data copied from the paper
 
-| Measurement | Improvement range |
-|---|---:|
-| Dependency Coverage | +31.4% to +39.1% |
-| Static Validity Rate | +44.9% to +57.7% |
-| Dependency-only validity | +56.8% to +67.7% |
+| Measurement              | Improvement range |
+| ------------------------ | ----------------: |
+| Dependency Coverage      |  +31.4% to +39.1% |
+| Static Validity Rate     |  +44.9% to +57.7% |
+| Dependency-only validity |  +56.8% to +67.7% |
 
 | Model on CoderEval | Average tool triggers per task |
-|---|---:|
-| CodeGPT | 5.02 |
-| CodeT5 | 6.24 |
-| CodeLlama | 7.05 |
+| ------------------ | -----------------------------: |
+| CodeGPT            |                           5.02 |
+| CodeT5             |                           6.24 |
+| CodeLlama          |                           7.05 |
 
 Source trace: R51, `paper-text/toolgen-autocomplete-repo-codegen-2401.06391.txt`.
 
@@ -98,17 +98,17 @@ errors dominate.
 
 ### Type-Constrained Code Generation data copied from the paper
 
-| Measurement | Value |
-|---|---:|
-| Type-check errors among generated TypeScript compile errors | 94% |
-| Syntax errors among generated TypeScript compile errors | 6% |
-| Compile-error reduction on HumanEval synthesis | 74.8% |
-| Compile-error reduction on MBPP synthesis | 56.0% |
-| Syntax-only ideal improvement on HumanEval synthesis | 9.0% |
-| Syntax-only ideal improvement on MBPP synthesis | 4.8% |
-| Average pass@1 relative gain, synthesis | +3.5% |
-| Average pass@1 relative gain, translation | +5.0% |
-| Average pass@1 relative gain, repair | +37.0% |
+| Measurement                                                 |  Value |
+| ----------------------------------------------------------- | -----: |
+| Type-check errors among generated TypeScript compile errors |    94% |
+| Syntax errors among generated TypeScript compile errors     |     6% |
+| Compile-error reduction on HumanEval synthesis              |  74.8% |
+| Compile-error reduction on MBPP synthesis                   |  56.0% |
+| Syntax-only ideal improvement on HumanEval synthesis        |   9.0% |
+| Syntax-only ideal improvement on MBPP synthesis             |   4.8% |
+| Average pass@1 relative gain, synthesis                     |  +3.5% |
+| Average pass@1 relative gain, translation                   |  +5.0% |
+| Average pass@1 relative gain, repair                        | +37.0% |
 
 Source trace: R43, `paper-text/type-constrained-codegen-2504.09246.txt`.
 
@@ -131,16 +131,16 @@ For humans, a lint message can often be short because the reader already knows
 the local convention. Agents need more context. A good agent-facing diagnostic
 should include:
 
-| Field | Why the agent needs it |
-|---|---|
-| Stable rule ID | Allows focused reruns, filtering, baselines, and memory. |
-| File and span | Prevents broad search and accidental unrelated edits. |
-| Found evidence | Shows what the rule matched. |
-| Expected surface | Points at the approved import, API, type, or command. |
-| Related files | Links schema, generated client, owner doc, or example. |
-| Precision tier | Distinguishes exact facts from heuristics. |
-| Suppression state | Makes ignores visible debt, not hidden exceptions. |
-| Machine format | Lets agents parse without scraping terminal prose. |
+| Field             | Why the agent needs it                                   |
+| ----------------- | -------------------------------------------------------- |
+| Stable rule ID    | Allows focused reruns, filtering, baselines, and memory. |
+| File and span     | Prevents broad search and accidental unrelated edits.    |
+| Found evidence    | Shows what the rule matched.                             |
+| Expected surface  | Points at the approved import, API, type, or command.    |
+| Related files     | Links schema, generated client, owner doc, or example.   |
+| Precision tier    | Distinguishes exact facts from heuristics.               |
+| Suppression state | Makes ignores visible debt, not hidden exceptions.       |
+| Machine format    | Lets agents parse without scraping terminal prose.       |
 
 This is where JSON and SARIF matter. They are not merely integrations for CI.
 They are the machine-readable version of architectural feedback.
@@ -153,19 +153,19 @@ that more global candidates can worsen F1.
 
 ### A3-CodGen data copied from the paper
 
-| Global retrieval setting | F1 | Accuracy | Avg retrieved functions |
-|---|---:|---:|---:|
-| k=5 | 0.601 | 0.851 | 8.154 |
-| k=10 | 0.526 | not copied here | more context, worse F1 |
-| k=15 | 0.479 | not copied here | more context, worse F1 |
+| Global retrieval setting |    F1 |        Accuracy | Avg retrieved functions |
+| ------------------------ | ----: | --------------: | ----------------------: |
+| k=5                      | 0.601 |           0.851 |                   8.154 |
+| k=10                     | 0.526 | not copied here |  more context, worse F1 |
+| k=15                     | 0.479 | not copied here |  more context, worse F1 |
 
 | Installed-library-aware knowledge | Improvement |
-|---|---:|
-| Precision | +30.59% |
-| Recall | +36.36% |
-| F1 | +34.33% |
-| Accuracy | +15.38% |
-| Library coverage | +7.43% |
+| --------------------------------- | ----------: |
+| Precision                         |     +30.59% |
+| Recall                            |     +36.36% |
+| F1                                |     +34.33% |
+| Accuracy                          |     +15.38% |
+| Library coverage                  |      +7.43% |
 
 Source trace: R64, `paper-text/a3-codgen-2312.05772.txt`.
 

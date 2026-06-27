@@ -24,6 +24,7 @@ The comprehensive benchmark for evaluating Deep Research Agents.
 ### Evaluation Dimensions
 
 Two primary frameworks:
+
 1. **RACE** - Report quality evaluation
 2. **FACT** - Citation quality evaluation
 
@@ -38,6 +39,7 @@ RACE evaluates the quality of generated research reports through four dimensions
 **Definition:** Coverage breadth and depth of the research topic
 
 **Measures:**
+
 - Did the report address all aspects of the research question?
 - Are there significant gaps in coverage?
 - Is the depth of analysis appropriate?
@@ -49,6 +51,7 @@ RACE evaluates the quality of generated research reports through four dimensions
 **Definition:** Quality, originality, logic, and value of analysis
 
 **Criteria:**
+
 - Does the report provide novel insights?
 - Is the reasoning logical and well-structured?
 - Does it go beyond surface-level information?
@@ -60,6 +63,7 @@ RACE evaluates the quality of generated research reports through four dimensions
 **Definition:** Adherence to task requirements and constraints
 
 **Measures:**
+
 - Did the report follow the specific instructions given?
 - Are formatting requirements met?
 - Are scope constraints respected?
@@ -69,6 +73,7 @@ RACE evaluates the quality of generated research reports through four dimensions
 **Definition:** Clarity of structure, fluency, and ease of understanding
 
 **Measures:**
+
 - Is the report well-organized?
 - Is the language clear and professional?
 - Is it easy to navigate and understand?
@@ -91,10 +96,12 @@ FACT evaluates information retrieval and grounding capabilities:
 ### Metrics
 
 #### Citation Accuracy
+
 - **Definition:** Percentage of citations correctly supported by their sources
 - **Formula:** (Verified Citations / Total Citations) × 100
 
 #### Effective Citations
+
 - **Definition:** Average number of verified citations per task
 - **Importance:** Measures both quantity and quality of sourcing
 
@@ -105,20 +112,21 @@ FACT evaluates information retrieval and grounding capabilities:
 ### Google TTD-DR (Diffusion) vs Others
 
 **Performance against OpenAI Deep Research:**
+
 - **Win Rate:** 74.5%
 - **Dataset 1:** +7.7% improvement
 - **Dataset 2:** +1.7% improvement
 
 ### Why Diffusion Outperforms
 
-| Factor | Explanation | Metric Impact |
-|--------|-------------|---------------|
-| Iterative refinement | Catches gaps through multiple passes | Higher Comprehensiveness |
-| Parallel execution | Diverse perspectives gathered efficiently | Better Coverage |
-| Explicit completion criteria | Based on findings, not appearance | Validated Comprehensiveness |
-| Self-balancing | Adapts iterations to complexity | Right-sized research |
-| Draft as context anchor | Persistent verified context | Higher Readability |
-| Quality rules in final generation | Systematic application | Higher Insight |
+| Factor                            | Explanation                               | Metric Impact               |
+| --------------------------------- | ----------------------------------------- | --------------------------- |
+| Iterative refinement              | Catches gaps through multiple passes      | Higher Comprehensiveness    |
+| Parallel execution                | Diverse perspectives gathered efficiently | Better Coverage             |
+| Explicit completion criteria      | Based on findings, not appearance         | Validated Comprehensiveness |
+| Self-balancing                    | Adapts iterations to complexity           | Right-sized research        |
+| Draft as context anchor           | Persistent verified context               | Higher Readability          |
+| Quality rules in final generation | Systematic application                    | Higher Insight              |
 
 ---
 
@@ -126,20 +134,20 @@ FACT evaluates information retrieval and grounding capabilities:
 
 ### Typical Metrics
 
-| System | Report Time | Cost | Special Features |
-|--------|-------------|------|------------------|
-| GPT Researcher | ~3 min | ~$0.005 | 5-6 page reports |
-| Perplexity DR | 2-4 min | Pro subscription | TTC architecture |
-| OpenAI DR | 5-10 min | Pro/Plus subscription | Commercial grade |
-| Diffusion (Go impl) | 5-15 min | ~$0.05-0.10 | Configurable iterations |
+| System              | Report Time | Cost                  | Special Features        |
+| ------------------- | ----------- | --------------------- | ----------------------- |
+| GPT Researcher      | ~3 min      | ~$0.005               | 5-6 page reports        |
+| Perplexity DR       | 2-4 min     | Pro subscription      | TTC architecture        |
+| OpenAI DR           | 5-10 min    | Pro/Plus subscription | Commercial grade        |
+| Diffusion (Go impl) | 5-15 min    | ~$0.05-0.10           | Configurable iterations |
 
 ### Iteration Scaling
 
-| Complexity | Typical Iterations | Sub-agents | Time |
-|------------|-------------------|------------|------|
-| Simple | 2-3 | 1-2 | 2-5 min |
-| Moderate | 5-8 | 2-3 | 5-10 min |
-| Complex | 10-15 | 3 | 10-15 min |
+| Complexity | Typical Iterations | Sub-agents | Time      |
+| ---------- | ------------------ | ---------- | --------- |
+| Simple     | 2-3                | 1-2        | 2-5 min   |
+| Moderate   | 5-8                | 2-3        | 5-10 min  |
+| Complex    | 10-15              | 3          | 10-15 min |
 
 ---
 
@@ -147,16 +155,17 @@ FACT evaluates information retrieval and grounding capabilities:
 
 ### Overall Performance
 
-| Metric | Score |
-|--------|-------|
+| Metric                   | Score |
+| ------------------------ | ----- |
 | Average Test Performance | 83.39 |
-| Level 1 | 93.55 |
-| Level 2 | 83.02 |
-| Level 3 | 65.31 |
+| Level 1                  | 93.55 |
+| Level 2                  | 83.02 |
+| Level 3                  | 65.31 |
 
 ### Benchmark Comparison
 
 Outperforms on:
+
 - **SimpleQA** - Simple question answering
 - **GAIA** - General AI Assistants
 - **HLE** - High-Level Evaluation
@@ -168,6 +177,7 @@ Outperforms on:
 ### From Original Paper
 
 **vs Outline-Driven Baselines:**
+
 - **Organization:** +25% improvement
 - **Coverage:** +10% improvement
 
@@ -211,21 +221,27 @@ Outperforms on:
 For the presentation demo, prepare these test scenarios:
 
 ### Simple Query (2-3 iterations expected)
+
 ```
 What is the ReAct agent pattern?
 ```
+
 Expected: Quick answer, 1-2 sources, ~2 min
 
 ### Moderate Query (5-8 iterations expected)
+
 ```
 Compare STORM and Diffusion research architectures
 ```
+
 Expected: Structured comparison, 5-10 sources, ~5 min
 
 ### Complex Query (10+ iterations expected)
+
 ```
 What are the security implications of WebAssembly for sandboxed execution in cloud environments?
 ```
+
 Expected: Deep analysis, 10+ sources, ~10 min
 
 ---

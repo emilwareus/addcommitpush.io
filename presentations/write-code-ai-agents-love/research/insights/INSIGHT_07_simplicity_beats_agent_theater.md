@@ -12,13 +12,13 @@ reproducible setup. Only after those are clean does orchestration complexity pay
 
 ## Source map
 
-| Ref | Source | Local text | Role in this insight |
-|---|---|---|---|
-| R23 | Agentless | `paper-text/agentless-2407.01489.txt` | Direct evidence: simple localize-repair-validate beats complex agents on SWE-bench Lite. |
-| R10 | ContextBench | `paper-text/contextbench-2602.05892.txt` | Shows sophisticated scaffolding yields only marginal gains in context retrieval. |
-| R25 | SWE-Search | `paper-text/swe-search-iclr-2025.txt` | MCTS-based search improves performance, but still depends on repository navigation and feedback. |
-| R24 | AutoCodeRover | `paper-text/autocoderover-2404.05427.txt` | AST-based code search improves localization, but the improvement comes from structure visibility, not orchestration complexity. |
-| R18 | Evaluating AGENTS.md | `paper-text/evaluating-agents-md-2602.11988.txt` | Context files can reduce success rates and increase cost when they add noise -- more context is not always better. |
+| Ref | Source               | Local text                                       | Role in this insight                                                                                                            |
+| --- | -------------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| R23 | Agentless            | `paper-text/agentless-2407.01489.txt`            | Direct evidence: simple localize-repair-validate beats complex agents on SWE-bench Lite.                                        |
+| R10 | ContextBench         | `paper-text/contextbench-2602.05892.txt`         | Shows sophisticated scaffolding yields only marginal gains in context retrieval.                                                |
+| R25 | SWE-Search           | `paper-text/swe-search-iclr-2025.txt`            | MCTS-based search improves performance, but still depends on repository navigation and feedback.                                |
+| R24 | AutoCodeRover        | `paper-text/autocoderover-2404.05427.txt`        | AST-based code search improves localization, but the improvement comes from structure visibility, not orchestration complexity. |
+| R18 | Evaluating AGENTS.md | `paper-text/evaluating-agents-md-2602.11988.txt` | Context files can reduce success rates and increase cost when they add noise -- more context is not always better.              |
 
 ## Agentless: the strongest simplicity evidence
 
@@ -31,14 +31,14 @@ autonomous decision-making, no tool use during execution, and no iterative feedb
 
 ### Agentless data
 
-| Measurement | Value | Context |
-|---|---:|---|
-| SWE-bench Lite performance | 32.00% | 96 correct fixes out of 300 |
-| Cost per issue | $0.70 | Average |
-| Ranking | Highest among all open-source agents | At time of publication |
-| OpenAI adoption | Used as go-to approach | For showcasing GPT-4o and o1 coding performance |
-| Agent turns required | 0 | No iterative agent loop |
-| Tool complexity | None | No file editing tools, no shell, no search APIs |
+| Measurement                |                                Value | Context                                         |
+| -------------------------- | -----------------------------------: | ----------------------------------------------- |
+| SWE-bench Lite performance |                               32.00% | 96 correct fixes out of 300                     |
+| Cost per issue             |                                $0.70 | Average                                         |
+| Ranking                    | Highest among all open-source agents | At time of publication                          |
+| OpenAI adoption            |               Used as go-to approach | For showcasing GPT-4o and o1 coding performance |
+| Agent turns required       |                                    0 | No iterative agent loop                         |
+| Tool complexity            |                                 None | No file editing tools, no shell, no search APIs |
 
 Source trace: R23, `paper-text/agentless-2407.01489.txt`.
 
@@ -65,12 +65,12 @@ scaffolding yields only marginal gains in context retrieval."
 
 ### ContextBench scaffolding comparison
 
-| Agent type | Retrieval behavior | Implication |
-|---|---|---|
-| Simple baseline (mini-SWE-agent) | Comparable context retrieval to complex agents | Complex scaffolding does not reliably improve what gets retrieved |
-| Complex agents (OpenHands, Prometheus) | More actions, more tokens, similar recall | Extra orchestration mainly increases cost |
-| All evaluated LLMs | Favor recall over precision | Broad retrieval introduces noise regardless of scaffold |
-| Balanced retrieval agents | Higher Pass@1 at lower cost | Restraint outperforms thoroughness |
+| Agent type                             | Retrieval behavior                             | Implication                                                       |
+| -------------------------------------- | ---------------------------------------------- | ----------------------------------------------------------------- |
+| Simple baseline (mini-SWE-agent)       | Comparable context retrieval to complex agents | Complex scaffolding does not reliably improve what gets retrieved |
+| Complex agents (OpenHands, Prometheus) | More actions, more tokens, similar recall      | Extra orchestration mainly increases cost                         |
+| All evaluated LLMs                     | Favor recall over precision                    | Broad retrieval introduces noise regardless of scaffold           |
+| Balanced retrieval agents              | Higher Pass@1 at lower cost                    | Restraint outperforms thoroughness                                |
 
 Source trace: R10, `paper-text/contextbench-2602.05892.txt`.
 
@@ -89,13 +89,13 @@ improvement over standard open-source agents across five models.
 
 ### SWE-Search data
 
-| Measurement | Value | Context |
-|---|---:|---|
-| Relative improvement over standard agents | 23% | Across 5 models on SWE-bench Lite |
-| Search mechanism | MCTS with value function | Balances exploration and exploitation |
-| Value estimation | LLM-based, both numerical and qualitative | Self-feedback loops |
-| Final decision | Multi-agent debate (Discriminator Agent) | Collaborative decision-making |
-| Key dependency | Repository navigation and feedback | Agent must observe signals to improve |
+| Measurement                               |                                     Value | Context                               |
+| ----------------------------------------- | ----------------------------------------: | ------------------------------------- |
+| Relative improvement over standard agents |                                       23% | Across 5 models on SWE-bench Lite     |
+| Search mechanism                          |                  MCTS with value function | Balances exploration and exploitation |
+| Value estimation                          | LLM-based, both numerical and qualitative | Self-feedback loops                   |
+| Final decision                            |  Multi-agent debate (Discriminator Agent) | Collaborative decision-making         |
+| Key dependency                            |        Repository navigation and feedback | Agent must observe signals to improve |
 
 Source trace: R25, `paper-text/swe-search-iclr-2025.txt`.
 
@@ -119,13 +119,13 @@ treating the project as a collection of files. It achieves 19% on SWE-bench Lite
 
 ### AutoCodeRover data
 
-| Measurement | Value | Context |
-|---|---:|---|
-| SWE-bench Lite performance | 19% | 57 correct fixes, pass@1 |
-| Average time per issue | ~4 minutes | vs. developer average of 2.68 days |
-| Average cost per issue | $0.43 | USD |
-| Code search APIs | AST-based | search_method_in_file, search_class, etc. |
-| Fault localization | Spectrum-based (SBFL) | Uses test suite coverage data |
+| Measurement                |                 Value | Context                                   |
+| -------------------------- | --------------------: | ----------------------------------------- |
+| SWE-bench Lite performance |                   19% | 57 correct fixes, pass@1                  |
+| Average time per issue     |            ~4 minutes | vs. developer average of 2.68 days        |
+| Average cost per issue     |                 $0.43 | USD                                       |
+| Code search APIs           |             AST-based | search_method_in_file, search_class, etc. |
+| Fault localization         | Spectrum-based (SBFL) | Uses test suite coverage data             |
 
 Source trace: R24, `paper-text/autocoderover-2404.05427.txt`.
 
@@ -146,13 +146,13 @@ cost.
 
 ### Evaluating AGENTS.md data
 
-| Measurement | Value | Context |
-|---|---:|---|
-| Benchmark tasks (AgentBench) | 138 | From 12 niche repositories with developer-written context files |
-| Effect on task success | Tends to reduce | vs. no context file |
-| Effect on cost | Increases by over 20% | More inference tokens |
-| Behavioral change | Broader exploration (more testing, more file traversal) | Agents respect instructions even when unhelpful |
-| Root cause | Unnecessary requirements make tasks harder | Context files add constraints agents try to satisfy |
+| Measurement                  |                                                   Value | Context                                                         |
+| ---------------------------- | ------------------------------------------------------: | --------------------------------------------------------------- |
+| Benchmark tasks (AgentBench) |                                                     138 | From 12 niche repositories with developer-written context files |
+| Effect on task success       |                                         Tends to reduce | vs. no context file                                             |
+| Effect on cost               |                                   Increases by over 20% | More inference tokens                                           |
+| Behavioral change            | Broader exploration (more testing, more file traversal) | Agents respect instructions even when unhelpful                 |
+| Root cause                   |              Unnecessary requirements make tasks harder | Context files add constraints agents try to satisfy             |
 
 Source trace: R18, `paper-text/evaluating-agents-md-2602.11988.txt`.
 
@@ -203,14 +203,14 @@ should describe only minimal requirements." Brevity and precision outperform tho
 
 ## Codebase design implications
 
-| Agent theater pattern | Simple alternative | Why it works better |
-|---|---|---|
-| Multi-agent debate over architecture | Clear module boundaries in code | Agents can localize without debating |
-| Complex retrieval pipelines | Predictable file naming and structure | Simple search finds what it needs |
-| Elaborate context injection | Minimal AGENTS.md with exact commands | Less noise, fewer unnecessary constraints |
-| Test-generation agents | Pre-existing targeted tests | Deterministic feedback without inference cost |
-| Orchestration frameworks | Single deterministic validation command | `pnpm lint && pnpm test` is cheaper than a framework |
-| RAG over documentation | Types and interfaces at boundaries | Types ARE the documentation, no retrieval needed |
+| Agent theater pattern                | Simple alternative                      | Why it works better                                  |
+| ------------------------------------ | --------------------------------------- | ---------------------------------------------------- |
+| Multi-agent debate over architecture | Clear module boundaries in code         | Agents can localize without debating                 |
+| Complex retrieval pipelines          | Predictable file naming and structure   | Simple search finds what it needs                    |
+| Elaborate context injection          | Minimal AGENTS.md with exact commands   | Less noise, fewer unnecessary constraints            |
+| Test-generation agents               | Pre-existing targeted tests             | Deterministic feedback without inference cost        |
+| Orchestration frameworks             | Single deterministic validation command | `pnpm lint && pnpm test` is cheaper than a framework |
+| RAG over documentation               | Types and interfaces at boundaries      | Types ARE the documentation, no retrieval needed     |
 
 ## Blog visual candidates
 

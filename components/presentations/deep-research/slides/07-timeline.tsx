@@ -4,13 +4,38 @@ import { motion } from 'framer-motion';
 import { useSlideStep } from '@/app/presentations/deep-research/layout';
 
 const entries = [
-  { date: 'Jan 2022', label: 'Chain-of-Thought', star: true, url: 'https://arxiv.org/abs/2201.11903' },
+  {
+    date: 'Jan 2022',
+    label: 'Chain-of-Thought',
+    star: true,
+    url: 'https://arxiv.org/abs/2201.11903',
+  },
   { date: 'Oct 2022', label: 'ReAct', star: true, url: 'https://arxiv.org/abs/2210.03629' },
-  { date: 'Jul 2023', label: 'GPT Researcher', star: false, url: 'https://github.com/assafelovic/gpt-researcher' },
+  {
+    date: 'Jul 2023',
+    label: 'GPT Researcher',
+    star: false,
+    url: 'https://github.com/assafelovic/gpt-researcher',
+  },
   { date: 'Feb 2024', label: 'STORM', star: true, url: 'https://github.com/stanford-oval/storm' },
-  { date: 'Feb 2025', label: 'OpenAI Deep Research', star: false, url: 'https://openai.com/index/introducing-deep-research/' },
-  { date: 'Mar 2025', label: 'Perplexity Deep Research', star: false, url: 'https://www.perplexity.ai/hub/blog/introducing-perplexity-deep-research' },
-  { date: 'Jul 2025', label: 'Diffusion Deep Research', star: true, url: 'https://arxiv.org/abs/2502.12018' },
+  {
+    date: 'Feb 2025',
+    label: 'OpenAI Deep Research',
+    star: false,
+    url: 'https://openai.com/index/introducing-deep-research/',
+  },
+  {
+    date: 'Mar 2025',
+    label: 'Perplexity Deep Research',
+    star: false,
+    url: 'https://www.perplexity.ai/hub/blog/introducing-perplexity-deep-research',
+  },
+  {
+    date: 'Jul 2025',
+    label: 'Diffusion Deep Research',
+    star: true,
+    url: 'https://arxiv.org/abs/2502.12018',
+  },
 ];
 
 export function TimelineSlide() {
@@ -18,7 +43,9 @@ export function TimelineSlide() {
 
   return (
     <div className="flex flex-col items-center justify-center h-full w-full max-w-5xl mx-auto px-8">
-      <h2 className="text-4xl md:text-5xl font-bold mb-16 text-primary">The Evolution of Research Agents</h2>
+      <h2 className="text-4xl md:text-5xl font-bold mb-16 text-primary">
+        The Evolution of Research Agents
+      </h2>
 
       <div className="relative w-full max-w-4xl">
         {/* Timeline line — vertically centered on the dots (dot is h-4 = 16px, center at 8px) */}
@@ -41,9 +68,7 @@ export function TimelineSlide() {
                 }`}
                 style={entry.star ? { boxShadow: '0 0 8px var(--primary)' } : undefined}
               />
-              <span className="text-sm font-mono text-muted-foreground mb-1">
-                {entry.date}
-              </span>
+              <span className="text-sm font-mono text-muted-foreground mb-1">{entry.date}</span>
               <a
                 href={entry.url}
                 target="_blank"

@@ -59,10 +59,7 @@ class AudioCaptureProcessor extends AudioWorkletProcessor {
         output[i] = Math.max(-32768, Math.min(32767, Math.round(sample * 32767)));
       }
 
-      this.port.postMessage(
-        { type: 'audio', samples: output },
-        [output.buffer]
-      );
+      this.port.postMessage({ type: 'audio', samples: output }, [output.buffer]);
     }
 
     return true;

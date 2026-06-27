@@ -13,26 +13,26 @@ what we infer about agent fitness.
 
 ## Source Map
 
-| Ref | Source | Local path | Source quality | Role |
-|---|---|---|---|---|
-| R-VA-027 | Local TTS deep dive | `../TTS-DEEP-DIVE.md` | `practitioner signal` | Existing open-source TTS survey. |
-| R-VA-010 | Kokoro-82M model card | `../articles/kokoro-82m-model-card.html` | `official-doc evidence` | Small practical local model; parameter count, license, and voice count. |
-| R-VA-011 | StyleTTS 2 (Li et al., 2023) | `../paper-text/styletts2-2306.07691.txt` | `paper evidence` | Kokoro lineage; human-level quality claims, RTF, and diversity data. |
-| R-VA-012 | F5-TTS (Chen et al., 2024) | `../paper-text/f5-tts-2410.06885.txt` | `paper evidence` | Flow-matching TTS with WER/SIM/UTMOS/RTF data across NFE/solver variants. |
-| R-VA-013 | Spark-TTS (Wang et al., 2025) | `../paper-text/spark-tts-2503.01710.txt` | `paper evidence` | LLM-based TTS with BiCodec tokenizer and controllability data. |
-| R-VA-014 | Fish Audio S2 (Fish Audio, 2026) | `../paper-text/fish-audio-s2-2603.08823.txt` | `paper evidence` | Production-serving TTFA/RTF and Seed-TTS-Eval WER/CER data. |
-| R-VA-036 | TTS benchmark slide | `../../../components/presentations/voice-agents/slides/08b-tts-benchmarks.tsx` | `local measurement` | Existing chart data and source links. |
+| Ref      | Source                           | Local path                                                                     | Source quality          | Role                                                                      |
+| -------- | -------------------------------- | ------------------------------------------------------------------------------ | ----------------------- | ------------------------------------------------------------------------- |
+| R-VA-027 | Local TTS deep dive              | `../TTS-DEEP-DIVE.md`                                                          | `practitioner signal`   | Existing open-source TTS survey.                                          |
+| R-VA-010 | Kokoro-82M model card            | `../articles/kokoro-82m-model-card.html`                                       | `official-doc evidence` | Small practical local model; parameter count, license, and voice count.   |
+| R-VA-011 | StyleTTS 2 (Li et al., 2023)     | `../paper-text/styletts2-2306.07691.txt`                                       | `paper evidence`        | Kokoro lineage; human-level quality claims, RTF, and diversity data.      |
+| R-VA-012 | F5-TTS (Chen et al., 2024)       | `../paper-text/f5-tts-2410.06885.txt`                                          | `paper evidence`        | Flow-matching TTS with WER/SIM/UTMOS/RTF data across NFE/solver variants. |
+| R-VA-013 | Spark-TTS (Wang et al., 2025)    | `../paper-text/spark-tts-2503.01710.txt`                                       | `paper evidence`        | LLM-based TTS with BiCodec tokenizer and controllability data.            |
+| R-VA-014 | Fish Audio S2 (Fish Audio, 2026) | `../paper-text/fish-audio-s2-2603.08823.txt`                                   | `paper evidence`        | Production-serving TTFA/RTF and Seed-TTS-Eval WER/CER data.               |
+| R-VA-036 | TTS benchmark slide              | `../../../components/presentations/voice-agents/slides/08b-tts-benchmarks.tsx` | `local measurement`     | Existing chart data and source links.                                     |
 
 ## Families That Matter
 
 The models fall into different latency shapes:
 
-| Family | Examples | Agent-relevant shape |
-|---|---|---|
-| Small local decoder/NAR systems | Kokoro, Piper, MeloTTS | Easy to keep hot; cheap local demos; often limited cloning/expressiveness metrics. |
-| Flow matching / diffusion transformer | F5-TTS | Strong quality and cloning; RTF controlled by NFE/solver; streaming requires careful serving. |
-| AR speech-token / LLM TTS | Fish Audio S2, Spark-TTS, Dia, Orpheus | Can naturally stream token/audio chunks; heavier models; serving stack matters a lot. |
-| Legacy voice-cloning systems | XTTS v2 | Useful baseline; less compelling hard current latency data. |
+| Family                                | Examples                               | Agent-relevant shape                                                                          |
+| ------------------------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Small local decoder/NAR systems       | Kokoro, Piper, MeloTTS                 | Easy to keep hot; cheap local demos; often limited cloning/expressiveness metrics.            |
+| Flow matching / diffusion transformer | F5-TTS                                 | Strong quality and cloning; RTF controlled by NFE/solver; streaming requires careful serving. |
+| AR speech-token / LLM TTS             | Fish Audio S2, Spark-TTS, Dia, Orpheus | Can naturally stream token/audio chunks; heavier models; serving stack matters a lot.         |
+| Legacy voice-cloning systems          | XTTS v2                                | Useful baseline; less compelling hard current latency data.                                   |
 
 The deck should avoid presenting a universal leaderboard. TTS papers do not use the same
 datasets, hardware, metrics, languages, or serving assumptions. Use grouped tables and
@@ -50,14 +50,14 @@ RTF = synthesis_time / audio_duration.
 
 The key agent metrics:
 
-| Metric | Why it matters |
-|---|---|
-| TTFA | User hears something soon after LLM first text/audio decision. |
-| RTF | The system keeps ahead of playback. |
-| Streaming chunk cadence | Smooth playout without large buffers. |
-| Cancellation latency | Barge-in feels immediate. |
-| Voice cache/prefix reuse | Repeated assistant voice is cheap. |
-| Stability under concurrency | No P99 spikes when multiple calls run. |
+| Metric                           | Why it matters                                                    |
+| -------------------------------- | ----------------------------------------------------------------- |
+| TTFA                             | User hears something soon after LLM first text/audio decision.    |
+| RTF                              | The system keeps ahead of playback.                               |
+| Streaming chunk cadence          | Smooth playout without large buffers.                             |
+| Cancellation latency             | Barge-in feels immediate.                                         |
+| Voice cache/prefix reuse         | Repeated assistant voice is cheap.                                |
+| Stability under concurrency      | No P99 spikes when multiple calls run.                            |
 | License and deployment footprint | Determines whether the model can ship in the desired environment. |
 
 ## Copied Data: StyleTTS 2
@@ -70,12 +70,12 @@ family. It is not a direct Kokoro benchmark, so the inference must be labeled ca
 The paper reports CMOS (Comparative Mean Opinion Score) results where positive values
 indicate the model is rated higher than the comparison target (`paper evidence`):
 
-| Result | Value | Source |
-|---|---:|---|
-| LJSpeech CMOS vs ground truth | +0.28, p = 0.021 | R-VA-011 |
-| LJSpeech CMOS vs NaturalSpeech | +1.07, p < 1e-6 | R-VA-011 |
+| Result                                |            Value | Source   |
+| ------------------------------------- | ---------------: | -------- |
+| LJSpeech CMOS vs ground truth         | +0.28, p = 0.021 | R-VA-011 |
+| LJSpeech CMOS vs NaturalSpeech        |  +1.07, p < 1e-6 | R-VA-011 |
 | VCTK naturalness CMOS vs ground truth | -0.02, p = 0.628 | R-VA-011 |
-| VCTK similarity CMOS vs ground truth | +0.30, p = 0.081 | R-VA-011 |
+| VCTK similarity CMOS vs ground truth  | +0.30, p = 0.081 | R-VA-011 |
 
 These are remarkable claims: on LJSpeech, StyleTTS 2 was rated significantly better than
 ground-truth recordings by human listeners (p = 0.021). On VCTK, naturalness was
@@ -92,12 +92,12 @@ Table 4 RTF value for StyleTTS 2 (0.0185) is consistent with Table 7's 5-step re
 
 All RTF data below is `paper evidence` from R-VA-011, Table 4:
 
-| Model | RTF | CVdur | CVf0 | Hardware (inferred) | Source |
-|---|---:|---:|---:|---|---|
-| StyleTTS 2 | 0.0185 | 0.0321 | 0.6962 | NVIDIA RTX 2080 Ti | R-VA-011, Table 4 |
-| VITS | 0.0599 | 0.0214 | 0.5976 | NVIDIA RTX 2080 Ti | R-VA-011, Table 4 |
-| FastDiff | 0.0769 | 0.0295 | 0.6490 | NVIDIA RTX 2080 Ti | R-VA-011, Table 4 |
-| ProDiff | 0.1454 | 2e-16 | 0.5898 | NVIDIA RTX 2080 Ti | R-VA-011, Table 4 |
+| Model      |    RTF |  CVdur |   CVf0 | Hardware (inferred) | Source            |
+| ---------- | -----: | -----: | -----: | ------------------- | ----------------- |
+| StyleTTS 2 | 0.0185 | 0.0321 | 0.6962 | NVIDIA RTX 2080 Ti  | R-VA-011, Table 4 |
+| VITS       | 0.0599 | 0.0214 | 0.5976 | NVIDIA RTX 2080 Ti  | R-VA-011, Table 4 |
+| FastDiff   | 0.0769 | 0.0295 | 0.6490 | NVIDIA RTX 2080 Ti  | R-VA-011, Table 4 |
+| ProDiff    | 0.1454 |  2e-16 | 0.5898 | NVIDIA RTX 2080 Ti  | R-VA-011, Table 4 |
 
 Inference: the hardware attribution is indirect. The main paper says training was on
 NVIDIA A40 GPUs, and the appendix says RTF was measured on RTX 2080 Ti. The Table 4 RTF
@@ -133,20 +133,20 @@ A100 80G GPUs, but RTF inference measurements are on RTX 3090.
 
 ### Main comparison (Table 1, LibriSpeech-PC test-clean)
 
-| Model | Params | Data | WER (%) | SIM-o | RTF | Hardware | Source |
-|---|---|---|---:|---:|---:|---|---|
-| F5-TTS (16 NFE) | 336M | 100K Multi. | 2.53 | 0.66 | 0.15 | RTX 3090 | R-VA-012, Table 1 |
-| F5-TTS (32 NFE) | 336M | 100K Multi. | 2.42 | 0.66 | 0.31 | RTX 3090 | R-VA-012, Table 1 |
-| E2 TTS (32 NFE) | 333M | 100K Multi. | 2.95 | 0.69 | 0.68 | RTX 3090 | R-VA-012, Table 1 |
-| Voicebox | 330M | 60K EN | 1.9 | 0.662 | 0.64 | RTX 3090 | R-VA-012, Table 1 (LibriSpeech test-clean subset, not LibriSpeech-PC) |
+| Model           | Params | Data        | WER (%) | SIM-o |  RTF | Hardware | Source                                                                |
+| --------------- | ------ | ----------- | ------: | ----: | ---: | -------- | --------------------------------------------------------------------- |
+| F5-TTS (16 NFE) | 336M   | 100K Multi. |    2.53 |  0.66 | 0.15 | RTX 3090 | R-VA-012, Table 1                                                     |
+| F5-TTS (32 NFE) | 336M   | 100K Multi. |    2.42 |  0.66 | 0.31 | RTX 3090 | R-VA-012, Table 1                                                     |
+| E2 TTS (32 NFE) | 333M   | 100K Multi. |    2.95 |  0.69 | 0.68 | RTX 3090 | R-VA-012, Table 1                                                     |
+| Voicebox        | 330M   | 60K EN      |     1.9 | 0.662 | 0.64 | RTX 3090 | R-VA-012, Table 1 (LibriSpeech test-clean subset, not LibriSpeech-PC) |
 
 ### Seed-TTS evaluation (Table 2)
 
-| Model | Seed test-en WER (%) | Seed test-en SIM-o | Seed test-zh WER/CER (%) | Seed test-zh SIM-o | Source |
-|---|---:|---:|---:|---:|---|
-| F5-TTS (16 NFE) | 1.89 | 0.67 | 1.74 | 0.75 | R-VA-012, Table 2 |
-| F5-TTS (32 NFE) | 1.83 | 0.67 | 1.56 | 0.76 | R-VA-012, Table 2 |
-| Ground Truth | 2.06 | 0.73 | 1.26 | 0.76 | R-VA-012, Table 2 |
+| Model           | Seed test-en WER (%) | Seed test-en SIM-o | Seed test-zh WER/CER (%) | Seed test-zh SIM-o | Source            |
+| --------------- | -------------------: | -----------------: | -----------------------: | -----------------: | ----------------- |
+| F5-TTS (16 NFE) |                 1.89 |               0.67 |                     1.74 |               0.75 | R-VA-012, Table 2 |
+| F5-TTS (32 NFE) |                 1.83 |               0.67 |                     1.56 |               0.76 | R-VA-012, Table 2 |
+| Ground Truth    |                 2.06 |               0.73 |                     1.26 |               0.76 | R-VA-012, Table 2 |
 
 ### NFE/solver trade-off (Appendix Tab.6, base model, s=-1)
 
@@ -154,12 +154,12 @@ This table shows the interaction between NFE count, solver choice, and quality/s
 base model. All values are `paper evidence` from R-VA-012, Appendix Tab.6. RTF is on
 NVIDIA RTX 3090.
 
-| F5-TTS setting | LibriSpeech-PC WER (%) | SIM-o | UTMOS | Seed test-en WER (%) | Seed test-zh CER (%) | RTF | Source |
-|---|---:|---:|---:|---:|---:|---:|---|
-| 16 NFE Euler, s=-1 | 2.53 | 0.66 | 3.88 | 1.89 | 1.74 | 0.15 | R-VA-012, Tab.6 |
-| 32 NFE Euler, s=-1 | 2.42 | 0.66 | 3.90 | 1.83 | 1.56 | 0.31 | R-VA-012, Tab.6 |
-| 16 NFE midpoint, s=-1 | 2.43 | 0.66 | 3.87 | 1.88 | 1.61 | 0.26 | R-VA-012, Tab.6 |
-| 32 NFE midpoint, s=-1 | 2.41 | 0.66 | 3.89 | 1.87 | 1.58 | 0.53 | R-VA-012, Tab.6 |
+| F5-TTS setting        | LibriSpeech-PC WER (%) | SIM-o | UTMOS | Seed test-en WER (%) | Seed test-zh CER (%) |  RTF | Source          |
+| --------------------- | ---------------------: | ----: | ----: | -------------------: | -------------------: | ---: | --------------- |
+| 16 NFE Euler, s=-1    |                   2.53 |  0.66 |  3.88 |                 1.89 |                 1.74 | 0.15 | R-VA-012, Tab.6 |
+| 32 NFE Euler, s=-1    |                   2.42 |  0.66 |  3.90 |                 1.83 |                 1.56 | 0.31 | R-VA-012, Tab.6 |
+| 16 NFE midpoint, s=-1 |                   2.43 |  0.66 |  3.87 |                 1.88 |                 1.61 | 0.26 | R-VA-012, Tab.6 |
+| 32 NFE midpoint, s=-1 |                   2.41 |  0.66 |  3.89 |                 1.87 |                 1.58 | 0.53 | R-VA-012, Tab.6 |
 
 Inference: F5-TTS has a clean quality/speed knob. Doubling NFE from 16 to 32 improves WER
 modestly (2.53% to 2.42% on LibriSpeech-PC) but doubles RTF (0.15 to 0.31 with Euler).
@@ -181,12 +181,12 @@ control. The paper introduces BiCodec, a single-stream speech codec.
 
 The paper reports (`paper evidence`, R-VA-013):
 
-| Metric | Value | Context | Source |
-|---|---|---|---|
-| BiCodec semantic token rate | 50 TPS | Semantic tokens for linguistic content | R-VA-013, Section 3, Figure 2 |
-| BiCodec bitrate | 0.65 kbps | Total codec bitrate, sub-1 kbps range | R-VA-013, Table 1, Section 7 |
-| BiCodec codebook size | 8192 | Single codebook with VQ | R-VA-013, Table 1 |
-| Global tokens | 32 fixed-length | Time-invariant speaker attributes via FSQ | R-VA-013, Section 3 |
+| Metric                      | Value           | Context                                   | Source                        |
+| --------------------------- | --------------- | ----------------------------------------- | ----------------------------- |
+| BiCodec semantic token rate | 50 TPS          | Semantic tokens for linguistic content    | R-VA-013, Section 3, Figure 2 |
+| BiCodec bitrate             | 0.65 kbps       | Total codec bitrate, sub-1 kbps range     | R-VA-013, Table 1, Section 7  |
+| BiCodec codebook size       | 8192            | Single codebook with VQ                   | R-VA-013, Table 1             |
+| Global tokens               | 32 fixed-length | Time-invariant speaker attributes via FSQ | R-VA-013, Section 3           |
 
 The paper states (Section 7): "BiCodec achieves a new SOTA reconstruction quality, operating
 at 50 TPS with a bit rate of 0.65 kbps, surpassing other codecs within the sub-1 kbps
@@ -194,14 +194,14 @@ range."
 
 ### Seed-TTS evaluation
 
-| Metric | Value | Source |
-|---|---:|---|
-| Seed-TTS test-zh CER | 1.20% | R-VA-013, Table 4 |
-| Seed-TTS test-zh SIM | 0.672 | R-VA-013, Table 4 |
-| Seed-TTS test-en WER | 1.98% | R-VA-013, Table 4 |
-| Seed-TTS test-en SIM | 0.584 | R-VA-013, Table 4 |
-| LibriSpeech UTMOS | 4.35 | R-VA-013 (from TTS deep dive cross-reference) |
-| Spark-TTS params | ~0.5B | R-VA-013, based on Qwen2.5 fine-tuning |
+| Metric               | Value | Source                                        |
+| -------------------- | ----: | --------------------------------------------- |
+| Seed-TTS test-zh CER | 1.20% | R-VA-013, Table 4                             |
+| Seed-TTS test-zh SIM | 0.672 | R-VA-013, Table 4                             |
+| Seed-TTS test-en WER | 1.98% | R-VA-013, Table 4                             |
+| Seed-TTS test-en SIM | 0.584 | R-VA-013, Table 4                             |
+| LibriSpeech UTMOS    |  4.35 | R-VA-013 (from TTS deep dive cross-reference) |
+| Spark-TTS params     | ~0.5B | R-VA-013, based on Qwen2.5 fine-tuning        |
 
 Caveat: no primary RTF or TTFA number was found in the Spark-TTS paper. The paper focuses
 on quality, controllability, and the BiCodec tokenizer design. It may be strong in
@@ -224,12 +224,12 @@ latency. The paper provides explicit serving-stack measurements on defined hardw
 The paper states (Section 5): "We evaluated the production-ready inference performance of
 Fish Audio S2 on a single NVIDIA H200 GPU." The inference engine is built on SGLang.
 
-| Metric | Value | Context | Hardware | Source |
-|---|---|---|---|---|
-| RTF | 0.195 | Dual-AR architecture with SGLang optimizations | Single NVIDIA H200 | R-VA-014, Section 5 |
-| TTFA | as low as 100 ms | "Benefiting from audio tokenizer decoding co-scheduling and RadixCache hits" | Single NVIDIA H200 | R-VA-014, Section 5 |
-| Max throughput | 3000+ acoustic tokens/s | "while keeping the RTF below 0.5" under high concurrency | Single NVIDIA H200 | R-VA-014, Section 5 |
-| Average prefix-cache hit rate | 86.4% | "over 90% at peak" for repeated voice reuse | Single NVIDIA H200 | R-VA-014, Section 5 |
+| Metric                        | Value                   | Context                                                                      | Hardware           | Source              |
+| ----------------------------- | ----------------------- | ---------------------------------------------------------------------------- | ------------------ | ------------------- |
+| RTF                           | 0.195                   | Dual-AR architecture with SGLang optimizations                               | Single NVIDIA H200 | R-VA-014, Section 5 |
+| TTFA                          | as low as 100 ms        | "Benefiting from audio tokenizer decoding co-scheduling and RadixCache hits" | Single NVIDIA H200 | R-VA-014, Section 5 |
+| Max throughput                | 3000+ acoustic tokens/s | "while keeping the RTF below 0.5" under high concurrency                     | Single NVIDIA H200 | R-VA-014, Section 5 |
+| Average prefix-cache hit rate | 86.4%                   | "over 90% at peak" for repeated voice reuse                                  | Single NVIDIA H200 | R-VA-014, Section 5 |
 
 The TTFA claim uses the phrase "as low as 100 ms," which is a best-case figure, not a median
 or percentile. The prefix-cache hit rate (86.4% average, 90%+ peak) is measured in their
@@ -240,11 +240,11 @@ replay, and RadixAttention.
 
 ### Seed-TTS evaluation (Table 1)
 
-| Split | Metric | Fish Audio S2 | Fish Audio S1 | Seed-TTS | Source |
-|---|---|---:|---:|---:|---|
-| test-zh | CER (%) | 0.54 | 0.54 | 1.12 | R-VA-014, Table 1 |
-| test-en | WER (%) | 0.99 | 1.07 | 2.25 | R-VA-014, Table 1 |
-| zh-hard | CER (%) | 5.99 | 17.00 | 7.59 | R-VA-014, Table 1 |
+| Split   | Metric  | Fish Audio S2 | Fish Audio S1 | Seed-TTS | Source            |
+| ------- | ------- | ------------: | ------------: | -------: | ----------------- |
+| test-zh | CER (%) |          0.54 |          0.54 |     1.12 | R-VA-014, Table 1 |
+| test-en | WER (%) |          0.99 |          1.07 |     2.25 | R-VA-014, Table 1 |
+| zh-hard | CER (%) |          5.99 |         17.00 |     7.59 | R-VA-014, Table 1 |
 
 Important context: the zh-hard split is substantially harder than test-zh (5.99% vs 0.54%
 CER). The test-en and test-zh numbers are impressively low but should not be taken as
@@ -337,7 +337,7 @@ completed file. That means the TTS component should expose:
 - StyleTTS 2 metrics are not direct Kokoro metrics. The architecture lineage provides
   plausibility but not measurement.
 - The RTF 0.2 sometimes cited for Kokoro is from community benchmarks (`practitioner
-  signal`), not from the model card or a published paper. It should not be attributed as
+signal`), not from the model card or a published paper. It should not be attributed as
   `official-doc evidence`.
 - Fish Audio S2 H200 TTFA is not a laptop-local latency claim. The "as low as 100 ms" is a
   best-case figure on H200 with warm prefix cache, not a median or P95.

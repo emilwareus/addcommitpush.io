@@ -370,10 +370,10 @@ Use tables when contrasting expensive vs. good systems, weak vs. strong examples
 
 **Example shape:**
 
-| Agent step | Expensive repo | Agent-friendly repo |
-| --- | --- | --- |
-| Orient | Tribal knowledge, stale wiki pages | Short root instructions, architecture map |
-| Retrieve | `utils`, string routes, hidden side effects | Stable names, imports, schemas, tests |
+| Agent step | Expensive repo                              | Agent-friendly repo                       |
+| ---------- | ------------------------------------------- | ----------------------------------------- |
+| Orient     | Tribal knowledge, stale wiki pages          | Short root instructions, architecture map |
+| Retrieve   | `utils`, string routes, hidden side effects | Stable names, imports, schemas, tests     |
 
 ### Blockquotes for the Core Thesis
 
@@ -433,16 +433,16 @@ The voice is excited about AI, but not naive about it. Prefer grounded ambition 
 
 Use these as calibration examples when editing drafts.
 
-| Weak | Better |
-| --- | --- |
-| "Developers should write better prompts for AI coding agents." | "Prompts help. But the real interface is the repository." |
-| "Large context windows are useful for complex repositories." | "More context is not always better. Better context is better." |
-| "Teams should document architectural best practices." | "If the rule matters, encode it. Make the architecture fail the build when violated." |
-| "Microservices can improve AI coding performance." | "AI does not love microservices. It loves recoverable boundaries." |
-| "Tests help validate AI-generated code." | "Tests are not decoration. They are the agent's feedback loop." |
-| "Names should be descriptive." | "Names are semantic infrastructure. If the agent cannot grep the concept, it guesses." |
-| "Generated SDKs reduce integration errors." | "Raw API calls are stringly typed integration debt. Generate the contract into code." |
-| "Instruction files should contain project guidance." | "`AGENTS.md` should be an index, not a novel." |
+| Weak                                                           | Better                                                                                 |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| "Developers should write better prompts for AI coding agents." | "Prompts help. But the real interface is the repository."                              |
+| "Large context windows are useful for complex repositories."   | "More context is not always better. Better context is better."                         |
+| "Teams should document architectural best practices."          | "If the rule matters, encode it. Make the architecture fail the build when violated."  |
+| "Microservices can improve AI coding performance."             | "AI does not love microservices. It loves recoverable boundaries."                     |
+| "Tests help validate AI-generated code."                       | "Tests are not decoration. They are the agent's feedback loop."                        |
+| "Names should be descriptive."                                 | "Names are semantic infrastructure. If the agent cannot grep the concept, it guesses." |
+| "Generated SDKs reduce integration errors."                    | "Raw API calls are stringly typed integration debt. Generate the contract into code."  |
+| "Instruction files should contain project guidance."           | "`AGENTS.md` should be an index, not a novel."                                         |
 
 ---
 

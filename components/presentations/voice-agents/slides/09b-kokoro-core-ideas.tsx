@@ -14,8 +14,8 @@ export function KokoroCoreIdeasSlide() {
 
       <div className="flex flex-wrap items-center justify-center gap-3 mb-3">
         <div className="px-4 py-2 rounded-full bg-primary/10 border border-primary/30 text-base">
-          <span className="font-semibold text-primary">256d style vector</span>{' '}
-          conditions both timbre and prosody
+          <span className="font-semibold text-primary">256d style vector</span> conditions both
+          timbre and prosody
         </div>
         <div className="px-4 py-2 rounded-full bg-zinc-900/80 border border-zinc-800 text-base text-muted-foreground">
           Voice packs replace runtime diffusion at inference
@@ -31,13 +31,17 @@ export function KokoroCoreIdeasSlide() {
               external G2P
             </div>
             <p className="text-base text-muted-foreground leading-relaxed">
-              Kokoro starts with raw text, then a grapheme-to-phoneme step converts spelling
-              into units of sound.
+              Kokoro starts with raw text, then a grapheme-to-phoneme step converts spelling into
+              units of sound.
             </p>
-            <p className="mt-3 text-base font-mono text-primary/80">&quot;cat&quot; → G2P → k ae t</p>
+            <p className="mt-3 text-base font-mono text-primary/80">
+              &quot;cat&quot; → G2P → k ae t
+            </p>
           </div>
 
-          <div className="hidden md:flex items-center justify-center text-5xl text-primary/50">→</div>
+          <div className="hidden md:flex items-center justify-center text-5xl text-primary/50">
+            →
+          </div>
 
           <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-3">
             <div className="text-base font-mono text-primary/70 mb-2">Stage 2</div>
@@ -76,7 +80,9 @@ export function KokoroCoreIdeasSlide() {
             </div>
           </div>
 
-          <div className="hidden md:flex items-center justify-center text-5xl text-primary/50">→</div>
+          <div className="hidden md:flex items-center justify-center text-5xl text-primary/50">
+            →
+          </div>
 
           <div className="relative bg-primary/10 border border-primary/30 rounded-xl p-3 pr-24">
             <div className="text-base font-mono text-primary/70 mb-2">Stage 3</div>
@@ -106,8 +112,8 @@ export function KokoroCoreIdeasSlide() {
       </div>
 
       <p className="text-lg text-primary/80 font-mono text-center max-w-4xl">
-        Bottom line: Kokoro stays small by keeping context modules modest and putting most of
-        the parameter budget where waveform quality is hardest.
+        Bottom line: Kokoro stays small by keeping context modules modest and putting most of the
+        parameter budget where waveform quality is hardest.
       </p>
     </div>
   );

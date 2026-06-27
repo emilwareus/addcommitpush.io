@@ -11,16 +11,16 @@ from each source.
 
 ## Source Map
 
-| Ref | Source | Local path | Role | Source quality |
-|---|---|---|---|---|
-| R-VA-002 | Local VAD deep dive | `../VAD-DEEP-DIVE.md` | Existing local analysis of Silero/WebRTC/Jarvis parameters. | `local measurement` |
-| R-VA-005 | Silero VAD quality metrics (GitHub wiki) | `../articles/silero-vad-quality-metrics.html` | ROC-AUC and accuracy table across VAD models and datasets. | `benchmark evidence` (vendor's own wiki, not independent). |
-| R-VA-006 | Silero VAD GitHub/defaults | `../VAD-DEEP-DIVE.md` | Frame size, threshold, minimum speech/silence defaults. | `official-doc evidence` |
-| R-VA-007 | OpenAI Realtime API reference | `../articles/openai-realtime-api-reference.html` | `server_vad`, `semantic_vad`, silence and interruption knobs. | `official-doc evidence` |
-| R-VA-008 | LiveKit turns overview and turn detector docs | `../articles/livekit-turns.html` | Turn detection modes and adaptive interruption framing. | `official-doc evidence` |
-| R-VA-009 | Pipecat Smart Turn docs | `../articles/pipecat-smart-turn.html` | Learned turn-completion model layered after VAD. | `official-doc evidence` |
-| R-VA-020 | Deepgram Flux docs and launch post | `../articles/deepgram-flux-quickstart.html`, `../articles/deepgram-flux-configuration.html`, `../articles/deepgram-flux-launch.html` | Conversational STT and end-of-turn event data. | `vendor claim` for latency numbers; `official-doc evidence` for configuration knobs. |
-| R-VA-022 | Stivers et al. "Universals and cultural variation in turn-taking in conversation" (PNAS, 2009) | URL in `../references.md` | Human target behavior. | `paper evidence` |
+| Ref      | Source                                                                                         | Local path                                                                                                                           | Role                                                          | Source quality                                                                       |
+| -------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| R-VA-002 | Local VAD deep dive                                                                            | `../VAD-DEEP-DIVE.md`                                                                                                                | Existing local analysis of Silero/WebRTC/Jarvis parameters.   | `local measurement`                                                                  |
+| R-VA-005 | Silero VAD quality metrics (GitHub wiki)                                                       | `../articles/silero-vad-quality-metrics.html`                                                                                        | ROC-AUC and accuracy table across VAD models and datasets.    | `benchmark evidence` (vendor's own wiki, not independent).                           |
+| R-VA-006 | Silero VAD GitHub/defaults                                                                     | `../VAD-DEEP-DIVE.md`                                                                                                                | Frame size, threshold, minimum speech/silence defaults.       | `official-doc evidence`                                                              |
+| R-VA-007 | OpenAI Realtime API reference                                                                  | `../articles/openai-realtime-api-reference.html`                                                                                     | `server_vad`, `semantic_vad`, silence and interruption knobs. | `official-doc evidence`                                                              |
+| R-VA-008 | LiveKit turns overview and turn detector docs                                                  | `../articles/livekit-turns.html`                                                                                                     | Turn detection modes and adaptive interruption framing.       | `official-doc evidence`                                                              |
+| R-VA-009 | Pipecat Smart Turn docs                                                                        | `../articles/pipecat-smart-turn.html`                                                                                                | Learned turn-completion model layered after VAD.              | `official-doc evidence`                                                              |
+| R-VA-020 | Deepgram Flux docs and launch post                                                             | `../articles/deepgram-flux-quickstart.html`, `../articles/deepgram-flux-configuration.html`, `../articles/deepgram-flux-launch.html` | Conversational STT and end-of-turn event data.                | `vendor claim` for latency numbers; `official-doc evidence` for configuration knobs. |
+| R-VA-022 | Stivers et al. "Universals and cultural variation in turn-taking in conversation" (PNAS, 2009) | URL in `../references.md`                                                                                                            | Human target behavior.                                        | `paper evidence`                                                                     |
 
 ## The Three-Layer Model
 
@@ -58,12 +58,12 @@ it represents the best possible separation, while accuracy is locked to a single
 
 ### Multi-Domain Validation results (subset, ROC-AUC and accuracy side by side)
 
-| Model | Multi-Domain ROC-AUC | Multi-Domain Accuracy | Source | Caveat |
-|---|---:|---:|---|---|
-| WebRTC VAD | 0.73 | 0.74 | R-VA-005 | `benchmark evidence`. Vendor's own wiki, not independently reproduced. |
-| Silero v4 | 0.91 | 0.85 | R-VA-005 | `benchmark evidence`. Same caveat. |
-| Silero v5 | 0.96 | 0.91 | R-VA-005 | `benchmark evidence`. Same caveat. |
-| Silero v6 | 0.97 | 0.92 | R-VA-005 | `benchmark evidence`. Same caveat. |
+| Model      | Multi-Domain ROC-AUC | Multi-Domain Accuracy | Source   | Caveat                                                                 |
+| ---------- | -------------------: | --------------------: | -------- | ---------------------------------------------------------------------- |
+| WebRTC VAD |                 0.73 |                  0.74 | R-VA-005 | `benchmark evidence`. Vendor's own wiki, not independently reproduced. |
+| Silero v4  |                 0.91 |                  0.85 | R-VA-005 | `benchmark evidence`. Same caveat.                                     |
+| Silero v5  |                 0.96 |                  0.91 | R-VA-005 | `benchmark evidence`. Same caveat.                                     |
+| Silero v6  |                 0.97 |                  0.92 | R-VA-005 | `benchmark evidence`. Same caveat.                                     |
 
 All values verified against `../articles/silero-vad-quality-metrics.html`. The ROC-AUC
 column comes from the "ROC-AUC score" table and the accuracy column comes from the
@@ -87,13 +87,13 @@ EOU policy is wrong.
 Silero defaults matter because they become policy when wrapped in an agent runtime
 (`official-doc evidence`, R-VA-006):
 
-| Parameter | Typical/default value | Meaning |
-|---|---:|---|
-| `threshold` | 0.5 | Speech probability threshold. |
-| `window_size_samples` | 512 at 16 kHz | About 32 ms input chunks. |
-| `min_speech_duration_ms` | 250 ms | Minimum segment before accepting speech. |
-| `min_silence_duration_ms` | 100 ms | Minimum silence to split segments. |
-| `speech_pad_ms` | 30 ms | Padding around speech segments. |
+| Parameter                 | Typical/default value | Meaning                                  |
+| ------------------------- | --------------------: | ---------------------------------------- |
+| `threshold`               |                   0.5 | Speech probability threshold.            |
+| `window_size_samples`     |         512 at 16 kHz | About 32 ms input chunks.                |
+| `min_speech_duration_ms`  |                250 ms | Minimum segment before accepting speech. |
+| `min_silence_duration_ms` |                100 ms | Minimum silence to split segments.       |
+| `speech_pad_ms`           |                 30 ms | Padding around speech segments.          |
 
 Those defaults are low-level. A voice agent usually adds a larger post-speech timer at a
 higher layer. The local Jarvis config uses 700 ms. The local VAD note compares OpenAI
@@ -106,11 +106,11 @@ interruptive the agent feels.
 The OpenAI Realtime API reference (`official-doc evidence`, R-VA-007) exposes the shape
 of the problem:
 
-| Mode | Relevant knobs | Defaults / values | Interpretation |
-|---|---|---|---|
-| `server_vad` | `threshold`, `prefix_padding_ms`, `silence_duration_ms`, `interrupt_response`, `create_response` | `prefix_padding_ms` defaults to 300 ms; `silence_duration_ms` defaults to 500 ms | Acoustic/silence-driven turn handling. |
-| `semantic_vad` | `eagerness`, `interrupt_response`, `create_response` | low/medium/high/auto; max timeouts 8 s, 4 s, 2 s | Model estimates whether the user is done. |
-| idle timeout | `idle_timeout_ms` | 5,000 to 30,000 ms; only for `server_vad` | Safety net for silence/no response. |
+| Mode           | Relevant knobs                                                                                   | Defaults / values                                                                | Interpretation                            |
+| -------------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- | ----------------------------------------- |
+| `server_vad`   | `threshold`, `prefix_padding_ms`, `silence_duration_ms`, `interrupt_response`, `create_response` | `prefix_padding_ms` defaults to 300 ms; `silence_duration_ms` defaults to 500 ms | Acoustic/silence-driven turn handling.    |
+| `semantic_vad` | `eagerness`, `interrupt_response`, `create_response`                                             | low/medium/high/auto; max timeouts 8 s, 4 s, 2 s                                 | Model estimates whether the user is done. |
+| idle timeout   | `idle_timeout_ms`                                                                                | 5,000 to 30,000 ms; only for `server_vad`                                        | Safety net for silence/no response.       |
 
 The engineering observation: even a "native realtime" API exposes endpointing as a separate
 policy surface. That is evidence that turn-taking cannot be treated as an incidental detail
@@ -129,11 +129,11 @@ complete. The Smart Turn v3 model (`LocalSmartTurnAnalyzerV3`) is the default us
 stop strategy in Pipecat. The model weights are bundled with the Pipecat package. The
 documentation states that it runs inference locally using ONNX.
 
-| System | Reported data | Source quality | Meaning |
-|---|---|---|---|
-| Pipecat Smart Turn v3 | "inference can be performed on low-cost cloud instances in under 100ms" | `official-doc evidence` (R-VA-009) | Semantic EOU can be cheap enough to run inline after pause on CPU. |
-| Pipecat input window | most recent 8 seconds | `official-doc evidence` (R-VA-009) | The model sees enough audio context to classify completion. |
-| Pipecat languages | 23 languages | `official-doc evidence` (R-VA-009) | Turn detection is increasingly multilingual, but language coverage should be checked per deployment. |
+| System                | Reported data                                                           | Source quality                     | Meaning                                                                                              |
+| --------------------- | ----------------------------------------------------------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Pipecat Smart Turn v3 | "inference can be performed on low-cost cloud instances in under 100ms" | `official-doc evidence` (R-VA-009) | Semantic EOU can be cheap enough to run inline after pause on CPU.                                   |
+| Pipecat input window  | most recent 8 seconds                                                   | `official-doc evidence` (R-VA-009) | The model sees enough audio context to classify completion.                                          |
+| Pipecat languages     | 23 languages                                                            | `official-doc evidence` (R-VA-009) | Turn detection is increasingly multilingual, but language coverage should be checked per deployment. |
 
 The "under 100 ms" CPU inference and the "around 65 ms on Pipecat Cloud 1x" figure (from
 `../data/turn_detection.csv`) are Pipecat's own documentation claims, not independently
@@ -155,15 +155,15 @@ has independently arrived at a layered architecture.
 Deepgram Flux is useful because it packages EOT as part of conversational STT, not as an
 afterthought. The data comes from Deepgram's documentation and launch materials.
 
-| Deepgram Flux field/claim | Value | Source quality | Caveat |
-|---|---:|---|---|
-| Recommended audio chunks | 80 ms | `official-doc evidence` (R-VA-020) | Provider-specific streaming guidance. |
-| `eot_threshold` range/default | 0.5-0.9, default 0.7 | `official-doc evidence` (R-VA-020) | Higher threshold reduces false positives but adds latency. |
-| `eot_timeout_ms` range/default | 500-10,000 ms, default 5,000 ms | `official-doc evidence` (R-VA-020) | Forced completion safety net. |
-| EOT detection latency | ~260 ms | `vendor claim` (R-VA-020 quickstart page) | Stated as "~260ms end-of-turn detection" in the quickstart. Not independently validated. |
-| Final `EndOfTurn` p95 | within 1.5 s | `vendor claim` (R-VA-020) | Not verified in local HTML capture; originally from launch post. Not independently validated. p95 of 1.5 s is a long tail relative to the ~260 ms median claim. |
-| `EagerEndOfTurn` timing | 150-250 ms earlier than `EndOfTurn` | `vendor claim` (R-VA-020) | Not verified in local HTML capture; originally from launch post. Trades speed for speculation. |
-| Agent latency reduction | 200-600 ms vs traditional STT+VAD | `vendor claim` (R-VA-020) | Not verified in local HTML capture; originally from launch post. Needs controlled comparison. |
+| Deepgram Flux field/claim      |                               Value | Source quality                            | Caveat                                                                                                                                                          |
+| ------------------------------ | ----------------------------------: | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Recommended audio chunks       |                               80 ms | `official-doc evidence` (R-VA-020)        | Provider-specific streaming guidance.                                                                                                                           |
+| `eot_threshold` range/default  |                0.5-0.9, default 0.7 | `official-doc evidence` (R-VA-020)        | Higher threshold reduces false positives but adds latency.                                                                                                      |
+| `eot_timeout_ms` range/default |     500-10,000 ms, default 5,000 ms | `official-doc evidence` (R-VA-020)        | Forced completion safety net.                                                                                                                                   |
+| EOT detection latency          |                             ~260 ms | `vendor claim` (R-VA-020 quickstart page) | Stated as "~260ms end-of-turn detection" in the quickstart. Not independently validated.                                                                        |
+| Final `EndOfTurn` p95          |                        within 1.5 s | `vendor claim` (R-VA-020)                 | Not verified in local HTML capture; originally from launch post. Not independently validated. p95 of 1.5 s is a long tail relative to the ~260 ms median claim. |
+| `EagerEndOfTurn` timing        | 150-250 ms earlier than `EndOfTurn` | `vendor claim` (R-VA-020)                 | Not verified in local HTML capture; originally from launch post. Trades speed for speculation.                                                                  |
+| Agent latency reduction        |   200-600 ms vs traditional STT+VAD | `vendor claim` (R-VA-020)                 | Not verified in local HTML capture; originally from launch post. Needs controlled comparison.                                                                   |
 
 ### EagerEndOfTurn: operational tradeoffs
 
@@ -223,15 +223,15 @@ available evidence.
 Inference: agent endpointing should be designed as an explicit subsystem with its own
 metrics:
 
-| Metric | Question |
-|---|---|
-| Start-of-speech latency | How quickly does the system know the user began speaking? |
-| End-of-speech latency | How quickly does acoustic speech stop get detected? |
-| End-of-turn latency | How quickly does the system decide the user is done? |
-| False end-of-turn rate | How often does the agent interrupt an unfinished user? |
-| Missed end-of-turn rate | How often does the agent wait after the user is done? |
+| Metric                              | Question                                                     |
+| ----------------------------------- | ------------------------------------------------------------ |
+| Start-of-speech latency             | How quickly does the system know the user began speaking?    |
+| End-of-speech latency               | How quickly does acoustic speech stop get detected?          |
+| End-of-turn latency                 | How quickly does the system decide the user is done?         |
+| False end-of-turn rate              | How often does the agent interrupt an unfinished user?       |
+| Missed end-of-turn rate             | How often does the agent wait after the user is done?        |
 | Backchannel false interruption rate | How often does "yeah", "mm-hm", or noise stop the assistant? |
-| Barge-in success rate | Can the user interrupt agent speech and be heard? |
+| Barge-in success rate               | Can the user interrupt agent speech and be heard?            |
 
 Inference: the product should expose different endpointing profiles:
 

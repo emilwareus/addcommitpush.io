@@ -53,10 +53,7 @@ const themeSchema = z.object({
   warning: z.string().optional().describe('Readable warning/caution color'),
   danger: z.string().optional().describe('Readable error/destructive color'),
   info: z.string().optional().describe('Readable informational accent color'),
-  card: z
-    .string()
-    .optional()
-    .describe('Card/panel background on top of the main page background'),
+  card: z.string().optional().describe('Card/panel background on top of the main page background'),
   'card-foreground': z
     .string()
     .optional()

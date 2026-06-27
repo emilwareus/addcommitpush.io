@@ -1,9 +1,7 @@
 export function ResourcesSlide() {
   return (
     <div className="flex flex-col items-center justify-center h-full w-full max-w-5xl mx-auto px-8 text-center">
-      <h2 className="text-6xl md:text-7xl font-bold mb-12 text-primary neon-glow">
-        Questions?
-      </h2>
+      <h2 className="text-6xl md:text-7xl font-bold mb-12 text-primary neon-glow">Questions?</h2>
 
       <div className="w-full max-w-2xl space-y-8">
         {/* Contact */}
@@ -26,12 +24,8 @@ export function ResourcesSlide() {
 
         {/* Presentation + blog */}
         <div className="space-y-3">
-          <p className="text-xl text-foreground/80">
-            Slides, code, and Jarvis source:
-          </p>
-          <p className="text-2xl font-mono font-bold text-primary">
-            addcommitpush.io
-          </p>
+          <p className="text-xl text-foreground/80">Slides, code, and Jarvis source:</p>
+          <p className="text-2xl font-mono font-bold text-primary">addcommitpush.io</p>
           <a
             href="https://github.com/emilwareus/addcommitpush.io/"
             target="_blank"

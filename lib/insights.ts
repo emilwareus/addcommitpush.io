@@ -162,7 +162,8 @@ const insights = [
       'Most coding-agent failures can be grouped by where the agent loop breaks: orientation, retrieval, editing, or verification.',
     conclusion:
       'A repo is agent-friendly when it makes orientation, retrieval, editing, and verification cheap and explicit.',
-    articlePath: 'presentations/write-code-ai-agents-love/research/insights/INSIGHT_01_context_maps.md',
+    articlePath:
+      'presentations/write-code-ai-agents-love/research/insights/INSIGHT_01_context_maps.md',
     status: 'working',
     confidence: 'medium',
     sourceType: 'mixed',
@@ -1492,8 +1493,7 @@ const insights = [
       {
         claim: 'Curated API/fact retrieval beats indiscriminate context expansion.',
         sourceTitles: ['A3-CodGen'],
-        detail:
-          'Global retrieval F1 drops from 0.601 at k=5 to 0.526 at k=10 and 0.479 at k=15.',
+        detail: 'Global retrieval F1 drops from 0.601 at k=5 to 0.526 at k=10 and 0.479 at k=15.',
       },
     ],
     caveats: [
@@ -1993,7 +1993,8 @@ const insights = [
           'Gloaguen et al. show context files can trigger more exploration and cost without improving patches.',
       },
       {
-        claim: 'Architecture, commands, and project rules are the central concerns of real config files.',
+        claim:
+          'Architecture, commands, and project rules are the central concerns of real config files.',
         sourceTitles: ['Claude Code configs study'],
         detail:
           'Santos et al. analyze 328 Claude Code configs and find architecture, testing, and commands dominate.',
@@ -2124,8 +2125,7 @@ const insights = [
     },
     problem:
       'Teams invest in complex multi-agent orchestration before fixing basic repo navigation and validation.',
-    whyItMatters:
-      'If the repo is opaque, more agents just parallelize confusion.',
+    whyItMatters: 'If the repo is opaque, more agents just parallelize confusion.',
     evidence: [
       {
         claim: 'A simple localize-repair-validate workflow can match elaborate agents.',
@@ -2312,8 +2312,7 @@ const insights = [
     },
     problem:
       'Strong agents often propose unnecessary code changes on already-fixed tasks. Confidence does not equal correctness.',
-    whyItMatters:
-      'The most expensive agent bug is the confident edit you did not need.',
+    whyItMatters: 'The most expensive agent bug is the confident edit you did not need.',
     evidence: [
       {
         claim: 'Agents often make unnecessary changes on already-fixed tasks.',
@@ -2378,8 +2377,7 @@ const insights = [
         },
       ],
     },
-    problem:
-      'Agents do not read your mind. Vague issues produce vague patches.',
+    problem: 'Agents do not read your mind. Vague issues produce vague patches.',
     whyItMatters:
       'Well-scoped issues with named artifacts and validation commands correlate with better agent PRs.',
     evidence: [
@@ -2520,8 +2518,7 @@ const insights = [
       {
         claim: 'Removing type context reduces repository-level generation performance.',
         sourceTitles: ['CatCoder'],
-        detail:
-          'CatCoder reports Java pass@k drop of up to 11.57% when type context is removed.',
+        detail: 'CatCoder reports Java pass@k drop of up to 11.57% when type context is removed.',
       },
     ],
     caveats: [
@@ -2646,7 +2643,8 @@ const insights = [
       'A curated test suite and static gates remain the more reliable oracle. Agent-generated tests alone are insufficient.',
     evidence: [
       {
-        claim: 'LLM-generated Java code has substantially higher smell incidence than professional references.',
+        claim:
+          'LLM-generated Java code has substantially higher smell incidence than professional references.',
         sourceTitles: ['Smells of LLM Generated Code'],
         detail:
           'The paper reports higher incidence of implementation and design smells in LLM-generated code.',
@@ -2654,8 +2652,7 @@ const insights = [
       {
         claim: 'Asking agents to write more tests does not reliably improve patch success.',
         sourceTitles: ['Rethinking agent-generated tests'],
-        detail:
-          'Agent test-writing activity is not equivalent to useful validation signal.',
+        detail: 'Agent test-writing activity is not equivalent to useful validation signal.',
       },
     ],
     caveats: [
@@ -2776,7 +2773,8 @@ const insights = [
       'The RIG paper shows +12.2% accuracy and -53.9% completion time with explicit repo maps. But RepoGraph shows 2-hop context is worse than 1-hop.',
     evidence: [
       {
-        claim: 'Repository Intelligence Graph improves agent accuracy by +12.2% and reduces time by -53.9%.',
+        claim:
+          'Repository Intelligence Graph improves agent accuracy by +12.2% and reduces time by -53.9%.',
         sourceTitles: ['Repository Intelligence Graph'],
         detail:
           'RIG measures deterministic repo maps for commercial agents; gains grow with repo complexity.',
@@ -2987,10 +2985,7 @@ const insights = [
     topics: ['ai-agents', 'code-review', 'pr-shape'],
     tags: ['prs', 'review', 'change-shape'],
     usedInPosts: ['write-code-ai-agents-love'],
-    relatedSlugs: [
-      'quality-gates-must-cover-smells',
-      'static-oracles-catch-what-tests-miss',
-    ],
+    relatedSlugs: ['quality-gates-must-cover-smells', 'static-oracles-catch-what-tests-miss'],
     graph: {
       edges: [
         {
@@ -3081,8 +3076,7 @@ const insights = [
       {
         claim: 'Cross-file API context materially improves repository completion.',
         sourceTitles: ['CrossCodeEval'],
-        detail:
-          'StarCoder-15.5B Python EM improved from 8.82 to 15.72 with retrieved context.',
+        detail: 'StarCoder-15.5B Python EM improved from 8.82 to 15.72 with retrieved context.',
       },
       {
         claim: 'Type constraints reduce the dominant compile-error class in generated TypeScript.',
@@ -3093,8 +3087,7 @@ const insights = [
       {
         claim: 'Name obfuscation sharply hurts intent summarization.',
         sourceTitles: ['When Names Disappear'],
-        detail:
-          'GPT-4o class summarization dropped from 87.3 to 58.7 after name obfuscation.',
+        detail: 'GPT-4o class summarization dropped from 87.3 to 58.7 after name obfuscation.',
       },
     ],
     caveats: [
@@ -3181,7 +3174,8 @@ const insights = [
     openQuestions: [
       {
         question: 'Does the CH=9 threshold hold for production multi-file contexts?',
-        whyItMatters: 'Real codebases have different complexity distributions than competitive programming.',
+        whyItMatters:
+          'Real codebases have different complexity distributions than competitive programming.',
       },
     ],
     sources: [
@@ -3382,8 +3376,7 @@ const insights = [
         title: 'Fish Audio S2',
         url: 'https://arxiv.org/abs/2603.08823',
         kind: 'paper',
-        localRef:
-          'presentations/voice-agents/research/paper-text/fish-audio-s2-2603.08823.txt',
+        localRef: 'presentations/voice-agents/research/paper-text/fish-audio-s2-2603.08823.txt',
         note: 'Primary TTS TTFA and RTF numbers.',
       },
       {
@@ -3479,8 +3472,7 @@ const insights = [
     openQuestions: [
       {
         question: 'Which endpointing mode should Jarvis use for live stage reliability?',
-        whyItMatters:
-          'A talk demo has different risk tolerance than a product support agent.',
+        whyItMatters: 'A talk demo has different risk tolerance than a product support agent.',
       },
     ],
     sources: [
@@ -3592,8 +3584,7 @@ const insights = [
     openQuestions: [
       {
         question: 'How unstable are partial transcripts in the current Jarvis STT path?',
-        whyItMatters:
-          'Partial churn determines whether speculative LLM work is safe.',
+        whyItMatters: 'Partial churn determines whether speculative LLM work is safe.',
       },
     ],
     sources: [
@@ -3681,8 +3672,7 @@ const insights = [
       {
         claim: 'Fish Audio S2 reports production TTFA and RTF.',
         sourceTitles: ['Fish Audio S2'],
-        detail:
-          'Fish Audio S2 reports RTF 0.195 and TTFA as low as 100 ms on H200 serving.',
+        detail: 'Fish Audio S2 reports RTF 0.195 and TTFA as low as 100 ms on H200 serving.',
       },
       {
         claim: 'StyleTTS 2 provides a strong quality and speed ancestor for Kokoro-like systems.',
@@ -3699,8 +3689,7 @@ const insights = [
     openQuestions: [
       {
         question: 'What are Kokoro TTFA and cancellation latency in the local Jarvis setup?',
-        whyItMatters:
-          'Kokoro is the practical demo candidate, so local measurements matter.',
+        whyItMatters: 'Kokoro is the practical demo candidate, so local measurements matter.',
       },
     ],
     sources: [
@@ -3749,10 +3738,7 @@ const insights = [
     topics: ['voice-agents', 'webrtc', 'transport'],
     tags: ['webrtc', 'websocket', 'media'],
     usedInPosts: ['voice-agents-article-draft'],
-    relatedSlugs: [
-      'barge-in-is-the-real-system-test',
-      'voice-agent-latency-budget-is-product',
-    ],
+    relatedSlugs: ['barge-in-is-the-real-system-test', 'voice-agent-latency-budget-is-product'],
     graph: {
       edges: [
         {
@@ -3784,7 +3770,8 @@ const insights = [
       'Production voice needs AEC, jitter handling, timestamps, NAT traversal, playout, and cancellation state.',
     evidence: [
       {
-        claim: 'OpenAI recommends WebRTC for browser/mobile and WebSocket for server-side integrations.',
+        claim:
+          'OpenAI recommends WebRTC for browser/mobile and WebSocket for server-side integrations.',
         sourceTitles: ['OpenAI Realtime WebRTC docs', 'OpenAI Realtime WebSocket docs'],
         detail:
           'The official Realtime docs separate client-side WebRTC from server-side WebSocket use cases.',
@@ -3803,9 +3790,9 @@ const insights = [
     ],
     openQuestions: [
       {
-        question: 'Should Jarvis default to WebRTC for the talk demo or keep WebSocket for simplicity?',
-        whyItMatters:
-          'Stage reliability may favor the path that is simplest to test end to end.',
+        question:
+          'Should Jarvis default to WebRTC for the talk demo or keep WebSocket for simplicity?',
+        whyItMatters: 'Stage reliability may favor the path that is simplest to test end to end.',
       },
     ],
     sources: [
@@ -3845,8 +3832,7 @@ const insights = [
     slug: 'barge-in-is-the-real-system-test',
     summary:
       'A voice agent is not conversational until the user can interrupt it and the system stops, cancels, and preserves state correctly.',
-    conclusion:
-      'Test interruption as an end-to-end media and state problem, not a VAD checkbox.',
+    conclusion: 'Test interruption as an end-to-end media and state problem, not a VAD checkbox.',
     status: 'working',
     confidence: 'medium',
     sourceType: 'mixed',
@@ -3946,10 +3932,7 @@ const insights = [
     topics: ['voice-agents', 'native-speech', 'architecture'],
     tags: ['speech-to-speech', 'moshi', 'qwen-omni'],
     usedInPosts: ['voice-agents-article-draft'],
-    relatedSlugs: [
-      'voice-agent-latency-budget-is-product',
-      'barge-in-is-the-real-system-test',
-    ],
+    relatedSlugs: ['voice-agent-latency-budget-is-product', 'barge-in-is-the-real-system-test'],
     graph: {
       edges: [
         {
@@ -3981,13 +3964,15 @@ const insights = [
       'The architectural boundary determines which failures are observable, controllable, and optimizable.',
     evidence: [
       {
-        claim: 'Moshi explicitly targets cascade latency, text bottleneck, and turn-based limitations.',
+        claim:
+          'Moshi explicitly targets cascade latency, text bottleneck, and turn-based limitations.',
         sourceTitles: ['Moshi'],
         detail:
           'The paper reports 160 ms theoretical latency, 200 ms practical latency, 12.5 Hz Mimi codec, and full-duplex multi-stream modeling.',
       },
       {
-        claim: 'Qwen2.5-Omni uses a Thinker-Talker architecture for multimodal reasoning and speech output.',
+        claim:
+          'Qwen2.5-Omni uses a Thinker-Talker architecture for multimodal reasoning and speech output.',
         sourceTitles: ['Qwen2.5-Omni'],
         detail:
           'The paper describes Talker producing audio tokens from Thinker representations with streaming audio decoding.',

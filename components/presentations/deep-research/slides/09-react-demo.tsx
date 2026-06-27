@@ -30,7 +30,10 @@ export function ReactDemoSlide() {
         className="px-8 py-4 rounded-lg bg-card border border-primary/30 font-mono text-lg text-primary"
         style={{ boxShadow: '0 0 12px oklch(0.7 0.14 195 / 0.15)' }}
       >
-        uv run main.py --agent=react &quot;I am giving a presentation at Foo Caf&eacute; in Malm&ouml; about deep research AI agents. Research the community and what they like, and tell me how to give a good presentation that the audience will like. Tailored to this community&quot;
+        uv run main.py --agent=react &quot;I am giving a presentation at Foo Caf&eacute; in
+        Malm&ouml; about deep research AI agents. Research the community and what they like, and
+        tell me how to give a good presentation that the audience will like. Tailored to this
+        community&quot;
       </motion.div>
 
       <motion.p

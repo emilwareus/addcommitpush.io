@@ -1,7 +1,10 @@
 'use client';
 
 import Image from 'next/image';
-import { AboutSlide as SharedAboutSlide, type AboutCard } from '@/components/presentations/shared/about-slide';
+import {
+  AboutSlide as SharedAboutSlide,
+  type AboutCard,
+} from '@/components/presentations/shared/about-slide';
 
 const cards: AboutCard[] = [
   {
@@ -65,7 +68,9 @@ const cards: AboutCard[] = [
         />
         <span className="text-base font-semibold">Valkompass</span>
         <span className="text-sm text-muted-foreground">Creator</span>
-        <span className="text-xs text-muted-foreground/60">AI-powered Swedish political compass</span>
+        <span className="text-xs text-muted-foreground/60">
+          AI-powered Swedish political compass
+        </span>
         <span className="text-xs text-muted-foreground/60">Tech philanthropy</span>
         <span className="text-sm text-primary/50 font-mono">valkompass.ai</span>
       </div>

@@ -15,13 +15,13 @@ voice agents.
 
 ## Source Map
 
-| Ref | Source | Local path | Role |
-|---|---|---|---|
-| R-VA-028 | Local transport deep dive | `../TRANSPORT-DEEP-DIVE.md` | Protocol internals, frame overhead calculation, echo cancellation analysis, latency budget breakdown, industry survey. `local measurement` / `practitioner signal`. |
-| R-VA-029 | MDN WebRTC protocols | `../articles/mdn-webrtc-protocols.html` | ICE/STUN/TURN/SDP protocol definitions. `official-doc evidence`. |
-| R-VA-031 | OpenAI Realtime WebRTC/WebSocket docs | `../articles/openai-realtime-webrtc.html`, `../articles/openai-realtime-websocket.html` | Official transport guidance: WebRTC for browser/mobile, WebSocket for server-to-server. `official-doc evidence`. |
-| R-VA-032 | LiveKit transport docs | `../articles/livekit-transport.html` | Production WebRTC SFU substrate reference. `official-doc evidence`. |
-| R-VA-033 | Pipecat transport docs | `../articles/pipecat-transports.html`, `../articles/pipecat-choosing-transport.html` | Transport-selection guidance with explicit "WebRTC for client-to-server voice, WebSocket for server-to-server." `official-doc evidence`. |
+| Ref      | Source                                | Local path                                                                              | Role                                                                                                                                                                |
+| -------- | ------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R-VA-028 | Local transport deep dive             | `../TRANSPORT-DEEP-DIVE.md`                                                             | Protocol internals, frame overhead calculation, echo cancellation analysis, latency budget breakdown, industry survey. `local measurement` / `practitioner signal`. |
+| R-VA-029 | MDN WebRTC protocols                  | `../articles/mdn-webrtc-protocols.html`                                                 | ICE/STUN/TURN/SDP protocol definitions. `official-doc evidence`.                                                                                                    |
+| R-VA-031 | OpenAI Realtime WebRTC/WebSocket docs | `../articles/openai-realtime-webrtc.html`, `../articles/openai-realtime-websocket.html` | Official transport guidance: WebRTC for browser/mobile, WebSocket for server-to-server. `official-doc evidence`.                                                    |
+| R-VA-032 | LiveKit transport docs                | `../articles/livekit-transport.html`                                                    | Production WebRTC SFU substrate reference. `official-doc evidence`.                                                                                                 |
+| R-VA-033 | Pipecat transport docs                | `../articles/pipecat-transports.html`, `../articles/pipecat-choosing-transport.html`    | Transport-selection guidance with explicit "WebRTC for client-to-server voice, WebSocket for server-to-server." `official-doc evidence`.                            |
 
 ## What WebRTC Provides That WebSocket Does Not
 
@@ -50,10 +50,10 @@ the application implements all media behavior above the TCP layer.
 
 The local transport deep dive (R-VA-028) documents the codec difference:
 
-| Transport | Audio format | Bandwidth | Compression | Source |
-|---|---|---|---|---|
-| WebSocket (typical) | Raw PCM int16, 16 kHz mono | 256 kbps (32 KB/s) | None | R-VA-028 |
-| WebRTC (typical) | Opus, negotiated via SDP | 16-32 kbps | 10-20x compression | R-VA-028 |
+| Transport           | Audio format               | Bandwidth          | Compression        | Source   |
+| ------------------- | -------------------------- | ------------------ | ------------------ | -------- |
+| WebSocket (typical) | Raw PCM int16, 16 kHz mono | 256 kbps (32 KB/s) | None               | R-VA-028 |
+| WebRTC (typical)    | Opus, negotiated via SDP   | 16-32 kbps         | 10-20x compression | R-VA-028 |
 
 The deep dive notes that Opus includes built-in forward error correction (FEC) for packet
 loss resilience. On localhost, the bandwidth difference is irrelevant. Over the internet,
@@ -86,10 +86,10 @@ is less robust under jitter.
 
 The local transport deep dive (R-VA-028) provides connection setup timelines:
 
-| Transport | Setup time | Steps | Source |
-|---|---|---|---|
-| WebSocket (WSS) | ~100 ms | TCP SYN/SYN-ACK/ACK, TLS handshake, HTTP Upgrade | R-VA-028 |
-| WebRTC | ~500 ms | SDP exchange, ICE gathering, connectivity checks, DTLS handshake | R-VA-028 |
+| Transport       | Setup time | Steps                                                            | Source   |
+| --------------- | ---------- | ---------------------------------------------------------------- | -------- |
+| WebSocket (WSS) | ~100 ms    | TCP SYN/SYN-ACK/ACK, TLS handshake, HTTP Upgrade                 | R-VA-028 |
+| WebRTC          | ~500 ms    | SDP exchange, ICE gathering, connectivity checks, DTLS handshake | R-VA-028 |
 
 WebRTC takes 3-5x longer to establish a connection. Once established, audio flows with
 the media-native characteristics described above.
@@ -102,6 +102,7 @@ The local transport deep dive (R-VA-028) calculates WebSocket frame overhead pre
 > that's 0.2-1.5% overhead. Negligible.
 
 The WebSocket frame format (RFC 6455) uses:
+
 - 2 bytes minimum header (FIN, opcode, mask bit, 7-bit payload length)
 - Up to 8 bytes extended payload length (for payloads > 125 bytes)
 - 4 bytes masking key (client-to-server only; server-to-client is unmasked)
@@ -123,13 +124,13 @@ N+2, ... are buffered at the receiver's TCP stack until packet N is retransmitte
 
 The deep dive provides a packet-loss impact table:
 
-| Scenario | Packet loss | HOL stall | Impact | Source |
-|---|---|---|---|---|
-| Localhost | ~0% | N/A | No impact | R-VA-028 |
-| LAN (same network) | <0.01% | N/A | No impact | R-VA-028 |
-| Internet (good) | <0.1% | ~50 ms once per 30 s | Imperceptible | R-VA-028 |
-| Internet (poor / mobile) | 1-5% | 50-200 ms frequently | Noticeable jitter | R-VA-028 |
-| Corporate VPN | 0.1-1% | Variable | Depends on VPN | R-VA-028 |
+| Scenario                 | Packet loss | HOL stall            | Impact            | Source   |
+| ------------------------ | ----------- | -------------------- | ----------------- | -------- |
+| Localhost                | ~0%         | N/A                  | No impact         | R-VA-028 |
+| LAN (same network)       | <0.01%      | N/A                  | No impact         | R-VA-028 |
+| Internet (good)          | <0.1%       | ~50 ms once per 30 s | Imperceptible     | R-VA-028 |
+| Internet (poor / mobile) | 1-5%        | 50-200 ms frequently | Noticeable jitter | R-VA-028 |
+| Corporate VPN            | 0.1-1%      | Variable             | Depends on VPN    | R-VA-028 |
 
 The deep dive's key observation: "The pipeline latency (1-2 s for VAD+STT+LLM+TTS)
 dominates by 100x. A 50 ms HOL stall is noise." This is true for the total latency
@@ -154,21 +155,21 @@ audio driver level with access to both signals.
 
 The deep dive documents three WebSocket AEC workarounds with their limitations:
 
-| Workaround | How it works | Limitation | Source |
-|---|---|---|---|
-| Mute mic during playback | Server skips mic frames while `is_tts_playing` flag is set | Prevents barge-in entirely | R-VA-028 |
-| getUserMedia echoCancellation constraint | Browser applies AEC to mic stream before app sees it | "Works ~80% of the time on Chrome desktop. Not reliable enough for production." AEC may not have correct reference signal when audio plays through Web Audio API. | R-VA-028 |
-| Server-side AEC (SpeexDSP) | Run AEC algorithm on server with reference signal | Requires sending reference signal back (doubles bandwidth), adds latency, quality depends on tail length tuning | R-VA-028 |
+| Workaround                               | How it works                                               | Limitation                                                                                                                                                        | Source   |
+| ---------------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| Mute mic during playback                 | Server skips mic frames while `is_tts_playing` flag is set | Prevents barge-in entirely                                                                                                                                        | R-VA-028 |
+| getUserMedia echoCancellation constraint | Browser applies AEC to mic stream before app sees it       | "Works ~80% of the time on Chrome desktop. Not reliable enough for production." AEC may not have correct reference signal when audio plays through Web Audio API. | R-VA-028 |
+| Server-side AEC (SpeexDSP)               | Run AEC algorithm on server with reference signal          | Requires sending reference signal back (doubles bandwidth), adds latency, quality depends on tail length tuning                                                   | R-VA-028 |
 
 The deep dive also provides a scenario matrix:
 
-| Scenario | Echo risk | Recommendation | Source |
-|---|---|---|---|
-| Agent speaks, user waits, user speaks | None | Mute-during-playback works | R-VA-028 |
-| User can interrupt agent (barge-in) | High | Need real AEC (WebRTC or server-side) | R-VA-028 |
-| Headphones required | None | No echo path exists | R-VA-028 |
-| Speakerphone / laptop speakers | High | AEC essential | R-VA-028 |
-| Smart speaker / far-field mic | Very high | Hardware AEC + software AEC | R-VA-028 |
+| Scenario                              | Echo risk | Recommendation                        | Source   |
+| ------------------------------------- | --------- | ------------------------------------- | -------- |
+| Agent speaks, user waits, user speaks | None      | Mute-during-playback works            | R-VA-028 |
+| User can interrupt agent (barge-in)   | High      | Need real AEC (WebRTC or server-side) | R-VA-028 |
+| Headphones required                   | None      | No echo path exists                   | R-VA-028 |
+| Speakerphone / laptop speakers        | High      | AEC essential                         | R-VA-028 |
+| Smart speaker / far-field mic         | Very high | Hardware AEC + software AEC           | R-VA-028 |
 
 Inference: Echo cancellation is the strongest argument for WebRTC in browser/mobile voice
 agents. The workarounds for WebSocket are either destructive (muting prevents barge-in),
@@ -200,6 +201,7 @@ make the strongest statement among the frameworks examined:
 > "For any client-to-server voice application, WebRTC is the right choice."
 
 The docs list specific reasons:
+
 - **Head-of-line blocking**: "TCP retransmits lost packets and holds up everything behind
   them. For audio, a dropped packet is better discarded than waited for -- a brief gap
   sounds far better than a stutter."
@@ -218,6 +220,7 @@ The docs then state: "WebSocket is appropriate for server-to-server communicatio
 both sides are on stable, controlled networks) or for text-only bots with no audio."
 
 Pipecat offers three transport options:
+
 1. **SmallWebRTC** -- Direct peer-to-peer WebRTC. Default in quickstart templates. For
    self-hosting and local dev.
 2. **Daily** -- WebRTC via Daily's global network (~75 PoPs, P50 first-hop latency ~13 ms,
@@ -236,14 +239,14 @@ Source: R-VA-028.
 
 The local transport deep dive (R-VA-028) surveys the industry:
 
-| Platform | Transport | Reason | Source |
-|---|---|---|---|
-| OpenAI Realtime | Both (WebRTC preferred for browser) | Flexibility across use cases | R-VA-028, R-VA-031 |
-| LiveKit | WebRTC only | Core product is real-time communication | R-VA-028, R-VA-032 |
-| Daily / Pipecat | WebRTC (with WS abstraction) | Production infrastructure | R-VA-028, R-VA-033 |
-| Twilio Media Streams | WebSocket | Telephony bridge, not browser-native | R-VA-028 |
-| Gemini Live | WebSocket | Simplicity, native multimodal | R-VA-028 |
-| Vapi / Retell | WebRTC (abstracted via LiveKit/Daily) | Built on LiveKit/Daily | R-VA-028 |
+| Platform             | Transport                             | Reason                                  | Source             |
+| -------------------- | ------------------------------------- | --------------------------------------- | ------------------ |
+| OpenAI Realtime      | Both (WebRTC preferred for browser)   | Flexibility across use cases            | R-VA-028, R-VA-031 |
+| LiveKit              | WebRTC only                           | Core product is real-time communication | R-VA-028, R-VA-032 |
+| Daily / Pipecat      | WebRTC (with WS abstraction)          | Production infrastructure               | R-VA-028, R-VA-033 |
+| Twilio Media Streams | WebSocket                             | Telephony bridge, not browser-native    | R-VA-028           |
+| Gemini Live          | WebSocket                             | Simplicity, native multimodal           | R-VA-028           |
+| Vapi / Retell        | WebRTC (abstracted via LiveKit/Daily) | Built on LiveKit/Daily                  | R-VA-028           |
 
 Inference: The pattern is consistent. Every vendor that targets browser/mobile voice uses
 WebRTC or recommends WebRTC for that use case. WebSocket appears in telephony bridging
@@ -297,15 +300,15 @@ WebRTC encodes all of these at the protocol level.
 
 The local transport deep dive (R-VA-028, Section 8) provides the Jarvis latency breakdown:
 
-| Stage | Latency | % of total | Source |
-|---|---|---|---|
-| VAD silence detection | ~700 ms | 46.7% | R-VA-028 |
-| Whisper STT (small, CPU) | ~300 ms | 20.0% | R-VA-028 |
-| Groq LLM TTFT (streaming) | ~150 ms | 10.0% | R-VA-028 |
-| First sentence buffer | ~100 ms | 6.7% | R-VA-028 |
-| Kokoro TTS (first sentence) | ~200 ms | 13.3% | R-VA-028 |
-| WebSocket round-trip | ~1 ms | 0.07% | R-VA-028 |
-| **Total to first audio** | **~1451 ms** | | R-VA-028 |
+| Stage                       | Latency      | % of total | Source   |
+| --------------------------- | ------------ | ---------- | -------- |
+| VAD silence detection       | ~700 ms      | 46.7%      | R-VA-028 |
+| Whisper STT (small, CPU)    | ~300 ms      | 20.0%      | R-VA-028 |
+| Groq LLM TTFT (streaming)   | ~150 ms      | 10.0%      | R-VA-028 |
+| First sentence buffer       | ~100 ms      | 6.7%       | R-VA-028 |
+| Kokoro TTS (first sentence) | ~200 ms      | 13.3%      | R-VA-028 |
+| WebSocket round-trip        | ~1 ms        | 0.07%      | R-VA-028 |
+| **Total to first audio**    | **~1451 ms** |            | R-VA-028 |
 
 Transport contributes 0.07% of total latency on localhost. Even over the internet with 50
 ms RTT, both WebSocket and WebRTC add approximately the same network latency (~50 ms, or
@@ -392,14 +395,14 @@ Transport is the thinnest slice. The argument for WebRTC is correctness, not spe
 
 ### Decision Matrix
 
-| Scenario | Recommended transport | Why | Source |
-|---|---|---|---|
-| Browser/mobile user talks to voice agent | WebRTC | AEC, Opus, jitter buffer, NAT traversal | R-VA-028, R-VA-031, R-VA-033 |
-| Native app with production media stack | WebRTC or platform-native media | Same media correctness needs | R-VA-028 |
-| Telephony provider media stream | Provider-native (often WebSocket) | PSTN bridge, not browser-native | R-VA-028 |
-| Backend-to-backend model stream | WebSocket | Stable network, no browser media stack needed | R-VA-031, R-VA-033 |
-| Local proof-of-concept | WebSocket | Simpler setup, faster iteration, media advantages irrelevant | R-VA-028 |
-| Text-only bots | WebSocket | No audio at all | R-VA-033 |
+| Scenario                                 | Recommended transport             | Why                                                          | Source                       |
+| ---------------------------------------- | --------------------------------- | ------------------------------------------------------------ | ---------------------------- |
+| Browser/mobile user talks to voice agent | WebRTC                            | AEC, Opus, jitter buffer, NAT traversal                      | R-VA-028, R-VA-031, R-VA-033 |
+| Native app with production media stack   | WebRTC or platform-native media   | Same media correctness needs                                 | R-VA-028                     |
+| Telephony provider media stream          | Provider-native (often WebSocket) | PSTN bridge, not browser-native                              | R-VA-028                     |
+| Backend-to-backend model stream          | WebSocket                         | Stable network, no browser media stack needed                | R-VA-031, R-VA-033           |
+| Local proof-of-concept                   | WebSocket                         | Simpler setup, faster iteration, media advantages irrelevant | R-VA-028                     |
+| Text-only bots                           | WebSocket                         | No audio at all                                              | R-VA-033                     |
 
 ### For the Presentation
 

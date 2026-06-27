@@ -1,7 +1,10 @@
 'use client';
 
 import Image from 'next/image';
-import { AboutSlide as SharedAboutSlide, type AboutCard } from '@/components/presentations/shared/about-slide';
+import {
+  AboutSlide as SharedAboutSlide,
+  type AboutCard,
+} from '@/components/presentations/shared/about-slide';
 
 const cards: AboutCard[] = [
   {

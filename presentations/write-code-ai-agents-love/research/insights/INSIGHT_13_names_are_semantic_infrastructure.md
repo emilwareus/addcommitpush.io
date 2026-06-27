@@ -9,13 +9,13 @@ program structure.
 
 ## Source map
 
-| Ref | Source | Local text | Role in this insight |
-|---|---|---|---|
-| R50 | CodeT5 | `paper-text/codet5-identifier-aware-2109.00859.txt` | Identifier-aware pretraining; identifiers preserve rich code semantics. |
-| R65 | How Does Naming Affect LLMs on Code Analysis Tasks? | `paper-text/naming-affects-llms-code-analysis-2307.12488.txt` | Nonsense/misleading names significantly degrade LLM code analysis. |
-| R66 | When Names Disappear | `paper-text/when-names-disappear-2510.03178.txt` | Semantics-preserving obfuscation degrades intent summarization and even execution tasks. |
-| R51 | ToolGen | `paper-text/toolgen-autocomplete-repo-codegen-2401.06391.txt` | Undefined-variable and no-member errors from invisible identifiers. |
-| R29 | CodeBERT | `paper-text/codebert-2002.08155.txt` | Foundational NL+code representation; descriptive names/docs as retrieval signals. |
+| Ref | Source                                              | Local text                                                    | Role in this insight                                                                     |
+| --- | --------------------------------------------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| R50 | CodeT5                                              | `paper-text/codet5-identifier-aware-2109.00859.txt`           | Identifier-aware pretraining; identifiers preserve rich code semantics.                  |
+| R65 | How Does Naming Affect LLMs on Code Analysis Tasks? | `paper-text/naming-affects-llms-code-analysis-2307.12488.txt` | Nonsense/misleading names significantly degrade LLM code analysis.                       |
+| R66 | When Names Disappear                                | `paper-text/when-names-disappear-2510.03178.txt`              | Semantics-preserving obfuscation degrades intent summarization and even execution tasks. |
+| R51 | ToolGen                                             | `paper-text/toolgen-autocomplete-repo-codegen-2401.06391.txt` | Undefined-variable and no-member errors from invisible identifiers.                      |
+| R29 | CodeBERT                                            | `paper-text/codebert-2002.08155.txt`                          | Foundational NL+code representation; descriptive names/docs as retrieval signals.        |
 
 ## CodeT5: identifier-aware pretraining
 
@@ -30,16 +30,17 @@ Source trace: R50, `paper-text/codet5-identifier-aware-2109.00859.txt`, lines 68
 
 ### CodeT5 pre-training tasks
 
-| Task | What it teaches |
-|---|---|
-| Identifier-aware masked span prediction | Distinguishes identifiers from other tokens |
-| Identifier recovery | Learns to predict identifier tokens specifically |
-| Bimodal dual generation (NL-PL) | Aligns natural language descriptions with code identifiers |
+| Task                                    | What it teaches                                            |
+| --------------------------------------- | ---------------------------------------------------------- |
+| Identifier-aware masked span prediction | Distinguishes identifiers from other tokens                |
+| Identifier recovery                     | Learns to predict identifier tokens specifically           |
+| Bimodal dual generation (NL-PL)         | Aligns natural language descriptions with code identifiers |
 
 ### Results from the paper
 
 CodeT5 significantly outperforms prior methods on CodeXGLUE benchmark across 14 sub-tasks
 including:
+
 - Code defect detection
 - Clone detection
 - Code summarization (PL -> NL)
@@ -54,6 +55,7 @@ the developer.
 ### Identifier masking example from the paper
 
 The paper illustrates two masked prediction modes:
+
 1. Standard span masking: masks arbitrary tokens
 2. Identifier-only masking: masks only identifier tokens (function names, variable names)
 
@@ -68,10 +70,10 @@ names are systematically replaced with nonsense or misleading alternatives.
 
 ### Taxonomy from the paper
 
-| Feature type | Definition | Impact on program logic |
-|---|---|---|
+| Feature type     | Definition                                  | Impact on program logic                         |
+| ---------------- | ------------------------------------------- | ----------------------------------------------- |
 | Literal features | Variable names, function names, annotations | None (removable without changing functionality) |
-| Logical features | Keywords, operators | Controls program behavior |
+| Logical features | Keywords, operators                         | Controls program behavior                       |
 
 Source trace: R65, `paper-text/naming-affects-llms-code-analysis-2307.12488.txt`, lines 145-150.
 
@@ -93,6 +95,7 @@ heavily relies on well-defined names in code."
 Source trace: R65, lines 90-93.
 
 Specific observations:
+
 - Nonsense names degrade performance because the model loses semantic signal
 - Misleading names degrade performance even more because the model follows false cues
 - Method/function names have stronger impact than variable names (they carry higher-level
@@ -109,12 +112,12 @@ of semantics-preserving obfuscations to disentangle structural understanding fro
 
 ### Obfuscation spectrum
 
-| Level | Method | Disruptiveness |
-|---|---|---|
-| 1 | Alpha-renaming (role-preserving placeholders) | Minimal |
-| 2 | Ambiguous identifiers (visually confusable tokens) | Moderate |
-| 3 | Cross-domain terms (unrelated field terminology) | High |
-| 4 | Misleading semantics (names implying wrong behavior) | Maximum |
+| Level | Method                                               | Disruptiveness |
+| ----- | ---------------------------------------------------- | -------------- |
+| 1     | Alpha-renaming (role-preserving placeholders)        | Minimal        |
+| 2     | Ambiguous identifiers (visually confusable tokens)   | Moderate       |
+| 3     | Cross-domain terms (unrelated field terminology)     | High           |
+| 4     | Misleading semantics (names implying wrong behavior) | Maximum        |
 
 Source trace: R66, `paper-text/when-names-disappear-2510.03178.txt`, lines 44-48.
 
@@ -138,6 +141,7 @@ Source trace: R66, lines 55-61.
 ### MinesweeperGame example from the paper
 
 The paper demonstrates with a MinesweeperGame class:
+
 - With original names: summary correctly identifies "mine sweeping games"
 - With alpha-renamed names (Class1, var1, method1): summary becomes a generic grid-based
   description, losing domain-specific understanding
@@ -148,6 +152,7 @@ This illustrates that LLMs use identifier names as semantic anchors for understa
 
 If even execution prediction tasks degrade under obfuscation, then naming is not just about
 human readability. It is part of the machine-readable semantic interface. Agents that need to:
+
 - Understand what code does (for localization)
 - Retrieve relevant code (for context)
 - Generate compatible code (for implementation)
@@ -162,12 +167,12 @@ of functions in real repositories are not standalone -- they depend on repositor
 
 ### ToolGen results copied from the paper
 
-| Metric | Improvement range across 3 LLMs |
-|---|---:|
-| Dependency Coverage | +31.4% to +39.1% |
-| Static Validity Rate | +44.9% to +57.7% |
-| Pass@1 (CoderEval, CodeT5) | +40.0% |
-| Pass@1 (CoderEval, CodeLlama) | +25.0% |
+| Metric                        | Improvement range across 3 LLMs |
+| ----------------------------- | ------------------------------: |
+| Dependency Coverage           |                +31.4% to +39.1% |
+| Static Validity Rate          |                +44.9% to +57.7% |
+| Pass@1 (CoderEval, CodeT5)    |                          +40.0% |
+| Pass@1 (CoderEval, CodeLlama) |                          +25.0% |
 
 Source trace: R51, `paper-text/toolgen-autocomplete-repo-codegen-2401.06391.txt`, lines 78-86.
 
@@ -184,19 +189,20 @@ or hidden behind dynamic dispatch, the agent cannot propose them.
 
 ## Inference for codebase design
 
-| Naming practice | Agent benefit | Evidence source |
-|---|---|---|
-| Precise domain nouns and verbs | Models use names as semantic anchors for understanding | R66, R50 |
-| Consistent terminology across code/tests/docs/APIs | Reduces retrieval noise; same concept has same name everywhere | R65 |
-| Avoid misleading names | Misleading names cause worse performance than no names at all | R65 |
-| Avoid generic `utils` modules | Generic names provide no semantic signal for retrieval | R50, inference |
-| Name tests by observable behavior | Test names serve as specifications for code understanding | Practitioner signal |
-| Stable exported symbol names | Changing names breaks agent retrieval across repo boundaries | R51, inference |
-| Avoid clever abbreviations | Models have seen standard terms; abbreviations may not be in vocabulary | R65, R66 |
+| Naming practice                                    | Agent benefit                                                           | Evidence source     |
+| -------------------------------------------------- | ----------------------------------------------------------------------- | ------------------- |
+| Precise domain nouns and verbs                     | Models use names as semantic anchors for understanding                  | R66, R50            |
+| Consistent terminology across code/tests/docs/APIs | Reduces retrieval noise; same concept has same name everywhere          | R65                 |
+| Avoid misleading names                             | Misleading names cause worse performance than no names at all           | R65                 |
+| Avoid generic `utils` modules                      | Generic names provide no semantic signal for retrieval                  | R50, inference      |
+| Name tests by observable behavior                  | Test names serve as specifications for code understanding               | Practitioner signal |
+| Stable exported symbol names                       | Changing names breaks agent retrieval across repo boundaries            | R51, inference      |
+| Avoid clever abbreviations                         | Models have seen standard terms; abbreviations may not be in vocabulary | R65, R66            |
 
 ### The directional argument
 
 The evidence establishes a clear direction:
+
 - Good names -> model understands intent -> correct generation/retrieval
 - Bad names -> model loses semantic signal -> degraded performance
 - Misleading names -> model follows false cues -> actively wrong behavior

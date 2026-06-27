@@ -3,6 +3,7 @@
 How VAD drives the entire state machine of a real-time voice agent, and why getting it wrong ruins everything downstream.
 
 **Based on:**
+
 - [Silero VAD GitHub](https://github.com/snakers4/silero-vad) -- MIT, ~2MB, the de facto standard
 - [The Gradient: One Voice Detector to Rule Them All](https://thegradient.pub/one-voice-detector-to-rule-them-all/) -- Silero team's own writeup
 - [Silero VAD Quality Metrics](https://github.com/snakers4/silero-vad/wiki/Quality-Metrics) -- ROC-AUC benchmarks
@@ -17,7 +18,7 @@ VAD is not just "detecting speech." It solves three engineering problems that ca
 
 ### Problem 1: Turn-taking / Endpointing
 
-Determining when the user has *finished* speaking so the agent can respond. This is the single most impactful UX parameter in a voice agent. The silence threshold (how long to wait after speech stops) controls the tradeoff:
+Determining when the user has _finished_ speaking so the agent can respond. This is the single most impactful UX parameter in a voice agent. The silence threshold (how long to wait after speech stops) controls the tradeoff:
 
 - **Too short (200ms)**: cuts users off mid-thought during natural pauses
 - **Too long (1000ms+)**: the agent feels sluggish, conversation loses flow
@@ -61,16 +62,16 @@ The Silero team notes: "you can achieve good results with any sort of fully feed
 
 ### Model Specs
 
-| Property | Value |
-|----------|-------|
-| Size | ~2 MB (v5/v6) |
-| Parameters | Not publicly disclosed |
-| Sample rates | 8 kHz and 16 kHz only |
-| Window size | 512 samples @ 16kHz = **32ms** (fixed in v5+) |
-| Inference time | <1ms per chunk on single CPU thread |
-| Training data | ~13,000 hours, 6,000+ languages |
-| License | MIT |
-| Output | Float 0.0-1.0 (speech probability) |
+| Property       | Value                                         |
+| -------------- | --------------------------------------------- |
+| Size           | ~2 MB (v5/v6)                                 |
+| Parameters     | Not publicly disclosed                        |
+| Sample rates   | 8 kHz and 16 kHz only                         |
+| Window size    | 512 samples @ 16kHz = **32ms** (fixed in v5+) |
+| Inference time | <1ms per chunk on single CPU thread           |
+| Training data  | ~13,000 hours, 6,000+ languages               |
+| License        | MIT                                           |
+| Output         | Float 0.0-1.0 (speech probability)            |
 
 ### Silero v5 Changes (from v4)
 
@@ -109,13 +110,13 @@ def vad_predict(self, audio_chunk: np.ndarray, sample_rate: int) -> float:
 
 Key `get_speech_timestamps` parameters:
 
-| Parameter | Default | Purpose |
-|-----------|---------|---------|
-| `threshold` | 0.5 | Speech probability threshold (0.0-1.0) |
-| `min_speech_duration_ms` | 250 | Minimum speech segment length |
-| `min_silence_duration_ms` | 100 | Minimum silence to split segments |
-| `speech_pad_ms` | 30 | Padding added before/after speech segments |
-| `max_speech_duration_s` | inf | Maximum speech segment length |
+| Parameter                 | Default | Purpose                                    |
+| ------------------------- | ------- | ------------------------------------------ |
+| `threshold`               | 0.5     | Speech probability threshold (0.0-1.0)     |
+| `min_speech_duration_ms`  | 250     | Minimum speech segment length              |
+| `min_silence_duration_ms` | 100     | Minimum silence to split segments          |
+| `speech_pad_ms`           | 30      | Padding added before/after speech segments |
+| `max_speech_duration_s`   | inf     | Maximum speech segment length              |
 
 ---
 
@@ -123,15 +124,15 @@ Key `get_speech_timestamps` parameters:
 
 Multi-domain validation set (17 hours, 9 datasets):
 
-| Model | ROC-AUC | Accuracy |
-|-------|---------|----------|
-| **Silero v6** | **0.97** | **0.92** |
-| Silero v5 | 0.96 | 0.91 |
-| FireRed VAD | 0.94 | 0.88 |
-| Commercial VAD (unnamed) | 0.93 | 0.87 |
-| Silero v4 | 0.91 | 0.85 |
-| Silero v3 | 0.92 | -- |
-| **WebRTC VAD** | **0.73** | **0.74** |
+| Model                    | ROC-AUC  | Accuracy |
+| ------------------------ | -------- | -------- |
+| **Silero v6**            | **0.97** | **0.92** |
+| Silero v5                | 0.96     | 0.91     |
+| FireRed VAD              | 0.94     | 0.88     |
+| Commercial VAD (unnamed) | 0.93     | 0.87     |
+| Silero v4                | 0.91     | 0.85     |
+| Silero v3                | 0.92     | --       |
+| **WebRTC VAD**           | **0.73** | **0.74** |
 
 The gap between Silero (0.97) and WebRTC (0.73) is enormous. WebRTC is "extremely fast and pretty good at separating noise from silence, but pretty poor at separating speech from noise."
 
@@ -204,11 +205,11 @@ Non-stationary noise: typing, music, HVAC hum, coughing. The 6-subband energy fe
 
 ### Frame Size and Hop Size
 
-| System | Frame size | Notes |
-|--------|-----------|-------|
-| Silero v5+ | 512 samples / 32ms @ 16kHz | Fixed, not configurable |
-| WebRTC | 10ms, 20ms, or 30ms | Shorter = faster onset detection |
-| Production standard | 25ms frame, 10ms hop | With Hamming windowing |
+| System              | Frame size                 | Notes                            |
+| ------------------- | -------------------------- | -------------------------------- |
+| Silero v5+          | 512 samples / 32ms @ 16kHz | Fixed, not configurable          |
+| WebRTC              | 10ms, 20ms, or 30ms        | Shorter = faster onset detection |
+| Production standard | 25ms frame, 10ms hop       | With Hamming windowing           |
 
 Tradeoff: shorter frames detect onset faster but misclassify more; longer frames improve accuracy but add detection delay. Silero chose 32ms as the sweet spot.
 
@@ -221,24 +222,24 @@ Tradeoff: shorter frames detect onset faster but misclassify more; longer frames
 
 ### Pre-Speech Buffer (Prefix Padding)
 
-When VAD triggers, you need the audio from *before* the trigger to avoid clipping the first syllable. This is a circular buffer maintained continuously.
+When VAD triggers, you need the audio from _before_ the trigger to avoid clipping the first syllable. This is a circular buffer maintained continuously.
 
-| Framework | Pre-speech buffer |
-|-----------|-------------------|
-| OpenAI Realtime API | 300ms |
-| LiveKit | 500ms |
-| Pipecat | configurable |
+| Framework           | Pre-speech buffer |
+| ------------------- | ----------------- |
+| OpenAI Realtime API | 300ms             |
+| LiveKit             | 500ms             |
+| Pipecat             | configurable      |
 
 ### Post-Speech Silence (Endpointing Threshold)
 
 After VAD probability drops below threshold, how long to wait before declaring end-of-utterance:
 
-| Framework | Silence threshold |
-|-----------|-------------------|
-| OpenAI Realtime API | 200ms |
-| Pipecat | 200ms |
-| LiveKit | 550ms |
-| **Jarvis** | **700ms** |
+| Framework           | Silence threshold |
+| ------------------- | ----------------- |
+| OpenAI Realtime API | 200ms             |
+| Pipecat             | 200ms             |
+| LiveKit             | 550ms             |
+| **Jarvis**          | **700ms**         |
 
 ### Hangover / Speech Continuation
 
@@ -306,6 +307,7 @@ While TTS is playing (`is_tts_playing`), all incoming audio is discarded and VAD
 ### STT Handoff
 
 When an utterance is complete:
+
 1. All buffered chunks (including up to 700ms trailing silence) concatenated into a single numpy array
 2. Minimum length check: rejects audio shorter than ~0.3 seconds
 3. `models.transcribe(full_audio)` runs faster-whisper on the complete utterance
@@ -320,25 +322,25 @@ Traditional VAD uses acoustic features only. The next generation fuses speech un
 
 ### OpenAI Realtime API -- `semantic_vad`
 
-Instead of pure silence detection, a classifier trained on conversational patterns determines when the user is *semantically done* speaking. Configuration is simple -- just an `eagerness` parameter (`low`, `medium`, `high`, `auto`).
+Instead of pure silence detection, a classifier trained on conversational patterns determines when the user is _semantically done_ speaking. Configuration is simple -- just an `eagerness` parameter (`low`, `medium`, `high`, `auto`).
 
 ### AssemblyAI -- Text + Audio Fusion
 
 Fuses text content and audio context to predict end-of-turn:
 
-| Parameter | Default |
-|-----------|---------|
-| `end_of_turn_confidence_threshold` | 0.7 |
-| `min_end_of_turn_silence_when_confident` | 160ms |
-| `max_turn_silence` | 2400ms (fallback) |
+| Parameter                                | Default           |
+| ---------------------------------------- | ----------------- |
+| `end_of_turn_confidence_threshold`       | 0.7               |
+| `min_end_of_turn_silence_when_confident` | 160ms             |
+| `max_turn_silence`                       | 2400ms (fallback) |
 
 Their comparison of approaches:
 
-| Approach | Input | VAD Dependency | Noise Robustness |
-|----------|-------|----------------|------------------|
-| LiveKit | Text only | High | Poor |
-| Pipecat | Audio features (prosody) | None | Poor |
-| AssemblyAI | Text + Audio context | Low | Good |
+| Approach   | Input                    | VAD Dependency | Noise Robustness |
+| ---------- | ------------------------ | -------------- | ---------------- |
+| LiveKit    | Text only                | High           | Poor             |
+| Pipecat    | Audio features (prosody) | None           | Poor             |
+| AssemblyAI | Text + Audio context     | Low            | Good             |
 
 ### Deepgram Flux
 
@@ -356,13 +358,13 @@ Semantic VAD is promising but currently only available behind commercial APIs. N
 
 In Jarvis's pipeline, the latency budget for one turn looks like:
 
-| Stage | Latency | Notes |
-|-------|---------|-------|
-| VAD detecting end-of-speech | ~700ms | The silence threshold |
-| STT (faster-whisper small, CPU) | ~300ms | Could be 50-148ms with Moonshine |
-| LLM inference | ~200-500ms | Depends on model and prompt |
-| TTS (Kokoro, CPU) | ~50-100ms | First chunk streaming |
-| **Total** | **~1.3-1.6s** | |
+| Stage                           | Latency       | Notes                            |
+| ------------------------------- | ------------- | -------------------------------- |
+| VAD detecting end-of-speech     | ~700ms        | The silence threshold            |
+| STT (faster-whisper small, CPU) | ~300ms        | Could be 50-148ms with Moonshine |
+| LLM inference                   | ~200-500ms    | Depends on model and prompt      |
+| TTS (Kokoro, CPU)               | ~50-100ms     | First chunk streaming            |
+| **Total**                       | **~1.3-1.6s** |                                  |
 
 VAD's 700ms is the single largest contributor. Reducing it improves perceived responsiveness more than any other optimization.
 

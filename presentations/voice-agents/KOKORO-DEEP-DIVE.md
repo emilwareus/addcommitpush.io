@@ -3,6 +3,7 @@
 How an 82M-parameter model achieves near-human speech quality, and why it's fast enough for real-time voice agents.
 
 **Based on:**
+
 - [Kokoro source code](../../../go-research/external_code/kokoro/kokoro/)
 - [iSTFTNet paper (Kaneko et al., 2022)](../../../go-research/external_code/kokoro/2203.02395v1.pdf) — the vocoder architecture
 - [StyleTTS 2 paper (Li et al., NeurIPS 2023)](../../../go-research/external_code/kokoro/2306.07691v2.pdf) — the foundational model
@@ -11,11 +12,12 @@ How an 82M-parameter model achieves near-human speech quality, and why it's fast
 
 ## 1. What Kokoro Is
 
-Kokoro is an inference-only implementation of **StyleTTS 2** — a text-to-speech model from Columbia University that was the first to achieve human-level speech quality on public benchmarks. On LJSpeech, human evaluators rated StyleTTS 2 *higher than actual human recordings* (CMOS +0.28, p < 0.05).
+Kokoro is an inference-only implementation of **StyleTTS 2** — a text-to-speech model from Columbia University that was the first to achieve human-level speech quality on public benchmarks. On LJSpeech, human evaluators rated StyleTTS 2 _higher than actual human recordings_ (CMOS +0.28, p < 0.05).
 
 Kokoro distills this into 82M parameters with a specific vocoder choice (iSTFTNet) that makes it fast enough for real-time streaming on CPU/MPS.
 
 **Key files:**
+
 - [`kokoro/__init__.py`](../../../go-research/external_code/kokoro/kokoro/__init__.py) — Package entry, exports `KModel` and `KPipeline`
 - [`kokoro/model.py`](../../../go-research/external_code/kokoro/kokoro/model.py) — Model assembly and forward pass
 - [`kokoro/pipeline.py`](../../../go-research/external_code/kokoro/kokoro/pipeline.py) — Full inference pipeline: G2P, chunking, voice loading
@@ -35,13 +37,13 @@ Text → Phonemes → [PLBERT + TextEncoder] → [Duration/Prosody Prediction] �
 
 There are **five neural sub-modules** that work together:
 
-| Module | What it does | Params source | Code |
-|--------|-------------|---------------|------|
-| **PLBERT** | Contextualizes phoneme tokens (ALBERT-based) | Pre-trained on Wikipedia phoneme sequences | [`modules.py:180-183`](../../../go-research/external_code/kokoro/kokoro/modules.py) |
-| **TextEncoder** | CNN+BiLSTM encoding of phonemes for acoustic features | Trained E2E | [`modules.py:35-69`](../../../go-research/external_code/kokoro/kokoro/modules.py) |
-| **ProsodyPredictor** | Predicts duration, F0 (pitch), and N (energy) per phoneme | Trained E2E | [`modules.py:91-134`](../../../go-research/external_code/kokoro/kokoro/modules.py) |
-| **DurationEncoder** | Style-conditioned BiLSTM stack for duration | Trained E2E | [`modules.py:137-176`](../../../go-research/external_code/kokoro/kokoro/modules.py) |
-| **Decoder (iSTFTNet)** | Converts features → magnitude + phase → iSTFT → waveform | Trained E2E | [`istftnet.py:384-421`](../../../go-research/external_code/kokoro/kokoro/istftnet.py) |
+| Module                 | What it does                                              | Params source                              | Code                                                                                  |
+| ---------------------- | --------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------- |
+| **PLBERT**             | Contextualizes phoneme tokens (ALBERT-based)              | Pre-trained on Wikipedia phoneme sequences | [`modules.py:180-183`](../../../go-research/external_code/kokoro/kokoro/modules.py)   |
+| **TextEncoder**        | CNN+BiLSTM encoding of phonemes for acoustic features     | Trained E2E                                | [`modules.py:35-69`](../../../go-research/external_code/kokoro/kokoro/modules.py)     |
+| **ProsodyPredictor**   | Predicts duration, F0 (pitch), and N (energy) per phoneme | Trained E2E                                | [`modules.py:91-134`](../../../go-research/external_code/kokoro/kokoro/modules.py)    |
+| **DurationEncoder**    | Style-conditioned BiLSTM stack for duration               | Trained E2E                                | [`modules.py:137-176`](../../../go-research/external_code/kokoro/kokoro/modules.py)   |
+| **Decoder (iSTFTNet)** | Converts features → magnitude + phase → iSTFT → waveform  | Trained E2E                                | [`istftnet.py:384-421`](../../../go-research/external_code/kokoro/kokoro/istftnet.py) |
 
 ---
 
@@ -229,7 +231,7 @@ The style vector is split into two halves serving different purposes:
 - **Dims 0-127** → condition the **Decoder** (timbre, acoustic characteristics) — [`model.py:118`](../../../go-research/external_code/kokoro/kokoro/model.py)
 - **Dims 128-255** → condition the **ProsodyPredictor** (rhythm, pitch patterns, speaking style) — [`model.py:104`](../../../go-research/external_code/kokoro/kokoro/model.py)
 
-This separation means a voice controls both *how it sounds* and *how it speaks* through independent pathways.
+This separation means a voice controls both _how it sounds_ and _how it speaks_ through independent pathways.
 
 ### Voice packs — Pre-computed style per utterance length
 
@@ -284,7 +286,7 @@ pack[len(ps)-1]  # select style vector matching this utterance's phoneme count
 
 ### Where this comes from (StyleTTS 2 paper)
 
-In the original StyleTTS 2, style vectors are sampled from a **diffusion model** conditioned on the input text. This means the style is *text-dependent* — the same voice saying "I'm angry" vs "I'm happy" gets different style vectors, producing appropriate prosody without explicit emotion labels.
+In the original StyleTTS 2, style vectors are sampled from a **diffusion model** conditioned on the input text. This means the style is _text-dependent_ — the same voice saying "I'm angry" vs "I'm happy" gets different style vectors, producing appropriate prosody without explicit emotion labels.
 
 The ablation study (StyleTTS 2 paper, Table 5) shows removing style diffusion causes the largest quality drop (CMOS -0.46), confirming it's the most important component.
 
@@ -359,13 +361,13 @@ If you come from a modern DL background, it helps to translate the prose descrip
 
 At inference time, Kokoro is **not** "one 82M model" in the sense of one uniform backbone. It is a composition of several sub-networks with very different inductive biases:
 
-| Submodule | Params | Share of total | What kind of network is it? | Responsible for |
-|-----------|--------|----------------|------------------------------|-----------------|
-| **PLBERT** | 6.3M | ~8% | 12-layer ALBERT-style transformer over phoneme tokens | Providing contextual phoneme embeddings for the prosody path |
-| **BERT projection** | 0.39M | <1% | Linear 768 -> 512 projection | Mapping PLBERT outputs into Kokoro's internal hidden dimension |
-| **Prosody predictor** | 16.2M | ~20% | BiLSTM + style-conditioned residual conv blocks for duration, F0, and energy | Predicting timing, pitch contour, and loudness over time |
-| **TextEncoder** | 5.6M | ~7% | Embedding + 3 Conv1d blocks + 1 BiLSTM | Building acoustic content features that the decoder consumes |
-| **Decoder / vocoder** | 53.3M | ~65% | CNN-heavy generator with AdaIN residual blocks, transposed conv upsampling, harmonic source injection, iSTFT reconstruction | Turning acoustic features plus F0 and energy into the final waveform |
+| Submodule             | Params | Share of total | What kind of network is it?                                                                                                 | Responsible for                                                      |
+| --------------------- | ------ | -------------- | --------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| **PLBERT**            | 6.3M   | ~8%            | 12-layer ALBERT-style transformer over phoneme tokens                                                                       | Providing contextual phoneme embeddings for the prosody path         |
+| **BERT projection**   | 0.39M  | <1%            | Linear 768 -> 512 projection                                                                                                | Mapping PLBERT outputs into Kokoro's internal hidden dimension       |
+| **Prosody predictor** | 16.2M  | ~20%           | BiLSTM + style-conditioned residual conv blocks for duration, F0, and energy                                                | Predicting timing, pitch contour, and loudness over time             |
+| **TextEncoder**       | 5.6M   | ~7%            | Embedding + 3 Conv1d blocks + 1 BiLSTM                                                                                      | Building acoustic content features that the decoder consumes         |
+| **Decoder / vocoder** | 53.3M  | ~65%           | CNN-heavy generator with AdaIN residual blocks, transposed conv upsampling, harmonic source injection, iSTFT reconstruction | Turning acoustic features plus F0 and energy into the final waveform |
 
 These counts come from loading the actual `hexgrad/Kokoro-82M` weights and summing parameters per top-level module.
 
@@ -549,7 +551,7 @@ class ProsodyPredictor(nn.Module):
 
 ### Differentiable duration modeling (StyleTTS 2 paper, Section 3.2.4)
 
-During *training* (not inference), StyleTTS 2 uses a novel differentiable upsampler that replaces the non-differentiable `round()` + `repeat_interleave`. It uses Gaussian kernels to create soft alignments:
+During _training_ (not inference), StyleTTS 2 uses a novel differentiable upsampler that replaces the non-differentiable `round()` + `repeat_interleave`. It uses Gaussian kernels to create soft alignments:
 
 ```
 a_pred[n, i] = softmax(sum over k: q[k,i] * Gaussian(n - l_{i-1}; sigma))
@@ -566,6 +568,7 @@ At inference, the differentiable upsampler is replaced with the simpler hard ali
 ### The problem with standard vocoders
 
 Traditional mel-spectrogram vocoders (like HiFi-GAN) use CNNs with temporal upsampling to directly predict time-domain waveforms. This means the network must:
+
 1. Recover the original-scale magnitude spectrogram (from 80-dim mel)
 2. Reconstruct phase (which was discarded)
 3. Convert from frequency to time domain
@@ -1111,31 +1114,33 @@ def waterfall_last(
 
 ## 10. Training — How StyleTTS 2 Was Trained
 
-Kokoro is inference-only, but understanding the training is key to understanding *why* it works so well. All training details come from the StyleTTS 2 paper (Li et al., NeurIPS 2023).
+Kokoro is inference-only, but understanding the training is key to understanding _why_ it works so well. All training details come from the StyleTTS 2 paper (Li et al., NeurIPS 2023).
 
 ### Two-stage training
 
 **Stage 1: Reconstruction** (with ground truth audio)
+
 - Train all modules using teacher-forcing
 - Losses: mel spectrogram reconstruction, multi-resolution STFT loss, duration/F0/energy regression
 - The style encoder extracts style vectors FROM the ground truth audio
 - Optimizer: AdamW (lr = 1e-4, weight decay = 0.01), batch size 16
 
 **Stage 2: End-to-end with SLM adversarial training** (text-only)
+
 - Remove the style encoder; replace with style diffusion model
 - Train the full pipeline from text alone
 - The SLM discriminator (WavLM-based) judges output naturalness at a perceptual level
 - The differentiable duration upsampler enables gradients through the whole pipeline
-- F0 loss is now computed against the *input style* rather than ground truth
+- F0 loss is now computed against the _input style_ rather than ground truth
 - Optimizer: AdamW (lr = 5e-5), 40 epochs
 
 ### Datasets
 
-| Dataset | Hours | Speakers | Used for |
-|---------|-------|----------|----------|
-| LJSpeech | 24h | 1 | Single-speaker evaluation |
-| LibriTTS | 585h | 2,456 | Multi-speaker training |
-| VCTK | 44h | 109 | Multi-speaker training + evaluation |
+| Dataset  | Hours | Speakers | Used for                            |
+| -------- | ----- | -------- | ----------------------------------- |
+| LJSpeech | 24h   | 1        | Single-speaker evaluation           |
+| LibriTTS | 585h  | 2,456    | Multi-speaker training              |
+| VCTK     | 44h   | 109      | Multi-speaker training + evaluation |
 
 ### Loss functions (combined)
 
@@ -1158,6 +1163,7 @@ L_slm = min_G max_D [E_x[log D_SLM(x)] + E_t[log(1 - D_SLM(G(t)))]]
 ```
 
 Where:
+
 - `G(t)` generates speech from text only (no ground truth audio)
 - `D_SLM` is a discriminator on top of **WavLM** (a pre-trained speech language model)
 - WavLM encodes acoustic → semantic information across its 12 layers
@@ -1166,6 +1172,7 @@ Where:
 Why this matters: traditional discriminators (multi-period, multi-scale) judge signal-level quality. WavLM judges **linguistic naturalness** — whether the speech sounds like a real human said it. This is why StyleTTS 2 surpasses human recordings on CMOS.
 
 Ablation (StyleTTS 2 paper, Table 5):
+
 - Remove SLM training: **CMOS -0.32**
 - Remove style diffusion: **CMOS -0.46** (largest drop)
 - Remove differentiable duration: **CMOS -0.21**
@@ -1173,6 +1180,7 @@ Ablation (StyleTTS 2 paper, Table 5):
 ### Style diffusion training
 
 The style diffusion model uses a simple U-Net architecture with only **3-5 diffusion steps** (vs hundreds for image diffusion). This works because:
+
 - The style vector is low-dimensional (256d) compared to images
 - The target distribution (natural speaking styles for a given text) is relatively smooth
 - Classifier-free guidance (w=1 to 2) is used for diversity control
@@ -1185,18 +1193,18 @@ For Kokoro specifically, the diffusion model is replaced with pre-computed style
 
 ## 11. The Numbers
 
-| Metric | Value | Source |
-|--------|-------|--------|
-| Parameters | 82M | Kokoro model card |
-| Output sample rate | 24 kHz | [`config.py`](../jarvis/config.py) |
-| Voices | 50+ | Voice pack files |
-| Context window | 510 phonemes | [`pipeline.py:205`](../../../go-research/external_code/kokoro/kokoro/pipeline.py) |
-| Style vector dimensions | 256 (128 acoustic + 128 prosodic) | [`model.py:104,118`](../../../go-research/external_code/kokoro/kokoro/model.py) |
-| Time to first audio (streaming) | ~200ms | Empirical |
-| StyleTTS 2 MOS on LJSpeech | 3.83 (ground truth: 3.81) | StyleTTS 2 paper, Table 2 |
-| StyleTTS 2 CMOS vs ground truth | +0.28 (p < 0.05) | StyleTTS 2 paper, Table 1 |
-| StyleTTS 2 CMOS vs NaturalSpeech | +1.07 (p < 0.01) | StyleTTS 2 paper, Table 1 |
-| License | Apache 2.0 | pyproject.toml |
+| Metric                           | Value                             | Source                                                                            |
+| -------------------------------- | --------------------------------- | --------------------------------------------------------------------------------- |
+| Parameters                       | 82M                               | Kokoro model card                                                                 |
+| Output sample rate               | 24 kHz                            | [`config.py`](../jarvis/config.py)                                                |
+| Voices                           | 50+                               | Voice pack files                                                                  |
+| Context window                   | 510 phonemes                      | [`pipeline.py:205`](../../../go-research/external_code/kokoro/kokoro/pipeline.py) |
+| Style vector dimensions          | 256 (128 acoustic + 128 prosodic) | [`model.py:104,118`](../../../go-research/external_code/kokoro/kokoro/model.py)   |
+| Time to first audio (streaming)  | ~200ms                            | Empirical                                                                         |
+| StyleTTS 2 MOS on LJSpeech       | 3.83 (ground truth: 3.81)         | StyleTTS 2 paper, Table 2                                                         |
+| StyleTTS 2 CMOS vs ground truth  | +0.28 (p < 0.05)                  | StyleTTS 2 paper, Table 1                                                         |
+| StyleTTS 2 CMOS vs NaturalSpeech | +1.07 (p < 0.01)                  | StyleTTS 2 paper, Table 1                                                         |
+| License                          | Apache 2.0                        | pyproject.toml                                                                    |
 
 ---
 

@@ -10,7 +10,9 @@ export function RealtimeTransportSlide() {
         <div className="bg-primary/15 border border-primary/50 rounded-xl p-6 space-y-5">
           <div className="flex items-center gap-3">
             <h3 className="text-2xl font-bold text-primary">WebSocket</h3>
-            <span className="text-sm font-mono bg-primary/30 text-primary px-2.5 py-0.5 rounded">TCP</span>
+            <span className="text-sm font-mono bg-primary/30 text-primary px-2.5 py-0.5 rounded">
+              TCP
+            </span>
           </div>
 
           <ul className="space-y-2 text-lg text-foreground/80">
@@ -22,7 +24,8 @@ export function RealtimeTransportSlide() {
           <div className="bg-red-500/15 border border-red-500/40 rounded-lg p-4">
             <div className="text-lg font-bold text-red-400 mb-1">Echo suppression</div>
             <p className="text-base text-red-300">
-              Barge-in possible but tricky — needs client-side VAD to distinguish user speech from echo.
+              Barge-in possible but tricky — needs client-side VAD to distinguish user speech from
+              echo.
             </p>
           </div>
         </div>
@@ -31,7 +34,9 @@ export function RealtimeTransportSlide() {
         <div className="bg-blue-500/15 border border-blue-500/50 rounded-xl p-6 space-y-5">
           <div className="flex items-center gap-3">
             <h3 className="text-2xl font-bold text-blue-400">WebRTC</h3>
-            <span className="text-sm font-mono bg-blue-500/30 text-blue-400 px-2.5 py-0.5 rounded">UDP</span>
+            <span className="text-sm font-mono bg-blue-500/30 text-blue-400 px-2.5 py-0.5 rounded">
+              UDP
+            </span>
           </div>
 
           <ul className="space-y-2 text-lg text-foreground/80">

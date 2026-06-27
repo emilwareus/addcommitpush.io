@@ -7,6 +7,7 @@
 ## FOUNDATIONAL LAYER (2021-2023)
 
 ### Chain-of-Thought Prompting
+
 - **Date:** January 28, 2022
 - **Organization:** Google
 - **Authors:** Jason Wei, Xuezhi Wang, Dale Schuurmans, Maarten Bosma, Brian Ichter, Fei Xia, Ed Chi, Quoc Le, Denny Zhou
@@ -16,6 +17,7 @@
 - **Impact:** Foundational work showing that step-by-step reasoning improves LLM capabilities; became a building block for all subsequent agentic research systems
 
 ### ReAct: Reasoning and Acting
+
 - **Date:** October 2022 (Published at ICLR 2023)
 - **Organization:** Google Research
 - **Authors:** Shunyu Yao and 6 colleagues
@@ -26,6 +28,7 @@
 - **Impact:** First pattern to demonstrate synergy between reasoning and action-taking; enables dynamic interaction with external environments. Foundation for modern research agents
 
 ### ToolLLM
+
 - **Date:** July 2023
 - **Organization:** Alibaba, Stanford
 - **Authors:** Yujia Qin et al.
@@ -40,6 +43,7 @@
 ## EARLY RESEARCH AGENT SYSTEMS (2023-2024)
 
 ### GPT Researcher
+
 - **Date:** 2023 (Formalized in 2024)
 - **Organization:** Open Source Community (Evolved into Tavily)
 - **Creator:** Assaf Elovic
@@ -54,6 +58,7 @@
 - **Impact:** Early open-source deep research agent; modular design allowing custom LLMs and search engines
 
 ### STORM: Synthesis of Topic Outlines through Retrieval and Multi-perspective Question Asking
+
 - **Date:** February 22, 2024 (arXiv v1), April 8, 2024 (v2)
 - **Organization:** Stanford University (OVAL Lab)
 - **Authors:** Yijia Shao, Yucheng Jiang, Theodore A Kanell, Peter Xu, Omar Khattab, Monica Lam
@@ -77,6 +82,7 @@
 ## COMMERCIAL RESEARCH AGENTS (2024-2025)
 
 ### OpenAI Deep Research
+
 - **Date:** February 2-3, 2025
 - **Organization:** OpenAI
 - **Announcement:** https://openai.com/index/introducing-deep-research/
@@ -85,6 +91,7 @@
 - **Impact:** Integrated into ChatGPT Pro/Plus; industry-standard benchmark for deep research performance; initial focus on enterprise-grade analysis
 
 ### Perplexity Deep Research
+
 - **Date:** 2024-2025
 - **Organization:** Perplexity AI
 - **Availability:** Part of Perplexity Pro
@@ -99,6 +106,7 @@
 - **Impact:** TTC architecture enabling systematic exploration of complex topics; combines search and coding capabilities
 
 ### Tavily Research Agent
+
 - **Date:** 2024-2025
 - **Organization:** Tavily (Spun out of GPT Researcher)
 - **Funding:** Series A $20M (2025), Total $25M
@@ -109,6 +117,7 @@
 - **Impact:** Optimized for RAG purposes; Fast and Ultra Fast search depths minimizing latency
 
 ### Google Deep Researcher with Test-Time Diffusion (TTD-DR)
+
 - **Date:** July 2025
 - **Organization:** Google DeepMind / Google Research
 - **Model:** Gemini 2.5 Pro
@@ -124,6 +133,7 @@
 - **Impact:** First to model report generation as diffusion process; novel approach treating research as iterative refinement rather than linear pipeline
 
 ### Atlassian Rovo Deep Research v2
+
 - **Date:** 2025
 - **Organization:** Atlassian
 - **URLs:**
@@ -142,6 +152,7 @@
 ## ADVANCED MULTI-AGENT ARCHITECTURES (2025)
 
 ### Skywork DeepResearchAgent / AgentOrchestra
+
 - **Date:** 2025
 - **Organization:** Skywork AI, Nanyang Technological University
 - **Authors:** Skywork AI Research Team
@@ -167,18 +178,21 @@
 This pattern emerged across multiple implementations as a standard approach:
 
 ### Core Pattern Flow:
+
 1. **Planning Phase:** LLM breaks user objective into 3-7 crisp, self-contained sub-questions; assigns to specialized agents
 2. **Research/Execution Phase:** Source Finder agent with web search tool returns high-signal links with titles, URLs, summaries, content
 3. **Processing Phase:** Summarization agent extracts relevant facts; Reviewer scans coverage and flags gaps; proposes new questions if needed
 4. **Report Generation:** Professional Research Writer synthesizes structured, readable report
 
 ### Implementations:
+
 - OpenAI Deep Research
 - Perplexity Deep Research
 - Anthropic's multi-agent research system
 - Numerous others
 
 ### Key Insight:
+
 This pattern has become the de facto standard for modern research automation because it separates concerns (planning vs. execution vs. synthesis) and enables iterative refinement.
 
 ---
@@ -186,6 +200,7 @@ This pattern has become the de facto standard for modern research automation bec
 ## SURVEY PAPERS (2025)
 
 ### Deep Research: A Survey of Autonomous Research Agents
+
 - **Date:** August 2025
 - **Authors:** Wenlin Zhang et al.
 - **Paper:** arXiv:2508.12752
@@ -193,6 +208,7 @@ This pattern has become the de facto standard for modern research automation bec
 - **Scope:** Systematic overview of deep research pipeline (planning, question developing, web exploration, report generation); comparison with RAG and tool-use systems
 
 ### Deep Research Agents: A Systematic Examination And Roadmap
+
 - **Date:** June 2025
 - **Paper:** arXiv:2506.18096
 - **URL:** https://arxiv.org/abs/2506.18096
@@ -203,19 +219,23 @@ This pattern has become the de facto standard for modern research automation bec
 ## KEY EVOLUTION INSIGHTS
 
 ### From Static to Dynamic:
+
 - **Early systems (2021-2023):** Static prompts, hard-coded workflows
 - **Recent systems (2024-2025):** Adaptive agentic paradigms, dynamic planning, real-time interaction
 
 ### Core Pipeline Standardization:
+
 All modern deep research agents follow variants of: **Plan → Research → Report**
 
 ### Architectural Trends:
+
 1. **Modular agents** with specialized roles (searcher, analyzer, writer, reviewer)
 2. **Hierarchical coordination** (planning agents managing execution agents)
 3. **Iterative refinement** (draft → review → revise → finalize)
 4. **Integrated tooling** (web search, code execution, document processing, MCP support)
 
 ### Performance Metrics:
+
 - Report generation: 3-10 minutes
 - Cost: $0.005-$0.10 per research task
 - Win rates: 74.5% (Google TTD-DR vs OpenAI DR)

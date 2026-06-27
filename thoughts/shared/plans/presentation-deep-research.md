@@ -134,6 +134,7 @@ export function getSlideSteps(slug: string): number {
 **File**: `app/presentations/deep-research/layout.tsx` (new)
 
 Client Component that handles:
+
 - Keyboard navigation (ArrowRight/ArrowLeft)
 - Step counter per slide (resets on pathname change)
 - Progress bar (top)
@@ -238,6 +239,7 @@ export default function PresentationLayout({ children }: { children: React.React
 ```
 
 **Key design decisions:**
+
 - `SlideStepContext` passes `step` to slide components without prop drilling through the page component
 - Space bar also advances (common presentation convention)
 - `z-50` ensures the presentation covers the blog `<Navigation />` from the root layout
@@ -376,10 +378,12 @@ export default async function SlidePage({
 ### Success Criteria:
 
 #### Automated Verification:
+
 - [x] `pnpm build` succeeds (generates 19 static slide pages)
 - [x] `pnpm lint` passes
 
 #### Manual Verification:
+
 - [ ] Navigating to `/presentations/deep-research/01-title` renders a slide fullscreen
 - [ ] Arrow keys navigate between slides
 - [ ] Progress bar updates
@@ -400,17 +404,20 @@ Create all 19 slide components. Slides with `steps > 0` use the `useSlideStep()`
 Each slide is a `'use client'` component (needed for `useSlideStep` context and Framer Motion). Below are the 19 slides with their content mapped from the outline:
 
 **01-title.tsx** — `steps: 0`
+
 - Large centered title: "DEEP RESEARCH AGENTS"
 - Subtitle: "Architecture Walkthrough"
 - Author + venue: "Emil Wåreus | Foo Cafe Malmo | Feb 5, 2026"
 - Keyboard hint at bottom: "Press arrow keys to navigate"
 
 **02-group-project.tsx** — `steps: 2`
+
 - Step 0: Heading "Remember group projects?"
 - Step 1: Animated diagram showing 4 people (Anna, Bob, Carol, Dan) each writing their section in isolation, then merging into "The Report"
 - Step 2: Caption "Everyone writes alone. Then you glue it together 3 hours before the deadline."
 
 **03-the-result.tsx** — `steps: 5`
+
 - Heading "The result?"
 - Steps 1-5 reveal bullet points one by one with Framer Motion fade-in:
   - Repetitive
@@ -420,18 +427,21 @@ Each slide is a `'use client'` component (needed for `useSlideStep` context and 
   - Not the grade you wanted
 
 **04-the-reveal.tsx** — `steps: 3`
+
 - Step 0: "This is exactly how most AI research agents work."
 - Step 1: Animated pipeline diagram: PLAN → PARALLEL SEARCH → MERGE
 - Step 2: Problems appear: "Can't see each other", "Can't update the plan", "One shot — hope it works"
 - Step 3: "Today: How we fixed this."
 
 **05-about.tsx** — `steps: 0`
+
 - Emil Wåreus intro card
 - "General hacker, Founder of oaiz"
 - "ex-co-founder Debricked, exit 2022"
 - "Blog: addcommitpush.io"
 
 **06-audience-poll.tsx** — `steps: 4`
+
 - "Quick Poll" heading
 - Steps 1-4 reveal questions one by one:
   1. "Who has used ChatGPT or Claude for research?"
@@ -440,6 +450,7 @@ Each slide is a `'use client'` component (needed for `useSlideStep` context and 
   4. "Who trusts AI research reports?"
 
 **07-timeline.tsx** — `steps: 6`
+
 - "The Evolution of Research Agents" heading
 - Horizontal timeline with entries appearing via steps:
   - Step 1: 2022 — Chain-of-Thought, ReAct
@@ -450,12 +461,14 @@ Each slide is a `'use client'` component (needed for `useSlideStep` context and 
   - Step 6: Bottom insight line: "Single calls → Agents → Multi-agent → Iterative"
 
 **08-storm-intro.tsx** — `steps: 3`
+
 - "STORM" heading with "Stanford 2024" attribution
 - Step 1: "What if we simulated conversations between experts?"
 - Step 2: 3 expert cards appear (Security Architect, DevOps Engineer, Platform Specialist) with speech bubbles
 - Step 3: "Different experts ask different questions → comprehensive coverage"
 
 **09-storm-architecture.tsx** — `steps: 4`
+
 - "STORM: Four Phases"
 - Steps 1-4 reveal phases one by one:
   1. DISCOVER — Survey topic, generate expert perspectives
@@ -464,47 +477,55 @@ Each slide is a `'use client'` component (needed for `useSlideStep` context and 
   4. SYNTHESIZE — Draft outline → Refine → Final article
 
 **10-storm-demo.tsx** — `steps: 0`
+
 - Simple centered card: "Live Demo: STORM"
 - "Switch to terminal"
 - Code block: `/storm "What are the security implications of WebAssembly?"`
 - Hint: "Watch: Perspectives → Parallel conversations → Final synthesis"
 
 **11-limitation.tsx** — `steps: 3`
+
 - Step 0: "But there's still a problem..."
 - Step 1: 3 agent boxes (Agent A, B, C) with arrows down
 - Step 2: Warning box: "Still can't see each other / Still one pass / Still no self-correction"
 - Step 3: "What if the report could evolve?"
 
 **12-diffusion-insight.tsx** — `steps: 2`
+
 - "What if research worked like image generation?"
 - Step 1: Image diffusion row: noise → less noise → shape → clean image
 - Step 2: Research diffusion row: rough draft → +gap fill → refine → final report
 - Comparison table + key insight: "The initial draft IS the noise we refine away"
 
 **13-diffusion-architecture.tsx** — `steps: 0`
+
 - Embed the existing `<DiffusionOverview />` component from `@/components/animations/diffusion`
 - Wrap in `max-w-5xl mx-auto w-full px-8`
 - Title: "Diffusion Deep Research" with "Google 2025"
 - Callout at bottom: "Loop stops when EVIDENCE is complete, not when draft looks good"
 
 **14-loop-visualized.tsx** — `steps: 0`
+
 - Title: "The Draft Evolves"
 - Embed the existing `<DraftDenoising />` component
 - Wrap in `max-w-5xl mx-auto w-full px-8`
 
 **15-parallel-agents.tsx** — `steps: 0`
+
 - Title: "Parallel Research, Isolated Contexts"
 - Embed the existing `<ParallelAgents />` component
 - Wrap in `max-w-5xl mx-auto w-full px-8`
 - Caption: "Why isolated? Independent perspectives. No cross-contamination."
 
 **16-diffusion-demo.tsx** — `steps: 0`
+
 - Simple centered card: "Live Demo: Diffusion"
 - "Switch to terminal"
 - Code block: `/think_deep "Compare STORM and Diffusion architectures"`
 - Hint: "Watch: Initial draft → Gap detection → Iterations → Final report"
 
 **17-benchmarks.tsx** — `steps: 5`
+
 - "The Results" heading
 - Step 1: Big animated number "74.5% WIN RATE" (Google Diffusion vs OpenAI)
 - Steps 2-5 reveal "Why?" table rows:
@@ -515,6 +536,7 @@ Each slide is a `'use client'` component (needed for `useSlideStep` context and 
 - Alternative: could also embed `<RACEMetrics />` at step 5
 
 **18-takeaways.tsx** — `steps: 7`
+
 - "What You Can Apply Today"
 - Steps 1-7 reveal each takeaway:
   1. Start with a draft
@@ -526,6 +548,7 @@ Each slide is a `'use client'` component (needed for `useSlideStep` context and 
   7. Compress findings, preserve everything
 
 **19-resources.tsx** — `steps: 0`
+
 - "Questions?" large heading
 - Divider
 - "Go Deeper" section with 4 resource links:
@@ -584,10 +607,12 @@ export function DiffusionArchitectureSlide() {
 ### Success Criteria:
 
 #### Automated Verification:
+
 - [x] `pnpm build` succeeds (all 19 routes generated)
 - [x] `pnpm lint` passes
 
 #### Manual Verification:
+
 - [ ] Each of the 19 slides renders correct content
 - [ ] Step-based slides (03, 04, 06, 07, 08, 09, 11, 12, 17, 18) reveal items on ArrowRight
 - [ ] ArrowLeft within a stepped slide goes back a step
@@ -625,6 +650,7 @@ export default function PresentationIndex() {
 #### 2. Build verification
 
 Run `pnpm build` and confirm:
+
 - All 19 slide routes are statically generated
 - No TypeScript errors
 - No lint errors
@@ -633,11 +659,13 @@ Run `pnpm build` and confirm:
 ### Success Criteria:
 
 #### Automated Verification:
+
 - [x] `pnpm build` succeeds with 19 slide routes + redirect route
 - [x] `pnpm lint` passes
 - [x] No TypeScript errors
 
 #### Manual Verification:
+
 - [ ] `/presentations/deep-research` redirects to `/presentations/deep-research/01-title`
 - [ ] Complete run-through of all 19 slides with keyboard navigation
 - [ ] No visual regressions on the blog (root layout unmodified)
@@ -647,11 +675,13 @@ Run `pnpm build` and confirm:
 ## Testing Strategy
 
 ### Automated:
+
 - `pnpm build` — validates all static params generate correctly
 - `pnpm lint` — code quality
 - TypeScript compilation via the build step
 
 ### Manual Testing Steps:
+
 1. Navigate to `/presentations/deep-research/01-title`
 2. Press ArrowRight through all 19 slides, verifying content and step animations
 3. Press ArrowLeft back to slide 1

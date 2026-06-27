@@ -32,8 +32,8 @@ export function StormIntroSlide() {
       </p>
 
       <p className="text-2xl text-muted-foreground mb-12 text-center max-w-2xl">
-        &ldquo;Wikipedia articles are comprehensive because they synthesize
-        multiple expert viewpoints&rdquo;
+        &ldquo;Wikipedia articles are comprehensive because they synthesize multiple expert
+        viewpoints&rdquo;
       </p>
 
       <div className="flex gap-8 mb-12">
@@ -45,11 +45,15 @@ export function StormIntroSlide() {
             transition={{ duration: 0.4, delay: i * 0.15 }}
             className="flex flex-col items-center gap-3 w-48"
           >
-            <div className={`w-14 h-14 rounded-full ${bgColors[i]} border ${colors[i]} flex items-center justify-center text-xl ${textColors[i]}`}>
+            <div
+              className={`w-14 h-14 rounded-full ${bgColors[i]} border ${colors[i]} flex items-center justify-center text-xl ${textColors[i]}`}
+            >
               {expert.role[0]}
             </div>
             <span className="text-sm font-semibold text-center">{expert.role}</span>
-            <div className={`px-3 py-2 rounded-lg bg-card border ${colors[i]} text-sm text-muted-foreground text-center`}>
+            <div
+              className={`px-3 py-2 rounded-lg bg-card border ${colors[i]} text-sm text-muted-foreground text-center`}
+            >
               &ldquo;{expert.question}&rdquo;
             </div>
           </motion.div>

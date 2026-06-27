@@ -12,14 +12,14 @@ that substitutes for much larger volumes of implementation code.
 
 ## Source map
 
-| Ref | Source | Local text | Role in this insight |
-|---|---|---|---|
-| R10 | ContextBench | `paper-text/contextbench-2602.05892.txt` | Shows agents retrieve noisy context and struggle with precision; types reduce what must be retrieved. |
-| R43 | Type-Constrained Code Generation | `paper-text/type-constrained-codegen-2504.09246.txt` | Direct evidence that type constraints reduce compilation errors by more than half and improve functional correctness. |
-| R63 | CatCoder | `paper-text/catcoder-2406.03283.txt` | Shows type context (API signatures, fields, methods) combined with code retrieval improves repository-level generation up to 17.35%. |
-| R13 | Repository Intelligence Graph | `paper-text/repository-intelligence-graph-2601.10112.txt` | Structural facts (components, dependencies, tests) improve agent accuracy by 12.2% and reduce completion time by 53.9%. |
-| R19 | Claude Code Configs | `paper-text/claude-code-configs-2511.09268.txt` | Empirical study showing developers encode architecture and testing rules because agents otherwise miss structural relationships. |
-| R03 | RepoBench | `paper-text/repobench-2306.03091.txt` | Cross-file context is a separately measured capability; implicit dependencies impose retrieval burden. |
+| Ref | Source                           | Local text                                                | Role in this insight                                                                                                                 |
+| --- | -------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| R10 | ContextBench                     | `paper-text/contextbench-2602.05892.txt`                  | Shows agents retrieve noisy context and struggle with precision; types reduce what must be retrieved.                                |
+| R43 | Type-Constrained Code Generation | `paper-text/type-constrained-codegen-2504.09246.txt`      | Direct evidence that type constraints reduce compilation errors by more than half and improve functional correctness.                |
+| R63 | CatCoder                         | `paper-text/catcoder-2406.03283.txt`                      | Shows type context (API signatures, fields, methods) combined with code retrieval improves repository-level generation up to 17.35%. |
+| R13 | Repository Intelligence Graph    | `paper-text/repository-intelligence-graph-2601.10112.txt` | Structural facts (components, dependencies, tests) improve agent accuracy by 12.2% and reduce completion time by 53.9%.              |
+| R19 | Claude Code Configs              | `paper-text/claude-code-configs-2511.09268.txt`           | Empirical study showing developers encode architecture and testing rules because agents otherwise miss structural relationships.     |
+| R03 | RepoBench                        | `paper-text/repobench-2306.03091.txt`                     | Cross-file context is a separately measured capability; implicit dependencies impose retrieval burden.                               |
 
 ## ContextBench: agents favor recall over precision
 
@@ -29,14 +29,14 @@ across 8 programming languages, each with human-annotated gold contexts.
 
 ### Key ContextBench data
 
-| Measurement | Value | Unit |
-|---|---:|---|
-| Issue-resolution tasks | 1,136 | tasks |
-| Repositories | 66 | repos |
-| Programming languages | 8 | languages |
-| Human-verified gold context lines | 522,115 | lines |
-| Gold context classes and functions | 23,116 | blocks |
-| Gold context files | 4,548 | files |
+| Measurement                        |   Value | Unit      |
+| ---------------------------------- | ------: | --------- |
+| Issue-resolution tasks             |   1,136 | tasks     |
+| Repositories                       |      66 | repos     |
+| Programming languages              |       8 | languages |
+| Human-verified gold context lines  | 522,115 | lines     |
+| Gold context classes and functions |  23,116 | blocks    |
+| Gold context files                 |   4,548 | files     |
 
 Source trace: R10, `paper-text/contextbench-2602.05892.txt`.
 
@@ -60,14 +60,14 @@ TypeScript type system to reject invalid token completions during generation.
 
 ### Type-Constrained Decoding data
 
-| Measurement | Value | Context |
-|---|---:|---|
-| Compilation errors due to type violations | 94% | Of all compilation errors in generated TypeScript code |
-| Compilation errors due to syntax | 6% | Syntax is the minor part of the problem |
-| Reduction in compilation errors | >50% | Type-constrained vs. unconstrained decoding |
-| Functional correctness improvement (synthesis/translation) | 3.5-5.5% | Relative improvement |
-| Functional correctness improvement (repair) | 37% | Relative improvement on average |
-| Model sizes evaluated | 2B-34B | Parameters |
+| Measurement                                                |    Value | Context                                                |
+| ---------------------------------------------------------- | -------: | ------------------------------------------------------ |
+| Compilation errors due to type violations                  |      94% | Of all compilation errors in generated TypeScript code |
+| Compilation errors due to syntax                           |       6% | Syntax is the minor part of the problem                |
+| Reduction in compilation errors                            |     >50% | Type-constrained vs. unconstrained decoding            |
+| Functional correctness improvement (synthesis/translation) | 3.5-5.5% | Relative improvement                                   |
+| Functional correctness improvement (repair)                |      37% | Relative improvement on average                        |
+| Model sizes evaluated                                      |   2B-34B | Parameters                                             |
 
 Source trace: R43, `paper-text/type-constrained-codegen-2504.09246.txt`.
 
@@ -85,14 +85,14 @@ the agent also needs the API surface of related types.
 
 ### CatCoder data
 
-| Measurement | Value | Context |
-|---|---:|---|
-| Java benchmark tasks | 199 | tasks |
-| Rust benchmark tasks | 90 | tasks |
-| Improvement over RepoCoder (compile@k) | up to 14.44% | percentage points |
-| Improvement over RepoCoder (pass@k) | up to 17.35% | percentage points |
-| Type context content | Fields, method signatures of related types | Extracted by static analyzer |
-| Performance improvement | Consistent across all evaluated LLMs | Both code-specialized and general-purpose models |
+| Measurement                            |                                      Value | Context                                          |
+| -------------------------------------- | -----------------------------------------: | ------------------------------------------------ |
+| Java benchmark tasks                   |                                        199 | tasks                                            |
+| Rust benchmark tasks                   |                                         90 | tasks                                            |
+| Improvement over RepoCoder (compile@k) |                               up to 14.44% | percentage points                                |
+| Improvement over RepoCoder (pass@k)    |                               up to 17.35% | percentage points                                |
+| Type context content                   | Fields, method signatures of related types | Extracted by static analyzer                     |
+| Performance improvement                |       Consistent across all evaluated LLMs | Both code-specialized and general-purpose models |
 
 Source trace: R63, `paper-text/catcoder-2406.03283.txt`.
 
@@ -112,16 +112,16 @@ instead of reverse-engineering project structure through file exploration.
 
 ### RIG data
 
-| Measurement | Value | Context |
-|---|---:|---|
-| Mean accuracy improvement with RIG | 12.2% | Relative, across 8 repos and 3 agents |
-| Mean completion time reduction | 53.9% | Wall-clock seconds |
-| Mean efficiency improvement (seconds per correct answer) | 57.8% | Reduction |
-| Multi-lingual repo accuracy improvement | 17.7% | Where structural complexity is highest |
-| Multi-lingual repo efficiency improvement | 69.5% | Where exploration cost is highest |
-| Single-language repo accuracy improvement | 6.6% | Lower complexity, less benefit |
-| Agents evaluated | Claude Code, Cursor, Codex | 3 commercial agents |
-| Repositories | 8 | Low to high build complexity |
+| Measurement                                              |                      Value | Context                                |
+| -------------------------------------------------------- | -------------------------: | -------------------------------------- |
+| Mean accuracy improvement with RIG                       |                      12.2% | Relative, across 8 repos and 3 agents  |
+| Mean completion time reduction                           |                      53.9% | Wall-clock seconds                     |
+| Mean efficiency improvement (seconds per correct answer) |                      57.8% | Reduction                              |
+| Multi-lingual repo accuracy improvement                  |                      17.7% | Where structural complexity is highest |
+| Multi-lingual repo efficiency improvement                |                      69.5% | Where exploration cost is highest      |
+| Single-language repo accuracy improvement                |                       6.6% | Lower complexity, less benefit         |
+| Agents evaluated                                         | Claude Code, Cursor, Codex | 3 commercial agents                    |
+| Repositories                                             |                          8 | Low to high build complexity           |
 
 Source trace: R13, `paper-text/repository-intelligence-graph-2601.10112.txt`.
 
@@ -139,14 +139,14 @@ find it necessary to explicitly state structural relationships that agents other
 
 ### Config study data
 
-| Measurement | Value |
-|---|---:|
-| Configuration files analyzed | 328 |
-| Files specifying architecture | 72.6% |
-| Top programming languages | JS/TS (35), Python (16), Go (9) |
-| Median project stars | 950 |
-| Median project age | 58 months |
-| Median level-2 headings per file | 7 |
+| Measurement                      |                           Value |
+| -------------------------------- | ------------------------------: |
+| Configuration files analyzed     |                             328 |
+| Files specifying architecture    |                           72.6% |
+| Top programming languages        | JS/TS (35), Python (16), Go (9) |
+| Median project stars             |                             950 |
+| Median project age               |                       58 months |
+| Median level-2 headings per file |                               7 |
 
 Source trace: R19, `paper-text/claude-code-configs-2511.09268.txt`.
 
@@ -159,12 +159,12 @@ dependency adds retrieval burden.
 
 ### RepoBench data
 
-| Measurement | Value |
-|---|---:|
-| Python test repositories | 1,075 |
-| Java test repositories | 594 |
-| Task settings | XF-F (hardest), XF-R, IF |
-| Hard subset candidate snippets | 10+ per task |
+| Measurement                    |                    Value |
+| ------------------------------ | -----------------------: |
+| Python test repositories       |                    1,075 |
+| Java test repositories         |                      594 |
+| Task settings                  | XF-F (hardest), XF-R, IF |
+| Hard subset candidate snippets |             10+ per task |
 
 Source trace: R03, `paper-text/repobench-2306.03091.txt`.
 
@@ -216,15 +216,15 @@ Based on the evidence above, the following inferences are defensible:
 
 ## Codebase design implications
 
-| Agent need | Type/interface affordance | Concrete repo artifact |
-|---|---|---|
-| Know what a function accepts | Parameter types | `function process(input: ParsedEvent): Result` |
-| Know what a module exports | Public API surface | `export type { Config, Plugin, Handler }` in index.ts |
-| Know available operations on an object | Interface/class definition | `interface RealMatrix { getEntry(r, c): double }` |
-| Know module dependencies | Import types | Explicit typed imports, no `require()` with implicit any |
-| Know architectural boundaries | Module boundary types | Barrel files with typed re-exports |
-| Avoid hallucinating APIs | Visible method signatures | Generated API docs, TypeDoc output, or .d.ts files |
-| Navigate unfamiliar codebase | Structural graph | Generated dependency graph, RIG-style JSON |
+| Agent need                             | Type/interface affordance  | Concrete repo artifact                                   |
+| -------------------------------------- | -------------------------- | -------------------------------------------------------- |
+| Know what a function accepts           | Parameter types            | `function process(input: ParsedEvent): Result`           |
+| Know what a module exports             | Public API surface         | `export type { Config, Plugin, Handler }` in index.ts    |
+| Know available operations on an object | Interface/class definition | `interface RealMatrix { getEntry(r, c): double }`        |
+| Know module dependencies               | Import types               | Explicit typed imports, no `require()` with implicit any |
+| Know architectural boundaries          | Module boundary types      | Barrel files with typed re-exports                       |
+| Avoid hallucinating APIs               | Visible method signatures  | Generated API docs, TypeDoc output, or .d.ts files       |
+| Navigate unfamiliar codebase           | Structural graph           | Generated dependency graph, RIG-style JSON               |
 
 ## Blog visual candidates
 

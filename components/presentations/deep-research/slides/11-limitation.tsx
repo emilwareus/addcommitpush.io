@@ -3,13 +3,13 @@
 import { motion } from 'framer-motion';
 import { useSlideStep } from '@/app/presentations/deep-research/layout';
 
-const warnings = [
-  'Still can\'t see each other',
-  'Still one pass',
-  'Still no self-correction',
-];
+const warnings = ["Still can't see each other", 'Still one pass', 'Still no self-correction'];
 
-const agentColors = ['border-primary/40 text-primary', 'border-secondary/40 text-secondary', 'border-accent/40 text-accent'];
+const agentColors = [
+  'border-primary/40 text-primary',
+  'border-secondary/40 text-secondary',
+  'border-accent/40 text-accent',
+];
 
 export function LimitationSlide() {
   const step = useSlideStep();
@@ -47,7 +47,9 @@ export function LimitationSlide() {
       >
         <div className="space-y-2 text-center">
           {warnings.map((warning) => (
-            <p key={warning} className="text-lg text-secondary">{warning}</p>
+            <p key={warning} className="text-lg text-secondary">
+              {warning}
+            </p>
           ))}
         </div>
       </motion.div>

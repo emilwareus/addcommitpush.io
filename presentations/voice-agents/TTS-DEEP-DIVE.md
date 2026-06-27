@@ -169,6 +169,7 @@ Models without any published quality metrics: Kokoro-82M, Bark, Piper, Orpheus, 
 ### For Voice Agents Specifically
 
 For real-time voice agents, the critical metrics are:
+
 1. **TTFA < 200ms** -- user perceives delay beyond this
 2. **RTF < 0.5** -- must generate audio faster than playback
 3. **Streaming support** -- chunk-level output, not full-utterance

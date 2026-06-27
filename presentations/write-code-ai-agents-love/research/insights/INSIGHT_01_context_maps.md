@@ -8,16 +8,16 @@ speed, and retrieval quality.
 
 ## Source map
 
-| Ref | Source | Local text | Role |
-|---|---|---|---|
-| R10 | ContextBench (2026-02) | `paper-text/contextbench-2602.05892.txt` | Measures retrieval quality during issue resolution; shows recall-over-precision bias and explored-vs-utilized gap. |
-| R03 | RepoBench (2023-06) | `paper-text/repobench-2306.03091.txt` | Splits repo-level completion into retrieval and generation; makes cross-file retrieval an explicit bottleneck. |
-| R12 | RepoGraph (ICLR 2025) | `paper-text/repograph-2410.14684.txt` | Adds a line-level dependency graph as a plug-in module; boosts SWE-bench by 32.8% relative. |
-| R13 | Repository Intelligence Graph (2026-01) | `paper-text/repository-intelligence-graph-2601.10112.txt` | Deterministic build/test-centered map; +12.2% accuracy, -53.9% time across 3 agents and 8 repos. |
-| R14 | AI-assisted Coding with Cody (2024-08) | `paper-text/cody-context-retrieval-2408.05344.txt` | Practitioner architecture: search + code intelligence > raw long-context for code recommendations. |
-| R16 | CodePlan (2023-09) | `paper-text/codeplan-2309.12499.txt` | Repository-level tasks need planning over dependency structure, not direct generation. |
-| D09 | Aider Repo Map docs | `articles/aider-repomap.md` | Practitioner signal: repo maps help agents work in larger codebases. |
-| D10 | Sourcegraph: How Cody understands your codebase | `articles/sourcegraph-how-cody-understands-codebase.html` | Official-doc evidence: code search + code intelligence, not prompt stuffing. |
+| Ref | Source                                          | Local text                                                | Role                                                                                                               |
+| --- | ----------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| R10 | ContextBench (2026-02)                          | `paper-text/contextbench-2602.05892.txt`                  | Measures retrieval quality during issue resolution; shows recall-over-precision bias and explored-vs-utilized gap. |
+| R03 | RepoBench (2023-06)                             | `paper-text/repobench-2306.03091.txt`                     | Splits repo-level completion into retrieval and generation; makes cross-file retrieval an explicit bottleneck.     |
+| R12 | RepoGraph (ICLR 2025)                           | `paper-text/repograph-2410.14684.txt`                     | Adds a line-level dependency graph as a plug-in module; boosts SWE-bench by 32.8% relative.                        |
+| R13 | Repository Intelligence Graph (2026-01)         | `paper-text/repository-intelligence-graph-2601.10112.txt` | Deterministic build/test-centered map; +12.2% accuracy, -53.9% time across 3 agents and 8 repos.                   |
+| R14 | AI-assisted Coding with Cody (2024-08)          | `paper-text/cody-context-retrieval-2408.05344.txt`        | Practitioner architecture: search + code intelligence > raw long-context for code recommendations.                 |
+| R16 | CodePlan (2023-09)                              | `paper-text/codeplan-2309.12499.txt`                      | Repository-level tasks need planning over dependency structure, not direct generation.                             |
+| D09 | Aider Repo Map docs                             | `articles/aider-repomap.md`                               | Practitioner signal: repo maps help agents work in larger codebases.                                               |
+| D10 | Sourcegraph: How Cody understands your codebase | `articles/sourcegraph-how-cody-understands-codebase.html` | Official-doc evidence: code search + code intelligence, not prompt stuffing.                                       |
 
 ## ContextBench: agents favor recall over precision
 
@@ -32,13 +32,13 @@ favor recall over precision. This means they retrieve broad, noisy context.
 
 ### ContextBench agent retrieval data (GPT-5 backbone)
 
-| Agent | File Recall | File Precision | File F1 | Block Recall | Block Precision | Block F1 | Pass@1 |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| mini-SWE-Agent | 0.682 | 0.709 | 0.634 | 0.369 | 0.645 | 0.375 | 0.472 |
-| Agentless | 0.609 | 0.352 | 0.390 | 0.344 | 0.328 | 0.242 | 0.452 |
-| SWE-agent | 0.726 | 0.537 | 0.544 | 0.312 | 0.625 | 0.285 | 0.490 |
-| OpenHands | 0.733 | 0.400 | 0.463 | 0.283 | 0.505 | 0.190 | 0.490 |
-| Prometheus | 0.717 | 0.336 | 0.403 | 0.258 | 0.646 | 0.285 | 0.512 |
+| Agent          | File Recall | File Precision | File F1 | Block Recall | Block Precision | Block F1 | Pass@1 |
+| -------------- | ----------: | -------------: | ------: | -----------: | --------------: | -------: | -----: |
+| mini-SWE-Agent |       0.682 |          0.709 |   0.634 |        0.369 |           0.645 |    0.375 |  0.472 |
+| Agentless      |       0.609 |          0.352 |   0.390 |        0.344 |           0.328 |    0.242 |  0.452 |
+| SWE-agent      |       0.726 |          0.537 |   0.544 |        0.312 |           0.625 |    0.285 |  0.490 |
+| OpenHands      |       0.733 |          0.400 |   0.463 |        0.283 |           0.505 |    0.190 |  0.490 |
+| Prometheus     |       0.717 |          0.336 |   0.403 |        0.258 |           0.646 |    0.285 |  0.512 |
 
 Source trace: R10, `paper-text/contextbench-2602.05892.txt`, Table 2.
 
@@ -49,15 +49,15 @@ organizing it so the agent can act on it.
 
 ### Benchmark scope
 
-| Measurement | Value |
-|---|---:|
-| Total tasks | 1,136 |
-| Lite subset | 500 |
-| Repositories | 66 |
-| Programming languages | 8 |
-| Gold context lines | 522,115 |
-| Gold context files | 4,548 |
-| Gold context blocks (classes/functions) | 23,116 |
+| Measurement                             |   Value |
+| --------------------------------------- | ------: |
+| Total tasks                             |   1,136 |
+| Lite subset                             |     500 |
+| Repositories                            |      66 |
+| Programming languages                   |       8 |
+| Gold context lines                      | 522,115 |
+| Gold context files                      |   4,548 |
+| Gold context blocks (classes/functions) |  23,116 |
 
 ## RepoBench: cross-file retrieval as explicit bottleneck
 
@@ -80,6 +80,7 @@ Source trace: R03, `paper-text/repobench-2306.03091.txt`.
 ## RepoGraph: structured graphs boost SWE-bench performance
 
 RepoGraph (R12, ICLR 2025) constructs a line-level graph where:
+
 - Nodes = lines of code (definitions or references)
 - Edges = dependency relationships (invoke, contain)
 
@@ -88,9 +89,9 @@ Ego-graph retrieval from this structure is integrated into both agent and proced
 
 ### RepoGraph results on SWE-bench
 
-| Framework integration | Relative improvement |
-|---|---:|
-| Average relative improvement (4 systems, 2 lines of approach) | 32.8% |
+| Framework integration                                         | Relative improvement |
+| ------------------------------------------------------------- | -------------------: |
+| Average relative improvement (4 systems, 2 lines of approach) |                32.8% |
 
 The paper demonstrates that RepoGraph helps both agent-based and procedural frameworks. It
 operates at line, file, and repository level simultaneously. The node filtering step is important:
@@ -106,18 +107,18 @@ deterministic, evidence-backed architectural graph from build and test artifacts
 
 ### RIG evaluation results across 3 agents and 8 repositories
 
-| Metric | Value |
-|---|---:|
-| Mean accuracy improvement (with RIG vs without) | +12.2% |
-| Mean completion time reduction | -53.9% |
-| Mean absolute time reduction per repository | -124.4 seconds |
-| Mean efficiency improvement (seconds per score point) | -57.8% |
-| Multilingual repo accuracy improvement | +17.7% |
-| Multilingual repo efficiency improvement | -69.5% |
-| Single-language repo accuracy improvement | +6.6% |
-| Single-language repo efficiency improvement | -46.1% |
-| Average RIG JSON size | 20,692 bytes (~5,173 tokens) |
-| Largest RIG in corpus | 60,076 bytes (~15,000 tokens) |
+| Metric                                                |                         Value |
+| ----------------------------------------------------- | ----------------------------: |
+| Mean accuracy improvement (with RIG vs without)       |                        +12.2% |
+| Mean completion time reduction                        |                        -53.9% |
+| Mean absolute time reduction per repository           |                -124.4 seconds |
+| Mean efficiency improvement (seconds per score point) |                        -57.8% |
+| Multilingual repo accuracy improvement                |                        +17.7% |
+| Multilingual repo efficiency improvement              |                        -69.5% |
+| Single-language repo accuracy improvement             |                         +6.6% |
+| Single-language repo efficiency improvement           |                        -46.1% |
+| Average RIG JSON size                                 |  20,692 bytes (~5,173 tokens) |
+| Largest RIG in corpus                                 | 60,076 bytes (~15,000 tokens) |
 
 Source trace: R13, `paper-text/repository-intelligence-graph-2601.10112.txt`.
 
