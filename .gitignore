@@ -65,3 +65,6 @@ presentations/voice-agents/jarvis/models/
 presentations/voice-agents/.venv/
 
 tmp 
+
+# Rust build output
+dr/target/
