@@ -18,6 +18,7 @@ import { GeneratedSdksSlide } from '@/components/presentations/write-code-ai-age
 import { CustomRulesSlide } from '@/components/presentations/write-code-ai-agents-love/slides/13-custom-rules';
 import { ImpactEffortSlide } from '@/components/presentations/write-code-ai-agents-love/slides/14-impact-effort';
 import { SlideShell } from '@/components/presentations/write-code-ai-agents-love/slides/shared';
+import { getPublishedBrainNoteBySlug } from '@/lib/brain/read-vault';
 
 const blogMarkdownPath = path.join(process.cwd(), 'blog/write-code-that-ai-loves/blog.md');
 
@@ -190,14 +191,18 @@ function extractMarkdownLinks(markdown: string) {
 }
 
 function insightTitleFromHref(href: string) {
-  const insightPath = path.join(process.cwd(), href.replace(/^\.\.\/\.\.\//, ''));
-  const insightMarkdown = fs.readFileSync(insightPath, 'utf8');
-  const firstHeading = insightMarkdown.split('\n', 1)[0] ?? '';
+  if (!href.startsWith('/brain/')) {
+    throw new Error(`Brain insight references must use /brain URLs: ${href}`);
+  }
 
-  return firstHeading
-    .replace(/^#\s*/, '')
-    .replace(/^INSIGHT\s+\d+:\s*/, '')
-    .trim();
+  const slug = href.replace(/^\/brain\//, '');
+  const note = getPublishedBrainNoteBySlug(slug);
+
+  if (!note) {
+    throw new Error(`Unknown brain insight reference: ${href}`);
+  }
+
+  return note.title;
 }
 
 function collectReferenceEntries(sections: MarkdownSection[]): CollectedReferences {

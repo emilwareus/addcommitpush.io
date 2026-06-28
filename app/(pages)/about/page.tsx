@@ -56,6 +56,54 @@ export default function AboutPage() {
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
                   <Badge asChild variant="outline">
                     <a
+                      href="https://github.com/emilwareus/demohunter"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1"
+                    >
+                      DemoHunter
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">
+                    Narrated product demos as code
+                  </span>
+                </div>
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+                  <Badge asChild variant="outline">
+                    <a
+                      href="https://github.com/emilwareus/polint"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1"
+                    >
+                      polint
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">
+                    Repo-local lint rules for team-specific policies
+                  </span>
+                </div>
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+                  <Badge asChild variant="outline">
+                    <a
+                      href="https://github.com/emilwareus/gnr8"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1"
+                    >
+                      gnr8
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">
+                    Code-to-OpenAPI and SDK generation as a native binary
+                  </span>
+                </div>
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+                  <Badge asChild variant="outline">
+                    <a
                       href="https://podidex.com"
                       target="_blank"
                       rel="noopener noreferrer"
@@ -433,7 +481,7 @@ export default function AboutPage() {
                     <ul className="space-y-3">
                       <li className="border-l-2 border-secondary/30 pl-4">
                         <a
-                          href="https://re.public.polimi.it/handle/11311/1223328"
+                          href="https://aclanthology.org/2022.icnlsp-1.6/"
                           target="_blank"
                           rel="noopener noreferrer"
                           className="text-foreground hover:text-secondary transition-colors inline-flex items-center gap-2"
@@ -616,6 +664,66 @@ export default function AboutPage() {
 
                   <div className="border-l-2 border-accent/30 pl-4">
                     <a
+                      href="https://github.com/emilwareus/demohunter"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-lg font-medium text-foreground hover:text-accent transition-colors inline-flex items-center gap-2"
+                    >
+                      DemoHunter
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      TypeScript • Playwright • TTS
+                    </p>
+                    <p className="text-foreground/80 mt-2">
+                      Tooling for generating narrated product demos from repeatable automation
+                      scripts. Produces portable video assets, captions, chapters, narration audio,
+                      and manifests so demos can stay in sync with product flows.
+                    </p>
+                  </div>
+
+                  <div className="border-l-2 border-accent/30 pl-4">
+                    <a
+                      href="https://github.com/emilwareus/polint"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-lg font-medium text-foreground hover:text-accent transition-colors inline-flex items-center gap-2"
+                    >
+                      polint
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Rust • Static Analysis • CI
+                    </p>
+                    <p className="text-foreground/80 mt-2">
+                      Static-analysis framework for repository-owned lint rules. Helps teams encode
+                      local conventions, security guardrails, migration policies, and agent feedback
+                      loops as reviewable, testable code.
+                    </p>
+                  </div>
+
+                  <div className="border-l-2 border-accent/30 pl-4">
+                    <a
+                      href="https://github.com/emilwareus/gnr8"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-lg font-medium text-foreground hover:text-accent transition-colors inline-flex items-center gap-2"
+                    >
+                      gnr8
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Rust • OpenAPI • SDK Generation
+                    </p>
+                    <p className="text-foreground/80 mt-2">
+                      Native generation tool that reads API code, builds a language-agnostic API
+                      model, and emits OpenAPI 3.1 plus typed client SDKs. Built for deterministic,
+                      fast, code-configured generation loops.
+                    </p>
+                  </div>
+
+                  <div className="border-l-2 border-accent/30 pl-4">
+                    <a
                       href="https://github.com/debricked/cli"
                       target="_blank"
                       rel="noopener noreferrer"
@@ -698,7 +806,7 @@ export default function AboutPage() {
                     <p className="text-foreground/80 mt-2">
                       Runtime vulnerability detection using eBPF.{' '}
                       <a
-                        href="https://www.vinnova.se/en/p/ai--and-risk-based-vulnerability-management-for-trustworthy-open-source-adoption-arvos/"
+                        href="https://www.vinnova.se/en/calls-for-proposals/advanced-and-innovative-digitalisation/cybersecurity-for-advanced-industrial-2021-01020"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-primary hover:underline"

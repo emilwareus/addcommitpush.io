@@ -1,9 +1,12 @@
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { MermaidDiagram } from '@/components/brain/mermaid-diagram';
+import { renderWikiLinks } from '@/lib/brain/links';
 
 interface MarkdownInsightProps {
   markdown: string;
+  publishedSlugs: ReadonlySet<string>;
+  sourceLabel: string;
 }
 
 const markdownComponents: Components = {
@@ -24,15 +27,28 @@ const markdownComponents: Components = {
     return <p className="my-5 text-base leading-8 md:text-lg">{children}</p>;
   },
   a({ children, href }) {
+    const isInternalBrainLink = href?.startsWith('/brain/');
+
     return (
       <a
         href={href}
-        target="_blank"
-        rel="noreferrer"
+        target={isInternalBrainLink ? undefined : '_blank'}
+        rel={isInternalBrainLink ? undefined : 'noreferrer'}
         className="text-primary underline underline-offset-4"
       >
         {children}
       </a>
+    );
+  },
+  img({ alt, src }) {
+    return (
+      // Markdown-authored images do not carry dimensions for next/image.
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src}
+        alt={alt ?? ''}
+        className="my-8 max-h-[680px] w-full border border-dashed border-border object-contain"
+      />
     );
   },
   ul({ children }) {
@@ -119,11 +135,13 @@ const markdownComponents: Components = {
   },
 };
 
-export function MarkdownInsight({ markdown }: MarkdownInsightProps) {
+export function MarkdownInsight({ markdown, publishedSlugs, sourceLabel }: MarkdownInsightProps) {
+  const renderedMarkdown = renderWikiLinks(markdown, publishedSlugs, sourceLabel);
+
   return (
     <div className="max-w-none">
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-        {markdown}
+        {renderedMarkdown}
       </ReactMarkdown>
     </div>
   );

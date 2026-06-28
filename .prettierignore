@@ -25,6 +25,7 @@ build
 # Misc
 .DS_Store
 *.pem
+.context
 
 # Testing
 coverage
@@ -36,6 +37,9 @@ test-results
 # Archived scraped research pages
 presentations/voice-agents/research/articles/*.html
 
+# Obsidian vault notes are intentionally edited as freeform Markdown.
+brain/**/*.md
+
 # TypeScript
 *.tsbuildinfo
 
@@ -46,4 +50,3 @@ yarn.lock
 
 # Claude AI files
 .claude
-
