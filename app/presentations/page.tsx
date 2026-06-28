@@ -32,6 +32,7 @@ const presentations: PresentationEntry[] = [
     actions: [
       { label: 'Slides →', href: '/presentations/write-code-ai-agents-love' },
       { label: 'Post →', href: '/blog/write-code-that-ai-agents-love' },
+      { label: 'Video →', href: 'https://www.youtube.com/watch?v=ttIunVR4s4Q' },
     ],
   },
   {

@@ -227,6 +227,34 @@ export default function AboutPage() {
                 <div className="space-y-6">
                   <div className="border-l-2 border-primary/30 pl-4">
                     <a
+                      href="https://www.youtube.com/watch?v=ttIunVR4s4Q"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-lg font-medium text-foreground hover:text-primary transition-colors inline-flex items-center gap-2"
+                    >
+                      Write Code That Your Coding Agents Love
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Agentic Engineering Meetup at Neo4j Malmö
+                    </p>
+                    <p className="text-foreground/80 mt-2">
+                      Practical patterns for making codebases easier for AI coding agents to
+                      navigate, modify, and verify.{' '}
+                      <a
+                        href="https://www.youtube.com/watch?v=ttIunVR4s4Q"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline inline-flex items-center gap-1"
+                      >
+                        Watch video
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </p>
+                  </div>
+
+                  <div className="border-l-2 border-primary/30 pl-4">
+                    <a
                       href="https://oredev.org/sessions/the-cry-wolf-vulnerability-paradox-the-problem-of-false-alerts-in-vulnerability-scanners"
                       target="_blank"
                       rel="noopener noreferrer"
