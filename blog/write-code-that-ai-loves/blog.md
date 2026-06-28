@@ -73,7 +73,7 @@ Writing good behavioral prompts, patterns + anti-patterns are often forgotten. R
 3. Keep them clear, short, and focus on commands and bootstrapping exploration
 4. Avoid "general stuff" that infers a lot in it. "write good code".
 
-**Insights:** [INSIGHT_02](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_02_agent_instructions_are_config.md) · [INSIGHT_24](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_24_context_files_are_config_with_debt.md)
+**Insights:** [INSIGHT_02](/brain/agent-instructions-are-config) · [INSIGHT_24](/brain/context-files-are-config-with-debt)
 
 **Papers**
 
@@ -117,7 +117,7 @@ backend/features/agents/evals/
 
 Trying to keep things pretty thin here. and IMO for the local things, the code should be so obvious it should not need docs on how to use/edit it. But I added "prompt engineering" as an example here, as my experience is that my friend Claude needs some guidance here. Another trick I do is in my SpecDrivenDevelopment pipeline, in the research phase, I force the models to enumerate the 3-5 most important architecture documents that it must read in plan and implementation to get a better sense of the codebase. This increased the autonomy a bit of the agent in my own experience.
 
-**Insights:** [INSIGHT_08](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_08_context_should_be_layered.md) · [INSIGHT_16](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_16_more_context_can_hurt.md)
+**Insights:** [INSIGHT_08](/brain/context-should-be-layered) · [INSIGHT_16](/brain/more-context-can-hurt)
 
 **Papers**
 
@@ -142,7 +142,7 @@ You onboard your agent 100 times a day. Make it VERY easy. My personal favorites
 
 Research states "machine-checkable contracts" agents can run in a fresh environment. I agree.
 
-**Insights:** [INSIGHT_03](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_03_reproducible_setup_is_agent_infrastructure.md) · [INSIGHT_23](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_23_setup_is_part_of_the_task.md)
+**Insights:** [INSIGHT_03](/brain/reproducible-setup-is-agent-infrastructure) · [INSIGHT_23](/brain/setup-is-part-of-the-task)
 
 **Papers**
 
@@ -188,7 +188,7 @@ Explore only the paths you were given. Return layout, key modules, and 3–5 fil
 
 Claude delegates from `description`; Cursor via `@research-codebase` or natural language; Codex only spawns subagents when you ask (parent keeps architecture, child stays read-heavy).
 
-**Insights:** [INSIGHT_07](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_07_simplicity_beats_agent_theater.md)
+**Insights:** [INSIGHT_07](/brain/simplicity-beats-agent-theater)
 
 **Papers**
 
@@ -216,7 +216,7 @@ But you are probably not building a code agent harness, you are probably build a
 
 BUT, if you are building an agentic harness (who isn't??), the call graph slice seems to have the highest impact. Making it queryable, extracting neighborhoods that typically impact each other. I learned on my last startup that call graphs are hard to build, so I'll (probably) just keep to LSP's for now.
 
-**Insights:** [INSIGHT_01](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_01_context_maps.md) · [INSIGHT_21](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_21_repository_graphs_need_selective_slices.md)
+**Insights:** [INSIGHT_01](/brain/context-maps) · [INSIGHT_21](/brain/repository-graphs-need-selective-slices)
 
 **Papers**
 
@@ -261,7 +261,7 @@ Sure, MCPs makes stuff searchable and retrievable in other systems. Have fun. Do
 
 Additionally, this means that you have a completely co-versioned company. Keeping things in sync becomes much easier when everything is on the same SHA.
 
-**Insights:** [INSIGHT_19](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_19_monorepos_are_agent_context_infrastructure.md)
+**Insights:** [INSIGHT_19](/brain/monorepos-are-agent-context-infrastructure)
 
 **Practitioner**
 
@@ -279,7 +279,7 @@ I think that a good bounded contexts within the codebase reduces the cognitive d
 
 I write a lot of Go this time around, and I really like the "Three Dots Labs" architecture: [https://threedots.tech](https://threedots.tech/), which is a bit of DDD, event driven, hexagonal-ish, with strong testing guidelines. Here, a bounded context is just a "service", that may be deployed on its own, but can also run in a big monolith along other services, it may not import another bounded context directly, has clear responsibilities, interfaces, APIs, and dependencies. This works well for me and my team, but the goal of this is to keep your cognitive debt low... so you do what's best for you IMO.
 
-**Insights:** [INSIGHT_15](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_15_modularity_is_not_magic_boundaries_are.md) · [INSIGHT_26](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_26_static_surfaces_are_agent_affordances.md)
+**Insights:** [INSIGHT_15](/brain/modularity-is-not-magic-boundaries-are) · [INSIGHT_26](/brain/static-surfaces-are-agent-affordances)
 
 **Papers**
 
@@ -321,7 +321,7 @@ That is where I think code quality matters most right now:
 
 > Code quality is how easy it is for the next human to understand whether the agent made a good change.
 
-**Insights:** [INSIGHT_30](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_30_codehealth_predicts_ai_refactoring_success.md) · [INSIGHT_31](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_31_perplexity_is_not_file_level_ai_friendliness.md) · [INSIGHT_05](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_05_maintainability_beats_one_shot_correctness.md)
+**Insights:** [INSIGHT_30](/brain/codehealth-predicts-ai-refactoring-success) · [INSIGHT_31](/brain/perplexity-is-not-file-level-ai-friendliness) · [INSIGHT_05](/brain/maintainability-beats-one-shot-correctness)
 
 **Papers**
 
@@ -356,7 +356,7 @@ That is the part I care about:
 
 > Tests are not there to make the percentage go up. They are there to make behavior visible.
 
-**Insights:** [INSIGHT_04](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_04_tests_are_the_agent_feedback_loop.md) · [INSIGHT_17](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_17_quality_gates_must_cover_smells.md) · [INSIGHT_28](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_28_static_oracles_catch_what_tests_miss.md)
+**Insights:** [INSIGHT_04](/brain/tests-are-the-agent-feedback-loop) · [INSIGHT_17](/brain/quality-gates-must-cover-smells) · [INSIGHT_28](/brain/static-oracles-catch-what-tests-miss)
 
 **Papers**
 
@@ -409,7 +409,7 @@ That is the point:
 
 > You get more of what you already have, so make the thing worth copying obvious.
 
-**Insights:** [INSIGHT_04](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_04_tests_are_the_agent_feedback_loop.md) · [INSIGHT_22](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_22_feature_work_fails_at_planning_and_constraints.md) · [INSIGHT_11](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_11_task_specs_are_part_of_the_codebase.md)
+**Insights:** [INSIGHT_04](/brain/tests-are-the-agent-feedback-loop) · [INSIGHT_22](/brain/feature-work-fails-at-planning-and-constraints) · [INSIGHT_11](/brain/task-specs-are-part-of-the-codebase)
 
 **Papers**
 
@@ -444,7 +444,7 @@ That gives me a smaller conclusion:
 
 > Bad names make the agent spend intelligence recovering meaning the code should have exposed.
 
-**Insights:** [INSIGHT_13](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_13_names_are_semantic_infrastructure.md)
+**Insights:** [INSIGHT_13](/brain/names-are-semantic-infrastructure)
 
 **Papers**
 
@@ -499,7 +499,7 @@ Types are not documentation you hope the agent reads. They are documentation the
 
 > A good type removes a wrong patch before the agent gets attached to it.
 
-**Insights:** [INSIGHT_06](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_06_types_and_interfaces_compress_context.md) · [INSIGHT_14](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_14_types_and_static_surfaces_reduce_hallucinated_apis.md)
+**Insights:** [INSIGHT_06](/brain/types-and-interfaces-compress-context) · [INSIGHT_14](/brain/types-and-static-surfaces-reduce-hallucinated-apis)
 
 **Papers**
 
@@ -546,7 +546,7 @@ The tooling will evolve as well, but the principle is already clear:
 
 > If the API contract matters, make it code the agent can import.
 
-**Insights:** [INSIGHT_20](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_20_generated_sdks_turn_api_contracts_into_code.md) · [INSIGHT_26](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_26_static_surfaces_are_agent_affordances.md) · [INSIGHT_19](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_19_monorepos_are_agent_context_infrastructure.md)
+**Insights:** [INSIGHT_20](/brain/generated-sdks-turn-api-contracts-into-code) · [INSIGHT_26](/brain/static-surfaces-are-agent-affordances) · [INSIGHT_19](/brain/monorepos-are-agent-context-infrastructure)
 
 **Papers**
 
@@ -606,7 +606,7 @@ Make the important edges visible enough that tools can select the right slice. M
 
 A side effect the agent cannot see is a dependency it cannot protect.
 
-**Insights:** [INSIGHT_26](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_26_static_surfaces_are_agent_affordances.md) · [INSIGHT_12](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_12_dependency_structure_beats_text_blobs.md) · [INSIGHT_21](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_21_repository_graphs_need_selective_slices.md) · [INSIGHT_07](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_07_simplicity_beats_agent_theater.md)
+**Insights:** [INSIGHT_26](/brain/static-surfaces-are-agent-affordances) · [INSIGHT_12](/brain/dependency-structure-beats-text-blobs) · [INSIGHT_21](/brain/repository-graphs-need-selective-slices) · [INSIGHT_07](/brain/simplicity-beats-agent-theater)
 
 **Papers**
 
@@ -677,7 +677,7 @@ But stronger models do not remove ripple. They only make the local patch better.
 
 But, create an architecture with "reasonable ripple", so you do not get 10x change coupling engineers.
 
-**Insights:** [INSIGHT_12](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_12_dependency_structure_beats_text_blobs.md) · [INSIGHT_22](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_22_feature_work_fails_at_planning_and_constraints.md) · [INSIGHT_11](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_11_task_specs_are_part_of_the_codebase.md) · [INSIGHT_28](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_28_static_oracles_catch_what_tests_miss.md)
+**Insights:** [INSIGHT_12](/brain/dependency-structure-beats-text-blobs) · [INSIGHT_22](/brain/feature-work-fails-at-planning-and-constraints) · [INSIGHT_11](/brain/task-specs-are-part-of-the-codebase) · [INSIGHT_28](/brain/static-oracles-catch-what-tests-miss)
 
 **Papers**
 
@@ -752,7 +752,7 @@ Names will not save a tangled system. They are not types, tests, or architecture
 
 Agents grep, be grep-friendly!
 
-**Insights:** [INSIGHT_13](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_13_names_are_semantic_infrastructure.md) · [INSIGHT_26](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_26_static_surfaces_are_agent_affordances.md)
+**Insights:** [INSIGHT_13](/brain/names-are-semantic-infrastructure) · [INSIGHT_26](/brain/static-surfaces-are-agent-affordances)
 
 **Papers**
 
@@ -799,7 +799,7 @@ The research points the same way. [CODETASTE](https://arxiv.org/abs/2603.04177) 
 
 For agents, adding these things to its verification loop have been really powerful in my experience. Every time it fails and I can programmatically "lint" the failure to never happen again I do it. This is part of what compounding quality means to me.
 
-**Insights:** [INSIGHT_04](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_04_tests_are_the_agent_feedback_loop.md) · [INSIGHT_17](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_17_quality_gates_must_cover_smells.md) · [INSIGHT_27](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_27_static_diagnostics_are_agent_interfaces.md) · [INSIGHT_28](../../presentations/write-code-ai-agents-love/research/insights/INSIGHT_28_static_oracles_catch_what_tests_miss.md)
+**Insights:** [INSIGHT_04](/brain/tests-are-the-agent-feedback-loop) · [INSIGHT_17](/brain/quality-gates-must-cover-smells) · [INSIGHT_27](/brain/static-diagnostics-are-agent-interfaces) · [INSIGHT_28](/brain/static-oracles-catch-what-tests-miss)
 
 **Sources:** [CODETASTE](https://arxiv.org/abs/2603.04177) · [Needle in the Repo](https://arxiv.org/abs/2603.27745) · [polint README](https://github.com/emilwareus/polint) · [polint Agent Playbook](https://github.com/emilwareus/polint/blob/main/docs/AGENT-PLAYBOOK.md)
 
