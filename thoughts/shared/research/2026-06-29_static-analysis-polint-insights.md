@@ -14,11 +14,11 @@ observations, article angles, and open questions.
 
 `dr` reports generated for this pass:
 
-| Report | Score | Use |
-| --- | ---: | --- |
-| `.context/dr/polint-static-analysis/00-state-of-static-analysis.md` | 1/5 | Lead only. Source coverage was too narrow. |
-| `.context/dr/polint-static-analysis/01-call-graph-construction-algorithms.md` | 2/5 | Lead only. Useful for CHA/RTA/VTA sources, incomplete for points-to and JS/TS. |
-| `.context/dr/polint-static-analysis/02-data-flow-engine-design.md` | 3/5 | Medium-confidence support for IFDS/IDE and sparse value-flow. |
+| Report                                                                        | Score | Use                                                                            |
+| ----------------------------------------------------------------------------- | ----: | ------------------------------------------------------------------------------ |
+| `.context/dr/polint-static-analysis/00-state-of-static-analysis.md`           |   1/5 | Lead only. Source coverage was too narrow.                                     |
+| `.context/dr/polint-static-analysis/01-call-graph-construction-algorithms.md` |   2/5 | Lead only. Useful for CHA/RTA/VTA sources, incomplete for points-to and JS/TS. |
+| `.context/dr/polint-static-analysis/02-data-flow-engine-design.md`            |   3/5 | Medium-confidence support for IFDS/IDE and sparse value-flow.                  |
 
 Local `polint` research packages used heavily:
 
@@ -34,15 +34,24 @@ Primary/current external sources used:
 - [CodeQL data flow analysis](https://codeql.github.com/docs/writing-codeql-queries/about-data-flow-analysis/)
 - [CodeQL path queries](https://codeql.github.com/docs/writing-codeql-queries/creating-path-queries/)
 - [Semgrep taint mode overview](https://docs.semgrep.dev/writing-rules/data-flow/taint-mode/overview)
+- [Joern custom data-flow semantics](https://docs.joern.io/dataflow-semantics/)
 - [SootUp call graph construction](https://soot-oss.github.io/SootUp/v1.1.2/call-graph-construction/)
 - [Joern code property graph docs](https://docs.joern.io/code-property-graph/)
 - [ESLint custom rules](https://eslint.org/docs/latest/extend/custom-rules)
+- [typescript-eslint custom rules](https://typescript-eslint.io/developers/custom-rules/)
+- [ArchUnit user guide](https://www.archunit.org/userguide/html/000_Index.html)
+- [dependency-cruiser rules reference](https://github.com/sverweij/dependency-cruiser/blob/main/doc/rules-reference.md)
+- [Go RTA package docs](https://pkg.go.dev/golang.org/x/tools/go/callgraph/rta)
 - [ast-grep](https://ast-grep.github.io/)
 - [Tree-sitter introduction](https://tree-sitter.github.io/tree-sitter/)
 - [Software Engineering at Google, static analysis chapter](https://abseil.io/resources/swe-book/html/ch20.html)
+- [Tricorder: Building a Program Analysis Ecosystem](https://research.google.com/pubs/archive/43322.pdf)
 - [AGENTS.md](https://agents.md/)
 - [Evaluating AGENTS.md, arXiv 2602.11988](https://arxiv.org/abs/2602.11988)
 - [Static Analysis as a Feedback Loop, arXiv 2508.14419](https://arxiv.org/html/2508.14419v1)
+- [FeedbackEval, arXiv 2504.06939](https://arxiv.org/abs/2504.06939)
+- [Security Degradation in Iterative AI Code Generation, arXiv 2506.11022](https://arxiv.org/abs/2506.11022)
+- [Helping LLMs improve code generation using feedback from testing and static analysis](https://link.springer.com/article/10.1007/s44163-026-01009-5)
 
 ## Executive Synthesis
 
@@ -72,20 +81,29 @@ The strongest article thesis:
 
 ## Insight Index
 
-| ID | Insight | Confidence | Implication |
-| --- | --- | --- | --- |
-| INSIGHT-001 | The state of static analysis is a layered ecosystem, not one tool class. | High | Position `polint` as a missing repo-local policy layer, not as a replacement. |
-| INSIGHT-002 | Developer adoption depends on effective false positives, not theoretical soundness. | High | Diagnostics must be actionable, scoped, and suppressible with debt visibility. |
-| INSIGHT-003 | Agent context files are useful but not sufficient; executable checks are the stronger memory format. | Medium | `polint` should be framed as "AGENTS.md for statically checkable rules." |
-| INSIGHT-004 | Custom-rule ecosystems prove demand, but most are language- or engine-bound. | High | `polint`'s differentiator is typed, multi-language facts plus repo-owned Rust rules. |
-| INSIGHT-005 | Call graphs are approximation families with algorithm labels, not a binary feature. | High | Store algorithm, precision, provenance, status, and unresolved reasons per edge. |
-| INSIGHT-006 | Dynamic dispatch, frameworks, and callbacks make unresolved facts first-class product data. | High | Unknowns should be visible and queryable, not silently dropped. |
-| INSIGHT-007 | A data-flow engine should be representation-first, not IFDS-first. | High | Build MIR, places, CFG, calls, summaries, then query-scoped flow. |
-| INSIGHT-008 | Useful data-flow APIs are source/sink/barrier query APIs with path evidence and budgets. | High | Public SDK should expose bounded policy queries, not raw graph traversal. |
-| INSIGHT-009 | The `#[polint::rule]` function signature is the key API design move. | High | Typed rule parameters become capability declarations and agent-inspectable manifests. |
-| INSIGHT-010 | Agent-extensible analysis means agents author artifacts, models, and fixtures, not just prose. | Medium | The product loop should be inspect, scaffold, test, diff, accept. |
-| INSIGHT-011 | Incrementality and provenance are correctness properties for agent-written analysis. | Medium | Cache keys must include source, config, rule, model, extension, schema, and provider inputs. |
-| INSIGHT-012 | The article should be honest about the current `polint` boundary: some deep graph features are preview/internal. | High | Avoid overselling. The research path is part of the story. |
+| ID          | Insight                                                                                                          | Confidence | Implication                                                                                                           |
+| ----------- | ---------------------------------------------------------------------------------------------------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------- |
+| INSIGHT-001 | The state of static analysis is a layered ecosystem, not one tool class.                                         | High       | Position `polint` as a missing repo-local policy layer, not as a replacement.                                         |
+| INSIGHT-002 | Developer adoption depends on effective false positives, not theoretical soundness.                              | High       | Diagnostics must be actionable, scoped, and suppressible with debt visibility.                                        |
+| INSIGHT-003 | Agent context files are useful but not sufficient; executable checks are the stronger memory format.             | Medium     | `polint` should be framed as "AGENTS.md for statically checkable rules."                                              |
+| INSIGHT-004 | Custom-rule ecosystems prove demand, but most are language- or engine-bound.                                     | High       | `polint`'s differentiator is typed, multi-language facts plus repo-owned Rust rules.                                  |
+| INSIGHT-005 | Call graphs are approximation families with algorithm labels, not a binary feature.                              | High       | Store algorithm, precision, provenance, status, and unresolved reasons per edge.                                      |
+| INSIGHT-006 | Dynamic dispatch, frameworks, and callbacks make unresolved facts first-class product data.                      | High       | Unknowns should be visible and queryable, not silently dropped.                                                       |
+| INSIGHT-007 | A data-flow engine should be representation-first, not IFDS-first.                                               | High       | Build MIR, places, CFG, calls, summaries, then query-scoped flow.                                                     |
+| INSIGHT-008 | Useful data-flow APIs are source/sink/barrier query APIs with path evidence and budgets.                         | High       | Public SDK should expose bounded policy queries, not raw graph traversal.                                             |
+| INSIGHT-009 | The `#[polint::rule]` function signature is the key API design move.                                             | High       | Typed rule parameters become capability declarations and agent-inspectable manifests.                                 |
+| INSIGHT-010 | Agent-extensible analysis means agents author artifacts, models, and fixtures, not just prose.                   | Medium     | The product loop should be inspect, scaffold, test, diff, accept.                                                     |
+| INSIGHT-011 | Incrementality and provenance are correctness properties for agent-written analysis.                             | Medium     | Cache keys must include source, config, rule, model, extension, schema, and provider inputs.                          |
+| INSIGHT-012 | The article should be honest about the current `polint` boundary: some deep graph features are preview/internal. | High       | Avoid overselling. The research path is part of the story.                                                            |
+| INSIGHT-013 | AI feedback loops need deterministic tools, not just more model self-critique.                                   | High       | Frame `polint` as external executable feedback whose truth does not depend on the model that wrote the patch.         |
+| INSIGHT-014 | Feedback loops need iteration budgets.                                                                           | High       | Cap repair loops and expose budget-exceeded as incomplete analysis, not success.                                      |
+| INSIGHT-015 | Models need diagnostics, not self-diagnosis.                                                                     | Medium     | Optimize diagnostic shape: span, rule ID, evidence, repair direction.                                                 |
+| INSIGHT-016 | Repo-local policy needs an agent repair benchmark.                                                               | High       | Measure the exact `polint` thesis rather than relying only on adjacent SAST/repair papers.                            |
+| INSIGHT-017 | Effective false positives are the adoption bar.                                                                  | High       | Measure whether warnings cause the right patch, not just whether they are technically true.                           |
+| INSIGHT-018 | Repo-local policy prior art is fragmented.                                                                       | High       | Respect ESLint, Semgrep, CodeQL, Joern, ArchUnit, and dependency-cruiser while explaining the missing `polint` layer. |
+| INSIGHT-019 | Data-flow solver choice is a product boundary.                                                                   | High       | Expose policy queries and evidence, not a premature public commitment to one solver.                                  |
+| INSIGHT-020 | Production data-flow claims need tool doc crosschecks.                                                           | High       | Separate algorithm papers from current production tool behavior.                                                      |
+| INSIGHT-021 | Call graph claims need algorithm provenance.                                                                     | High       | Store and expose edge algorithm, precision, status, provenance, and unresolved reasons.                               |
 
 ## INSIGHT-001: Static Analysis Is A Layered Ecosystem
 
@@ -124,13 +142,13 @@ architecture and workflow rules.
 
 Recommended action: Use a taxonomy table in the article:
 
-| Layer | Examples | What it knows | What it usually cannot know |
-| --- | --- | --- | --- |
-| Formatter/typechecker | Prettier, tsc, mypy | syntax, types, style | local architecture policy |
-| AST linter | ESLint, Ruff, Clippy | language-specific patterns | cross-language repo contracts |
-| Pattern/static SAST | Semgrep, ast-grep | configurable syntax/data-flow patterns | exact internal framework semantics |
-| Semantic graph/query | CodeQL, Joern | call/data/control-flow models | repo-specific conventions unless modeled |
-| Repo-local policy | `polint` | team-owned executable conventions | anything not statically observable |
+| Layer                 | Examples             | What it knows                          | What it usually cannot know              |
+| --------------------- | -------------------- | -------------------------------------- | ---------------------------------------- |
+| Formatter/typechecker | Prettier, tsc, mypy  | syntax, types, style                   | local architecture policy                |
+| AST linter            | ESLint, Ruff, Clippy | language-specific patterns             | cross-language repo contracts            |
+| Pattern/static SAST   | Semgrep, ast-grep    | configurable syntax/data-flow patterns | exact internal framework semantics       |
+| Semantic graph/query  | CodeQL, Joern        | call/data/control-flow models          | repo-specific conventions unless modeled |
+| Repo-local policy     | `polint`             | team-owned executable conventions      | anything not statically observable       |
 
 ## INSIGHT-002: Effective False Positives Are The Real Adoption Metric
 
@@ -213,12 +231,12 @@ machine can check them, make the machine check them."
 
 Recommended action: Use a contrast table:
 
-| Policy type | Good medium |
-| --- | --- |
-| How to run tests | AGENTS.md |
-| Code ownership or release rituals | AGENTS.md and docs |
-| "Never call raw API from UI" | `polint` rule |
-| "New GORM model needs index review" | `polint review` rule |
+| Policy type                         | Good medium               |
+| ----------------------------------- | ------------------------- |
+| How to run tests                    | AGENTS.md                 |
+| Code ownership or release rituals   | AGENTS.md and docs        |
+| "Never call raw API from UI"        | `polint` rule             |
+| "New GORM model needs index review" | `polint review` rule      |
 | "Request data must not reach shell" | `polint` data-flow policy |
 
 ## INSIGHT-004: Custom Rules Are Proven, But Usually Language-Bound
@@ -533,13 +551,13 @@ wrong artifact."
 
 Recommended artifact matrix:
 
-| Need | Artifact |
-| --- | --- |
-| Emit diagnostics from existing facts | Rule |
-| Teach sources/sinks/sanitizers/framework APIs | Model |
-| Reuse API semantics across rules | Summary |
-| Add new repo-local extraction logic | Provider extension |
-| Prove behavior and prevent regressions | Fixture/eval |
+| Need                                          | Artifact           |
+| --------------------------------------------- | ------------------ |
+| Emit diagnostics from existing facts          | Rule               |
+| Teach sources/sinks/sanitizers/framework APIs | Model              |
+| Reuse API semantics across rules              | Summary            |
+| Add new repo-local extraction logic           | Provider extension |
+| Prove behavior and prevent regressions        | Fixture/eval       |
 
 ## INSIGHT-011: Incrementality Is A Trust Feature
 
@@ -620,6 +638,70 @@ Recommended action: Add a note before the deep graph section:
 > The public API intentionally does not expose raw call graphs or raw data-flow
 > graphs. That is not an omission; it is the boundary that keeps repo-local rules
 > small and stable.
+
+## Second-Wave Research Findings
+
+Follow-up `dr` reports:
+
+| Report                                                                                 | Score | Use                                                                                                       |
+| -------------------------------------------------------------------------------------- | ----: | --------------------------------------------------------------------------------------------------------- |
+| `.context/dr/polint-static-analysis-followup/00-ai-feedback-loop-evidence-register.md` |   5/5 | Strong support for feedback-loop claims, with measured improvements and counterevidence.                  |
+| `.context/dr/polint-static-analysis-followup/02-call-graph-evidence-register.md`       |   3/5 | Good support for CHA/RTA/VTA provenance; explicit gaps on Steensgaard, sensitivity, JS/TS, and Go limits. |
+| `.context/dr/polint-static-analysis-followup/03-data-flow-evidence-register.md`        |   3/5 | Good support for IFDS/IDE and SVF; explicit gaps on CodeQL/Semgrep/Pysa/Joern production behavior.        |
+
+High-confidence additions:
+
+- Feedback source matters. Static-analysis feedback from deterministic tools
+  should not be conflated with LLM-only self-critique.
+- Iteration budgets matter. FeedbackEval reports diminishing returns after two
+  or three rounds; the security-degradation paper reports increased critical
+  vulnerabilities after five AI refinement iterations.
+- Diagnostics are the agent interface. The evidence suggests models often repair
+  better from concrete external feedback than from self-diagnosis.
+- The strongest missing validation is a repo-local agent repair benchmark for
+  `polint`-style policies.
+- Call graph edges need algorithm provenance. CHA, RTA, VTA, RTA-for-Go,
+  framework models, and heuristics are different claims.
+- Data-flow APIs should expose bounded policy queries and evidence, not raw
+  solver identity.
+
+Source-backed measurements to use carefully:
+
+- Static-analysis feedback with Bandit/Pylint reduced GPT-4o PythonSecurityEval
+  security issues from more than 40% to 13%, readability violations from more
+  than 80% to 11%, and reliability warnings from more than 50% to 11% within ten
+  iterations.
+- FeedbackEval reports structured feedback and feedback type materially affect
+  repair success, with iterative gains diminishing after two or three rounds.
+- Security Degradation in Iterative AI Code Generation reports a 37.6% increase
+  in critical vulnerabilities after five AI refinement iterations.
+- The AGENTS.md evaluation reports context files do not generally improve task
+  success in the studied settings and increase inference cost by more than 20%
+  on average.
+
+Gaps to keep visible:
+
+- No admitted report source directly compares `polint` diagnostics against
+  `AGENTS.md` or review comments on repo-local policy tasks.
+- No admitted report source measures false-positive cascades in coding-agent
+  repair loops.
+- No admitted call-graph report source covers Steensgaard, context sensitivity,
+  object sensitivity, JavaScript/TypeScript dynamic limitations, or quantitative
+  precision/recall.
+- No admitted data-flow report source covers production behavior for CodeQL,
+  Semgrep, Pysa, or Joern; those claims require direct official-doc citations.
+
+New insight notes created from this wave:
+
+- [[static-analysis-feedback-loops-need-deterministic-tools]]
+- [[feedback-loops-need-iteration-budgets]]
+- [[models-need-diagnostics-not-self-diagnosis]]
+- [[repo-local-policy-needs-an-agent-repair-benchmark]]
+- [[effective-false-positives-are-the-adoption-bar]]
+- [[repo-local-policy-prior-art-is-fragmented]]
+- [[data-flow-solver-choice-is-a-product-boundary]]
+- [[production-data-flow-claims-need-tool-doc-crosschecks]]
+- [[call-graph-claims-need-algorithm-provenance]]
 
 ## Technical Primer: Call Graph Construction Algorithms
 
@@ -808,4 +890,3 @@ The deeper technical story is that this requires a real static-analysis
 substrate: typed facts, capability planning, provenance, precision labels,
 unknowns, budgets, path evidence, review diff facts, caching, and eventually
 agent-authored models that bind back to native facts.
-

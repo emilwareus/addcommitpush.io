@@ -25,14 +25,22 @@ typed facts.
 ## Linked insights
 
 - [[agent-extensible-analysis-needs-artifacts]]
+- [[call-graph-claims-need-algorithm-provenance]]
 - [[call-graphs-are-approximation-families]]
 - [[custom-rules-prove-demand-but-are-engine-bound]]
 - [[data-flow-engines-need-representations-before-solvers]]
 - [[data-flow-policy-needs-paths-budgets-and-models]]
+- [[data-flow-solver-choice-is-a-product-boundary]]
+- [[effective-false-positives-are-the-adoption-bar]]
+- [[feedback-loops-need-iteration-budgets]]
 - [[incrementality-is-analysis-correctness]]
+- [[models-need-diagnostics-not-self-diagnosis]]
+- [[production-data-flow-claims-need-tool-doc-crosschecks]]
+- [[repo-local-policy-needs-an-agent-repair-benchmark]]
 - [[repo-local-policy-is-executable-memory]]
 - [[static-analysis-engines-are-fact-pipelines]]
 - [[static-analysis-is-a-layered-ecosystem]]
+- [[static-analysis-feedback-loops-need-deterministic-tools]]
 - [[typed-rule-signatures-are-capability-contracts]]
 - [[unknowns-are-static-analysis-product-data]]
 
@@ -42,6 +50,9 @@ The long-form research synthesis lives in
 `thoughts/shared/research/2026-06-29_static-analysis-polint-insights.md`.
 
 The raw `dr` reports live in `.context/dr/polint-static-analysis/`.
+
+The second follow-up `dr` reports live in
+`.context/dr/polint-static-analysis-followup/`.
 
 The local `polint` repository snapshot used for this pass lives in
 `.context/polint/`.
