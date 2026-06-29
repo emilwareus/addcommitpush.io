@@ -77,7 +77,7 @@ function SectionMarker({ section }: { section?: string }) {
   if (loopIndex < 0) return null;
 
   return (
-    <div className="fixed left-8 top-7 z-50 font-mono">
+    <div className="fixed top-5 left-4 z-50 hidden font-mono sm:block lg:left-8 lg:top-7">
       <div className="text-[10px] uppercase tracking-[0.24em] text-muted-foreground">
         Agentic loop
       </div>
@@ -115,7 +115,7 @@ export function PresentationLayout({
   const currentSlide = slides[currentIndex];
 
   return (
-    <div className="presentation-slide-surface fixed inset-0 z-50 overflow-hidden">
+    <div className="presentation-slide-surface fixed inset-0 z-50 overflow-auto md:overflow-hidden">
       <div className="fixed top-0 left-0 right-0 z-50 h-[3px] bg-[var(--hair)]">
         <div
           className="h-full bg-primary transition-all duration-300 ease-out"
@@ -127,8 +127,8 @@ export function PresentationLayout({
 
       <SectionMarker section={currentSlide?.section} />
 
-      <div className="h-full flex">
-        <div className="flex-1 h-full">
+      <div className="flex h-full min-w-0">
+        <div className="h-full min-w-0 flex-1">
           <SlideStepProvider
             key={currentSlug}
             pathname={pathname}
@@ -142,7 +142,7 @@ export function PresentationLayout({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="flex h-full w-full items-center justify-center"
+                className="presentation-stage flex h-full w-full min-w-0 items-center justify-center"
               >
                 {children}
               </motion.div>
@@ -153,7 +153,7 @@ export function PresentationLayout({
         {sidebar}
       </div>
 
-      <div className="fixed right-6 bottom-4 z-50 font-mono text-sm text-muted-foreground">
+      <div className="fixed right-3 bottom-3 z-50 font-mono text-xs text-muted-foreground sm:right-6 sm:bottom-4 sm:text-sm">
         {currentIndex + 1} / {slides.length}
       </div>
     </div>

@@ -24,10 +24,10 @@ export default function BrainPage() {
 
   return (
     <main className="site-container">
-      <section className="py-20 sm:py-24">
-        <div className="section-kicker mb-8">Second Brain</div>
-        <h1 className="display-heading text-[clamp(4rem,12vw,8.5rem)]">Brain</h1>
-        <p className="mt-10 max-w-3xl text-[15px] leading-[1.75] text-muted-foreground">
+      <section className="py-14 sm:py-20 md:py-24">
+        <div className="section-kicker mb-6 sm:mb-8">Second Brain</div>
+        <h1 className="display-heading text-[clamp(3.25rem,18vw,8.5rem)]">Brain</h1>
+        <p className="mt-7 max-w-3xl text-[15px] leading-[1.75] text-muted-foreground sm:mt-10">
           A working collection of raw notes, linked insights, source summaries, diagrams, tables,
           and post seeds before they become polished writing.
         </p>
