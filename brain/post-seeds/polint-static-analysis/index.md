@@ -25,6 +25,7 @@ typed facts.
 ## Linked insights
 
 - [[agent-extensible-analysis-needs-artifacts]]
+- [[agent-feedback-needs-standard-diagnostic-formats]]
 - [[call-graph-claims-need-algorithm-provenance]]
 - [[call-graphs-are-approximation-families]]
 - [[custom-rules-prove-demand-but-are-engine-bound]]
@@ -34,13 +35,17 @@ typed facts.
 - [[effective-false-positives-are-the-adoption-bar]]
 - [[feedback-loops-need-iteration-budgets]]
 - [[incrementality-is-analysis-correctness]]
+- [[language-agnostic-analysis-is-a-fact-contract]]
 - [[models-need-diagnostics-not-self-diagnosis]]
 - [[production-data-flow-claims-need-tool-doc-crosschecks]]
 - [[repo-local-policy-needs-an-agent-repair-benchmark]]
 - [[repo-local-policy-is-executable-memory]]
+- [[repo-local-rules-need-a-trust-boundary]]
 - [[static-analysis-engines-are-fact-pipelines]]
 - [[static-analysis-is-a-layered-ecosystem]]
 - [[static-analysis-feedback-loops-need-deterministic-tools]]
+- [[static-analysis-for-agents-needs-policy-fixtures]]
+- [[the-next-article-move-is-a-measured-case-study]]
 - [[typed-rule-signatures-are-capability-contracts]]
 - [[unknowns-are-static-analysis-product-data]]
 

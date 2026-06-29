@@ -33,7 +33,11 @@ Primary/current external sources used:
 
 - [CodeQL data flow analysis](https://codeql.github.com/docs/writing-codeql-queries/about-data-flow-analysis/)
 - [CodeQL path queries](https://codeql.github.com/docs/writing-codeql-queries/creating-path-queries/)
+- [SARIF 2.1.0 specification](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html)
+- [GitHub SARIF upload docs](https://docs.github.com/en/code-security/how-tos/find-and-fix-code-vulnerabilities/integrate-with-existing-tools/upload-sarif-file)
+- [GitHub Actions secure use reference](https://docs.github.com/en/actions/reference/security/secure-use)
 - [Semgrep taint mode overview](https://docs.semgrep.dev/writing-rules/data-flow/taint-mode/overview)
+- [Semgrep generic pattern matching](https://docs.semgrep.dev/writing-rules/generic-pattern-matching)
 - [Joern custom data-flow semantics](https://docs.joern.io/dataflow-semantics/)
 - [SootUp call graph construction](https://soot-oss.github.io/SootUp/v1.1.2/call-graph-construction/)
 - [Joern code property graph docs](https://docs.joern.io/code-property-graph/)
@@ -42,6 +46,9 @@ Primary/current external sources used:
 - [ArchUnit user guide](https://www.archunit.org/userguide/html/000_Index.html)
 - [dependency-cruiser rules reference](https://github.com/sverweij/dependency-cruiser/blob/main/doc/rules-reference.md)
 - [Go RTA package docs](https://pkg.go.dev/golang.org/x/tools/go/callgraph/rta)
+- [Cargo build scripts](https://rustwiki.org/en/cargo/reference/build-scripts.html)
+- [Oxc parser architecture](https://oxc.rs/docs/learn/architecture/parser)
+- [SCIP Code Intelligence Protocol](https://github.com/scip-code/scip)
 - [ast-grep](https://ast-grep.github.io/)
 - [Tree-sitter introduction](https://tree-sitter.github.io/tree-sitter/)
 - [Software Engineering at Google, static analysis chapter](https://abseil.io/resources/swe-book/html/ch20.html)
@@ -52,6 +59,10 @@ Primary/current external sources used:
 - [FeedbackEval, arXiv 2504.06939](https://arxiv.org/abs/2504.06939)
 - [Security Degradation in Iterative AI Code Generation, arXiv 2506.11022](https://arxiv.org/abs/2506.11022)
 - [Helping LLMs improve code generation using feedback from testing and static analysis](https://link.springer.com/article/10.1007/s44163-026-01009-5)
+- [SWE-bench](https://www.swebench.com/original.html)
+- [SWE-bench Verified](https://www.swebench.com/verified.html)
+- [Defects4J](https://github.com/rjust/defects4j)
+- [NIST Juliet Test Suite](https://www.nist.gov/publications/juliet-11-cc-and-java-test-suite)
 
 ## Executive Synthesis
 
@@ -104,6 +115,11 @@ The strongest article thesis:
 | INSIGHT-019 | Data-flow solver choice is a product boundary.                                                                   | High       | Expose policy queries and evidence, not a premature public commitment to one solver.                                  |
 | INSIGHT-020 | Production data-flow claims need tool doc crosschecks.                                                           | High       | Separate algorithm papers from current production tool behavior.                                                      |
 | INSIGHT-021 | Call graph claims need algorithm provenance.                                                                     | High       | Store and expose edge algorithm, precision, status, provenance, and unresolved reasons.                               |
+| INSIGHT-022 | Repo-local executable rules need a trust boundary.                                                               | High       | Treat rule packs like trusted project code, not inert config.                                                         |
+| INSIGHT-023 | Agent feedback needs standard diagnostic formats.                                                                | High       | JSON/GitHub/SARIF/explain outputs are product surfaces, not cosmetic renderers.                                       |
+| INSIGHT-024 | Language-agnostic analysis is a fact contract.                                                                   | High       | Claim language-agnostic policy and diagnostics, not equal semantic precision across all languages.                    |
+| INSIGHT-025 | Static analysis for agents needs policy fixtures.                                                                | High       | Measure repo-local policy repair, not only general bug-fixing or SAST benchmarks.                                     |
+| INSIGHT-026 | The next article move is a measured case study.                                                                  | High       | Stop broad background research and run a small `polint` agent-repair experiment.                                      |
 
 ## INSIGHT-001: Static Analysis Is A Layered Ecosystem
 
@@ -703,6 +719,53 @@ New insight notes created from this wave:
 - [[production-data-flow-claims-need-tool-doc-crosschecks]]
 - [[call-graph-claims-need-algorithm-provenance]]
 
+## Third-Pass Research Findings
+
+The third pass focused on operational objections and article readiness rather
+than more algorithm background. The automated `dr` route could not run in this
+shell because the Brave key was not available, so this pass used direct
+primary-source checks and the local `polint` snapshot.
+
+High-confidence additions:
+
+- Repo-local rules need an explicit trust boundary. A `polint` rule pack is
+  trusted project code, closer to tests or build scripts than to inert
+  configuration.
+- Diagnostic output formats are product surfaces. JSON, GitHub annotations,
+  SARIF, explain output, and unknowns output serve different consumers.
+- "Language agnostic" should mean a stable fact and diagnostic contract across
+  adapters, not equal semantic precision in every language.
+- General coding benchmarks do not prove the `polint` thesis. The right
+  evaluation is a small policy-fixture benchmark where the feedback channel is
+  the variable.
+- The next article move should be a measured case study, not more broad static
+  analysis background.
+
+Source-backed details:
+
+- Cargo build scripts are compiled and run before package build, which supports
+  the claim that Cargo-based rule hosts cross an execution trust boundary.
+- GitHub Actions docs warn against combining privileged workflow triggers with
+  untrusted pull-request code and describe the difference between ephemeral
+  GitHub-hosted runners and persistently compromiseable self-hosted runners.
+- GitHub code scanning can ingest third-party SARIF, and SARIF is the standard
+  static-analysis interchange format for that integration surface.
+- Tree-sitter, Oxc, SCIP, and Semgrep generic mode collectively support the
+  "fact contract" framing: common indexing or parsing layers can be
+  language-agnostic, but semantic precision depends on adapters and language
+  support.
+- SWE-bench, SWE-bench Verified, Defects4J, and Juliet provide useful benchmark
+  vocabulary, but none directly measures repo-local policy repair from static
+  diagnostics.
+
+New insight notes created from this pass:
+
+- [[repo-local-rules-need-a-trust-boundary]]
+- [[agent-feedback-needs-standard-diagnostic-formats]]
+- [[language-agnostic-analysis-is-a-fact-contract]]
+- [[static-analysis-for-agents-needs-policy-fixtures]]
+- [[the-next-article-move-is-a-measured-case-study]]
+
 ## Technical Primer: Call Graph Construction Algorithms
 
 Use this section as background notes, not as the article's main body.
@@ -863,20 +926,25 @@ Opening paragraph seed:
 - Do not say "sound" without stating the scope, model, unsupported constructs,
   and precision tier.
 
-## Follow-Up Research Needed
+## Next Work
 
-1. Run `polint` on a real repo with one AI-agent-specific rule and measure:
-   diagnostics, repair success, false positives, and agent iteration count.
-2. Compare three policy encodings:
-   AGENTS.md only, review comment only, `polint` rule.
-3. Build a small benchmark for repo-local rules:
-   raw API calls, design tokens, security guard, GORM model index review,
-   request-to-shell flow.
-4. Verify published crate surface against cloned repo state before writing the
-   public post.
-5. Create one diagram of the layered engine:
-   source files -> facts -> capability plan -> rules -> diagnostics.
-6. Create one diagram of data-flow:
+1. Run one measured case study before writing the article:
+   same fixture repo, same task, same agent, four conditions.
+2. Use a narrow policy first:
+   "UI code must use the generated API client, not raw `fetch`."
+3. Compare:
+   no policy, `AGENTS.md` policy, review-comment instruction, `polint`
+   diagnostic after first patch.
+4. Measure:
+   initial violation, final violation, tests, iterations, unrelated diff lines,
+   workaround behavior, and suppressions.
+5. Then add four more fixtures only if the first one is useful:
+   raw design token, secret logged, missing migration guard, user-controlled
+   shell command.
+6. Verify the published `polint` crate/API surface against the cloned repo state
+   before writing public implementation claims.
+7. Create two diagrams for the article:
+   source files -> facts -> capability plan -> rules -> diagnostics;
    source -> local edge -> call edge -> summary -> barrier -> sink.
 
 ## Bottom Line
