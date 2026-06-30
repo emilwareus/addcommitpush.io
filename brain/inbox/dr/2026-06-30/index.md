@@ -41,4 +41,4 @@ report or correction note.
 - [static-analysis-sota/22-soundness-vs-usefulness.md](static-analysis-sota/22-soundness-vs-usefulness.md)
 - [static-analysis-sota/23-context-sensitivity-and-summaries.md](static-analysis-sota/23-context-sensitivity-and-summaries.md)
 - [static-analysis-sota/24-fact-databases-query-engines.md](static-analysis-sota/24-fact-databases-query-engines.md)
-
+- [static-analysis-sota/25-emilwareus-polint-correction-note.md](static-analysis-sota/25-emilwareus-polint-correction-note.md)
