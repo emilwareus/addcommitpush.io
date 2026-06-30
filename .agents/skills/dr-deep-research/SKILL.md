@@ -31,19 +31,23 @@ structured INSIGHTS.
    --env-file go-research/.env
    ```
 
-4. Put research artifacts under `.context/dr/` unless the user requested another
-   location. Keep generated reports out of source files unless explicitly asked.
+4. Put generated Markdown reports under `brain/inbox/dr/` so they are readable
+   and committed. `.context/dr/` may be used as temporary scratch space, but it
+   is not the archival location.
+5. Never delete historical `brain/inbox/dr/**` reports. If a report is weak,
+   outdated, superseded, or wrong, keep it and add a newer report or correction
+   note.
 
 ## Single Report
 
 Use one focused report when the question is narrow enough to answer directly.
 
 ```bash
-mkdir -p .context/dr
+mkdir -p brain/inbox/dr/nextjs-16-migration
 dr research "What should an agent know before migrating a Next.js app to v16?" \
   --env-file go-research/.env \
   --effort standard \
-  --output .context/dr/nextjs-16-migration.md
+  --output brain/inbox/dr/nextjs-16-migration/report.md
 ```
 
 Use `--effort deep` or `--effort max` when the answer must be more exhaustive.
@@ -82,7 +86,7 @@ user confirms their Brave plan can handle more. Use `DR_PARALLELISM=2` or `3`
 only for paid plans or when the task is worth the API pressure.
 
 ```bash
-mkdir -p .context/dr
+mkdir -p brain/inbox/dr/research-program
 
 topics=(
   "Deep research agent benchmarks in 2026"
@@ -106,7 +110,7 @@ for index in "${!topics[@]}"; do
   dr research "${topics[$index]}" \
     --env-file go-research/.env \
     --effort deep \
-    --output ".context/dr/${index}-${slug}.md" &
+    --output "brain/inbox/dr/research-program/${index}-${slug}.md" &
 done
 
 wait
@@ -122,7 +126,7 @@ dr research "..." \
   --effort deep \
   --search-concurrency 2 \
   --search-delay-ms 0 \
-  --output .context/dr/topic.md
+  --output brain/inbox/dr/topic/report.md
 ```
 
 ## Gap Loop
@@ -164,9 +168,9 @@ One to three paragraphs summarizing the evidence-backed picture.
 
 ## Insight Index
 
-| ID | Insight | Confidence | Evidence | Implication | Action |
-| --- | --- | --- | --- | --- | --- |
-| INSIGHT-001 | ... | High | report.md [S3], report-2.md [S1] | ... | ... |
+| ID          | Insight | Confidence | Evidence                         | Implication | Action |
+| ----------- | ------- | ---------- | -------------------------------- | ----------- | ------ |
+| INSIGHT-001 | ...     | High       | report.md [S3], report-2.md [S1] | ...         | ...    |
 
 ## INSIGHT-001: Short Name
 
@@ -195,9 +199,9 @@ Confidence rules:
 Before writing INSIGHTS for a broad subject, build a synthesis matrix:
 
 ```markdown
-| Report | Lane | Strongest verified claims | Source quality | Gaps | Follow-up |
-| --- | --- | --- | --- | --- | --- |
-| .context/dr/00-benchmarks.md | Benchmarks | ... | ... | ... | ... |
+| Report                          | Lane       | Strongest verified claims | Source quality | Gaps | Follow-up |
+| ------------------------------- | ---------- | ------------------------- | -------------- | ---- | --------- |
+| brain/inbox/dr/00-benchmarks.md | Benchmarks | ...                       | ...            | ...  | ...       |
 ```
 
 Then cluster:
@@ -210,8 +214,8 @@ Then cluster:
 - unresolved questions that need another `dr` run
 
 Keep citations as report path plus source IDs, for example
-`.context/dr/00-benchmarks.md [S4]`. Do not cite a source ID if the report did
-not admit it.
+`brain/inbox/dr/00-benchmarks.md [S4]`. Do not cite a source ID if the report
+did not admit it.
 
 ## Final Orchestrator Checklist
 
@@ -219,4 +223,5 @@ not admit it.
 - There are enough reports to support the breadth of the final synthesis.
 - Weak reports have been followed by narrower gap reports.
 - INSIGHTS distinguish evidence, confidence, caveats, implications, and actions.
+- The reports are saved in `brain/inbox/dr/` and included in the commit.
 - The final answer tells the user where the reports and INSIGHTS file are saved.
