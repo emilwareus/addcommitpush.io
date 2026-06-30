@@ -5,8 +5,11 @@ or a place for short note-card summaries.
 
 When writing or editing files under `brain/insights/`, treat each insight as an
 educational research article about one specific subject. The reader should come
-away understanding the concept, the mechanism, the trade-offs, the failure
-modes, and the evidence behind it.
+away understanding the concept, current state of research, underlying
+innovation, implementation shape, trade-offs, and open questions. Each insight
+should feel like a short, approachable scientific paper: rigorous enough to be
+trusted, but written in clear language with prerequisites explained inline or in
+linked prerequisite insights.
 
 ## Length And Depth
 
@@ -15,24 +18,22 @@ An insight should usually be around two pages of informative, readable content.
 Dense or algorithmic subjects can be up to five pages when the extra length is
 needed to teach the subject properly.
 
-Do not write one-paragraph summaries unless the user explicitly asks for a tiny
-stub. A good insight should be long enough to actually educate.
+Do not write one-paragraph summaries with short lists unless the user
+explicitly asks for a tiny stub. A good insight should be long enough to
+actually educate.
 
-For example:
+This applies to every subject, not only static analysis. For example:
 
-- If the subject is call graph algorithms, explain the algorithms completely:
-  CHA, RTA, VTA, points-to-based construction, their data structures, their
-  fixed-point loops, their precision trade-offs, and their failure modes. Add
-  pseudocode.
-- If the subject is data flow, explain the representation first: CFG nodes,
-  facts, transfer functions, joins, summaries, sources, sinks, barriers, path
-  reconstruction, and then the solver.
-- If the subject is abstract interpretation, explain abstract domains,
-  ordering, transfer functions, joins, widening, fixpoints, and soundness
-  assumptions.
-- If the subject is diagnostics, explain what makes a diagnostic actionable:
-  location, rule id, path, provenance, confidence, suggested fix, suppression
-  model, and known limitations.
+- If the subject is an algorithm, explain the algorithm completely: input,
+  output, data structures, main loop, complexity, correctness intuition,
+  trade-offs, and failure modes. Add pseudocode.
+- If the subject is a system architecture, explain the components, data flow,
+  ownership boundaries, persistence model, operational assumptions, and
+  bottlenecks.
+- If the subject is an evaluation method, explain the benchmark, metric,
+  baseline, threat model, data quality, and how to interpret the result.
+- If the subject is a product or workflow pattern, explain the user problem,
+  state model, feedback loop, adoption constraints, and edge cases.
 
 ## What A Good Insight Contains
 
@@ -44,16 +45,19 @@ A strong insight should include:
 - a real explanation of how the mechanism works;
 - examples or small scenarios where useful;
 - pseudocode for algorithmic topics;
+- graphs, diagrams, or data tables when they clarify the research;
 - trade-offs and edge cases;
 - practical design implications;
 - source-backed claims;
-- explicit caveats where the evidence is incomplete.
+- clear references at the end to articles, papers, docs, standards, or other
+  external sources, not just files inside this repository;
+- a scoped piece of knowledge the user can attain by reading the insight, not
+  merely one isolated claim.
 
-The body should teach, not merely label. Avoid writing "RTA narrows CHA by
-instantiated types" and stopping there. Explain what CHA does, why it
-over-approximates, how RTA tracks allocated types, why RTA needs a fixed point,
-where RTA still over-approximates, and how VTA or points-to analysis changes the
-available facts.
+The body should teach, not merely label. A weak insight says "Technique X is a
+faster version of Technique Y." A strong insight explains what Y does, what X
+changes, why the change affects the result, what it costs, what evidence
+supports it, and where it fails.
 
 ## Suggested Structure
 
@@ -62,14 +66,13 @@ Use this structure unless another shape is clearly better:
 1. Frontmatter
 2. Title
 3. One-paragraph thesis
-4. Claim
-5. Background and definitions
-6. Main explanation
-7. Algorithm or mechanism, when applicable
-8. Pseudocode, when applicable
-9. Trade-offs and failure modes
-10. Practical implications
-11. Sources
+4. Background and definitions
+5. Main explanation
+6. Algorithm or mechanism, when applicable
+7. Pseudocode, when applicable
+8. Trade-offs and failure modes
+9. Practical implications
+10. Sources
 
 The opening should tell the reader what idea matters. The middle should teach
 the mechanism. The ending should explain how the insight affects engineering
@@ -88,7 +91,7 @@ created: YYYY-MM-DD
 status: working
 publish: true
 tags:
-  - static analysis
+  - broad topic tag
 feeds_into:
   - "[[parent-note]]"
 related:
@@ -96,8 +99,11 @@ related:
 ---
 ```
 
-Use one broad tag unless the user explicitly asks for more. For the static
-analysis cluster, the only tag is:
+Use one broad tag unless the user explicitly asks for more. Tags are broad
+navigation, not a full ontology. Folder paths, titles, backlinks, and body text
+already carry subtopic detail.
+
+For the current static analysis cluster, the only tag is:
 
 ```yaml
 tags:
@@ -106,6 +112,37 @@ tags:
 
 Do not create a tag for every subtopic. Folder paths, titles, backlinks, and
 body text already carry subtopic detail.
+
+## Graphs, Diagrams, And Data Tables
+
+The user strongly prefers insights that preserve the shape of the research.
+When the underlying research contains useful comparison tables, benchmark
+numbers, source registers, evidence tables, taxonomies, timelines, architecture
+diagrams, dependency graphs, or process diagrams, copy or adapt that structure
+into the insight instead of flattening everything into prose.
+
+Use tables and diagrams generously when they make the note easier to learn:
+
+- Markdown tables for algorithm comparisons, benchmark results, source quality,
+  metric definitions, trade-offs, and failure modes;
+- simple diagrams for pipelines, feedback loops, state machines, dependency
+  graphs, architecture relationships, and lifecycle flows;
+- pseudocode blocks for algorithms, workflows, and procedures;
+- small worked examples when they make the mechanism concrete.
+
+Good table subjects:
+
+- approach versus precision versus cost;
+- source versus claim versus limitation;
+- metric versus what it measures versus what it misses;
+- tool or system versus data model versus integration point;
+- failure mode versus cause versus mitigation;
+- benchmark result versus interpretation caveat.
+
+Do not invent numbers. If a `dr` report or source paper contains useful
+quantitative or comparative structure, carry it over with citations. Prefer the
+primary source when possible. If the table is a synthesis assembled from
+multiple sources, label it as synthesis and make the sources clear.
 
 ## Evidence Standard
 
@@ -127,7 +164,7 @@ Use weak sources only as leads:
 - generated research reports.
 
 Generated `dr` reports are useful research scratchpads. Durable insight files
-should cite the primary sources directly when possible.
+should always cite the primary sources directly, not these research files.
 
 ## Tone
 
@@ -156,11 +193,11 @@ enough to read but precise enough to reveal the real data dependencies.
 
 Useful pseudocode conventions:
 
-- `worklist` for iterative graph or data-flow algorithms;
-- `reachable` for discovered procedures;
-- `allocatedTypes` for RTA-style allocation filtering;
-- `pointsTo[var]` for variable-to-object facts;
-- `targets(callSite)` for dispatch resolution;
+- `worklist` for iterative algorithms;
+- `reachable`, `visited`, or `frontier` for graph traversal;
+- `state`, `facts`, or `cache` for accumulated knowledge;
+- `constraints`, `events`, or `updates` for propagation systems;
+- `score`, `threshold`, or `rankedCandidates` for ranking or evaluation;
 - `changed` or delta sets for fixed-point iteration.
 
 After pseudocode, explain what each data structure means and what approximation
@@ -168,9 +205,9 @@ the algorithm is making.
 
 ## Practical Design Lens
 
-Most insights should connect the idea back to engine or tool design:
+Most insights should connect the idea back to practical design:
 
-- What facts must the engine compute?
+- What facts, observations, or measurements must the system compute?
 - What must be cached or invalidated?
 - What provenance should be shown to users?
 - What would make diagnostics misleading?
@@ -179,4 +216,3 @@ Most insights should connect the idea back to engine or tool design:
 
 The best insight files are useful both as research notes and as design
 documents.
-
