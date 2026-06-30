@@ -60,10 +60,10 @@ const presentations: PresentationEntry[] = [
 export default function PresentationsPage() {
   return (
     <main className="site-container">
-      <section className="py-20 sm:py-24">
-        <div className="section-kicker mb-8">Slides & Talks</div>
-        <h1 className="display-heading text-[clamp(4rem,12vw,8.5rem)]">Presentations</h1>
-        <p className="mt-10 max-w-3xl text-[15px] leading-[1.75] text-muted-foreground">
+      <section className="py-14 sm:py-20 md:py-24">
+        <div className="section-kicker mb-6 sm:mb-8">Slides & Talks</div>
+        <h1 className="display-heading text-[clamp(1.75rem,8.75vw,8.5rem)]">Presentations</h1>
+        <p className="mt-7 max-w-3xl text-[15px] leading-[1.75] text-muted-foreground sm:mt-10">
           Decks and talks on AI agents, data, and building. Mostly the same arguments as the blog,
           with more diagrams and worse jokes.
         </p>
@@ -73,13 +73,13 @@ export default function PresentationsPage() {
         {presentations.map((presentation) => (
           <article
             key={presentation.href}
-            className="flex min-h-[280px] flex-col border border-dashed border-border p-7"
+            className="flex min-h-[260px] min-w-0 flex-col border border-dashed border-border p-5 sm:min-h-[280px] sm:p-7"
           >
-            <div className="flex justify-between gap-5 text-xs uppercase tracking-[0.12em] text-muted-foreground">
+            <div className="flex flex-wrap justify-between gap-3 text-xs uppercase tracking-[0.12em] text-muted-foreground">
               <span>{presentation.date}</span>
               <span>{presentation.kind}</span>
             </div>
-            <h2 className="display-heading mt-8 text-[clamp(1.55rem,3vw,2rem)] leading-[1.12]">
+            <h2 className="display-heading mt-7 text-[clamp(1.45rem,8vw,2rem)] leading-[1.12] sm:mt-8">
               {presentation.title}
             </h2>
             <p className="mt-6 text-[13.5px] leading-[1.65] text-foreground">
@@ -102,7 +102,7 @@ export default function PresentationsPage() {
           </article>
         ))}
 
-        <div className="flex min-h-[280px] flex-col items-center justify-center border border-dashed border-[var(--hair)] p-7 text-center">
+        <div className="flex min-h-[260px] flex-col items-center justify-center border border-dashed border-[var(--hair)] p-5 text-center sm:min-h-[280px] sm:p-7">
           <div className="font-serif text-lg italic text-muted-foreground">
             your next talk here...
           </div>

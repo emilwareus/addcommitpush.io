@@ -121,7 +121,7 @@ export function JarvisSidebar() {
   }, [messages]);
 
   return (
-    <div className="w-80 shrink-0 bg-background/95 backdrop-blur border-l border-primary/20 flex flex-col h-full">
+    <div className="hidden h-full w-80 shrink-0 flex-col border-l border-primary/20 bg-background/95 backdrop-blur lg:flex">
       {/* Header */}
       <div className="p-4 border-b border-primary/20 flex items-center justify-between">
         <div className="flex items-center gap-2">

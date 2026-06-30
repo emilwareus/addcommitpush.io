@@ -168,6 +168,7 @@
 
   html {
     background: var(--background);
+    overflow-x: clip;
   }
 
   body {
@@ -176,6 +177,7 @@
       var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
       'Courier New', monospace;
     min-height: 100vh;
+    overflow-x: clip;
   }
 
   ::selection {
@@ -185,6 +187,16 @@
 
   a {
     text-underline-offset: 4px;
+  }
+
+  main a {
+    overflow-wrap: anywhere;
+  }
+
+  main a.inline-flex {
+    max-width: 100%;
+    min-width: 0;
+    flex-wrap: wrap;
   }
 
   button,
@@ -251,6 +263,7 @@
   letter-spacing: 0.005em;
   text-transform: uppercase;
   color: var(--primary);
+  overflow-wrap: anywhere;
 }
 
 .section-kicker {
@@ -384,6 +397,10 @@
   font-family: var(--font-mono), ui-monospace, monospace;
 }
 
+.presentation-stage {
+  min-width: 0;
+}
+
 .presentation-slide-surface h1,
 .presentation-slide-surface h2 {
   font-family: var(--font-serif), Georgia, serif !important;
@@ -482,4 +499,26 @@
 
 .presentation-slide-surface [style*='box-shadow'] {
   box-shadow: none !important;
+}
+
+@media (max-width: 639px) {
+  .site-container,
+  .site-container-narrow {
+    width: min(100% - 24px, 1280px);
+  }
+
+  .display-heading {
+    line-height: 1.04;
+  }
+
+  [data-slot='card-content'],
+  [data-slot='card-header'],
+  [data-slot='card-footer'] {
+    padding-inline: 1.25rem;
+  }
+
+  [data-slot='card-content'].p-8,
+  [data-slot='card-content'].md\:p-10 {
+    padding: 1.25rem;
+  }
 }

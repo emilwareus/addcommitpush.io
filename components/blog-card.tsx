@@ -9,10 +9,10 @@ export function BlogCard({ post }: BlogCardProps) {
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group flex min-h-[290px] flex-col border border-dashed border-border p-6 text-foreground no-underline transition-colors hover:bg-[var(--hover)] sm:p-7"
+      className="group flex min-h-[260px] min-w-0 flex-col border border-dashed border-border p-5 text-foreground no-underline transition-colors hover:bg-[var(--hover)] sm:min-h-[290px] sm:p-7"
     >
-      <div className="flex items-start justify-between gap-5">
-        <h2 className="display-heading max-w-[82%] text-[clamp(1.35rem,2.5vw,1.8rem)] leading-[1.12] transition-colors group-hover:text-foreground">
+      <div className="flex min-w-0 flex-wrap items-start justify-between gap-3 sm:gap-5">
+        <h2 className="display-heading min-w-0 flex-1 text-[clamp(1.35rem,8vw,1.8rem)] leading-[1.12] transition-colors group-hover:text-foreground">
           {post.title}
         </h2>
         {post.audioUrl && (
@@ -24,7 +24,7 @@ export function BlogCard({ post }: BlogCardProps) {
 
       <p className="mt-auto pt-7 text-[13px] leading-[1.65] text-foreground">{post.description}</p>
 
-      <div className="mt-5 flex justify-between gap-4 text-[11px] uppercase tracking-[0.04em] text-muted-foreground">
+      <div className="mt-5 flex flex-wrap justify-between gap-3 text-[11px] uppercase tracking-[0.04em] text-muted-foreground">
         <time dateTime={post.publishedAt}>
           {new Date(post.publishedAt).toLocaleDateString('en-US', {
             month: 'short',
