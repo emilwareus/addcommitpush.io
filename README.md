@@ -1,5 +1,20 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Deep Research CLI
+
+This repository also contains `dr`, a Rust deep-research CLI for coding agents.
+It uses Brave Search plus OpenRouter models to write cited Markdown reports.
+
+```bash
+make build-dr
+make install-dr
+dr research "research topic" --env-file go-research/.env --output .context/dr/topic.md
+```
+
+See `dr/README.md` for architecture details and
+`.agents/skills/dr-deep-research/SKILL.md` for the agent orchestration workflow,
+including multi-report subject research and structured INSIGHTS synthesis.
+
 ## Getting Started
 
 First, run the development server:
