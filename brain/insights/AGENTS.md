@@ -26,7 +26,7 @@ This applies to every subject, not only static analysis. For example:
 
 - If the subject is an algorithm, explain the algorithm completely: input,
   output, data structures, main loop, complexity, correctness intuition,
-  trade-offs, and failure modes. Add pseudocode.
+  trade-offs, limits, and edge cases. Add pseudocode.
 - If the subject is a system architecture, explain the components, data flow,
   ownership boundaries, persistence model, operational assumptions, and
   bottlenecks.
@@ -57,7 +57,7 @@ A strong insight should include:
 The body should teach, not merely label. A weak insight says "Technique X is a
 faster version of Technique Y." A strong insight explains what Y does, what X
 changes, why the change affects the result, what it costs, what evidence
-supports it, and where it fails.
+supports it, and where its limits are.
 
 ## Suggested Structure
 
@@ -70,7 +70,7 @@ Use this structure unless another shape is clearly better:
 5. Main explanation
 6. Algorithm or mechanism, when applicable
 7. Pseudocode, when applicable
-8. Trade-offs and failure modes
+8. Trade-offs, limits, and edge cases
 9. Practical implications
 10. Sources
 
@@ -124,7 +124,7 @@ into the insight instead of flattening everything into prose.
 Use tables and diagrams generously when they make the note easier to learn:
 
 - Markdown tables for algorithm comparisons, benchmark results, source quality,
-  metric definitions, trade-offs, and failure modes;
+  metric definitions, trade-offs, and caveats;
 - simple diagrams for pipelines, feedback loops, state machines, dependency
   graphs, architecture relationships, and lifecycle flows;
 - pseudocode blocks for algorithms, workflows, and procedures;
@@ -136,7 +136,7 @@ Good table subjects:
 - source versus claim versus limitation;
 - metric versus what it measures versus what it misses;
 - tool or system versus data model versus integration point;
-- failure mode versus cause versus mitigation;
+- limitation versus cause versus mitigation;
 - benchmark result versus interpretation caveat.
 
 Do not invent numbers. If a `dr` report or source paper contains useful
@@ -176,7 +176,7 @@ Good phrasing:
 - "This algorithm over-approximates because..."
 - "This claim depends on the following assumptions..."
 - "This is useful when..."
-- "This fails when..."
+- "This breaks down when..."
 - "A production engine should expose..."
 
 Avoid phrasing like:

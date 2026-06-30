@@ -67,7 +67,7 @@ research program.
    - benchmarks and evaluation methods
    - architecture patterns
    - implementation constraints
-   - failure modes and risks
+   - limits, risks, and caveats
    - economics, latency, and operational constraints
    - adoption signals and production examples
    - contradictions or disputed claims
