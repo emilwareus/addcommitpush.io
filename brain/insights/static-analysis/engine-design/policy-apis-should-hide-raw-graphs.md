@@ -241,6 +241,60 @@ precision.
 This matters for agents. An agent can safely repair an exact missing import. It should treat
 a heuristic data-flow finding differently, especially when a sanitizer model is incomplete.
 
+## Result Semantics
+
+The API should specify status semantics as part of the contract.
+
+| Status | Meaning | User action |
+| --- | --- | --- |
+| `violation` | engine found a policy-breaking path/fact under the requested precision tier | repair or suppress with evidence |
+| `clean` | engine searched the requested capability space and found no violation | trust only within stated capability/precision |
+| `unknown` | engine reached a semantic gap such as unresolved dynamic call or missing model | add model, raise budget, or review manually |
+| `unsupported` | provider cannot compute the required fact family for this language/setup | fix setup or do not run the rule |
+| `budget_exceeded` | engine stopped before completing the requested query | increase budget or narrow query |
+
+The most important distinction is `clean` versus `unknown`. A green report should mean "no
+violation under the declared analysis contract," not "the analyzer gave up quietly."
+
+## Evidence As A Bounded Proof Object
+
+For exact local policies, evidence can be a span and matched fact. For reachability and
+source-sink policies, evidence should behave like a bounded proof object: enough to audit
+the result, not a dump of the private graph.
+
+```text
+FlowEvidence:
+  query_digest
+  source:
+    file
+    range
+    pattern
+    precision
+  sink:
+    file
+    range
+    pattern
+    precision
+  path:
+    status: complete | summary_only | truncated | unknown
+    edges:
+      - kind: local_assignment | call | return | summary | field | unknown
+        from
+        to
+        provenance
+        precision
+  barriers_checked:
+    - pattern
+    - result: absent | present | unknown
+  budgets:
+    max_depth
+    max_paths
+    truncated
+```
+
+This makes the hidden graph auditable. A reviewer can disagree with a source model, a
+summary edge, or a barrier model without needing internal node IDs.
+
 ## Evidence Schema
 
 Policy APIs should return compact evidence, not internal graph dumps.
@@ -351,6 +405,20 @@ run_policy_query(rule, query):
 ```
 
 The API stays small, but the engine remains honest about support and precision.
+
+## How To Test Whether Hiding Graphs Works
+
+The design claim is not self-proving. It should be evaluated.
+
+| Hypothesis | Experiment |
+| --- | --- |
+| Policy APIs reduce rule bugs compared with raw graph traversal | Implement the same 10 local policies with raw graph APIs and policy queries; compare LOC, fixture pass rate, and review findings. |
+| Bounded evidence improves agent repair | Compare agent repair with terminal text, raw graph JSON, and policy evidence JSON; measure iterations, edit distance, and regressions. |
+| Unknown statuses prevent false confidence | Seed fixtures with unresolved imports, reflection, dynamic calls, and missing summaries; verify the engine emits unknown/unsupported instead of clean. |
+| Query digests improve baselines | Change source/sink/barrier models and verify baseline fingerprints invalidate intentionally. |
+
+Without this evaluation, "hide raw graphs" is a design preference. With it, it becomes a
+testable product hypothesis.
 
 ## Implication For polint
 

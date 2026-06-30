@@ -40,6 +40,23 @@ linting." Its job is the policies generic linters cannot know:
 | Test quality | Table tests require `t.Run` and assertions. |
 | Review obligations | GORM model changes require index review. |
 
+Formal definition:
+
+```text
+Repo-local policy engine =
+  a static-analysis runtime where:
+    policies are stored with the repository,
+    policies are authored as reviewed code,
+    the engine owns extraction/facts/output,
+    diagnostics are machine-readable,
+    local fixtures define policy semantics,
+    and unsupported analysis is surfaced explicitly.
+```
+
+This distinguishes polint from a generic rule pack. A generic linter ships broad rules for
+many repositories. A repo-local engine ships the substrate; the repository supplies the
+claims it wants to enforce.
+
 ## Why "No Built-In Rules" Is Coherent
 
 A tool with no rules sounds empty until you separate policy from substrate.
@@ -58,6 +75,23 @@ This mirrors the shadcn-style ownership pattern: install scaffolding, then own t
 polint, `polint new-rule` creates a local Rust rule module and fixtures under
 `.polint/tests/rules/`. The framework can improve the engine while the repository reviews
 policy changes like any other code change.
+
+The trade-off is real:
+
+| Benefit | Cost |
+| --- | --- |
+| Local policy semantics are reviewed with the codebase. | Teams must author and maintain rules. |
+| Rules can encode internal APIs and migration states. | Discoverability is worse than a bundled rule catalog. |
+| Fixtures can mirror local failures. | Bad local models can encode false confidence. |
+| Agent output can carry repo-specific repair evidence. | The engine must keep output stable and parseable. |
+
+The scientific claim to test is not "no built-in rules is better." It is narrower:
+
+```text
+For policies whose semantics depend on repository-specific APIs, ownership boundaries,
+migrations, generated clients, or agent instructions, repo-local executable policies should
+reduce violation recurrence and repair ambiguity compared with prose-only instructions.
+```
 
 ## The Engine Shape Implied By The Docs
 
@@ -159,6 +193,10 @@ internals.
 This is the main architectural bet: the SDK should expose policy-level facts, not raw engine
 machinery.
 
+The table should be read as a status map, not a proof of implementation depth. Stable views
+are suitable for rule authors today. Preview policy queries document the intended shape for
+deeper analysis. Reserved raw graph APIs are deliberately not part of the public contract.
+
 ## A Staged Static-Analysis Roadmap
 
 The current public fact set supports useful local rules without solving all of static
@@ -177,6 +215,20 @@ analysis. The deeper roadmap can be staged so each layer earns its way into the 
 This sequence matters because every later layer depends on earlier correctness. A broken
 module resolver poisons symbols. A broken call graph poisons interprocedural flow. A broken
 alias model poisons memory flow.
+
+Promotion criteria should be explicit:
+
+| Stage boundary | Minimum evidence before promotion |
+| --- | --- |
+| syntax -> resolved imports | fixtures for aliases, config roots, package boundaries, generated/vendor exclusions |
+| resolved imports -> symbols | cross-file definitions/references, reexports, shadowing, language-specific declaration forms |
+| symbols -> calls | direct calls, dynamic dispatch tier, entrypoint modeling, unresolved-call diagnostics |
+| calls -> CFG | branches, loops, early returns, exceptions/finally/defer, same-function guard dominance |
+| CFG -> data flow | source/sink fixtures, summaries, barriers, unknown edges, budget truncation |
+| data flow -> memory/alias | field sensitivity, containers, heap abstraction, alias false-positive/false-negative corpus |
+
+Without promotion criteria, "roadmap" becomes a wish list. With criteria, each fact family
+has an evaluation surface.
 
 ## How Data Flow Could Work Inside polint
 
@@ -215,6 +267,32 @@ run_flow_query(query, repo_facts):
 ```
 
 The rule author never sees the graph. They see violations, unknowns, precision, and paths.
+
+One concrete output shape for an unsupported edge should be part of the design:
+
+```json
+{
+  "rule_id": "local/no-request-to-shell",
+  "policy_status": "unknown",
+  "policy_precision": "unknown",
+  "file": "src/routes/run.ts",
+  "message": "request-to-shell query crossed an unresolved dynamic call",
+  "evidence": {
+    "source": "req.query.cmd",
+    "sink": "exec",
+    "unknown_edge": {
+      "kind": "dynamic_call",
+      "callee_expression": "plugins[name].run",
+      "reason": "computed property call has no configured summary"
+    },
+    "searched_depth": 7,
+    "max_depth": 24
+  }
+}
+```
+
+This is the difference between a static-analysis substrate and a style linter. The output is
+not only a warning; it is a precise statement about the analysis contract.
 
 ## How Calls Could Work Inside polint
 
@@ -276,6 +354,19 @@ rule_fixture:
 Testing unknown behavior is what keeps a static-analysis product honest. A clean-only
 fixture suite can hide unsupported semantics for years.
 
+A stronger rule fixture suite should include mutation tests:
+
+| Mutation | Expected result |
+| --- | --- |
+| rename forbidden callee behind an alias | rule still finds by symbol/reference if capability claims that precision |
+| move source through helper function | interprocedural query finds or reports unknown |
+| add sanitizer for wrong sink class | violation remains |
+| add accepted sanitizer | violation disappears with barrier evidence |
+| introduce dynamic call | unknown/support diagnostic appears |
+| exceed path budget | budget evidence appears |
+
+The fixture suite is the peer-review corpus for a local rule.
+
 ## Agent Workflow
 
 polint is explicitly agent-aware. The agent playbook recommends:
@@ -334,6 +425,21 @@ That thesis explains the unusual product shape:
 - typed fact views, because rule authors should not parse everything themselves;
 - preview policy queries, because deeper graph analysis should be bounded and explainable;
 - agent-friendly JSON, because diagnostics are part of the repair loop.
+
+## Evaluation Plan For The Article
+
+The publishable version should include at least one small empirical section:
+
+| Question | Measurement |
+| --- | --- |
+| Do repo-local rules catch violations prose instructions miss? | Seed convention violations in a fixture repo; compare agent runs with prose-only instructions vs polint diagnostics. |
+| Does structured evidence reduce repair churn? | Measure iterations, edit distance, and regressions for terminal text vs sliced JSON diagnostics. |
+| Are unknowns surfaced honestly? | Run rules against fixtures with dynamic calls, unresolved imports, missing summaries, and budget limits. |
+| What is the authoring cost? | Rule LOC, fixture LOC, setup time, and maintenance changes per policy. |
+| What is the runtime cost? | cold/warm check time, cache hit rate, diagnostics count, report size. |
+
+Without this, the article is a design essay. With it, it becomes a defensible engineering
+case study.
 
 ## Sources
 

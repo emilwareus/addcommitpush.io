@@ -61,6 +61,43 @@ reach a place, the place is considered tainted. Sanitization is not the inverse 
 introduction. It is a transfer function that removes specific labels under specific
 conditions.
 
+The domain needs to say what a "place" is. Otherwise aliasing, fields, and containers are
+hidden in prose.
+
+```text
+Place ::=
+    Local(variable)
+  | Param(function, index)
+  | Return(call_site)
+  | Receiver(call_site)
+  | Field(base_place, field_name)
+  | Index(base_place, abstract_key)
+  | Global(symbol)
+  | HeapObject(abstract_object)
+
+AccessPath ::= base.selector_1.selector_2....selector_k
+  where k <= access_path_limit
+
+Label ::= policy tag, optionally carrying source identity and sanitizer state
+
+State ::= Place -> powerset(Label)
+```
+
+This definition exposes several precision switches:
+
+| Switch | Precise version | Cheaper version | Failure mode |
+| --- | --- | --- | --- |
+| variable vs object taint | distinguish local bindings and heap objects | taint variables only | misses alias/container effects |
+| field sensitivity | `obj.secret` distinct from `obj.name` | whole object tainted | false positives across fields |
+| index sensitivity | key-specific array/map elements | whole collection tainted | false positives across entries |
+| access-path depth | track `a.b.c` up to bound | collapse beyond bound to summary | deep flows become unknown or broad |
+| explicit vs implicit flow | branch conditions affect assignments | only value flow | misses control-dependent leaks |
+| may vs must taint | any path taints | all paths taint | security rules usually need may |
+
+Semgrep's public taint model is a useful reminder that production tools choose points in
+this space. Its docs describe variable-level taint behavior and advanced modeling knobs, but
+aliasing and object identity remain precision boundaries that a policy engine must surface.
+
 ```text
 transfer_assignment(state, target, expression):
   labels = labels_of_expression(state, expression)
@@ -315,6 +352,46 @@ Summaries create an explicit modeling boundary. Unknown external calls should ei
 pessimistic summary, a configured library summary, or an `unknown` result. Treating them as
 "no flow" creates false confidence.
 
+Recursive functions and mutually recursive call groups make summaries a fixed-point problem.
+The engine should solve summaries in call-graph strongly connected components.
+
+```text
+compute_summaries(call_graph, model):
+  summaries = map function -> empty_summary()
+
+  for scc in reverse_topological_scc_order(call_graph):
+    changed = true
+
+    while changed:
+      changed = false
+
+      for function in scc.functions:
+        old = summaries[function]
+        new = analyze_function_with_current_summaries(
+          function,
+          model,
+          summaries
+        )
+
+        joined = join_summary(old, new)
+        if joined != old:
+          summaries[function] = joined
+          changed = true
+
+  return summaries
+```
+
+An external or unknown call should have one explicit semantic:
+
+| Unknown-call policy | Meaning | Diagnostic consequence |
+| --- | --- | --- |
+| opaque-propagating | tainted args may taint return/receiver/outputs | more false positives, fewer false negatives |
+| modeled | configured summary gives known flows | precise only as far as model is correct |
+| capability-unknown | engine refuses to claim clean result | user sees unsupported/unknown evidence |
+
+The worst policy is silent non-propagation. That reports "clean" when the engine merely
+failed to model the call.
+
 ## IFDS Encoding Of Taint
 
 Taint is often a good IFDS fit because facts are finite and transfer functions are usually
@@ -398,6 +475,48 @@ reconstruct_path(sink_point, sink_fact):
 Path ranking should prefer short, source-to-sink, human-readable paths over exhaustive
 coverage. For an agent, one clear repair path is usually more useful than 500 equivalent
 paths through helper functions.
+
+Interprocedural path reconstruction has an additional constraint: the witness must be
+realizable. A path that enters `sanitize`, returns from `parse`, and continues in the caller
+is not an execution path.
+
+```text
+reconstruct_interprocedural_path(sink_state):
+  witness = []
+  cursor = sink_state
+  call_stack = empty_stack()
+
+  while cursor has predecessor:
+    pred, edge = predecessor[cursor]
+
+    if edge.kind == summary:
+      expanded = expand_summary_edge(edge)
+      if expanded exists:
+        witness.extend(expanded)
+      else:
+        witness.push(summary_only_edge(edge))
+
+    else if edge.kind == return:
+      call_stack.push(edge.call_site)
+      witness.push(edge)
+
+    else if edge.kind == call:
+      expected = call_stack.pop()
+      if expected != edge.call_site:
+        return invalid_witness("unmatched call/return")
+      witness.push(edge)
+
+    else:
+      witness.push(edge)
+
+    cursor = pred
+
+  return reverse(witness)
+```
+
+If the solver uses summaries, the engine should either record the callee witness that created
+the summary or mark the path segment as `summary-only`. Inventing a detailed path after the
+fact is worse than showing a compact but honest witness.
 
 ## Interprocedural Cost
 

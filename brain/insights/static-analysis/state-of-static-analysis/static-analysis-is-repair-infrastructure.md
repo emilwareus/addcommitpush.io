@@ -157,6 +157,27 @@ running those facts cheaply and making them actionable.
 This is the context in which polint is interesting: it can make these ideas available for
 repo-local policies without requiring every team to operate a full variant-analysis stack.
 
+## Hard Data That Shapes The Current State
+
+The strongest lesson from production and research data is that "more static analysis" is not
+one variable. Different engines hit different walls: tuple invalidation, memory blowups,
+timeouts, source/sink modeling, graph size, context explosion, and benchmark drift.
+
+| Tool / method | Hard data | What it actually proves |
+| --- | --- | --- |
+| CodeQL incremental production scans | GitHub reported average PR scan speedups over seven days: JavaScript/TypeScript 29/47/70% and Python 11/57/70% for `<3 min`, `3-7 min`, and `>7 min` baseline buckets in March 2026; later C/C++ and Go data reported C/C++ 17/34/46% and Go 9/16/25%. | Incrementality is now production-relevant, but numbers are query-suite/setup-specific. |
+| CodeQL incremental research prototype | FSE 2023 paper reported full incremental initialization around 66-67 minutes and 70-72 GB memory on two Ruby projects; hybrid initialization around 14-15 minutes and 21-23 GB. | Small updates can be fast, but stable IDs and memory are central blockers. |
+| Semgrep CE | Official docs describe CE data flow as intraprocedural; default CLI guardrails include 5 s per rule/file timeout, timeout threshold 3, and 1 MB max target size. | Default scans are bounded products, not proofs that every file/path was analyzed. |
+| FlowDroid | PLDI 2014 reported 93% recall and 86% precision on DroidBench 1.0; real-app analysis in that paper was often under 1 minute for top Google Play apps. | Deep Android taint can work, but benchmark/configuration/lifecycle/source-sink choices matter. |
+| Souffle | CAV 2016 OpenJDK analysis: context-insensitive points-to 35 s / 8.5 GB; context-sensitive points-to 6:44:08 / 206.4 GB; security analysis 14:45:01 / 75.3 GB. | Datalog can be fast, but context sensitivity and relation size can dominate memory. |
+| Joern / CPG | IEEE S&P 2014 Linux kernel CPG: about 52M nodes, 87M edges, 110 min import, 14 GB graph plus 14 GB index; four traversals found 18 previously unknown kernel vulnerabilities. | Graph queries can support expert vulnerability hunting, but graph construction/storage is a large artifact. |
+| LLVM MemorySSA | LLVM docs frame MemorySSA as replacing many MemoryDependenceAnalysis uses because careless dependency scans can become quadratic; MemorySSA uses one memory variable and walkers/AA for clobbers. | Sparse memory representation is a performance design, not a complete alias solution. |
+
+These numbers should discipline the article. A repo-local policy engine should not promise
+"full static analysis." It should promise explicit capability tiers, bounded queries,
+machine-readable unknowns, and focused rules whose cost is proportional to the policy being
+asked.
+
 ## Why AI Agents Change The Pressure
 
 AI coding agents make prose instructions less sufficient. A prompt or `AGENTS.md` entry
@@ -273,16 +294,23 @@ know without becoming bespoke.
 - [About CodeQL queries](https://codeql.github.com/docs/writing-codeql-queries/about-codeql-queries/)
 - [Creating path queries in CodeQL](https://codeql.github.com/docs/writing-codeql-queries/creating-path-queries/)
 - [CodeQL incremental analysis](https://docs.github.com/en/code-security/how-tos/find-and-fix-code-vulnerabilities/scan-from-the-command-line/incremental-analysis)
+- [Faster incremental analysis with CodeQL in pull requests](https://github.blog/changelog/2026-03-24-faster-incremental-analysis-with-codeql-in-pull-requests/)
+- [Incremental analysis for Go, C/C++, and CodeQL CLI](https://github.blog/changelog/2026-06-10-incremental-analysis-for-go-c-c-and-codeql-cli/)
+- [Incrementalizing Production CodeQL Analyses](https://arxiv.org/pdf/2308.09660)
 - [Semgrep rule writing overview](https://docs.semgrep.dev/writing-rules/overview/)
 - [Semgrep taint analysis overview](https://docs.semgrep.dev/writing-rules/data-flow/taint-mode/overview)
+- [Semgrep CLI reference](https://docs.semgrep.dev/cli-reference)
 - [ESLint custom rules](https://eslint.org/docs/latest/extend/custom-rules)
+- [FlowDroid](https://www.bodden.de/pubs/far+14flowdroid.pdf)
 - [SootUp call graph construction](https://soot-oss.github.io/SootUp/v1.1.2/call-graph-construction/)
 - [Go `callgraph/vta` package](https://pkg.go.dev/golang.org/x/tools/go/callgraph/vta)
 - [LLVM MemorySSA](https://llvm.org/docs/MemorySSA.html)
 - [Writing DataFlow Analyses in MLIR](https://mlir.llvm.org/docs/Tutorials/DataFlowAnalysis/)
 - [SVF project documentation](https://svf-tools.github.io/SVF/)
 - [Souffle docs](https://souffle-lang.github.io/docs.html)
+- [Souffle CAV 2016 paper](https://www.souffle-lang.com/pdf/cav16.pdf)
 - [Joern data-flow query steps](https://docs.joern.io/cpgql/data-flow-steps/)
+- [Modeling and Discovering Vulnerabilities with Code Property Graphs](https://www.ieee-security.org/TC/SP2014/papers/ModelingandDiscoveringVulnerabilitieswithCodePropertyGraphs.pdf)
 - [emilwareus/polint README](https://github.com/emilwareus/polint)
 - [FeedbackEval](https://arxiv.org/html/2504.06939)
 - [Static Analysis as a Feedback Loop](https://arxiv.org/abs/2508.14419)

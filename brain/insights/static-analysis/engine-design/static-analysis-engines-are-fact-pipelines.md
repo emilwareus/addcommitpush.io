@@ -242,6 +242,57 @@ Each fact should have:
 The moment a rule receives parser-specific objects, the engine has leaked its private
 adapter layer.
 
+## Fact Schema Contract
+
+An expert reviewer will ask what a "fact" is. The engine should define it as a versioned,
+span-backed, provenance-carrying record.
+
+```text
+Fact:
+  id: stable content-derived or provider-derived identifier
+  kind: namespaced fact kind, for example import.edge or call.edge
+  subject: file/module/symbol/node/function the fact is about
+  span: source range or generated/no-span marker
+  payload: normalized typed data
+  provenance:
+    provider: parser/resolver/analyzer name
+    precision: exact | setup_aware | conservative | heuristic | unknown
+    inputs: source digests and config digests
+    version: provider schema version
+```
+
+The stable ID is not cosmetic. CodeQL's incremental-analysis research showed how unstable
+IDs can cause small source diffs to invalidate very large derived tuple sets. A repo-local
+engine has the same problem at smaller scale: if function IDs change because one line moved,
+cached call/data-flow facts become useless.
+
+## Provider Contracts
+
+Each provider should state its preconditions, output facts, precision, and invalidation keys.
+
+```text
+Provider Contract:
+  name: "typescript.resolved-imports"
+  inputs:
+    - parse.import
+    - tsconfig digest
+    - package manager lockfile digest
+  outputs:
+    - module.resolved-import-edge
+  precision:
+    setup_aware if tsconfig and package roots are complete
+    unknown if module roots are missing
+  invalidates_when:
+    - imported file content changes
+    - tsconfig changes
+    - lockfile changes
+    - provider version changes
+```
+
+This contract turns "analysis setup" into data. If the provider cannot satisfy its
+preconditions, the engine emits a capability diagnostic instead of silently producing empty
+facts.
+
 ## Derived Facts Form A Dependency Graph
 
 Derived providers should declare their input facts and output facts. That makes ordering and
@@ -365,6 +416,28 @@ For polint's use case, typed fact views plus constrained policy queries are the 
 default. Internally, some providers can still use relational indexes, Datalog-style fixed
 points, or sparse solvers.
 
+## Benchmark Protocol For A Fact Pipeline
+
+An engine design claim is weak unless it names the workload and metric. A repo-local policy
+engine should evaluate at least these dimensions:
+
+| Metric | Measurement | Why it matters |
+| --- | --- | --- |
+| extraction time | cold parse/extract per language and repository size | baseline cost before rules run |
+| derived fact time | per provider, cold and warm | identifies call/data-flow cost centers |
+| cache hit rate | unchanged file, changed file, config change, rule option change | validates invalidation design |
+| invalidation fanout | facts invalidated per edit class | catches unstable IDs and overbroad dependencies |
+| diagnostic precision | true/false positives on fixtures or labeled corpus | prevents policy noise |
+| unknown rate | unsupported or budgeted results per rule | measures honesty of capability modeling |
+| repair locality | files/lines changed to fix a diagnostic | determines agent usefulness |
+| report size | terminal summary bytes and JSON bytes | prevents context flooding |
+
+The CodeQL incremental-analysis data shows why fanout matters. In the FSE 2023 prototype,
+stable identities reduced the impact of commits up to 1000 changed lines to at most about
+5% of derived IDB tuples in one evaluated Ruby project, while production-style ID churn could
+invalidate hundreds of millions of derived tuples. The lesson generalizes: incremental
+static analysis is mostly dependency hygiene.
+
 ## Diagnostic Ownership
 
 The engine should own normalization:
@@ -432,6 +505,7 @@ small enough to keep the engine honest.
 - [About CodeQL queries](https://codeql.github.com/docs/writing-codeql-queries/about-codeql-queries/)
 - [CodeQL incremental analysis](https://docs.github.com/en/code-security/how-tos/find-and-fix-code-vulnerabilities/scan-from-the-command-line/incremental-analysis)
 - [Incrementalizing Production CodeQL Analyses](https://arxiv.org/pdf/2308.09660)
+- [Faster incremental analysis with CodeQL in pull requests](https://github.blog/changelog/2026-03-24-faster-incremental-analysis-with-codeql-in-pull-requests/)
 - [Writing DataFlow Analyses in MLIR](https://mlir.llvm.org/docs/Tutorials/DataFlowAnalysis/)
 - [Souffle docs](https://souffle-lang.github.io/docs.html)
 - [OASIS SARIF 2.1.0](https://www.oasis-open.org/standard/sarifv2-1-os/)

@@ -37,6 +37,32 @@ prefer deterministic analyzers, cap iterations, and preserve evidence.
 The apparent contradiction is the point. Static analysis as a deterministic external tool is
 not the same as asking the model to critique itself.
 
+For a scientific argument, those rows are not directly comparable without metadata:
+
+| Evidence dimension | Why it changes interpretation |
+| --- | --- |
+| model family and date | repair behavior changes quickly across model generations |
+| language and task | Python security repairs and TypeScript architecture repairs are different tasks |
+| benchmark construction | synthetic bugs, real PRs, and generated tasks have different distributions |
+| feedback format | compiler text, test failure, SARIF, JSON policy evidence, and prose critique are different treatments |
+| iteration count | later iterations can help, plateau, or degrade code |
+| success definition | compile success, test pass, vulnerability reduction, and human acceptance are not equivalent |
+
+The right claim is therefore conditional:
+
+```text
+Deterministic static-analysis feedback is useful for agents when:
+  diagnostics are mostly true positives,
+  the repair is local enough to infer,
+  evidence identifies the violated policy,
+  and the loop has stop rules.
+
+It is harmful when:
+  warnings are weak or underspecified,
+  the agent optimizes for satisfying the warning rather than preserving behavior,
+  or the loop keeps iterating without an external oracle.
+```
+
 ## The Feedback Signal Has A Type
 
 For agent repair loops, "feedback" is too broad. The signal source changes the risk.
@@ -120,6 +146,18 @@ repair_with_static_feedback(goal, command, max_iterations):
 
 This is not only a coding workflow. It is a safety control. The loop stops when diagnostics
 repeat, when the report is non-actionable, or when the iteration budget is gone.
+
+The hidden functions in that pseudocode are the actual research surface:
+
+| Function | Contract |
+| --- | --- |
+| `parse_machine_readable_report` | must preserve rule ID, fingerprint, precision/status, location, and evidence |
+| `choose_repair_cluster` | must choose one coherent cluster, not a whole-report rewrite |
+| `load_minimal_context` | must load files on the diagnostic path plus local tests/docs, not the entire repo |
+| `propose_patch` | must preserve behavior outside the policy violation and avoid fake suppressions |
+| `repeats_same_failure` | must compare stable fingerprints, not only message text |
+
+If any contract is vague, the loop is not an algorithm; it is a prompt recipe.
 
 ## Diagnostic Slicing
 
@@ -266,6 +304,45 @@ The useful metrics are not only pass/fail.
 For the polint article, this gives a concrete evaluation path: show not only that a rule
 finds a violation, but that its diagnostic helps an agent repair the violation in a bounded,
 small edit.
+
+## Factorial Experiment Design
+
+The claim "static analysis helps agents" should be tested by varying the feedback, not by
+showing one success story.
+
+```text
+Dataset:
+  N convention/security/architecture violations in a fixture repository
+  each violation has a ground-truth intended repair and regression tests
+
+Treatments:
+  A: prose instruction only
+  B: terminal linter text
+  C: JSON diagnostic with span
+  D: JSON diagnostic with path evidence and precision/status
+  E: JSON diagnostic with path evidence plus focused rerun command
+
+Metrics:
+  repair success
+  iterations to clean
+  edit distance
+  unrelated regression rate
+  false-positive repair rate
+  suppression/fake-fix rate
+  tokens consumed
+
+Stop rule:
+  max 3 iterations or repeated fingerprint
+```
+
+Expected result, stated as a hypothesis rather than a conclusion:
+
+```text
+Structured evidence should reduce iterations and edit distance for local policy repairs,
+but only when the analyzer emits true-positive diagnostics with repair-relevant evidence.
+Unknown or heuristic findings should reduce false confidence, not necessarily increase
+automatic repair success.
+```
 
 ## How polint Fits
 

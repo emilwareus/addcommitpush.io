@@ -45,3 +45,4 @@ report or correction note.
 - [static-analysis-deepening/00-data-flow-algorithms-engine-design.md](static-analysis-deepening/00-data-flow-algorithms-engine-design.md)
 - [static-analysis-deepening/01-production-engines-and-modern-methods.md](static-analysis-deepening/01-production-engines-and-modern-methods.md)
 - [static-analysis-deepening/02-primary-source-supplement-missing-tools.md](static-analysis-deepening/02-primary-source-supplement-missing-tools.md)
+- [static-analysis-rabbit-hole/00-hard-data-and-complexity.md](static-analysis-rabbit-hole/00-hard-data-and-complexity.md)

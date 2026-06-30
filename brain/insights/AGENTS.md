@@ -18,6 +18,25 @@ An insight should usually be around two pages of informative, readable content.
 Dense or algorithmic subjects can be up to five pages when the extra length is
 needed to teach the subject properly.
 
+Depth matters more than word count. A longer note that only adds labels,
+background prose, and generic comparisons is still shallow. The target is high
+information density: if a note becomes 2x longer, it should teach several times
+more mechanism, evidence, edge cases, implementation detail, and judgment. Do
+not pad. Compress the writing, not the thinking.
+
+For broad research requests, do not create a thin note per topic. Either split
+the subject into properly deep notes, or write one larger synthesis that
+actually explains the machinery. A reader should be able to implement, evaluate,
+or critique the idea after reading the note.
+
+The quality and depth of the insights is to be able to publsih them to a peer-reviewed
+scientific journal. They should be really deep, not a summary. Assume you have an expert
+reader. Do not create word-bloated papers, but clear, to the point, information rich and dense
+papers that really explains the concepts and enough of the prerequisits. You must 
+work REALLY hard to achieve this. When creating an insight you review it in many turns
+and make sure it is of the highest possible quality. Remember, scientific publication
+quality at a high rated conference.
+
 Do not write one-paragraph summaries with short lists unless the user
 explicitly asks for a tiny stub. A good insight should be long enough to
 actually educate.
@@ -58,6 +77,29 @@ The body should teach, not merely label. A weak insight says "Technique X is a
 faster version of Technique Y." A strong insight explains what Y does, what X
 changes, why the change affects the result, what it costs, what evidence
 supports it, and where its limits are.
+
+## Shallow Note Rejection Test
+
+Before finishing an insight, reject the draft if any of these are true:
+
+- It mostly defines terms, lists tools, or states conclusions without explaining
+  how the mechanism works.
+- It could be reduced to a table of contents without losing much knowledge.
+- It mentions an algorithm but does not show inputs, outputs, state, core loop,
+  termination/convergence conditions, and pseudocode.
+- It mentions a system architecture but does not show data flow, component
+  responsibilities, storage/caching, invalidation, failure modes, and
+  operational constraints.
+- It mentions "state of the art" but does not distinguish foundational methods,
+  production implementations, current frontier, and unresolved limits.
+- It cites sources but does not connect each important claim to what the source
+  actually establishes.
+- It gives implications without saying what evidence or mechanism makes those
+  implications defensible.
+- It avoids the hardest part of the user's question.
+
+If a draft fails this test, do not polish it. Re-research, add the missing
+mechanism, or narrow the note until it can be made deep.
 
 ## Suggested Structure
 
@@ -202,6 +244,20 @@ Useful pseudocode conventions:
 
 After pseudocode, explain what each data structure means and what approximation
 the algorithm is making.
+
+Algorithmic insights must answer this implementation checklist:
+
+- What are the inputs and outputs?
+- What facts, states, or graph nodes are stored?
+- What invariant is preserved by the main loop?
+- What causes a state change?
+- What makes the algorithm terminate or fail to terminate?
+- What is the main complexity driver?
+- Where does precision get lost?
+- What edge cases change the algorithm in production?
+- What fixtures would prove the implementation works?
+
+If the insight cannot answer those questions yet, it is not ready.
 
 ## Practical Design Lens
 

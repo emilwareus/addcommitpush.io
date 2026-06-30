@@ -38,6 +38,126 @@ For a taint-like analysis, the fact domain might be "place X is tainted by sourc
 For reaching definitions, it might be "definition D may reach this point." For resource
 cleanup, it might be "resource R is open."
 
+## Formal Data-Flow Problem
+
+An intraprocedural forward data-flow analysis can be written as equations over a CFG
+`G = (N, E, entry, exit)`.
+
+```text
+For each node n in N:
+  IN[n]  = boundary                              if n = entry
+         = combine({ OUT[p] | (p, n) in E })     otherwise
+
+  OUT[n] = transfer_n(IN[n])
+```
+
+For a backward analysis, reverse the direction:
+
+```text
+For each node n in N:
+  OUT[n] = boundary                              if n = exit
+         = combine({ IN[s] | (n, s) in E })      otherwise
+
+  IN[n]  = transfer_n(OUT[n])
+```
+
+The equations are usually recursive because loops make `IN` and `OUT` depend on themselves
+through cycles. The solver computes a fixed point of these equations. The scientific
+questions are:
+
+| Question | Why it matters |
+| --- | --- |
+| Is the lattice finite-height? | Guarantees termination without widening. |
+| Are transfer functions monotone? | Guarantees iteration moves toward a fixed point. |
+| Are transfer functions distributive? | Determines whether the fixed point equals meet-over-all-paths. |
+| Is the problem may or must? | Chooses union-like or intersection-like confluence. |
+| Is the analysis path-sensitive? | Determines whether facts from different paths are merged early. |
+
+Meet-over-all-paths is the idealized answer:
+
+```text
+MOP[n] = combine({
+  transfer_path(boundary)
+  for every feasible path entry -> ... -> n
+})
+```
+
+The maximum fixed point or minimum fixed point is what the iterative equations compute,
+depending on the order convention. For distributive frameworks, the fixed-point solution and
+MOP coincide. For monotone but non-distributive frameworks, the fixed point is safe but can
+be less precise because it merges before applying later transfer functions.
+
+The theorem-level distinction is:
+
+```text
+Framework:
+  G = (N, E, entry, exit)
+  L = finite-height semilattice
+  F = { transfer_n : L -> L | n in N }
+  transfer_path(n1...nk) = transfer_nk o ... o transfer_n1
+
+If all transfer_n are monotone:
+  chaotic iteration terminates and computes a fixed point of the equations.
+
+If all transfer_n distribute over combine:
+  the fixed-point solution equals the valid-path meet-over-all-paths solution.
+
+If transfer_n are monotone but not distributive:
+  the fixed-point solution may be strictly less precise than MOP.
+```
+
+The CFG itself is also an approximation. A solver can compute the exact fixed point of its
+equations and still be imprecise with respect to concrete execution if the CFG includes
+infeasible paths or omits framework/exception/callback edges.
+
+### The MFP/MOP Gap In One Program
+
+Constant propagation is the standard counterexample because its transfer functions are
+monotone but not distributive over the usual constant lattice.
+
+```text
+if (*) {
+  x = 2
+  y = 3
+} else {
+  x = 3
+  y = 2
+}
+z = x + y
+```
+
+Path-sensitive MOP evaluates `z = x + y` on each path and gets `z = 5` both times. The
+fixed-point solver merges first:
+
+```text
+join({x=2, y=3}, {x=3, y=2}) = {x=unknown, y=unknown}
+transfer(z = x + y)             = {z=unknown}
+```
+
+The result is sound but less precise. That loss is not an implementation bug. It is the
+price of merging abstract states before later transfer functions.
+
+## Complexity Envelope
+
+The useful complexity statements are conditional. The hard part is naming the variable that
+actually grows.
+
+| Solver / representation | Bound worth remembering | Conditions and caveats |
+| --- | --- | --- |
+| Chaotic finite-height iteration | `O(E * H * C)` conservative envelope | `E` CFG edges, `H` strict state increases per node, `C` cost of transfer plus join. |
+| Bit-vector gen/kill | `O(I * E * B / w)` | `B` facts, word width `w`, `I` iterations; reverse postorder can reduce `I` in practice. |
+| IFDS tabulation | classic worst case `O(|E| * |D|^3)` time, `O(|E| * |D|^2)` space | finite fact domain `D`, distributive flow functions, realizable paths. |
+| Locally separable IFDS | can approach `O(E * D)` | only for restricted flow-function families; not the general result. |
+| IDE | same graph shape with edge functions | value domain and edge-function composition become the cost center. |
+| Sparse value-flow | `O(|E_vfg_reached| * C_alias_or_summary)` | depends on value-flow edges reached by the query, not raw CFG size. |
+| Andersen-style points-to | commonly cited cubic worst-case family | inclusion constraints, flow/context-insensitive baseline. |
+| Steensgaard-style points-to | almost linear | unification constraints, much coarser alias information. |
+| Full path sensitivity | exponential in branch/call depth | must be bounded, summarized, or represented symbolically. |
+
+This table is the engineering reason policy APIs need budgets. A rule author can write a
+tiny source-sink query whose fact domain explodes because access paths, aliases, contexts,
+or summaries multiply `D`.
+
 ## Worklist Solver Pseudocode
 
 ```text
@@ -65,6 +185,62 @@ solve_forward(cfg, entry_state):
 
 The loop terminates when the lattice is finite and transfer functions are monotone. If facts
 can grow forever, the analysis needs widening, bounds, or a different abstraction.
+
+## Algorithm: Kildall-Style Iteration
+
+The earlier pseudocode is the implementation shape. Written as a scientific algorithm, the
+inputs are the CFG, a lattice, a confluence operator, and one transfer function per node.
+
+```text
+Algorithm KILDALL_FORWARD(G, L, join, bottom, boundary, transfer)
+Input:
+  G = (N, E, entry, exit)
+  L = finite-height lattice with partial order <=
+  join = least upper bound operator for may analysis
+  bottom = least element of L
+  boundary = initial abstract state at entry
+  transfer[n] = monotone function L -> L for each n in N
+Output:
+  IN, OUT maps assigning an abstract state to every CFG node
+
+1. for each n in N:
+2.   IN[n] = bottom
+3.   OUT[n] = bottom
+4. IN[entry] = boundary
+5. W = { entry }
+
+6. while W is not empty:
+7.   remove some node n from W
+8.   old_out = OUT[n]
+9.   OUT[n] = transfer[n](IN[n])
+
+10.  if old_out != OUT[n]:
+11.    for each edge (n, s) in E:
+12.      candidate = join(IN[s], OUT[n])
+13.      if candidate != IN[s]:
+14.        IN[s] = candidate
+15.        add s to W
+
+16. return IN, OUT
+```
+
+Invariant:
+
+```text
+At every iteration, IN[s] over-approximates the join of OUT[p] for the processed
+predecessor contributions already propagated to s.
+```
+
+Termination argument:
+
+```text
+Each update moves IN or OUT monotonically upward in a finite-height lattice.
+There are at most height(L) strict increases per node, so the loop terminates.
+```
+
+The same algorithm can solve a must problem by flipping the order convention and using meet.
+In production code the implementation also chooses a node ordering. Reverse postorder often
+reduces iterations for reducible CFGs, but it does not change the semantic fixed point.
 
 ## CFG Construction Is The First Analysis
 
@@ -487,6 +663,66 @@ For taint, facts might be `(place, label)` pairs. A source edge maps `zero` to
 maps `(x, label)` to the empty set for the protected sink class. A sink is not special to
 the solver; it is a query over reachable facts at sink program points.
 
+## Algorithm: IFDS Tabulation With Summaries
+
+The naive exploded graph view is conceptually useful, but a real IFDS solver does not want
+to materialize every possible edge eagerly. The tabulation algorithm records path edges and
+summary edges. A path edge says: "inside this procedure, fact `d1` at procedure start can
+reach fact `d2` at program point `n`." A summary edge says: "for this call, input fact `d1`
+at the call can produce output fact `d2` at the return site."
+
+```text
+Algorithm IFDS_TABULATE(ICFG, D, zero, flow)
+Input:
+  ICFG = interprocedural control-flow graph with call, return, and normal edges
+  D = finite data-flow fact domain
+  zero = distinguished fact used to generate facts
+  flow(edge, fact) = set of output facts for one edge
+Output:
+  Reachable(point, fact)
+
+State:
+  PathEdge(startPoint, startFact, point, fact)
+  SummaryEdge(callSite, inputFact, returnSite, outputFact)
+  Worklist of newly discovered PathEdges
+
+1. for each program entry e:
+2.   add PathEdge(e, zero, e, zero) to Worklist
+
+3. while Worklist is not empty:
+4.   edge = Worklist.pop()
+5.   (sp, sf, n, d) = edge
+
+6.   if n has normal successor m:
+7.     for d2 in flow((n, m), d):
+8.       propagate PathEdge(sp, sf, m, d2)
+
+9.   if n is call site c with callee entry calleeEntry:
+10.    for d2 in call_flow(c, calleeEntry, d):
+11.      propagate PathEdge(calleeEntry, d2, calleeEntry, d2)
+12.      record that call c waits for callee summary from d2
+
+13.    for existing SummaryEdge(c, d, ret, dret):
+14.      propagate PathEdge(sp, sf, ret, dret)
+
+15.  if n is procedure exit x:
+16.    for each call site c that called this procedure with input fact sf:
+17.      for return site ret of c:
+18.        for dret in return_flow(x, ret, d):
+19.          add SummaryEdge(c, sf, ret, dret)
+20.          for each caller PathEdge(callerStart, callerFact, c, sf):
+21.            propagate PathEdge(callerStart, callerFact, ret, dret)
+
+22. return all (point, fact) pairs appearing in discovered PathEdges
+```
+
+The real Reps-Horwitz-Sagiv algorithm is more subtle than this sketch, but this is the
+important implementation shape: call/return matching is preserved by summaries, not by
+blindly traversing returns to every caller. The cost is driven by the number of ICFG edges,
+the fact-domain size, and the number of summary/path edges generated. The classic result is
+polynomial for finite distributive problems; practical performance depends heavily on
+domain size and summary reuse.
+
 ## IDE Adds Edge Functions
 
 IDE keeps the exploded-supergraph shape but gives each edge a function over values instead
@@ -551,6 +787,28 @@ A sparse value-flow graph is usually built from SSA or memory SSA plus alias inf
 It connects definitions to uses directly, and it adds memory edges when stores may feed
 loads.
 
+A value-flow edge is a contract:
+
+```text
+u -> v is sound for client fact f if every concrete flow of the modeled value
+from u to v is represented by at least one path in the graph.
+```
+
+Precision is the number of extra graph paths introduced by conservative aliases, summaries,
+and heap abstraction. Missing paths are unsound; extra paths are false-positive pressure.
+
+| Edge kind | Meaning |
+| --- | --- |
+| `AddrEdge` | allocation/address-of creates a pointer value |
+| `CopyEdge` | assignment, cast, copy, or phi-like value movement |
+| `FieldEdge` | field/index projection under a field-sensitivity policy |
+| `StoreEdge` | value flows into an abstract object or memory version |
+| `LoadEdge` | abstract object or memory version flows into a loaded value |
+| `PhiEdge` | scalar or memory merge |
+| `CallEdge` | actual argument flows to formal parameter |
+| `ReturnEdge` | callee return flows to call result |
+| `SummaryEdge` | precomputed procedure or library behavior |
+
 ```text
 build_sparse_value_flow(functions, alias_info):
   graph = new_graph()
@@ -578,6 +836,21 @@ The precision driver is `alias_info`. If every pointer may alias every other poi
 graph becomes dense and noisy. If aliasing is too optimistic, the engine misses flows. SVF's
 value-flow design is a state-of-the-art example of refining pointer analysis and value-flow
 construction together rather than treating them as unrelated passes.
+
+The recurring production pattern is two-phase:
+
+```text
+1. run a cheaper flow-insensitive pointer analysis
+2. build a sparse value-flow graph from those aliases
+3. answer flow-sensitive or demand-driven client queries on the sparse graph
+4. optionally refine aliases and value-flow edges when the client needs precision
+```
+
+The hard-data report found recent SVF-family evidence for why this matters. A 2025
+flow-sensitive Andersen-style approach reports a 7.27x average speedup and 33.05% average
+memory reduction over a prior state-of-the-art flow-sensitive analysis on SPEC CPU 2017,
+with the important caveat that it is a paper-specific benchmark and not a universal engine
+law.
 
 ## Datalog Is The Same Fixed Point In Declarative Form
 
@@ -623,6 +896,25 @@ analysis is the standard example: loop iterations can keep changing `[0, 0]` to 
 replace the precise value with a coarser one that guarantees convergence. Narrowing can then
 recover some precision.
 
+The scientific object is a relation between concrete and abstract semantics:
+
+```text
+Concrete domain: C
+Abstract domain: A
+alpha : C -> A          // abstraction
+gamma : A -> C          // concretization
+
+Galois condition:
+  alpha(c) <=_A a  iff  c <=_C gamma(a)
+
+Sound abstract transformer:
+  alpha(F(c)) <=_A F#(alpha(c))
+```
+
+The analyzer does not execute `F`, the concrete transformer. It executes `F#`, the abstract
+transformer. A post-fixpoint of `F#` over-approximates the reachable concrete states through
+`gamma`.
+
 ```text
 solve_with_widening(cfg, max_updates_before_widen):
   state = map node -> bottom
@@ -655,6 +947,18 @@ solve_with_widening(cfg, max_updates_before_widen):
 Widening is not a performance trick. It changes the semantics of the analysis. Diagnostics
 should therefore say when a result comes from a widened `top` state instead of a precise
 range.
+
+Serious analyzers usually widen at loop headers or strongly connected component headers,
+not at every node equally. A widening operator must satisfy:
+
+```text
+x <= widen(x, y)
+y <= widen(x, y)
+the sequence x0, widen(x0, x1), widen(...), ... eventually stabilizes
+```
+
+Narrowing is a bounded precision-recovery pass. If it is unbounded, the engine has simply
+reintroduced the termination problem under a different name.
 
 ## Incremental Data Flow Is Dependency Management
 
@@ -760,15 +1064,20 @@ machinery into small, testable policy questions.
 
 ## Sources
 
+- [Monotone Data Flow Analysis Frameworks](https://link.springer.com/article/10.1007/BF00290339)
+- [Kildall's lattice framework notes](https://pages.cs.wisc.edu/~horwitz/CS704-NOTES/DATAFLOW-AUX/lattice.html)
+- [On the Computational Complexity of Data Flow Analysis](https://arxiv.org/abs/1303.4315)
 - [Precise Interprocedural Dataflow Analysis via Graph Reachability](https://pages.cs.wisc.edu/~fischer/cs701.f14/popl95.pdf)
 - [Inter-procedural data-flow analysis with IFDS/IDE and Soot](https://dl.acm.org/doi/10.1145/2259051.2259052)
 - [Practical Extensions to the IFDS Algorithm](https://link.springer.com/chapter/10.1007/978-3-642-11970-5_8)
+- [Boosting the Performance of Alias-Aware IFDS Analysis with CFL-Based Environment Transformers](https://dl.acm.org/doi/10.1145/3689804)
 - [Efficiently Computing Static Single Assignment Form and the Control Dependence Graph](https://www.cs.utexas.edu/~pingali/CS380C/2010/papers/ssaCytron.pdf)
 - [LLVM MemorySSA](https://llvm.org/docs/MemorySSA.html)
 - [Writing DataFlow Analyses in MLIR](https://mlir.llvm.org/docs/Tutorials/DataFlowAnalysis/)
 - [MLIR sparse data-flow analysis source](https://mlir.llvm.org/doxygen/SparseAnalysis_8h_source.html)
 - [SVF: Interprocedural Static Value-Flow Analysis in LLVM](https://yuleisui.github.io/publications/cc16.pdf)
 - [SVF project documentation](https://svf-tools.github.io/SVF/)
+- [Flow Sensitivity without Control Flow Graph](https://arxiv.org/html/2508.01974v1)
 - [Souffle tutorial](https://souffle-lang.github.io/tutorial)
 - [CodeQL data flow analysis](https://codeql.github.com/docs/writing-codeql-queries/about-data-flow-analysis/)
 - [Incrementalizing Production CodeQL Analyses](https://arxiv.org/pdf/2308.09660)
