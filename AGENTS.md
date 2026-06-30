@@ -105,6 +105,26 @@ Constraints:
   - Use proper JSX/React syntax for code blocks, keep lines < 100 chars.
   - Add alt text for every image. Use vector/SVG when possible; fall back to optimized PNG/JPEG.
 
+### Research and insight standards
+
+- Insights under `brain/insights/` should be expert-facing research notes, not
+  summaries. Aim for peer-reviewed technical-paper depth: mechanisms,
+  prerequisites, algorithms, hard data, caveats, and source-backed claims.
+- For algorithmic topics, include scientific pseudocode with concrete state,
+  transitions, invariants, termination conditions, complexity drivers, precision
+  losses, and production edge cases. The reader should be able to implement the
+  algorithm from the note.
+- Use code and data analysis when it improves correctness: parse benchmark
+  tables, recompute percentages/speedups, simulate algorithms on toy inputs,
+  validate pseudocode, inspect local code, or generate structured comparison
+  tables. Keep scratch work under `.context/`; promote durable evidence into
+  `brain/inbox/`, `brain/sources/`, or `brain/assets/`.
+- Do not pad research notes. If a note gets longer, it should become denser:
+  more mechanism, evidence, examples, failure modes, and implementation detail,
+  not more generic prose.
+- Review important insights in multiple passes before finishing: mechanism,
+  evidence, failure modes, density, and expert-reader usefulness.
+
 Example post component structure:
 
 ```tsx

@@ -20,24 +20,24 @@ from common anti-slop skills: detect, analyze, clean, then manually review.
 
 ## Replace Usually
 
-| Slop | Better |
-| --- | --- |
-| delve into | examine, inspect, trace |
-| leverage | use |
-| utilize | use |
-| facilitate | help, enable |
-| foster | build, encourage |
-| bolster | support, strengthen |
-| underscore | show, highlight |
-| streamline | simplify |
-| robust | reliable, thorough, typed, tested, depending on meaning |
-| comprehensive | complete, broad, detailed, or the actual coverage |
-| pivotal | key, central |
-| seamless | remove or explain the concrete behavior |
-| cutting-edge | current, recent, or the specific date/model/paper |
-| paradigm | model, approach, architecture |
-| landscape | field, ecosystem, market, codebase |
-| navigate | handle, manage, work through |
+| Slop          | Better                                                  |
+| ------------- | ------------------------------------------------------- |
+| delve into    | examine, inspect, trace                                 |
+| leverage      | use                                                     |
+| utilize       | use                                                     |
+| facilitate    | help, enable                                            |
+| foster        | build, encourage                                        |
+| bolster       | support, strengthen                                     |
+| underscore    | show, highlight                                         |
+| streamline    | simplify                                                |
+| robust        | reliable, thorough, typed, tested, depending on meaning |
+| comprehensive | complete, broad, detailed, or the actual coverage       |
+| pivotal       | key, central                                            |
+| seamless      | remove or explain the concrete behavior                 |
+| cutting-edge  | current, recent, or the specific date/model/paper       |
+| paradigm      | model, approach, architecture                           |
+| landscape     | field, ecosystem, market, codebase                      |
+| navigate      | handle, manage, work through                            |
 
 ## Cut Intensifiers
 

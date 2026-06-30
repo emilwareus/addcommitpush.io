@@ -36,6 +36,7 @@ test-results
 
 # Archived scraped research pages
 presentations/voice-agents/research/articles/*.html
+research-reports/**/*.md
 
 # Obsidian vault notes are intentionally edited as freeform Markdown.
 brain/**/*.md
