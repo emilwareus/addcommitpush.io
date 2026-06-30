@@ -38,6 +38,47 @@ flowchart LR
 CodeQL path queries use the same conceptual model at a different abstraction level: define
 where data can flow from, where it can flow to, and which graph edges connect the two.
 
+## The Taint Lattice
+
+A boolean taint bit is rarely enough. Real policies need labels: `user_input`,
+`secret_like`, `html_untrusted`, `sql_untrusted`, `shell_untrusted`, `path_untrusted`,
+`maybe_null`, or repository-specific categories. A value can carry multiple labels, and a
+sanitizer may remove only one label class.
+
+```text
+TaintState = map Place -> set<TaintLabel>
+
+bottom = empty map
+join(left, right):
+  result = copy(left)
+  for place, labels in right:
+    result[place] = result[place] union labels
+  return result
+```
+
+The join is usually union because taint is a may property: if any path lets untrusted input
+reach a place, the place is considered tainted. Sanitization is not the inverse of source
+introduction. It is a transfer function that removes specific labels under specific
+conditions.
+
+```text
+transfer_assignment(state, target, expression):
+  labels = labels_of_expression(state, expression)
+  return state with state[target] = labels
+
+transfer_sanitizer_call(state, target, callee, arguments):
+  labels = labels_of_arguments(state, arguments)
+  removed = sanitizer_labels_removed(callee, arguments)
+  return state with state[target] = labels - removed
+
+transfer_concat(state, target, parts):
+  labels = union(labels_of_expression(state, part) for part in parts)
+  return state with state[target] = labels
+```
+
+This is why taint tracking differs from strict value-preserving data flow. In `"/tmp/" +
+name`, the resulting string is not equal to `name`, but it is still influenced by `name`.
+
 ## Exactness Is Semantics
 
 One of the most useful Semgrep details is exactness. If a source pattern is not exact, then
@@ -55,6 +96,38 @@ the other direction.
 
 These are not UI details. They define the analysis semantics.
 
+## Matching Sources, Sinks, And Sanitizers
+
+The model compiler should turn human rule patterns into matchers with explicit exactness.
+
+```text
+compile_taint_model(query):
+  return {
+    sources: compile_patterns(query.sources, default_exact=true),
+    sinks: compile_patterns(query.sinks, default_exact=true),
+    sanitizers: compile_patterns(query.sanitizers, default_exact=true),
+    propagators: compile_propagators(query.propagators),
+    barriers: compile_barriers(query.barriers)
+  }
+
+match_source(model, expression):
+  matches = []
+  for source in model.sources:
+    if source.exact:
+      if pattern_matches(source.pattern, expression):
+        matches.push(expression)
+    else:
+      for subexpression in walk(expression):
+        if pattern_matches(source.pattern, subexpression):
+          matches.push(subexpression)
+  return matches
+```
+
+Exactness controls whether the match applies to the node itself or to its children. In a
+source pattern like `source(sink(x))`, non-exact source behavior can accidentally taint
+`sink(x)` or `x` depending on the matcher semantics. In a sanitizer pattern, non-exactness
+can accidentally sanitize inputs before they have actually passed through the sanitizer.
+
 ## Sanitizers Are The Dangerous Part
 
 A source is usually easy to identify. A sink is usually easy to identify. Sanitizers are
@@ -70,6 +143,50 @@ String(input)           // conversion, not validation
 A production engine should avoid claiming "sanitized" without evidence about which sink
 class the sanitizer protects. For repo-local rules, the safest model is explicit: the team
 names the barrier calls and owns the fixtures.
+
+## Propagators Model Library Behavior
+
+Default assignment and call-return propagation are not enough. Libraries can move taint via
+builder APIs, mutable containers, callbacks, fields, indexes, or side effects.
+
+```text
+// Example model: builder.add(x) taints builder, builder.build() returns tainted value.
+propagator builder_add:
+  when call.method == "add":
+    from = call.argument(0)
+    to = call.receiver
+
+propagator builder_build:
+  when call.method == "build":
+    from = call.receiver
+    to = call.return_value
+```
+
+```text
+apply_propagators(state, call, model):
+  updates = []
+
+  for propagator in model.propagators:
+    if propagator.matches(call):
+      source_places = propagator.source_places(call)
+      target_places = propagator.target_places(call)
+      labels = union(state[source] for source in source_places)
+
+      for target in target_places:
+        updates.push((target, labels))
+
+  return join_updates(state, updates)
+```
+
+Side-effectful propagators are especially important for mutable APIs:
+
+```text
+list.add(secret)   // taints list
+value = list.get(0) // value receives taint from list
+```
+
+Without these models, an engine may report clean code because it did not understand the
+container, not because the program is safe.
 
 ## Policy Query Pseudocode
 
@@ -99,6 +216,136 @@ for source in match_sources(program, query.source):
 The important line is `emit_unknown`. A static-analysis engine must not silently drop
 unsupported flows and then call the result clean.
 
+## A Worklist Taint Solver
+
+For intraprocedural taint, the policy query can be implemented as a forward worklist over a
+CFG. Sources seed labels. Transfer functions propagate or remove labels. Sink checks inspect
+the incoming state.
+
+```text
+solve_taint_function(cfg, model):
+  in = map node -> bottom_taint_state()
+  out = map node -> bottom_taint_state()
+  worklist = [cfg.entry]
+
+  while worklist not empty:
+    node = worklist.pop()
+
+    incoming = join(out[pred] for pred in cfg.predecessors(node))
+    state = incoming
+
+    for source_match in match_sources(model, node.expression):
+      state[source_match.place].add(source_match.label)
+
+    state = apply_default_transfer(state, node)
+    state = apply_propagators(state, node, model)
+    state = apply_sanitizers(state, node, model)
+
+    for sink_match in match_sinks(model, node.expression):
+      labels = labels_reaching_sink(state, sink_match)
+      if labels intersects sink_match.forbidden_labels:
+        emit_violation(node, sink_match, labels)
+
+    if state != out[node]:
+      in[node] = incoming
+      out[node] = state
+      worklist.add_all(cfg.successors(node))
+
+  return violations
+```
+
+This solver is easy to understand but can be imprecise. At joins it merges labels from
+different paths. A path-sensitive engine may keep separate states per branch predicate, but
+that can grow exponentially. Most production tools choose bounded path sensitivity,
+context sensitivity, or policy-level path reconstruction rather than full path enumeration.
+
+## Interprocedural Summaries
+
+Interprocedural taint should not inline every callee for every call. The common solution is
+a summary: a compact description of how taint moves from parameters, globals, receiver, and
+fields to return values, out-parameters, or sinks.
+
+```text
+compute_function_summary(function, model):
+  symbolic_sources = []
+
+  for parameter in function.parameters:
+    symbolic_sources.push(label(parameter, "param:" + parameter.index))
+
+  result = solve_taint_function_with_symbolic_sources(
+    function.cfg,
+    model,
+    symbolic_sources
+  )
+
+  summary = empty_summary()
+
+  for return_expr in function.returns:
+    for label in result.labels_at(return_expr):
+      summary.add_flow(from=label.origin, to="return")
+
+  for sink in result.sinks:
+    for label in result.labels_at(sink.argument):
+      summary.add_sink_flow(from=label.origin, to=sink.kind)
+
+  for mutated_argument in result.mutated_arguments:
+    summary.add_flow(from=label.origin, to=mutated_argument)
+
+  return summary
+```
+
+At a call site, the summary is instantiated with the caller's actual taint state:
+
+```text
+apply_summary(state, call, summary):
+  for flow in summary.flows:
+    source_actual = actual_place(call, flow.from)
+    target_actual = actual_place(call, flow.to)
+    state[target_actual].add_all(state[source_actual])
+
+  for sink_flow in summary.sink_flows:
+    source_actual = actual_place(call, sink_flow.from)
+    if state[source_actual] intersects forbidden_labels(sink_flow.to):
+      emit_violation(call, sink_flow, state[source_actual])
+
+  return state
+```
+
+Summaries create an explicit modeling boundary. Unknown external calls should either use a
+pessimistic summary, a configured library summary, or an `unknown` result. Treating them as
+"no flow" creates false confidence.
+
+## IFDS Encoding Of Taint
+
+Taint is often a good IFDS fit because facts are finite and transfer functions are usually
+distributive. A fact can be `(place, label)`. The zero fact introduces sources.
+
+```text
+flow_function(edge, fact):
+  if fact == zero and edge.target matches source:
+    return {zero, (source_place(edge.target), source_label(edge.target))}
+
+  if edge is assignment target = source:
+    if fact.place == source:
+      return {fact, (target, fact.label)}
+    return {fact}
+
+  if edge.target matches sanitizer for fact.label:
+    if fact.place in sanitized_places(edge.target):
+      return empty_set()
+    return {fact}
+
+  if edge is call:
+    return apply_call_flow(edge, fact)
+
+  return {fact}
+```
+
+This encoding explains the algorithmic attraction of IFDS: interprocedural taint becomes
+reachability in an exploded graph. The limitation is also clear: if the policy needs
+unbounded string reasoning, arithmetic relations, or rich heap shapes, the fact domain stops
+being the small finite set IFDS wants.
+
 ## Path Evidence
 
 Path evidence is what makes a taint finding repairable:
@@ -117,6 +364,40 @@ multiple possible traces exist. CodeQL path queries similarly render path explan
 code scanning or VS Code. polint's preview policy diagnostics carry a normalized evidence
 header plus query-specific scalar evidence such as source, sink, path status, path, barrier
 status, and budget reason.
+
+## Path Reconstruction
+
+The solver should keep predecessor edges for facts that reach sinks. It does not need to
+store every possible path. It needs enough to reconstruct one or a bounded number of useful
+paths.
+
+```text
+record_update(target_state, fact, predecessor_fact, edge):
+  if fact not in target_state:
+    target_state.add(fact)
+    predecessor[target_state.point, fact] = (predecessor_fact, edge)
+    return changed
+
+  if path_rank(edge) better than existing predecessor:
+    predecessor[target_state.point, fact] = (predecessor_fact, edge)
+
+  return no_change
+
+reconstruct_path(sink_point, sink_fact):
+  path = []
+  cursor = (sink_point, sink_fact)
+
+  while cursor in predecessor:
+    previous_fact, edge = predecessor[cursor]
+    path.push(edge)
+    cursor = (edge.source_point, previous_fact)
+
+  return reverse(path)
+```
+
+Path ranking should prefer short, source-to-sink, human-readable paths over exhaustive
+coverage. For an agent, one clear repair path is usually more useful than 500 equivalent
+paths through helper functions.
 
 ## Interprocedural Cost
 
@@ -162,8 +443,10 @@ middle path between regex linting and full general-purpose security analysis.
 ## Sources
 
 - [Semgrep taint analysis overview](https://docs.semgrep.dev/writing-rules/data-flow/taint-mode/overview)
+- [Semgrep advanced taint mode](https://docs.semgrep.dev/writing-rules/data-flow/taint-mode/advanced)
 - [CodeQL data flow analysis](https://codeql.github.com/docs/writing-codeql-queries/about-data-flow-analysis/)
 - [Creating path queries in CodeQL](https://codeql.github.com/docs/writing-codeql-queries/creating-path-queries/)
+- [Joern data-flow query steps](https://docs.joern.io/cpgql/data-flow-steps/)
+- [Joern data-flow semantics](https://docs.joern.io/dataflow-semantics/)
 - [polint data-flow facts](https://github.com/emilwareus/polint/blob/main/docs/facts/data-flow.md)
 - [polint policy query preview](https://github.com/emilwareus/polint/blob/main/docs/facts/policy-queries.md)
-

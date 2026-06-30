@@ -59,6 +59,28 @@ polint, `polint new-rule` creates a local Rust rule module and fixtures under
 `.polint/tests/rules/`. The framework can improve the engine while the repository reviews
 policy changes like any other code change.
 
+## The Engine Shape Implied By The Docs
+
+polint's public docs imply a layered engine, even when some layers are still preview or
+roadmap items.
+
+```mermaid
+flowchart TD
+  Rules[Repo-local Rust rules] --> Signatures[Typed fact-view signatures]
+  Signatures --> Plan[Capability plan]
+  Plan --> Extract[Language adapters and extraction]
+  Extract --> Facts[Stable fact store]
+  Facts --> Derived[Derived semantic providers]
+  Derived --> Views[Typed public views]
+  Views --> Rules
+  Derived --> Policy[Preview policy queries]
+  Policy --> Diag[Diagnostics + evidence]
+```
+
+The important design move is that rule signatures declare capabilities. A rule that asks for
+`StringLiterals<'_>` can run on cheap syntax facts. A rule that asks for `DataFlow<'_>`
+forces the engine to plan a deeper provider stack.
+
 ## The Rule Function Is The Contract
 
 Rule modules use `#[polint::rule]` functions. The typed fact-view parameters declare what
@@ -87,6 +109,35 @@ fn no_secret_logs(ctx: &mut RuleCtx<'_>, flow: DataFlow<'_>) -> RuleResult {
 The signature tells the engine that this rule needs data-flow capability. That enables
 capability planning, setup diagnostics, caching, and `polint inspect rule --format json`.
 
+## Rule Execution Pseudocode
+
+The runtime can treat rules as typed queries over precomputed facts:
+
+```text
+execute_rule_pack(rule_pack, repo):
+  plan = build_capability_plan(rule_pack)
+  fact_store = analyze_repo(repo, plan)
+  diagnostics = []
+
+  for rule in rule_pack.rules:
+    support = fact_store.support_for(rule.required_views)
+
+    if support.has_blocking_gap:
+      diagnostics.push(capability_diagnostic(rule.id, support))
+      continue
+
+    views = []
+    for view_type in rule.required_views:
+      views.push(fact_store.materialize(view_type, rule.options))
+
+    diagnostics.extend(call_rule_function(rule, views))
+
+  return diagnostics
+```
+
+That design gives local rules normal code ergonomics while preserving the engine's ability
+to plan, cache, and validate capability support.
+
 ## The Public Fact Surface
 
 polint's docs distinguish stable fact views from preview policy queries and reserved
@@ -107,6 +158,123 @@ internals.
 
 This is the main architectural bet: the SDK should expose policy-level facts, not raw engine
 machinery.
+
+## A Staged Static-Analysis Roadmap
+
+The current public fact set supports useful local rules without solving all of static
+analysis. The deeper roadmap can be staged so each layer earns its way into the SDK.
+
+| Stage | Private machinery | Public capability | Example policy |
+| --- | --- | --- | --- |
+| 1. Syntax facts | parsers, spans, imports, literals, declarations | `Imports`, `StringLiterals`, `Functions` | ban raw colors or unsafe imports |
+| 2. Repository graph | resolved imports, module roots, changed files | `ResolvedImports`, `ModuleGraphFacts`, `ChangedFiles` | prevent UI -> database imports |
+| 3. Symbols | definitions, references, exports | `Symbols`, `References` | migration is complete only when old API refs are gone |
+| 4. Calls | direct calls, CHA/RTA/VTA where supported, entrypoints | `Calls` policy queries | production handler must not reach internal admin API |
+| 5. CFG | branch and lifecycle facts, guard dominance | `ControlFlow` policy queries | operation must be guarded before side effect |
+| 6. Data flow | SSA/value-flow, summaries, barriers, budgets | `DataFlow` policy queries | request data must not reach shell execution |
+| 7. Memory and alias | MemorySSA-like facts, points-to summaries | still private unless stable | secret stored in container must not reach logger |
+
+This sequence matters because every later layer depends on earlier correctness. A broken
+module resolver poisons symbols. A broken call graph poisons interprocedural flow. A broken
+alias model poisons memory flow.
+
+## How Data Flow Could Work Inside polint
+
+The public preview API can stay small:
+
+```rust
+FlowQuery::new(SourcePattern::http_request(), SinkPattern::call("exec"))
+```
+
+Internally, the engine can compile it into a staged analysis:
+
+```text
+run_flow_query(query, repo_facts):
+  plan = compile_query(query)
+
+  local_cfgs = repo_facts.require("cfg", languages=plan.languages)
+  local_value_flow = repo_facts.require("value_flow", cfgs=local_cfgs)
+
+  if plan.interprocedural:
+    call_graph = repo_facts.require("calls", precision=plan.minimum_precision)
+    summaries = compute_or_load_summaries(call_graph, query)
+    graph = stitch_interprocedural_flow(local_value_flow, call_graph, summaries)
+  else:
+    graph = local_value_flow
+
+  results = bounded_source_sink_search(
+    graph=graph,
+    sources=plan.sources,
+    sinks=plan.sinks,
+    barriers=plan.barriers,
+    max_depth=query.max_depth,
+    max_paths=query.max_paths
+  )
+
+  return attach_policy_status_and_evidence(results)
+```
+
+The rule author never sees the graph. They see violations, unknowns, precision, and paths.
+
+## How Calls Could Work Inside polint
+
+The `Calls<'_>` preview should also hide the raw graph. A reachability policy can compile
+entrypoint patterns and target patterns into a bounded traversal.
+
+```text
+run_reachability_query(query, repo_facts):
+  call_graph = repo_facts.require("call_graph", precision=query.minimum_precision)
+  roots = call_graph.match_roots(query.roots)
+  targets = call_graph.match_targets(query.targets)
+
+  for root in roots:
+    frontier = [(root, [])]
+    visited = empty_set()
+
+    while frontier not empty:
+      function, path = frontier.pop()
+
+      if function in targets:
+        emit_violation(root, function, path, precision=path_precision(path))
+        continue
+
+      if path.length == query.max_depth:
+        emit_unknown(root, function, reason="budget_exceeded")
+        continue
+
+      for edge in call_graph.outgoing(function):
+        if edge.status == "unknown":
+          emit_unknown(root, function, reason=edge.reason)
+        else if visited.add(edge.callee):
+          frontier.push((edge.callee, path + [edge]))
+```
+
+This is the right level for a repo-local API because policies usually care about bounded
+reachability, not graph algorithms.
+
+## How A Rule Should Be Tested
+
+The fixture model is part of the product. A local policy should have examples for positive,
+negative, unknown, and budget behavior.
+
+```text
+rule_fixture:
+  files:
+    src/bad.ts: contains violation
+    src/good.ts: contains allowed pattern
+    src/unknown.ts: uses dynamic edge the provider cannot resolve
+  expected:
+    diagnostics:
+      - rule_id: local/no-request-to-shell
+        file: src/bad.ts
+        status: exact
+      - rule_id: polint/capability
+        file: src/unknown.ts
+        status: unknown
+```
+
+Testing unknown behavior is what keeps a static-analysis product honest. A clean-only
+fixture suite can hide unsupported semantics for years.
 
 ## Agent Workflow
 
@@ -171,12 +339,15 @@ That thesis explains the unusual product shape:
 
 - [emilwareus/polint README](https://github.com/emilwareus/polint)
 - [polint agent playbook](https://github.com/emilwareus/polint/blob/main/docs/AGENT-PLAYBOOK.md)
+- [polint analysis roadmap](https://github.com/emilwareus/polint/blob/main/docs/ANALYSIS-ROADMAP.md)
 - [polint fact reference](https://github.com/emilwareus/polint/blob/main/docs/facts/README.md)
 - [polint policy query preview](https://github.com/emilwareus/polint/blob/main/docs/facts/policy-queries.md)
+- [polint calls facts](https://github.com/emilwareus/polint/blob/main/docs/facts/calls.md)
+- [polint control-flow facts](https://github.com/emilwareus/polint/blob/main/docs/facts/control-flow.md)
+- [polint data-flow facts](https://github.com/emilwareus/polint/blob/main/docs/facts/data-flow.md)
 - [polint changed-files facts](https://github.com/emilwareus/polint/blob/main/docs/facts/changed-files.md)
 - [polint ignore comments](https://github.com/emilwareus/polint/blob/main/docs/IGNORE-COMMENTS.md)
 - [polint GitHub Action guide](https://github.com/emilwareus/polint/blob/main/docs/GITHUB-ACTION.md)
 - [ESLint custom rules](https://eslint.org/docs/latest/extend/custom-rules)
 - [Semgrep rule writing overview](https://docs.semgrep.dev/writing-rules/overview/)
 - [About CodeQL](https://codeql.github.com/docs/codeql-overview/about-codeql/)
-

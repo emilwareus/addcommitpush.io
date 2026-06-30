@@ -48,6 +48,25 @@ of a ladder.
 The central design question is not "which analyzer is best?" It is "which facts does this
 policy need, and how much approximation can the team tolerate?"
 
+## What "State Of The Art" Actually Means
+
+There is no single state of the art because static analysis is a stack of methods. A modern
+engine is usually state of the art in one or two layers, not all of them.
+
+| Layer | Mature methods | Current production direction | Main limit |
+| --- | --- | --- | --- |
+| Parsing | native parsers, tree-sitter, compiler frontends | multi-language normalized facts | syntax is not semantics |
+| Local facts | AST visitors, symbol tables, metrics | typed fact stores with spans | fragile across languages |
+| Data flow | monotone worklists, SSA, IFDS/IDE | sparse value-flow and path queries | aliasing and summaries |
+| Calls | CHA, RTA, VTA, points-to | language-specific dispatch models | dynamic features and callbacks |
+| Memory | alias analysis, MemorySSA | sparse memory def/use graphs | precision vs. cost |
+| Whole-program | Datalog, graph queries, relational DBs | database-backed and incremental analysis | cache invalidation and schema complexity |
+| Taint | source/sink/sanitizer models | labels, exactness, interprocedural traces | model completeness |
+| Agent loops | JSON/SARIF, focused reruns | deterministic repair feedback | false-positive repair churn |
+
+This is why "language agnostic" has to be phrased carefully. The policy surface can be
+language agnostic. The semantic providers underneath are necessarily language specific.
+
 ## Current State
 
 The ecosystem is specialized. ESLint custom rules are JavaScript modules with a `meta`
@@ -71,6 +90,73 @@ golangci-lint, or CodeQL. Its README positions it as a Rust framework for repo-l
 static-analysis rules: the team owns the policies, while the framework supplies file
 discovery, parsers, typed facts, diagnostics, caching, CI output, and an SDK.
 
+## How The Major Families Differ Internally
+
+The tools that appear similar in a CI log often have very different internal models.
+
+| Tool family | Internal shape | What it is good at | What this implies for polint |
+| --- | --- | --- | --- |
+| ESLint-style visitor | traverse ESTree and report nodes | fast syntax-local JavaScript rules | good inspiration for simple rule ergonomics, not enough for multi-language policy |
+| Semgrep-style pattern/taint | patterns plus source/sink/sanitizer models | grep-like rules that can grow into taint | exactness and model knobs should be explicit |
+| CodeQL-style database | extracted relational DB plus QL queries | variant analysis, path problems, security queries | facts and queries should be separable and cacheable |
+| Joern CPG | code property graph plus traversals | exploratory slicing across syntax, CFG, PDG | graph exploration is powerful but needs bounded APIs |
+| SVF/LLVM | IR, pointer analysis, MemorySSA, sparse value flow | precise compiled-language data/value flow | sparse internal graphs can sit behind simple policy queries |
+| Souffle/Doop | recursive Datalog relations | whole-program fixed-point analyses | relational facts are a serious implementation option |
+| MLIR data flow | lattice states over IR anchors and use-def subscriptions | reusable compiler analyses | dependency-driven propagation should be an engine primitive |
+
+The shared trend is not "everything becomes one tool." It is fact separation: parse once,
+derive stable facts, query those facts, and attach evidence.
+
+## The Algorithmic Center Has Not Changed
+
+The foundational ideas are old and still central:
+
+```text
+while facts keep changing:
+  apply transfer functions
+  join results at merge points
+  enqueue dependents
+```
+
+Modern systems differ in what the "facts" are and how dependencies are represented:
+
+| Engine style | Facts | Dependency edge |
+| --- | --- | --- |
+| Dense CFG solver | state at every basic block | CFG predecessor/successor |
+| SSA sparse solver | state at SSA value | def-use edge |
+| MemorySSA solver | memory access versions | defining access / clobber chain |
+| IFDS/IDE solver | `(point, fact)` exploded nodes | realizable interprocedural edge |
+| Datalog engine | relations | rule body to derived head |
+| Code database | extracted tables | query dependency and result provenance |
+| Incremental engine | cached facts | invalidation dependency graph |
+
+The implementation details are different, but the intellectual shape is still fixed-point
+computation plus approximation control.
+
+## The Current Frontier Is Incremental, Explainable, And Bounded
+
+Modern static analysis has already learned how to find deep facts. The pressure now is
+running those facts cheaply and making them actionable.
+
+1. Incremental analysis: CodeQL's public direction combines cached base databases with
+   changed-code analysis for pull requests. Research prototypes show that fully incremental
+   query evaluation can make small updates fast, but initial indexing and memory can be very
+   expensive. The engineering lesson is to design cache keys and invalidation before the
+   engine gets large.
+2. Explainable paths: CodeQL path queries, Semgrep taint traces, and Joern
+   `reachableByFlows` all point at the same UX requirement: a warning without a path is hard
+   to repair.
+3. Policy-level knobs: Semgrep's exactness, CodeQL barriers/additional flow steps, and
+   polint's planned budgets all expose analysis semantics as part of the rule.
+4. Sparse representations: SSA, MemorySSA, SVF-style value-flow graphs, and MLIR sparse
+   analyses avoid traversing irrelevant CFG edges when a value graph is enough.
+5. Honest uncertainty: dynamic dispatch, reflection, unresolved imports, framework
+   callbacks, and missing summaries should produce precision labels or unknowns, not silent
+   clean results.
+
+This is the context in which polint is interesting: it can make these ideas available for
+repo-local policies without requiring every team to operate a full variant-analysis stack.
+
 ## Why AI Agents Change The Pressure
 
 AI coding agents make prose instructions less sufficient. A prompt or `AGENTS.md` entry
@@ -91,6 +177,43 @@ naive automation:
 
 The synthesis is not "run more tools." It is: use deterministic tools as external
 oracles, cap iteration, and keep the feedback small enough to act on.
+
+## Repair Infrastructure Architecture
+
+Static analysis becomes repair infrastructure when the diagnostic is designed for a loop,
+not only for a human reading terminal output.
+
+```text
+build_repair_infrastructure(repo):
+  policies = load_repo_local_rules(repo)
+  facts = analyze_repo(repo, policies.required_capabilities)
+  diagnostics = run_policies(policies, facts)
+
+  for diagnostic in diagnostics:
+    attach:
+      stable rule id
+      precise span
+      path or local evidence
+      precision/status
+      suggested repair direction when known
+      fingerprint for baselines
+
+  write:
+    compact terminal summary
+    full JSON report
+    optional SARIF report
+
+agent_repair_loop():
+  run check
+  select one rule_id or one diagnostic cluster
+  inspect only relevant files and evidence
+  edit smallest policy-preserving change
+  rerun focused check
+  stop when clean, unknown, or iteration budget reached
+```
+
+The engine is doing product work here. It is shaping the feedback so the repair actor, human
+or agent, does less guessing.
 
 ## The Useful Static-Analysis Product
 
@@ -149,12 +272,18 @@ know without becoming bespoke.
 - [About CodeQL](https://codeql.github.com/docs/codeql-overview/about-codeql/)
 - [About CodeQL queries](https://codeql.github.com/docs/writing-codeql-queries/about-codeql-queries/)
 - [Creating path queries in CodeQL](https://codeql.github.com/docs/writing-codeql-queries/creating-path-queries/)
+- [CodeQL incremental analysis](https://docs.github.com/en/code-security/how-tos/find-and-fix-code-vulnerabilities/scan-from-the-command-line/incremental-analysis)
 - [Semgrep rule writing overview](https://docs.semgrep.dev/writing-rules/overview/)
 - [Semgrep taint analysis overview](https://docs.semgrep.dev/writing-rules/data-flow/taint-mode/overview)
 - [ESLint custom rules](https://eslint.org/docs/latest/extend/custom-rules)
 - [SootUp call graph construction](https://soot-oss.github.io/SootUp/v1.1.2/call-graph-construction/)
+- [Go `callgraph/vta` package](https://pkg.go.dev/golang.org/x/tools/go/callgraph/vta)
+- [LLVM MemorySSA](https://llvm.org/docs/MemorySSA.html)
+- [Writing DataFlow Analyses in MLIR](https://mlir.llvm.org/docs/Tutorials/DataFlowAnalysis/)
+- [SVF project documentation](https://svf-tools.github.io/SVF/)
+- [Souffle docs](https://souffle-lang.github.io/docs.html)
+- [Joern data-flow query steps](https://docs.joern.io/cpgql/data-flow-steps/)
 - [emilwareus/polint README](https://github.com/emilwareus/polint)
 - [FeedbackEval](https://arxiv.org/html/2504.06939)
 - [Static Analysis as a Feedback Loop](https://arxiv.org/abs/2508.14419)
 - [Security Degradation in Iterative AI Code Generation](https://arxiv.org/html/2506.11022v2)
-

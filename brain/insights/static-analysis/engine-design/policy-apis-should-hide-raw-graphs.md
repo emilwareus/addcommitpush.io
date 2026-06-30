@@ -45,6 +45,29 @@ But they create four long-term problems:
 
 The public API should express policy concepts, not storage mechanics.
 
+## The Raw Graph Problem In Practice
+
+Suppose a rule author wants "request data must not reach shell execution." A raw graph API
+forces them to solve several unrelated problems:
+
+```text
+rule_author_work_if_raw_graph:
+  find request sources
+  find shell sinks
+  decide which graph edges count as data flow
+  handle assignments, calls, returns, fields, containers
+  handle sanitizers
+  choose a traversal algorithm
+  cap traversal depth
+  reconstruct a useful path
+  decide what to do when calls are unresolved
+  format a diagnostic
+```
+
+That is not a custom lint rule. That is a custom static analyzer embedded inside a rule. A
+policy API should collapse this to the part the repository owns: source model, sink model,
+barrier model, and acceptable precision.
+
 ## A Better Shape: Query Objects
 
 polint's preview policy-query docs use a constrained shape:
@@ -85,6 +108,109 @@ fn no_request_to_shell(ctx: &mut RuleCtx<'_>, flow: DataFlow<'_>) -> RuleResult 
 The rule is readable because it says what the team cares about. The engine owns the hard
 parts: graph construction, call resolution, path search, budget handling, and evidence.
 
+## Query Compilation
+
+A policy query should compile into a private execution plan. The plan selects providers,
+chooses graph representations, and prepares matchers.
+
+```text
+compile_flow_query(query, capability_plan):
+  source_matcher = compile_source_pattern(query.source)
+  sink_matcher = compile_sink_pattern(query.sink)
+  barrier_matcher = compile_barrier_pattern(query.barriers)
+
+  required = {
+    "parse_facts",
+    "local_cfg",
+    "value_flow",
+    "call_summaries if query.interprocedural",
+    "alias_facts if query.needs_memory_flow"
+  }
+
+  support = capability_plan.check(required)
+  if support.has_gap:
+    return UnsupportedPlan(support)
+
+  return FlowExecutionPlan(
+    sources=source_matcher,
+    sinks=sink_matcher,
+    barriers=barrier_matcher,
+    graph_provider=select_graph_provider(query.minimum_precision),
+    max_depth=query.max_depth,
+    max_paths=query.max_paths,
+    minimum_precision=query.minimum_precision
+  )
+```
+
+The public `FlowQuery` can stay stable while the private plan evolves from AST-adjacent
+local flow to SSA, MemorySSA, IFDS, Datalog, or sparse value-flow providers.
+
+## Private Evaluation
+
+Once compiled, a query is evaluated against private facts. The evaluator should treat
+violations, unknowns, and budget exhaustion as distinct outcomes.
+
+```text
+evaluate_flow_plan(plan, fact_store):
+  if plan is UnsupportedPlan:
+    return [policy_result(
+      status="unsupported",
+      precision="unknown",
+      evidence=plan.support.evidence
+    )]
+
+  graph = plan.graph_provider.load(fact_store)
+  sources = graph.find_nodes(plan.sources)
+  results = []
+
+  for source in sources:
+    frontier = priority_queue([(source, empty_path(), initial_labels(source))])
+    visited = bounded_seen_set()
+
+    while frontier not empty:
+      node, path, labels = frontier.pop_shortest()
+
+      if path.length > plan.max_depth:
+        results.push(policy_result(
+          status="budget_exceeded",
+          evidence=budget_evidence(source, node, path)
+        ))
+        continue
+
+      if graph.matches(node, plan.sinks) and labels not empty:
+        results.push(policy_result(
+          status="exact_or_heuristic",
+          precision=path_precision(path),
+          evidence=path_evidence(source, node, path)
+        ))
+        if count(results) >= plan.max_paths:
+          results.push(policy_result(status="budget_exceeded"))
+          break
+
+      for edge in graph.outgoing(node):
+        next_labels = transfer_labels(labels, edge, plan.barriers)
+        if next_labels is empty:
+          continue
+
+        if edge.status == "unknown":
+          results.push(policy_result(
+            status="unknown",
+            precision=edge.precision,
+            evidence=edge.evidence
+          ))
+          continue
+
+        state = (edge.to, next_labels, path_abstraction(path))
+        if visited.add(state):
+          frontier.push((edge.to, path + [edge], next_labels))
+
+  return normalize_policy_results(results)
+```
+
+This is still graph traversal internally. The design point is that traversal is owned once,
+tested once, budgeted once, and can be improved without asking every policy author to update
+their own solver.
+
 ## Mature Tools Use The Same Pattern At Larger Scale
 
 CodeQL path queries are also policy-shaped. A query defines a source, a sink, and flow
@@ -114,6 +240,77 @@ precision.
 
 This matters for agents. An agent can safely repair an exact missing import. It should treat
 a heuristic data-flow finding differently, especially when a sanitizer model is incomplete.
+
+## Evidence Schema
+
+Policy APIs should return compact evidence, not internal graph dumps.
+
+```text
+PolicyViolation:
+  rule_id
+  policy_status
+  policy_precision
+  file
+  range
+  message
+  query_digest
+  evidence:
+    source
+    sink
+    path_status
+    path_edges[0..max_paths]
+    barrier_status
+    unresolved_edges
+    budget:
+      max_depth
+      max_paths
+      truncated
+```
+
+The `query_digest` matters because local policies change. If a team adds `mask_secret` as a
+barrier, the same code path has a different policy meaning. Baselines, suppressions, and
+agent memories should be tied to the query semantics, not only the diagnostic message.
+
+## Partial Flow Debugging
+
+Policy authors need a way to debug missing findings without receiving the raw graph. CodeQL
+has partial-flow exploration for this reason: it can show where flow stops when a source
+does not reach a sink. A repo-local engine can expose the same concept at the policy level.
+
+```text
+explain_partial_flow(query, source, limit):
+  plan = compile_flow_query(query)
+  graph = plan.graph_provider.load()
+  frontier = [(source, empty_path())]
+  explanations = []
+
+  while frontier not empty and count(explanations) < limit:
+    node, path = frontier.pop()
+
+    outgoing = graph.outgoing(node)
+    if outgoing is empty:
+      explanations.push({
+        kind: "dead_end",
+        node: node,
+        path: path
+      })
+      continue
+
+    for edge in outgoing:
+      if edge.status == "unsupported":
+        explanations.push({
+          kind: "unsupported_edge",
+          edge: edge,
+          path: path
+        })
+      else:
+        frontier.push((edge.to, path + [edge]))
+
+  return explanations
+```
+
+This gives rule authors a debuggable model without turning the public API into a raw graph
+browser.
 
 ## Unknowns Are Better Than Silent Passes
 
@@ -173,5 +370,5 @@ repository; the graph machinery belongs to the engine.
 - [polint control-flow facts](https://github.com/emilwareus/polint/blob/main/docs/facts/control-flow.md)
 - [polint data-flow facts](https://github.com/emilwareus/polint/blob/main/docs/facts/data-flow.md)
 - [Creating path queries in CodeQL](https://codeql.github.com/docs/writing-codeql-queries/creating-path-queries/)
+- [Debugging data-flow queries using partial flow](https://codeql.github.com/docs/writing-codeql-queries/debugging-data-flow-queries-using-partial-flow/)
 - [Semgrep taint analysis overview](https://docs.semgrep.dev/writing-rules/data-flow/taint-mode/overview)
-

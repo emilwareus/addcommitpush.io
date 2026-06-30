@@ -42,3 +42,6 @@ report or correction note.
 - [static-analysis-sota/23-context-sensitivity-and-summaries.md](static-analysis-sota/23-context-sensitivity-and-summaries.md)
 - [static-analysis-sota/24-fact-databases-query-engines.md](static-analysis-sota/24-fact-databases-query-engines.md)
 - [static-analysis-sota/25-emilwareus-polint-correction-note.md](static-analysis-sota/25-emilwareus-polint-correction-note.md)
+- [static-analysis-deepening/00-data-flow-algorithms-engine-design.md](static-analysis-deepening/00-data-flow-algorithms-engine-design.md)
+- [static-analysis-deepening/01-production-engines-and-modern-methods.md](static-analysis-deepening/01-production-engines-and-modern-methods.md)
+- [static-analysis-deepening/02-primary-source-supplement-missing-tools.md](static-analysis-deepening/02-primary-source-supplement-missing-tools.md)
