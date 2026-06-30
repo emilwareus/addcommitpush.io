@@ -20,7 +20,22 @@ notes.
 3. Store every `dr` report in `brain/inbox/dr/<date-or-topic>/` and commit
    those reports. Follow `brain/AGENTS.md`. Never delete old research reports.
 4. Create or update insights using `brain/insights/AGENTS.md`. Insights should
-   be educational, source-backed, readable research articles with useful tables,
-   diagrams, examples, and pseudocode where appropriate.
-5. Promote only evidence-backed findings. Keep weak reports as archived
+   be dense, source-backed, expert-facing research notes with useful tables,
+   diagrams, worked examples, hard data, and pseudocode where appropriate. The
+   target is closer to a peer-reviewed technical paper than a summary.
+5. When the subject involves algorithms, benchmarks, measurements, or datasets,
+   use executable analysis where it improves correctness: write small scripts,
+   recompute numbers, simulate algorithms on toy inputs, extract structured
+   tables, or validate pseudocode against examples. Keep temporary work under
+   `.context/` and promote durable evidence into `brain/inbox/`, `brain/sources/`,
+   or `brain/assets/`.
+6. For broad or high-stakes insight work, run a review loop before finishing:
+   mechanism pass, evidence pass, failure/edge-case pass, density pass, and
+   reader pass. If the note still reads like a table of contents, continue
+   researching or narrow the claim.
+7. When the user explicitly asks for subagents or parallel review, use them for
+   independent research lanes, hard-data gathering, and skeptical review. Do not
+   let subagents edit the same insight files unless their write scopes are
+   disjoint.
+8. Promote only evidence-backed findings. Keep weak reports as archived
    research, not as proof.

@@ -144,6 +144,30 @@ authority. Write a short gap list, then launch targeted follow-up reports for
 missing primary sources, contradictory findings, weak benchmarks, or uncited
 claims.
 
+## Executable Evidence Work
+
+Use code and data analysis when the research contains numbers, benchmark
+tables, datasets, algorithm traces, or claims that can be checked locally.
+
+Good patterns:
+
+- parse source tables into CSV/JSON and recompute totals, averages, speedups,
+  precision/recall, or memory ratios;
+- write small simulations for algorithms so pseudocode can be tested on toy
+  examples before it is promoted into an insight;
+- compare numbers across papers and official docs to catch unit, version, or
+  configuration mismatches;
+- generate synthesis tables from structured data instead of hand-copying long
+  comparisons;
+- use local code search or small scripts to verify claims about the repository
+  being discussed.
+
+Keep scratch scripts and intermediate files under `.context/` unless they are
+part of the durable evidence trail. If a generated dataset, chart, or source
+summary matters for future readers, promote it into `brain/inbox/`,
+`brain/sources/`, or `brain/assets/` and cite primary sources or measured local
+results in the final insight.
+
 ## Deriving INSIGHTS
 
 An INSIGHT is not a summary. It is a decision-useful conclusion that connects
@@ -217,11 +241,31 @@ Keep citations as report path plus source IDs, for example
 `brain/inbox/dr/00-benchmarks.md [S4]`. Do not cite a source ID if the report
 did not admit it.
 
+## Scientific-Depth Gate
+
+Before promoting research into `brain/insights/`, verify that the synthesis
+would satisfy an expert reader:
+
+- Important mechanisms are explained with inputs, outputs, state, transitions,
+  invariants, complexity drivers, precision losses, and edge cases.
+- Algorithmic claims include scientific pseudocode, not only generic traversal
+  loops.
+- Quantitative claims include primary sources, benchmark names, versions or
+  configurations, and caveats.
+- Tool claims separate official documentation, benchmark papers, vendor claims,
+  and local inference.
+- Design implications are framed as evidence-backed conclusions or explicit
+  hypotheses, not product positioning.
+- Weak reports are used as leads, not as proof.
+
 ## Final Orchestrator Checklist
 
 - The subject map covers the user question's major dimensions.
 - There are enough reports to support the breadth of the final synthesis.
 - Weak reports have been followed by narrower gap reports.
+- Relevant numbers or algorithms have been checked with code/data analysis when
+  that would reduce errors.
 - INSIGHTS distinguish evidence, confidence, caveats, implications, and actions.
+- The draft passes the scientific-depth gate and does not read like a summary.
 - The reports are saved in `brain/inbox/dr/` and included in the commit.
 - The final answer tells the user where the reports and INSIGHTS file are saved.

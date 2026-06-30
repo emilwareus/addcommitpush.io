@@ -29,13 +29,12 @@ the subject into properly deep notes, or write one larger synthesis that
 actually explains the machinery. A reader should be able to implement, evaluate,
 or critique the idea after reading the note.
 
-The quality and depth of the insights is to be able to publsih them to a peer-reviewed
-scientific journal. They should be really deep, not a summary. Assume you have an expert
-reader. Do not create word-bloated papers, but clear, to the point, information rich and dense
-papers that really explains the concepts and enough of the prerequisits. You must 
-work REALLY hard to achieve this. When creating an insight you review it in many turns
-and make sure it is of the highest possible quality. Remember, scientific publication
-quality at a high rated conference.
+The target quality is closer to a peer-reviewed systems/program-analysis paper
+than a blog outline. Assume an expert reader who wants to go deep. Do not
+create word-bloated papers; write clear, dense, information-rich notes that
+explain the concepts, prerequisites, mechanisms, evidence, and limits. Review
+insights in multiple passes until the result is defensible at a high technical
+standard.
 
 Do not write one-paragraph summaries with short lists unless the user
 explicitly asks for a tiny stub. A good insight should be long enough to
@@ -186,6 +185,33 @@ quantitative or comparative structure, carry it over with citations. Prefer the
 primary source when possible. If the table is a synthesis assembled from
 multiple sources, label it as synthesis and make the sources clear.
 
+## Executable Analysis
+
+When the subject involves algorithms, benchmarks, measurements, datasets,
+tables, graphs, or complexity claims, do not rely only on prose. Use code and
+data analysis when it would improve correctness or depth.
+
+Good uses of executable analysis:
+
+- write a small script to parse benchmark tables and recompute percentages,
+  averages, speedups, or confidence intervals;
+- simulate an algorithm on a toy input to verify pseudocode and produce a
+  worked trace;
+- extract structured data from reports into CSV/JSON before synthesizing
+  comparison tables;
+- validate that source-backed numbers agree across papers, docs, and generated
+  `dr` reports;
+- generate diagrams or tables from structured data instead of manually
+  transcribing large comparisons;
+- run small experiments against local code or public fixtures when the insight
+  makes an implementation claim.
+
+Temporary scripts and outputs can live under `.context/` while working. Promote
+durable datasets, source summaries, or research outputs into `brain/inbox/`,
+`brain/sources/`, or `brain/assets/` when they are part of the evidence trail.
+Do not cite generated scripts as authority; cite the primary sources or the
+measured local experiment directly.
+
 ## Evidence Standard
 
 Prefer strong sources:
@@ -258,6 +284,28 @@ Algorithmic insights must answer this implementation checklist:
 - What fixtures would prove the implementation works?
 
 If the insight cannot answer those questions yet, it is not ready.
+
+For complex algorithms, include scientific pseudocode, not only generic
+traversal loops. Show the actual state variables and transition rules. For
+example, an RTA note should show reachable methods, instantiated classes,
+virtual call sites, dispatch resolution, reprocessing when new allocation types
+appear, the fixed-point condition, and the precision failure case. The reader
+should be able to implement the algorithm from the note.
+
+## Review Loop
+
+For important insights, do at least two revision passes:
+
+1. Mechanism pass: does the note explain the actual algorithm/system/data flow?
+2. Evidence pass: are major claims tied to primary sources or measured data?
+3. Failure pass: does it explain where the method breaks, approximates, or
+   becomes expensive?
+4. Density pass: can any paragraph be replaced with a table, worked example, or
+   precise algorithm?
+5. Reader pass: would an expert reader learn something non-obvious and be able
+   to reproduce the reasoning?
+
+If the answer is no, keep researching or narrow the claim.
 
 ## Practical Design Lens
 
