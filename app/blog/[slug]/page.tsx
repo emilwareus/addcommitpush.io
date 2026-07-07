@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getPostBySlug, getAllSlugs } from '@/lib/posts';
+import { feedAlternates } from '@/lib/site';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
@@ -32,6 +33,10 @@ export async function generateMetadata({
   return {
     title: `${post.title} | addcommitpush.io`,
     description: post.description,
+    alternates: {
+      canonical: `/blog/${post.slug}`,
+      types: feedAlternates,
+    },
     openGraph: {
       title: post.title,
       description: post.description,

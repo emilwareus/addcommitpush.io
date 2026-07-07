@@ -4,6 +4,7 @@ import { IBM_Plex_Mono, Spectral } from 'next/font/google';
 import { Suspense } from 'react';
 import './globals.css';
 import { Navigation } from '@/components/navigation';
+import { feedAlternates, siteConfig } from '@/lib/site';
 import { PHProvider } from './providers';
 import { PostHogPageView } from './posthog-pageview';
 
@@ -21,28 +22,29 @@ const spectral = Spectral({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteConfig.url),
   title: {
-    default: 'addcommitpush.io - Emil Wåreus',
+    default: siteConfig.title,
     template: '%s | addcommitpush.io',
   },
-  description:
-    'Tech blog by Emil Wåreus. Head of Engineering and Research. Writing about machine learning, data engineering, leadership, and startups.',
+  description: siteConfig.description,
+  alternates: {
+    types: feedAlternates,
+  },
   icons: {
     icon: [{ url: '/icon' }],
     apple: [{ url: '/apple-icon' }],
   },
   openGraph: {
-    title: 'addcommitpush.io - Emil Wåreus',
-    description:
-      'Tech blog by Emil Wåreus. Head of Engineering and Research. Writing about machine learning, data engineering, leadership, and startups.',
-    siteName: 'addcommitpush.io',
+    title: siteConfig.title,
+    description: siteConfig.description,
+    siteName: siteConfig.name,
     type: 'website',
   },
   twitter: {
     card: 'summary',
-    title: 'addcommitpush.io - Emil Wåreus',
-    description:
-      'Tech blog by Emil Wåreus. Head of Engineering and Research. Writing about machine learning, data engineering, leadership, and startups.',
+    title: siteConfig.title,
+    description: siteConfig.description,
   },
 };
 

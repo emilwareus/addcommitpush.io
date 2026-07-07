@@ -8,6 +8,9 @@ export interface Post {
   cover?: string;
   readTime: string;
   audioUrl?: string;
+  draft?: boolean;
+  canonicalUrl?: string;
+  ogImage?: string;
 }
 
 const posts: Post[] = [
@@ -65,15 +68,17 @@ const posts: Post[] = [
 ];
 
 export function getAllPosts(): Post[] {
-  return posts.sort((a, b) => {
-    return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
-  });
+  return posts
+    .filter((post) => post.draft !== true)
+    .sort((a, b) => {
+      return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+    });
 }
 
 export function getPostBySlug(slug: string): Post | null {
-  return posts.find((post) => post.slug === slug) || null;
+  return posts.find((post) => post.slug === slug && post.draft !== true) || null;
 }
 
 export function getAllSlugs(): string[] {
-  return posts.map((post) => post.slug);
+  return getAllPosts().map((post) => post.slug);
 }
