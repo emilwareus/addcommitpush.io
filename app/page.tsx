@@ -1,6 +1,8 @@
 import { BlogCard } from '@/components/blog-card';
 import { BlogTerminalHero } from '@/components/blog-terminal-hero';
 import { getAllPosts } from '@/lib/posts';
+import { feedAlternates, siteConfig } from '@/lib/site';
+import { Rss } from 'lucide-react';
 
 // Fully static: error if dynamic APIs are used
 export const dynamic = 'error';
@@ -24,13 +26,14 @@ export const metadata = {
   creator: 'Emil Wåreus',
   publisher: 'Emil Wåreus',
   alternates: {
-    canonical: 'https://addcommitpush.io',
+    canonical: siteConfig.url,
+    types: feedAlternates,
   },
   openGraph: {
     type: 'website',
     locale: 'en_US',
-    url: 'https://addcommitpush.io',
-    siteName: 'addcommitpush.io',
+    url: siteConfig.url,
+    siteName: siteConfig.name,
     title: 'addcommitpush.io | Tech, Data, Leadership & Startups',
     description:
       "Emil Wåreus' blog on tech, data, leadership, and startups. Software engineer, founder, researcher, and investor sharing insights on building products, scaling teams, and navigating the startup ecosystem.",
@@ -70,6 +73,21 @@ export default function HomePage() {
           Notes on tech, data, leadership & startups by Emil Wåreus: coder, founder, researcher,
           investor. Every post ships with audio narration.
         </p>
+        <div className="mt-5 flex flex-wrap items-center gap-3 text-[11px] font-medium uppercase tracking-[0.08em]">
+          <a
+            href={siteConfig.feeds.rss}
+            className="inline-flex items-center gap-2 text-muted-foreground no-underline transition-colors hover:text-primary"
+          >
+            <Rss className="h-3.5 w-3.5" aria-hidden="true" />
+            RSS
+          </a>
+          <a
+            href={siteConfig.feeds.atom}
+            className="text-muted-foreground no-underline transition-colors hover:text-primary"
+          >
+            Atom
+          </a>
+        </div>
       </section>
 
       <section className="grid gap-6 pb-14 md:grid-cols-2">
