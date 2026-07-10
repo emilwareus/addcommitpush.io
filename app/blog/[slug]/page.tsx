@@ -31,7 +31,7 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${post.title} | addcommitpush.io`,
+    title: post.title,
     description: post.description,
     alternates: {
       canonical: `/blog/${post.slug}`,
@@ -88,6 +88,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           content: <WriteCodeThatAiAgentsLoveContent />,
           references: <WriteCodeThatAiAgentsLoveReferences />,
         };
+      }
+      case 'the-rules-of-vibe-coding': {
+        const { TheRulesOfVibeCodingContent } =
+          await import('@/components/blog-posts/the-rules-of-vibe-coding');
+        return { content: <TheRulesOfVibeCodingContent />, references: null };
       }
       default:
         notFound();

@@ -6,8 +6,19 @@
     <atom:link href="https://addcommitpush.io/feed.xml" rel="self" type="application/rss+xml" />
     <description>Tech blog by Emil Wåreus. Head of Engineering and Research. Writing about machine learning, data engineering, leadership, and startups.</description>
     <language>en</language>
-    <lastBuildDate>Tue, 09 Jun 2026 00:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Fri, 10 Jul 2026 00:00:00 GMT</lastBuildDate>
     <generator>addcommitpush.io feed generator</generator>
+    <item>
+      <title>The Rules of Vibe Coding</title>
+      <link>https://addcommitpush.io/blog/the-rules-of-vibe-coding</link>
+      <guid isPermaLink="true">https://addcommitpush.io/blog/the-rules-of-vibe-coding</guid>
+      <pubDate>Tue, 30 Jun 2026 00:00:00 GMT</pubDate>
+      <description><![CDATA[Vibe coding works when the repo can talk back. Repo-local static analysis explained: syntax rules, resolved imports, call graphs, CFGs, and data flow.]]></description>
+      <category>ai</category>
+      <category>agents</category>
+      <category>static-analysis</category>
+      <category>software</category>
+    </item>
     <item>
       <title>Write Code That AI Agents Love</title>
       <link>https://addcommitpush.io/blog/write-code-that-ai-agents-love</link>

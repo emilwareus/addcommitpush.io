@@ -1,7 +1,44 @@
 'use client';
 
-import { Highlight, type Language, themes } from 'prism-react-renderer';
+import { Highlight, type Language, type PrismTheme } from 'prism-react-renderer';
 import { ArticleCodePanel } from '@/components/blog-posts/article-code-panel';
+
+const articleCodeTheme: PrismTheme = {
+  plain: {
+    backgroundColor: 'transparent',
+    color: 'var(--foreground)',
+  },
+  styles: [
+    {
+      types: ['comment', 'prolog', 'doctype', 'cdata'],
+      style: { color: 'var(--muted-foreground)', fontStyle: 'italic' },
+    },
+    {
+      types: ['punctuation', 'operator'],
+      style: { color: 'var(--foreground)' },
+    },
+    {
+      types: ['property', 'tag', 'boolean', 'number', 'constant', 'symbol', 'deleted'],
+      style: { color: 'var(--primary)' },
+    },
+    {
+      types: ['selector', 'attr-name', 'string', 'char', 'builtin', 'inserted'],
+      style: { color: 'var(--success)' },
+    },
+    {
+      types: ['atrule', 'attr-value', 'keyword'],
+      style: { color: 'var(--warning)' },
+    },
+    {
+      types: ['function', 'class-name'],
+      style: { color: 'var(--info)' },
+    },
+    {
+      types: ['regex', 'important', 'variable'],
+      style: { color: 'var(--danger)' },
+    },
+  ],
+};
 
 export function CodeBlock({ code, language }: { code: string; language: string }) {
   const trimmed = code.replace(/\n$/, '');
@@ -21,11 +58,11 @@ export function CodeBlock({ code, language }: { code: string; language: string }
 
   return (
     <ArticleCodePanel label={language}>
-      <Highlight theme={themes.vsDark} code={trimmed} language={highlightLanguage}>
+      <Highlight theme={articleCodeTheme} code={trimmed} language={highlightLanguage}>
         {({ className, style, tokens, getLineProps, getTokenProps }) => (
           <pre
             className={`${className} m-0 overflow-x-auto whitespace-pre-wrap break-words font-mono text-sm leading-relaxed`}
-            style={{ ...style, background: 'transparent', color: 'var(--foreground)' }}
+            style={style}
           >
             {tokens.map((line, lineIndex) => {
               const lineProps = getLineProps({ line });
@@ -33,13 +70,7 @@ export function CodeBlock({ code, language }: { code: string; language: string }
                 <div key={lineIndex} {...lineProps}>
                   {line.map((token, tokenIndex) => {
                     const tokenProps = getTokenProps({ token });
-                    return (
-                      <span
-                        key={tokenIndex}
-                        {...tokenProps}
-                        style={{ ...tokenProps.style, color: 'inherit' }}
-                      />
-                    );
+                    return <span key={tokenIndex} {...tokenProps} />;
                   })}
                 </div>
               );
