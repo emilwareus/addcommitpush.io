@@ -41,7 +41,7 @@ important rules stay in your head.
 A senior engineer remembers that UI code must not reach into persistence, that
 a mutating route needs a guard before it writes, and that request-controlled
 data must not reach a dangerous sink without validation. An agent will not
-reliably remember any of that across tasks. I know, because I tried the prompt
+reliably remember any of that across tasks. I know because I tried the prompt
 version first. I wrote the boundaries into my instruction files, and the agent
 respected them right up until the session got long enough that it did not.
 
@@ -268,7 +268,8 @@ That is still useful. An agent can add a new handler and forget the denied case.
 A static test-evidence rule catches the missing proof before review.
 
 There are limits. Naming can be gamed. Static test evidence is not runtime
-coverage. Framework discovery needs models. But the alternative is often worse:
+coverage. Discovering tests in your framework needs its own model. But the
+alternative is often worse:
 humans asking "did you add the access test?" over and over in review.
 
 # Some rules are review obligations
@@ -413,8 +414,9 @@ Does check access dominate mutate?
 Does audit denial occur on every denied path before return?
 ```
 
-"Dominates" means every path to the later operation goes through the earlier
-operation. That is the kind of relationship syntax cannot express.
+"Dominates" means every path from the function entry to the later operation
+goes through the earlier operation. That is the kind of relationship syntax
+cannot express.
 
 CFG rules force trade-offs. Path-sensitive rules distinguish branches better,
 but cost more and need stronger models. Path-insensitive rules are cheaper, but
@@ -552,8 +554,8 @@ teaches the wrong behavior.
 # Agents need repair objects
 
 An agent mid-task has three deterministic oracles available: the typechecker,
-the test suite, and static policy. The first two are table stakes. The third is
-the one most repos are missing.
+the test suite, and static policy. The first two you probably already have. The
+third is the one most repos are missing.
 
 An agent can use this:
 
@@ -651,8 +653,8 @@ fn no_raw_ui_values(ctx: &mut RuleCtx<'_>, literals: StringLiterals<'_>) -> Rule
 
 The function signature is the contract. This rule asks for string literals. A
 deeper rule might ask for resolved imports, test facts, call reachability, CFG
-ordering, or data-flow evidence. The engine can plan only the capabilities
-needed by the rule pack.
+ordering, or data-flow evidence. The engine computes only the capabilities the
+rule pack asks for.
 
 That is the boundary I care about: local rules ask for policy-level facts, not
 raw engine internals. Most repository policies are questions, not graph
@@ -702,8 +704,8 @@ request violated the shape here, for this reason, with this evidence."
 
 Vibe coding works best when the repo can talk back. Tests say whether behavior
 still works. Types say whether the program still fits. Repo-local static rules
-say whether the edit preserved the shape we care about. That is the practical
-version of releasing the vibes: move fast, but make the repo explicit enough to
+say whether the edit preserved the shape we care about. Releasing the vibes, in
+practice, means exactly this: move fast, but make the repo explicit enough to
 notice when its shape is being lost.
 
 If you take one thing from this post, take the smallest version of it: pick one
