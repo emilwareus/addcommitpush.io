@@ -32,6 +32,21 @@
 - Added pitfalls so the article does not oversell static analysis.
 - Checked for em dashes, AI citation artifacts, and unsupported numbers.
 
+## 2026-07-12 Pattern-Level Slop Review
+
+- Researched structural AI-writing tells (Wikipedia WP:AITELLS, Pangram,
+  tropes.fyi): the tell is density and decorative use, not any single device.
+- Counted ~20 contrastive-negation constructions ("It is not X. It is Y.",
+  "X, not Y"). Kept the load-bearing ones (call graph/precision budget,
+  unknown/honesty, the two candidate guard questions, changed-file rule
+  disambiguation, one "The point is not X" signature). Rewrote the rest.
+- Broke the uniform "X, not Y" shape in the rules bullet list (5 of 8 bullets
+  shared it).
+- Fixed synonym cycling: "provider" -> "engine" in the status table.
+- Left intact: coined-and-reused terms (repair objects, precision budget,
+  proof-shape rules), the owns/owns slogan echo, and section-scaffold
+  repetition (policy -> facts -> repair object), which teaches by repetition.
+
 ## 2026-07-01 Slop Review
 
 - Rewrote the finalized article source rather than polishing around the old shape.

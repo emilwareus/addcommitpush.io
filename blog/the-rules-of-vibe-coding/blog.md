@@ -5,9 +5,9 @@ attempt to explain why I think the hobby is the saner response.
 
 I like vibe coding, and I want it to stay fast: sketch, ask for a refactor, try
 a design, let the model take a swing, keep moving. But I do not want the
-codebase to slowly forget its boundaries while I do. The way out is not more
-prompt ceremony. The way out is to turn the rules that define the shape of the
-repo into executable checks.
+codebase to slowly forget its boundaries while I do. More prompt ceremony will
+not prevent that. Turning the rules that define the shape of the repo into
+executable checks will.
 
 Who is this for? You ship code with agents most days, your `AGENTS.md` keeps
 growing, and you have typed "remember: UI code does not import the database"
@@ -67,23 +67,25 @@ Start with the policies, not the tool.
 Useful repo-local rules sound like this:
 
 - Product UI uses design tokens, not raw colors.
-- E2E tests use stable test IDs, not brittle text selectors.
-- Client feature code goes through the API layer, not direct network calls from
-  random components.
-- Layers import inward or through contracts, not sideways through internal
-  files.
+- E2E tests select on stable test IDs instead of whatever copy happens to be on
+  the button this week.
+- Client feature code reaches the backend through the API layer; components do
+  not roll their own fetch calls.
+- Layers import inward or through contracts, never sideways into another
+  layer's internals.
 - Persistence adapters do not read request state or transport concepts.
 - Mutating routes check protection before the side effect.
-- Personal data and secrets do not reach logs or public responses unless
+- Personal data and secrets stay out of logs and public responses unless
   explicitly allowed.
-- Tests prove the important branches, not just that a function was called once.
+- Tests prove the important branches. "The function was called once" does not
+  count.
 
 These are local shape rules. Generic linters cannot know them in advance because
 the rules are about your boundaries, migrations, test standards, threat model,
 and architecture.
 
-Once you list the rules, the next question is not "which linter should we use?"
-It is:
+Once you list the rules, resist jumping to "which linter should we use?" Ask
+this first:
 
 ```text
 Which facts can answer this policy?
@@ -177,8 +179,8 @@ Many useful rules live at this level:
 - block obvious personal-data keys in log metadata.
 
 The caveat is simple: syntax only sees syntax. Aliases, wrappers, and generated
-values may hide the behavior. That is not a reason to dismiss cheap rules. It is
-a reason to know their contract.
+values may hide the behavior. Cheap rules are still worth having. You just have
+to know their contract.
 
 # Boundaries need resolved imports
 
@@ -234,14 +236,14 @@ architecture:
 - private contracts must be consumed only through allowed composition points;
 - generated API clients are the only allowed path to a remote service boundary.
 
-These rules keep the shape of the codebase visible. If the resolver cannot
-resolve an import, the result is not clean. It is unknown or unsupported for
-that edge.
+These rules keep the shape of the codebase visible. And when the resolver fails
+on an import, the honest answer for that edge is unknown or unsupported, never
+a silent clean.
 
 # Tests can be checked for evidence
 
-Some of the most useful rules are not security rules. They are proof-shape
-rules.
+Some of the most useful rules have nothing to do with security. I think of them
+as proof-shape rules.
 
 For example:
 
@@ -255,7 +257,7 @@ Tests use named subtests that describe the branch being proved.
 This is static analysis over the test suite. It does not run the tests. It
 parses them and asks whether the codebase contains evidence in the right place.
 
-The rule is not "prove the program correct." It is more modest:
+The rule asks for something much more modest than "prove the program correct":
 
 ```text
 for each mutating handler:
@@ -543,7 +545,7 @@ The result state should be explicit:
 | `violation`       | The engine found a policy-breaking fact or path under the requested contract. |
 | `clean`           | The engine searched the requested capability space and found no violation.    |
 | `unknown`         | The engine hit a semantic gap, unresolved edge, or missing model.             |
-| `unsupported`     | The provider cannot compute the requested fact family.                        |
+| `unsupported`     | The engine cannot compute the requested fact family.                          |
 | `budget_exceeded` | The query stopped before completing.                                          |
 
 This changes behavior. An exact syntax finding can usually be fixed directly. A
