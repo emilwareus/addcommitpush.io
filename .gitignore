@@ -68,3 +68,5 @@ tmp
 
 # Rust build output
 dr/target/
+/life/target/
+/life/.env
