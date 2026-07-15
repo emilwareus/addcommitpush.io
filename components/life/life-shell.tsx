@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import type React from 'react';
-import { BookOpen, Clock3, LayoutDashboard, LockKeyhole, MessagesSquare } from 'lucide-react';
+import { BookOpen, Clock3, LayoutDashboard, LockKeyhole, MessagesSquare, Mic } from 'lucide-react';
 import { LifeLogoutButton } from './logout-button';
 
 const links = [
   { href: '/life', label: 'Overview', icon: LayoutDashboard },
+  { href: '/life/voice', label: 'Voice', icon: Mic },
   { href: '/life/memories', label: 'Memories', icon: BookOpen },
   { href: '/life/timeline', label: 'Timeline', icon: Clock3 },
   { href: '/life/conversations', label: 'Conversations', icon: MessagesSquare },

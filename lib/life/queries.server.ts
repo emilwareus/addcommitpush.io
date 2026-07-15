@@ -7,6 +7,8 @@ import {
   conversationSchema,
   conversationTurnRequestSchema,
   conversationTurnResponseSchema,
+  createRealtimeSessionRequestSchema,
+  createRealtimeSessionResponseSchema,
   createConversationRequestSchema,
   healthMeasurementListSchema,
   memoryEdgeListSchema,
@@ -15,12 +17,18 @@ import {
   memorySchema,
   messageListSchema,
   ownerSchema,
+  realtimeMemorySearchRequestSchema,
+  realtimeSessionSchema,
+  realtimeTurnRequestSchema,
   searchHitListSchema,
   searchRequestSchema,
   timelineQuerySchema,
   type Conversation,
+  type CreateRealtimeSessionRequest,
   type Memory,
   type MemoryInput,
+  type RealtimeMemorySearchRequest,
+  type RealtimeTurnRequest,
   type SearchRequest,
 } from './contracts';
 import { lifeRequest } from './client.server';
@@ -155,6 +163,55 @@ export function sendConversationTurn(
     path: `/v1/conversations/${id}/turns`,
     schema: conversationTurnResponseSchema,
     body,
+  });
+}
+
+export function createRealtimeSession(input: CreateRealtimeSessionRequest) {
+  const body = createRealtimeSessionRequestSchema.parse(input);
+  return lifeRequest({
+    method: 'POST',
+    path: '/v1/realtime/sessions',
+    schema: createRealtimeSessionResponseSchema,
+    body,
+    timeoutMs: 30_000,
+  });
+}
+
+export function getRealtimeSession(id: string) {
+  return lifeRequest({
+    method: 'GET',
+    path: `/v1/realtime/sessions/${id}`,
+    schema: realtimeSessionSchema,
+  });
+}
+
+export function closeRealtimeSession(id: string) {
+  return lifeRequest({
+    method: 'DELETE',
+    path: `/v1/realtime/sessions/${id}`,
+    schema: realtimeSessionSchema,
+  });
+}
+
+export function searchRealtimeMemory(id: string, input: RealtimeMemorySearchRequest) {
+  const body = realtimeMemorySearchRequestSchema.parse(input);
+  return lifeRequest({
+    method: 'POST',
+    path: `/v1/realtime/sessions/${id}/tools/search-memory`,
+    schema: searchHitListSchema,
+    body,
+    timeoutMs: 30_000,
+  });
+}
+
+export function commitRealtimeTurn(id: string, input: RealtimeTurnRequest) {
+  const body = realtimeTurnRequestSchema.parse(input);
+  return lifeRequest({
+    method: 'POST',
+    path: `/v1/realtime/sessions/${id}/turns`,
+    schema: conversationTurnResponseSchema,
+    body,
+    timeoutMs: 120_000,
   });
 }
 

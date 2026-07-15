@@ -11,6 +11,7 @@ interface LifeRequestOptions<T> {
   path: `/v1/${string}`;
   schema: ZodType<T>;
   body?: unknown;
+  timeoutMs?: number;
 }
 
 export async function lifeRequest<T>({
@@ -18,6 +19,7 @@ export async function lifeRequest<T>({
   path,
   schema,
   body,
+  timeoutMs = 15_000,
 }: LifeRequestOptions<T>): Promise<T> {
   const config = getLifeServerConfig();
   const url = new URL(path, config.apiBaseUrl);
@@ -38,7 +40,7 @@ export async function lifeRequest<T>({
       },
       body: body === undefined ? undefined : JSON.stringify(body),
       cache: 'no-store',
-      signal: AbortSignal.timeout(15_000),
+      signal: AbortSignal.timeout(timeoutMs),
     });
   } catch {
     throw new LifeApiError('upstream_unavailable', 503, requestId);

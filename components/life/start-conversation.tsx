@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Keyboard, Mic, MessagesSquare } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -38,12 +39,13 @@ export function StartConversation() {
       <p className="text-[10px] uppercase tracking-[0.18em] opacity-75">Start a conversation</p>
       <h2 className="mt-2 font-serif text-3xl font-semibold">Talk with Life</h2>
       <p className="mt-3 max-w-2xl text-sm opacity-80">
-        Text is available now. Realtime voice and guided interviews arrive in their dedicated
-        phases.
+        Start a low-latency voice session or continue with a durable text conversation.
       </p>
       <div className="mt-5 flex flex-wrap gap-3">
-        <Button type="button" variant="secondary" disabled title="Realtime voice is Phase 3">
-          <Mic aria-hidden="true" /> Voice
+        <Button asChild type="button" variant="secondary">
+          <Link href="/life/voice" prefetch={false}>
+            <Mic aria-hidden="true" /> Voice
+          </Link>
         </Button>
         <Button
           type="button"

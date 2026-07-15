@@ -257,6 +257,43 @@ export const createRealtimeSessionResponseSchema = z
   })
   .strict();
 
+export const createRealtimeSessionRequestSchema = z
+  .object({
+    title: z.string().trim().min(1).max(300),
+    sensitivities: z.array(sensitivitySchema).min(1).max(4),
+  })
+  .strict()
+  .refine((value) => new Set(value.sensitivities).size === value.sensitivities.length, {
+    message: 'Sensitivities must be unique.',
+    path: ['sensitivities'],
+  });
+
+export const realtimeMemorySearchRequestSchema = z
+  .object({
+    query: z.string().trim().min(1).max(2_000),
+    limit: z.number().int().min(1).max(20),
+  })
+  .strict();
+
+const exactTranscriptSchema = z
+  .string()
+  .min(1)
+  .max(50_000)
+  .refine((value) => value.trim().length > 0, 'Transcript cannot be blank.');
+
+export const realtimeTurnRequestSchema = z
+  .object({
+    user_transcript: exactTranscriptSchema,
+    assistant_transcript: exactTranscriptSchema,
+    provider_response_id: z.string().min(1).max(500),
+    cited_memory_ids: z.array(uuidSchema).max(100),
+  })
+  .strict()
+  .refine((value) => new Set(value.cited_memory_ids).size === value.cited_memory_ids.length, {
+    message: 'Cited memory IDs must be unique.',
+    path: ['cited_memory_ids'],
+  });
+
 export const researchCitationSchema = z
   .object({ url: z.string().url(), title: z.string().nullable() })
   .strict();
@@ -362,6 +399,18 @@ export const errorEnvelopeSchema = z
   .object({ error: z.object({ code: z.string(), message: z.string() }).strict() })
   .strict();
 
+export const lifeUiErrorEnvelopeSchema = z
+  .object({
+    error: z
+      .object({
+        code: z.string(),
+        message: z.string(),
+        request_id: z.string().optional(),
+      })
+      .strict(),
+  })
+  .strict();
+
 export const loginRequestSchema = z
   .object({
     password: z.string().min(1).max(1_024),
@@ -389,6 +438,10 @@ export type Conversation = z.infer<typeof conversationSchema>;
 export type Message = z.infer<typeof messageSchema>;
 export type ConversationTurnResponse = z.infer<typeof conversationTurnResponseSchema>;
 export type RealtimeSession = z.infer<typeof realtimeSessionSchema>;
+export type CreateRealtimeSessionRequest = z.infer<typeof createRealtimeSessionRequestSchema>;
+export type CreateRealtimeSessionResponse = z.infer<typeof createRealtimeSessionResponseSchema>;
+export type RealtimeMemorySearchRequest = z.infer<typeof realtimeMemorySearchRequestSchema>;
+export type RealtimeTurnRequest = z.infer<typeof realtimeTurnRequestSchema>;
 export type Connector = z.infer<typeof connectorSchema>;
 export type IngestionJob = z.infer<typeof ingestionJobSchema>;
 export type MemoryEdge = z.infer<typeof memoryEdgeSchema>;
