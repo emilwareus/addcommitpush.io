@@ -1,6 +1,17 @@
 import Link from 'next/link';
 import type React from 'react';
-import { BookOpen, Clock3, LayoutDashboard, LockKeyhole, MessagesSquare, Mic } from 'lucide-react';
+import {
+  BookOpen,
+  Clock3,
+  FlaskConical,
+  HeartPulse,
+  LayoutDashboard,
+  LockKeyhole,
+  MessagesSquare,
+  Mic,
+  Settings,
+  ShieldAlert,
+} from 'lucide-react';
 import { LifeLogoutButton } from './logout-button';
 
 const links = [
@@ -9,6 +20,10 @@ const links = [
   { href: '/life/memories', label: 'Memories', icon: BookOpen },
   { href: '/life/timeline', label: 'Timeline', icon: Clock3 },
   { href: '/life/conversations', label: 'Conversations', icon: MessagesSquare },
+  { href: '/life/research', label: 'Research', icon: FlaskConical },
+  { href: '/life/health', label: 'Health', icon: HeartPulse },
+  { href: '/life/contradictions', label: 'Review', icon: ShieldAlert },
+  { href: '/life/settings', label: 'Settings', icon: Settings },
 ];
 
 export function LifeShell({ children }: Readonly<{ children: React.ReactNode }>) {

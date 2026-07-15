@@ -1457,6 +1457,28 @@ impl Repository {
         .map_err(AppError::from)
     }
 
+    pub async fn contradiction(
+        &self,
+        owner_id: Uuid,
+        contradiction_id: Uuid,
+    ) -> Result<Contradiction, AppError> {
+        sqlx::query_as::<_, Contradiction>(
+            r"
+            SELECT id, owner_id, left_memory_id, right_memory_id, explanation,
+                   status, resolution_markdown, detected_at, resolved_at
+            FROM contradictions
+            WHERE owner_id = $1 AND id = $2
+            ",
+        )
+        .bind(owner_id)
+        .bind(contradiction_id)
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(AppError::NotFound {
+            resource: "contradiction",
+        })
+    }
+
     pub async fn resolve_contradiction(
         &self,
         owner_id: Uuid,

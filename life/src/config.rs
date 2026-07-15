@@ -15,6 +15,7 @@ pub struct Config {
     encryption_key: [u8; 32],
     allowed_origin: Url,
     public_base_url: Url,
+    frontend_base_url: Url,
     openai_api_key: String,
     openai_reasoning_model: String,
     openai_embedding_model: String,
@@ -57,6 +58,7 @@ impl Config {
             encryption_key: decode_encryption_key(&required("LIFE_ENCRYPTION_KEY")?)?,
             allowed_origin: parse_url("LIFE_ALLOWED_ORIGIN")?,
             public_base_url: parse_url("LIFE_PUBLIC_BASE_URL")?,
+            frontend_base_url: parse_url("LIFE_FRONTEND_BASE_URL")?,
             openai_api_key: required("OPENAI_API_KEY")?,
             openai_reasoning_model: value_or("OPENAI_REASONING_MODEL", "gpt-5.6-sol"),
             openai_embedding_model: value_or("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small"),
@@ -84,6 +86,7 @@ impl Config {
         }
         validate_http_url("LIFE_ALLOWED_ORIGIN", &config.allowed_origin, true)?;
         validate_http_url("LIFE_PUBLIC_BASE_URL", &config.public_base_url, false)?;
+        validate_http_url("LIFE_FRONTEND_BASE_URL", &config.frontend_base_url, true)?;
         Ok(config)
     }
 
@@ -108,6 +111,10 @@ impl Config {
 
     pub const fn public_base_url(&self) -> &Url {
         &self.public_base_url
+    }
+
+    pub const fn frontend_base_url(&self) -> &Url {
+        &self.frontend_base_url
     }
 
     pub fn openai_api_key(&self) -> &str {
@@ -275,5 +282,12 @@ mod tests {
         let url = Url::parse("https://life.example/backend").unwrap();
 
         assert!(validate_http_url("LIFE_PUBLIC_BASE_URL", &url, false).is_ok());
+    }
+
+    #[test]
+    fn frontend_base_url_rejects_a_path() {
+        let url = Url::parse("https://life-ui.example/app").unwrap();
+
+        assert!(validate_http_url("LIFE_FRONTEND_BASE_URL", &url, true).is_err());
     }
 }

@@ -1,11 +1,11 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use axum::body::Bytes;
 use axum::extract::{DefaultBodyLimit, Extension, Multipart, Path, Query, Request, State};
 use axum::http::header::{AUTHORIZATION, CONTENT_DISPOSITION, CONTENT_TYPE};
 use axum::http::{HeaderMap, HeaderValue, Method, StatusCode};
 use axum::middleware::{self, Next};
-use axum::response::{IntoResponse, Response};
+use axum::response::{IntoResponse, Redirect, Response};
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use base64::Engine as _;
@@ -25,10 +25,10 @@ use crate::models::{
     CreateRealtimeSessionRequest, CreateRealtimeSessionResponse, DeleteOwnerRequest,
     HealthMeasurement, HealthMeasurementInput, HealthResponse, IngestionJob, InterviewQuestion,
     InterviewSession, ListMemoriesQuery, MarkdownDocumentInput, Memory, MemoryEdge, MemoryInput,
-    Message, OAuthCallbackQuery, OAuthStartResponse, Owner, OwnerExport,
-    RealtimeMemorySearchRequest, RealtimeSession, RealtimeTurnRequest, ReflectionRequest,
-    ReflectionResponse, ResearchRequest, ResearchResponse, ResolveContradictionRequest, SearchHit,
-    SearchRequest, TimelineQuery, UpdateOwnerRequest, VoiceTurnResponse,
+    Message, OAuthStartResponse, Owner, OwnerExport, RealtimeMemorySearchRequest, RealtimeSession,
+    RealtimeTurnRequest, ReflectionRequest, ReflectionResponse, ResearchRequest, ResearchResponse,
+    ResolveContradictionRequest, SearchHit, SearchRequest, TimelineQuery, UpdateOwnerRequest,
+    VoiceTurnResponse,
 };
 
 #[derive(Clone, Copy)]
@@ -92,7 +92,7 @@ pub fn router(state: AppState) -> Result<Router, AppError> {
         .route("/contradictions", get(list_contradictions))
         .route(
             "/contradictions/{contradiction_id}",
-            axum::routing::put(resolve_contradiction),
+            get(get_contradiction).put(resolve_contradiction),
         )
         .route("/audit-events", get(list_audit_events))
         .route("/realtime/sessions", post(create_realtime_session))
@@ -536,6 +536,19 @@ async fn list_contradictions(
     Ok(Json(state.repository.list_contradictions(owner_id).await?))
 }
 
+async fn get_contradiction(
+    State(state): State<AppState>,
+    Extension(AuthenticatedOwner(owner_id)): Extension<AuthenticatedOwner>,
+    Path(contradiction_id): Path<Uuid>,
+) -> Result<Json<Contradiction>, AppError> {
+    Ok(Json(
+        state
+            .repository
+            .contradiction(owner_id, contradiction_id)
+            .await?,
+    ))
+}
+
 async fn resolve_contradiction(
     State(state): State<AppState>,
     Extension(AuthenticatedOwner(owner_id)): Extension<AuthenticatedOwner>,
@@ -863,16 +876,67 @@ async fn start_connector_oauth(
 
 async fn finish_connector_oauth(
     State(state): State<AppState>,
-    Path(provider): Path<String>,
-    Query(query): Query<OAuthCallbackQuery>,
-) -> Result<Json<Connector>, AppError> {
-    let provider = provider.parse::<Provider>()?;
-    Ok(Json(
-        state
+    Path(provider_value): Path<String>,
+    Query(query): Query<HashMap<String, String>>,
+) -> Redirect {
+    let provider = provider_value.parse::<Provider>();
+    let result = match (provider, query.get("code"), query.get("state")) {
+        (Ok(provider), Some(code), Some(oauth_state)) => state
             .connectors
-            .finish_oauth(provider, &query.code, &query.state)
-            .await?,
-    ))
+            .finish_oauth(provider, code, oauth_state)
+            .await
+            .map(|_| provider.as_str()),
+        (Ok(provider), _, _) => Err(AppError::InvalidInput(format!(
+            "{} OAuth callback omitted code or state",
+            provider.as_str()
+        ))),
+        (Err(error), _, _) => Err(error),
+    };
+
+    let mut destination = state.config.frontend_base_url().clone();
+    destination.set_path("/life/settings/connectors");
+    destination.set_query(None);
+    destination.set_fragment(None);
+    match result {
+        Ok(provider) => {
+            destination
+                .query_pairs_mut()
+                .append_pair("oauth", provider)
+                .append_pair("status", "connected");
+        }
+        Err(error) => {
+            let (provider, error_code) = oauth_redirect_error(&provider_value, &error);
+            destination
+                .query_pairs_mut()
+                .append_pair("oauth", provider)
+                .append_pair("status", "error")
+                .append_pair("error", error_code);
+        }
+    }
+    Redirect::to(destination.as_str())
+}
+
+fn oauth_redirect_error<'a>(provider: &'a str, error: &AppError) -> (&'a str, &'static str) {
+    let safe_provider = if matches!(provider, "github" | "linear" | "gmail") {
+        provider
+    } else {
+        "unknown"
+    };
+    let code = match error {
+        AppError::ProviderNotConfigured { .. } => "provider_not_configured",
+        AppError::Upstream { .. }
+        | AppError::HttpClient(_)
+        | AppError::InvalidProviderResponse(_) => "provider_error",
+        AppError::InvalidInput(_) | AppError::NotFound { .. } | AppError::Unauthorized => {
+            "invalid_oauth_callback"
+        }
+        AppError::Config(_)
+        | AppError::Database(_)
+        | AppError::Migration(_)
+        | AppError::Crypto(_)
+        | AppError::Conflict(_) => "internal_error",
+    };
+    (safe_provider, code)
 }
 
 async fn linear_webhook(
@@ -1086,7 +1150,8 @@ fn single_embedding(mut embeddings: Vec<Vec<f32>>) -> Result<Vec<f32>, AppError>
 
 #[cfg(test)]
 mod tests {
-    use super::{single_embedding, validate_realtime_sensitivities};
+    use super::{oauth_redirect_error, single_embedding, validate_realtime_sensitivities};
+    use crate::error::AppError;
 
     #[test]
     fn single_embedding_should_return_the_only_embedding() {
@@ -1116,6 +1181,22 @@ mod tests {
                 "restricted".to_owned(),
             ])
             .is_ok()
+        );
+    }
+
+    #[test]
+    fn oauth_redirect_errors_are_stable_and_provider_bounded() {
+        let invalid_callback = AppError::InvalidInput("secret callback detail".to_owned());
+        let provider_failure =
+            AppError::InvalidProviderResponse("secret provider detail".to_owned());
+
+        assert_eq!(
+            oauth_redirect_error("github", &invalid_callback),
+            ("github", "invalid_oauth_callback")
+        );
+        assert_eq!(
+            oauth_redirect_error("attacker-controlled", &provider_failure),
+            ("unknown", "provider_error")
         );
     }
 }

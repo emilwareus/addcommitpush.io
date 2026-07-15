@@ -53,6 +53,27 @@ export const ownerSchema = z
   })
   .strict();
 
+export const updateOwnerRequestSchema = z
+  .object({
+    display_name: z.string().trim().min(1).max(300),
+    timezone: z
+      .string()
+      .trim()
+      .min(1)
+      .max(100)
+      .refine((value) => {
+        try {
+          new Intl.DateTimeFormat('en', { timeZone: value }).format();
+          return true;
+        } catch {
+          return false;
+        }
+      }, 'Timezone must be a valid IANA timezone.'),
+    locale: z.string().trim().min(1).max(100),
+    profile_markdown: z.string().max(100_000),
+  })
+  .strict();
+
 const nullableUuidSchema = uuidSchema.nullable();
 const nullableDateTimeSchema = isoDateTimeSchema.nullable();
 
@@ -295,7 +316,19 @@ export const realtimeTurnRequestSchema = z
   });
 
 export const researchCitationSchema = z
-  .object({ url: z.string().url(), title: z.string().nullable() })
+  .object({
+    url: z
+      .string()
+      .url()
+      .refine((value) => new URL(value).protocol === 'https:', 'Research sources must use HTTPS.'),
+    title: z.string().nullable(),
+  })
+  .strict();
+export const researchRequestSchema = z
+  .object({
+    query: z.string().trim().min(1).max(2_000),
+    sensitivity: sensitivitySchema.default('standard'),
+  })
   .strict();
 export const researchResponseSchema = z
   .object({
@@ -303,7 +336,11 @@ export const researchResponseSchema = z
     citations: z.array(researchCitationSchema),
     memories: z.array(memorySchema),
   })
-  .strict();
+  .strict()
+  .refine((value) => value.memories.every((memory) => memory.epistemic_status === 'researched'), {
+    message: 'Research responses may only contain researched memories.',
+    path: ['memories'],
+  });
 
 export const connectorSchema = z
   .object({
@@ -341,6 +378,39 @@ export const ingestionJobSchema = z
   })
   .strict();
 
+export const ingestionJobViewSchema = z
+  .object({
+    id: uuidSchema,
+    status: z.enum(JOB_STATUSES),
+    attempts: z.number().int().min(0),
+    last_error: z.string().nullable(),
+    completed_at: nullableDateTimeSchema,
+  })
+  .strict();
+
+export const connectorViewSchema = z
+  .object({
+    id: uuidSchema,
+    provider: z.enum(CONNECTOR_PROVIDERS),
+    external_account_name: z.string().nullable(),
+    status: z.enum(CONNECTOR_STATUSES),
+    scopes: z.array(z.string()),
+    token_expires_at: nullableDateTimeSchema,
+    last_synced_at: nullableDateTimeSchema,
+    has_error: z.boolean(),
+  })
+  .strict();
+
+export const oauthStartResponseSchema = z
+  .object({
+    provider: z.enum(CONNECTOR_PROVIDERS),
+    authorization_url: z
+      .string()
+      .url()
+      .refine((value) => new URL(value).protocol === 'https:', 'OAuth URLs must use HTTPS.'),
+  })
+  .strict();
+
 export const memoryEdgeSchema = z
   .object({
     id: uuidSchema,
@@ -368,6 +438,13 @@ export const contradictionSchema = z
   })
   .strict();
 
+export const resolveContradictionRequestSchema = z
+  .object({
+    status: z.enum(['confirmed', 'not_a_contradiction', 'resolved']),
+    resolution_markdown: z.string().trim().min(1).max(50_000),
+  })
+  .strict();
+
 export const healthMeasurementSchema = z
   .object({
     id: uuidSchema,
@@ -380,6 +457,75 @@ export const healthMeasurementSchema = z
     ended_at: nullableDateTimeSchema,
     dimensions: jsonValueSchema,
     created_at: isoDateTimeSchema,
+  })
+  .strict();
+
+export const healthMeasurementInputSchema = z
+  .object({
+    source_id: uuidSchema.nullable().optional(),
+    metric_code: z.string().trim().min(1).max(200),
+    value: z.number().finite(),
+    unit: z.string().trim().min(1).max(100),
+    measured_at: isoDateTimeSchema,
+    ended_at: isoDateTimeSchema.nullable().optional(),
+    dimensions: jsonValueSchema.default({}),
+  })
+  .strict()
+  .refine(
+    (value) => !value.ended_at || Date.parse(value.ended_at) > Date.parse(value.measured_at),
+    { message: 'The end time must be after the measurement time.', path: ['ended_at'] }
+  );
+
+export const reflectionRequestSchema = z
+  .object({
+    prompt: z.string().trim().min(1).max(10_000),
+    sensitivities: z.array(sensitivitySchema).min(1).max(4),
+    sensitivity: sensitivitySchema.default('private'),
+  })
+  .strict()
+  .refine((value) => new Set(value.sensitivities).size === value.sensitivities.length, {
+    message: 'Sensitivities must be unique.',
+    path: ['sensitivities'],
+  });
+
+export const reflectionResponseSchema = z
+  .object({ memory: memorySchema, cited_memory_ids: z.array(uuidSchema) })
+  .strict();
+
+export const createInterviewRequestSchema = z
+  .object({
+    theme: z.string().trim().min(1).max(1_000),
+    title: z.string().trim().min(1).max(300),
+  })
+  .strict();
+
+export const interviewSessionSchema = z
+  .object({
+    id: uuidSchema,
+    owner_id: uuidSchema,
+    conversation_id: uuidSchema,
+    theme: z.string(),
+    status: z.string(),
+    questions_answered: z.number().int().min(0),
+    created_at: isoDateTimeSchema,
+    completed_at: nullableDateTimeSchema,
+  })
+  .strict();
+
+export const createInterviewResponseSchema = z
+  .object({
+    conversation: conversationSchema,
+    interview: interviewSessionSchema,
+    opening_message: messageSchema,
+    question: z.string(),
+  })
+  .strict();
+
+export const deleteOwnerRequestSchema = z
+  .object({
+    confirm_display_name: z.string().min(1).max(300),
+    password: z.string().min(1).max(1_024),
+    confirmed: z.literal(true),
   })
   .strict();
 
@@ -444,7 +590,11 @@ export type RealtimeMemorySearchRequest = z.infer<typeof realtimeMemorySearchReq
 export type RealtimeTurnRequest = z.infer<typeof realtimeTurnRequestSchema>;
 export type Connector = z.infer<typeof connectorSchema>;
 export type IngestionJob = z.infer<typeof ingestionJobSchema>;
+export type IngestionJobView = z.infer<typeof ingestionJobViewSchema>;
+export type ConnectorView = z.infer<typeof connectorViewSchema>;
 export type MemoryEdge = z.infer<typeof memoryEdgeSchema>;
 export type Contradiction = z.infer<typeof contradictionSchema>;
 export type HealthMeasurement = z.infer<typeof healthMeasurementSchema>;
 export type AuditEvent = z.infer<typeof auditEventSchema>;
+export type ResearchResponse = z.infer<typeof researchResponseSchema>;
+export type HealthMeasurementInput = z.input<typeof healthMeasurementInputSchema>;

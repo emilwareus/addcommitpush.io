@@ -14,13 +14,19 @@ interface LifeRequestOptions<T> {
   timeoutMs?: number;
 }
 
-export async function lifeRequest<T>({
+interface LifeRawRequestOptions {
+  method: LifeMethod;
+  path: `/v1/${string}`;
+  body?: unknown;
+  timeoutMs?: number;
+}
+
+async function fetchLife({
   method,
   path,
-  schema,
   body,
   timeoutMs = 15_000,
-}: LifeRequestOptions<T>): Promise<T> {
+}: LifeRawRequestOptions): Promise<Response> {
   const config = getLifeServerConfig();
   const url = new URL(path, config.apiBaseUrl);
   if (url.origin !== config.apiBaseUrl.origin || !url.pathname.startsWith('/v1/')) {
@@ -55,10 +61,37 @@ export async function lifeRequest<T>({
     const code = mapLifeApiStatus(response.status);
     throw new LifeApiError(code, response.status, correlatedRequestId);
   }
+  return response;
+}
+
+export async function lifeRequest<T>({
+  method,
+  path,
+  schema,
+  body,
+  timeoutMs = 15_000,
+}: LifeRequestOptions<T>): Promise<T> {
+  const response = await fetchLife({ method, path, body, timeoutMs });
+  const correlatedRequestId = response.headers.get('x-request-id') ?? crypto.randomUUID();
 
   const parsed = schema.safeParse(await response.json().catch(() => null));
   if (!parsed.success) {
     throw new LifeApiError('invalid_upstream_response', 502, correlatedRequestId);
   }
   return parsed.data;
+}
+
+export async function lifeVoidRequest(options: LifeRawRequestOptions): Promise<void> {
+  const response = await fetchLife(options);
+  if (response.status !== 204) {
+    throw new LifeApiError(
+      'invalid_upstream_response',
+      502,
+      response.headers.get('x-request-id') ?? crypto.randomUUID()
+    );
+  }
+}
+
+export function lifeDownloadRequest(path: '/v1/export' | '/v1/export/markdown'): Promise<Response> {
+  return fetchLife({ method: 'GET', path, timeoutMs: 120_000 });
 }

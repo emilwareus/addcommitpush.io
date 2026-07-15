@@ -10,28 +10,42 @@ import {
   createRealtimeSessionRequestSchema,
   createRealtimeSessionResponseSchema,
   createConversationRequestSchema,
+  createInterviewRequestSchema,
+  createInterviewResponseSchema,
   healthMeasurementListSchema,
+  healthMeasurementInputSchema,
+  healthMeasurementSchema,
+  ingestionJobSchema,
   memoryEdgeListSchema,
   memoryInputSchema,
   memoryListSchema,
   memorySchema,
   messageListSchema,
   ownerSchema,
+  oauthStartResponseSchema,
   realtimeMemorySearchRequestSchema,
   realtimeSessionSchema,
   realtimeTurnRequestSchema,
+  reflectionRequestSchema,
+  reflectionResponseSchema,
+  researchRequestSchema,
+  researchResponseSchema,
+  resolveContradictionRequestSchema,
   searchHitListSchema,
   searchRequestSchema,
   timelineQuerySchema,
   type Conversation,
   type CreateRealtimeSessionRequest,
+  type HealthMeasurementInput,
   type Memory,
   type MemoryInput,
   type RealtimeMemorySearchRequest,
   type RealtimeTurnRequest,
   type SearchRequest,
+  updateOwnerRequestSchema,
+  uuidSchema,
 } from './contracts';
-import { lifeRequest } from './client.server';
+import { lifeDownloadRequest, lifeRequest, lifeVoidRequest } from './client.server';
 
 function queryPath(path: string, parameters: URLSearchParams): `/v1/${string}` {
   const query = parameters.toString();
@@ -40,6 +54,19 @@ function queryPath(path: string, parameters: URLSearchParams): `/v1/${string}` {
 
 export function getOwner() {
   return lifeRequest({ method: 'GET', path: '/v1/owner', schema: ownerSchema });
+}
+
+export function updateOwner(input: unknown) {
+  const body = updateOwnerRequestSchema.parse(input);
+  return lifeRequest({ method: 'PUT', path: '/v1/owner', schema: ownerSchema, body });
+}
+
+export function deleteOwner(confirmDisplayName: string) {
+  return lifeVoidRequest({
+    method: 'DELETE',
+    path: '/v1/owner',
+    body: { confirm_display_name: confirmDisplayName },
+  });
 }
 
 export function listMemories(
@@ -219,6 +246,60 @@ export function listConnectors() {
   return lifeRequest({ method: 'GET', path: '/v1/connectors', schema: connectorListSchema });
 }
 
+export function startConnectorOAuth(provider: string) {
+  const parsedProvider = zConnectorProvider(provider);
+  return lifeRequest({
+    method: 'POST',
+    path: `/v1/connectors/${parsedProvider}/oauth/start`,
+    schema: oauthStartResponseSchema,
+  });
+}
+
+function zConnectorProvider(provider: string): 'github' | 'linear' | 'gmail' {
+  return oauthStartResponseSchema.shape.provider.parse(provider);
+}
+
+export function syncConnector(id: string) {
+  const connectorId = uuidSchema.parse(id);
+  return lifeRequest({
+    method: 'POST',
+    path: `/v1/connectors/${connectorId}/sync`,
+    schema: ingestionJobSchema,
+  });
+}
+
+export function resetConnectorCursor(id: string) {
+  const connectorId = uuidSchema.parse(id);
+  return lifeRequest({
+    method: 'POST',
+    path: `/v1/connectors/${connectorId}/reset-cursor`,
+    schema: connectorListSchema.element,
+  });
+}
+
+export function revokeConnector(id: string) {
+  const connectorId = uuidSchema.parse(id);
+  return lifeRequest({
+    method: 'DELETE',
+    path: `/v1/connectors/${connectorId}`,
+    schema: connectorListSchema.element,
+  });
+}
+
+export function getIngestionJob(id: string) {
+  const jobId = uuidSchema.parse(id);
+  return lifeRequest({ method: 'GET', path: `/v1/jobs/${jobId}`, schema: ingestionJobSchema });
+}
+
+export function retryIngestionJob(id: string) {
+  const jobId = uuidSchema.parse(id);
+  return lifeRequest({
+    method: 'POST',
+    path: `/v1/jobs/${jobId}/retry`,
+    schema: ingestionJobSchema,
+  });
+}
+
 export function listAuditEvents() {
   return lifeRequest({ method: 'GET', path: '/v1/audit-events', schema: auditEventListSchema });
 }
@@ -231,12 +312,79 @@ export function listHealthMeasurements() {
   });
 }
 
+export function createHealthMeasurement(input: HealthMeasurementInput) {
+  const body = healthMeasurementInputSchema.parse(input);
+  return lifeRequest({
+    method: 'POST',
+    path: '/v1/health-measurements',
+    schema: healthMeasurementSchema,
+    body,
+  });
+}
+
 export function listContradictions() {
   return lifeRequest({
     method: 'GET',
     path: '/v1/contradictions',
     schema: contradictionListSchema,
   });
+}
+
+export function getContradiction(id: string) {
+  const contradictionId = uuidSchema.parse(id);
+  return lifeRequest({
+    method: 'GET',
+    path: `/v1/contradictions/${contradictionId}`,
+    schema: contradictionListSchema.element,
+  });
+}
+
+export function resolveContradiction(id: string, input: unknown) {
+  const contradictionId = uuidSchema.parse(id);
+  const body = resolveContradictionRequestSchema.parse(input);
+  return lifeRequest({
+    method: 'PUT',
+    path: `/v1/contradictions/${contradictionId}`,
+    schema: contradictionListSchema.element,
+    body,
+  });
+}
+
+export function runResearch(input: unknown) {
+  const body = researchRequestSchema.parse(input);
+  return lifeRequest({
+    method: 'POST',
+    path: '/v1/research',
+    schema: researchResponseSchema,
+    body,
+    timeoutMs: 120_000,
+  });
+}
+
+export function createReflection(input: unknown) {
+  const body = reflectionRequestSchema.parse(input);
+  return lifeRequest({
+    method: 'POST',
+    path: '/v1/reflections',
+    schema: reflectionResponseSchema,
+    body,
+    timeoutMs: 120_000,
+  });
+}
+
+export function createInterview(input: unknown) {
+  const body = createInterviewRequestSchema.parse(input);
+  return lifeRequest({
+    method: 'POST',
+    path: '/v1/interviews',
+    schema: createInterviewResponseSchema,
+    body,
+    timeoutMs: 120_000,
+  });
+}
+
+export function downloadOwnerExport(format: 'json' | 'markdown') {
+  return lifeDownloadRequest(format === 'json' ? '/v1/export' : '/v1/export/markdown');
 }
 
 export async function getDashboardData() {

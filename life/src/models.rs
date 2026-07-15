@@ -465,12 +465,6 @@ pub struct OAuthStartResponse {
     pub authorization_url: String,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct OAuthCallbackQuery {
-    pub code: String,
-    pub state: String,
-}
-
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct IngestionJob {
     pub id: Uuid,

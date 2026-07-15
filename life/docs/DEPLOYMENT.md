@@ -22,7 +22,9 @@ an untracked in-process background task.
    Manager. The encryption key is exactly 32 random bytes encoded as base64 and
    is separate from PostgreSQL. User bearer tokens are manually issued and only
    their SHA-256 digests are stored in PostgreSQL.
-4. Keep Cloud SQL private or attach it through the Cloud SQL connector. Limit
+4. Set `LIFE_FRONTEND_BASE_URL` to the exact frontend origin. OAuth callbacks
+   redirect only to its fixed `/life/settings/connectors` path.
+5. Keep Cloud SQL private or attach it through the Cloud SQL connector. Limit
    `DATABASE_MAX_CONNECTIONS` per instance so maximum instances multiplied by
    pool size stays below the Cloud SQL connection budget.
 
@@ -70,7 +72,7 @@ gcloud run deploy life-api \
   --image "$IMAGE" \
   --allow-unauthenticated \
   --add-cloudsql-instances "$PROJECT_ID:$REGION:life" \
-  --set-env-vars 'LIFE_ALLOWED_ORIGIN=https://your-frontend.example,LIFE_PUBLIC_BASE_URL=https://life-api.example,DATABASE_MAX_CONNECTIONS=5,RUST_LOG=info' \
+  --set-env-vars 'LIFE_ALLOWED_ORIGIN=https://your-frontend.example,LIFE_FRONTEND_BASE_URL=https://your-frontend.example,LIFE_PUBLIC_BASE_URL=https://life-api.example,DATABASE_MAX_CONNECTIONS=5,RUST_LOG=info' \
   --set-secrets 'DATABASE_URL=life-database-url:latest,LIFE_ENCRYPTION_KEY=life-encryption-key:latest,OPENAI_API_KEY=openai-api-key:latest'
 ```
 
@@ -104,7 +106,7 @@ gcloud run jobs deploy life-worker \
   --tasks 1 \
   --max-retries 0 \
   --add-cloudsql-instances "$PROJECT_ID:$REGION:life" \
-  --set-env-vars 'DATABASE_MAX_CONNECTIONS=5,RUST_LOG=info' \
+  --set-env-vars 'LIFE_ALLOWED_ORIGIN=https://your-frontend.example,LIFE_FRONTEND_BASE_URL=https://your-frontend.example,LIFE_PUBLIC_BASE_URL=https://life-api.example,DATABASE_MAX_CONNECTIONS=5,RUST_LOG=info' \
   --set-secrets 'DATABASE_URL=life-database-url:latest,LIFE_ENCRYPTION_KEY=life-encryption-key:latest,OPENAI_API_KEY=openai-api-key:latest'
 
 gcloud run jobs execute life-worker \

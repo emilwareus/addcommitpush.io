@@ -5,12 +5,13 @@ import { Keyboard, Mic, MessagesSquare } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { conversationSchema } from '@/lib/life/contracts';
+import { conversationSchema, createInterviewResponseSchema } from '@/lib/life/contracts';
 
 export function StartConversation() {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showInterview, setShowInterview] = useState(false);
 
   async function startTextConversation() {
     setPending(true);
@@ -32,6 +33,30 @@ export function StartConversation() {
       return;
     }
     router.push(`/life/conversations/${conversation.data.id}`);
+  }
+
+  async function startInterview(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setPending(true);
+    setError(null);
+    const form = new FormData(event.currentTarget);
+    const response = await fetch('/api/life/interviews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ theme: String(form.get('theme')), title: String(form.get('title')) }),
+    });
+    if (!response.ok) {
+      setError('The interview could not be started.');
+      setPending(false);
+      return;
+    }
+    const parsed = createInterviewResponseSchema.safeParse(await response.json());
+    if (!parsed.success) {
+      setError('Life returned an invalid interview response.');
+      setPending(false);
+      return;
+    }
+    router.push(`/life/conversations/${parsed.data.conversation.id}`);
   }
 
   return (
@@ -59,13 +84,41 @@ export function StartConversation() {
         <Button
           type="button"
           variant="ghost"
-          disabled
-          title="Interviews are a later phase"
+          disabled={pending}
+          onClick={() => setShowInterview((visible) => !visible)}
           className="text-primary-foreground"
         >
           <MessagesSquare aria-hidden="true" /> Interview
         </Button>
       </div>
+      {showInterview && (
+        <form
+          onSubmit={startInterview}
+          className="mt-5 grid gap-3 border border-dashed border-primary-foreground/50 p-4 sm:grid-cols-2"
+        >
+          <label className="text-xs">
+            <span className="mb-2 block uppercase tracking-wider">Title</span>
+            <input
+              name="title"
+              required
+              defaultValue="Life interview"
+              className="h-10 w-full border border-dashed border-primary-foreground/50 bg-transparent px-3 text-sm"
+            />
+          </label>
+          <label className="text-xs">
+            <span className="mb-2 block uppercase tracking-wider">Theme</span>
+            <input
+              name="theme"
+              required
+              placeholder="A period, relationship, or decision"
+              className="h-10 w-full border border-dashed border-primary-foreground/50 bg-transparent px-3 text-sm"
+            />
+          </label>
+          <Button type="submit" variant="secondary" disabled={pending} className="sm:col-span-2">
+            {pending ? 'Starting…' : 'Start themed interview'}
+          </Button>
+        </form>
+      )}
       {error && (
         <p role="alert" className="mt-3 text-sm">
           {error}

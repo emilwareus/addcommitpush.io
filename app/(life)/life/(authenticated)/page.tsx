@@ -3,6 +3,7 @@ import { AlertTriangle, ArrowRight, Database, HeartPulse, Plug, ScrollText } fro
 import { LifePageHeader } from '@/components/life/page-header';
 import { MemoryCard } from '@/components/life/memory-card';
 import { StartConversation } from '@/components/life/start-conversation';
+import { ReflectionAction } from '@/components/life/reflection-action';
 import { Badge } from '@/components/ui/badge';
 import { enumLabel, formatInOwnerTimezone, formatMemoryTime } from '@/lib/life/formatting';
 import { getDashboardData } from '@/lib/life/queries.server';
@@ -23,6 +24,7 @@ export default async function LifeDashboardPage() {
       />
       <div className="grid gap-5 lg:grid-cols-2">
         <StartConversation />
+        <ReflectionAction />
 
         <DashboardPanel title="Recent memories" icon={Database} href="/life/memories">
           <div className="space-y-3">
@@ -126,9 +128,14 @@ export default async function LifeDashboardPage() {
             <strong>{data.pendingContradictions.length}</strong> pending contradictions and{' '}
             <strong>{connectorErrors.length}</strong> connector errors.
           </p>
-          <p className="mt-3 text-xs text-muted-foreground">
-            Review workflows are intentionally reserved for later phases.
-          </p>
+          <div className="mt-3 flex gap-4 text-xs">
+            <Link href="/life/contradictions" prefetch={false}>
+              Review contradictions
+            </Link>
+            <Link href="/life/settings/connectors" prefetch={false}>
+              Review connectors
+            </Link>
+          </div>
         </DashboardPanel>
 
         <DashboardPanel title="Activity" icon={ScrollText}>

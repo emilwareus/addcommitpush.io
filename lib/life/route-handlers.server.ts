@@ -5,6 +5,7 @@ import type { ZodType } from 'zod';
 import { ZodError } from 'zod';
 import { getLifeServerConfig } from './config.server';
 import { LifeApiError } from './errors';
+import type { IngestionJob, IngestionJobView } from './contracts';
 import {
   LIFE_SESSION_COOKIE,
   LifeSessionError,
@@ -44,6 +45,16 @@ export async function readLifeMutation<T>(request: Request, schema: ZodType<T>):
 
 export function privateJson(data: unknown, status = 200): NextResponse {
   return NextResponse.json(data, { status, headers: PRIVATE_HEADERS });
+}
+
+export function ingestionJobView(job: IngestionJob): IngestionJobView {
+  return {
+    id: job.id,
+    status: job.status,
+    attempts: job.attempts,
+    last_error: job.last_error ? 'The connector sync failed.' : null,
+    completed_at: job.completed_at,
+  };
 }
 
 export async function lifeRouteError(error: unknown): Promise<NextResponse> {
