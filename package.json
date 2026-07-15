@@ -13,6 +13,7 @@
     "format:check": "prettier --check .",
     "check": "pnpm format && pnpm lint && pnpm build",
     "check-links": "tsx scripts/check-about-links.ts",
+    "check:life-contracts": "tsx scripts/check-life-contracts.ts",
     "optimize-images": "tsx scripts/optimize-images.ts",
     "generate-feeds": "tsx scripts/generate-feeds.ts",
     "extract-text": "tsx scripts/extract-post-text.ts",

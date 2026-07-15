@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useSlideStep } from '@/app/presentations/deep-research/layout';
+import { useSlideStep } from '@/app/(public)/presentations/deep-research/layout';
 
 const experts = [
   { role: 'Basic Fact Writer', question: 'What are the key facts?' },
