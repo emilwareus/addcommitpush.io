@@ -19,9 +19,9 @@ export default async function VoicePage() {
   return (
     <div className="mx-auto max-w-7xl">
       <LifePageHeader
-        kicker="Realtime voice"
+        kicker="Voice"
         title="Talk with Life"
-        description="A private WebRTC conversation with live transcripts, fixed memory sensitivity, and explicit durable saves. Realtime errors never switch to uploaded audio."
+        description="Talk naturally. Life asks questions, remembers what matters, and can explore everything you have shared."
       />
       <VoiceSession defaultTitle={defaultTitle} />
     </div>

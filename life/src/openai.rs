@@ -408,27 +408,101 @@ fn realtime_client_secret_request(
                 },
                 "output": {"voice": voice}
             },
-            "tools": [{
-                "type": "function",
-                "name": "search_life_memory",
-                "description": "Search the authenticated person's private life memory. Call this before making a claim about their history, identity, relationships, goals, feelings, or prior statements.",
-                "parameters": {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "required": ["query", "limit"],
-                    "properties": {
-                        "query": {
-                            "type": "string",
-                            "description": "A concise semantic and keyword search query."
-                        },
-                        "limit": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "maximum": 20
+            "tools": [
+                {
+                    "type": "function",
+                    "name": "record_life_memory",
+                    "description": "Record a durable thought, fact, event, relationship, preference, goal, decision, or memory shared by the person. Call this before responding whenever they share something worth remembering.",
+                    "parameters": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                            "kind",
+                            "title",
+                            "body_markdown",
+                            "domain",
+                            "occurred_start"
+                        ],
+                        "properties": {
+                            "kind": {
+                                "type": "string",
+                                "enum": [
+                                    "event", "fact", "identity", "relationship", "belief",
+                                    "emotion", "goal", "regret", "secret", "journal",
+                                    "reflection", "health", "life_period", "person", "place",
+                                    "project", "decision", "achievement", "habit", "preference",
+                                    "value"
+                                ]
+                            },
+                            "title": {
+                                "type": "string",
+                                "description": "A short, specific title."
+                            },
+                            "body_markdown": {
+                                "type": "string",
+                                "description": "A faithful standalone account in the person's own terms."
+                            },
+                            "domain": {
+                                "type": "string",
+                                "description": "A concise area such as family, work, health, or identity."
+                            },
+                            "occurred_start": {
+                                "anyOf": [
+                                    {"type": "string", "format": "date-time"},
+                                    {"type": "null"}
+                                ],
+                                "description": "When it happened, or null when unknown."
+                            }
+                        }
+                    }
+                },
+                {
+                    "type": "function",
+                    "name": "search_life_memory",
+                    "description": "Search all of the person's memories for a specific question or topic. Call this before making a claim about their life.",
+                    "parameters": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["query", "limit"],
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "A concise semantic and keyword search query."
+                            },
+                            "limit": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 20
+                            }
+                        }
+                    }
+                },
+                {
+                    "type": "function",
+                    "name": "explore_life_memories",
+                    "description": "Browse the person's existing memories, newest first. Use this to find interview threads, revisit a domain, or explore without a precise query.",
+                    "parameters": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": ["kind", "domain", "limit"],
+                        "properties": {
+                            "kind": {
+                                "anyOf": [{"type": "string"}, {"type": "null"}],
+                                "description": "A memory kind to browse, or null for every kind."
+                            },
+                            "domain": {
+                                "anyOf": [{"type": "string"}, {"type": "null"}],
+                                "description": "A life domain to browse, or null for every domain."
+                            },
+                            "limit": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 20
+                            }
                         }
                     }
                 }
-            }],
+            ],
             "tool_choice": "auto",
             "max_output_tokens": 1200
         }
@@ -584,6 +658,19 @@ mod tests {
             "semantic_vad"
         );
         assert_eq!(request["session"]["audio"]["output"]["voice"], "marin");
-        assert_eq!(request["session"]["tools"][0]["name"], "search_life_memory");
+        let tool_names = request["session"]["tools"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|tool| tool["name"].as_str().unwrap())
+            .collect::<Vec<_>>();
+        assert_eq!(
+            tool_names,
+            vec![
+                "record_life_memory",
+                "search_life_memory",
+                "explore_life_memories"
+            ]
+        );
     }
 }

@@ -61,9 +61,6 @@ CREATE TABLE memories (
         'user_stated', 'observed', 'imported', 'researched', 'inferred',
         'disputed', 'retracted', 'superseded'
     )),
-    sensitivity TEXT NOT NULL CHECK (sensitivity IN (
-        'standard', 'private', 'intimate', 'restricted'
-    )),
     confidence DOUBLE PRECISION NOT NULL CHECK (confidence >= 0 AND confidence <= 1),
     importance SMALLINT NOT NULL CHECK (importance BETWEEN 0 AND 10),
     occurred_start TIMESTAMPTZ,
@@ -106,42 +103,10 @@ CREATE INDEX memories_structured_fact_idx
     ON memories (owner_id, subject, predicate)
     WHERE subject IS NOT NULL AND predicate IS NOT NULL AND superseded_at IS NULL;
 
-CREATE TABLE memory_edges (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    owner_id UUID NOT NULL REFERENCES owners(id) ON DELETE CASCADE,
-    from_memory_id UUID NOT NULL REFERENCES memories(id) ON DELETE CASCADE,
-    relation TEXT NOT NULL,
-    to_memory_id UUID NOT NULL REFERENCES memories(id) ON DELETE CASCADE,
-    confidence DOUBLE PRECISION NOT NULL CHECK (confidence >= 0 AND confidence <= 1),
-    source_id UUID REFERENCES source_records(id) ON DELETE SET NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CHECK (from_memory_id <> to_memory_id),
-    UNIQUE (from_memory_id, relation, to_memory_id)
-);
-
-CREATE INDEX memory_edges_owner_from_idx ON memory_edges (owner_id, from_memory_id);
-CREATE INDEX memory_edges_owner_to_idx ON memory_edges (owner_id, to_memory_id);
-
-CREATE TABLE contradictions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    owner_id UUID NOT NULL REFERENCES owners(id) ON DELETE CASCADE,
-    left_memory_id UUID NOT NULL REFERENCES memories(id) ON DELETE CASCADE,
-    right_memory_id UUID NOT NULL REFERENCES memories(id) ON DELETE CASCADE,
-    explanation TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN (
-        'pending', 'confirmed', 'not_a_contradiction', 'resolved'
-    )),
-    resolution_markdown TEXT,
-    detected_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    resolved_at TIMESTAMPTZ,
-    CHECK (left_memory_id <> right_memory_id),
-    UNIQUE (left_memory_id, right_memory_id)
-);
-
 CREATE TABLE conversations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     owner_id UUID NOT NULL REFERENCES owners(id) ON DELETE CASCADE,
-    mode TEXT NOT NULL CHECK (mode IN ('conversation', 'interview', 'research')),
+    mode TEXT NOT NULL CHECK (mode IN ('conversation', 'research')),
     title TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'completed')),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -155,15 +120,10 @@ CREATE TABLE realtime_sessions (
     owner_id UUID NOT NULL REFERENCES owners(id) ON DELETE CASCADE,
     conversation_id UUID NOT NULL UNIQUE REFERENCES conversations(id) ON DELETE CASCADE,
     openai_session_id TEXT NOT NULL UNIQUE,
-    allowed_sensitivities TEXT[] NOT NULL,
     status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'closed')),
     expires_at TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    closed_at TIMESTAMPTZ,
-    CHECK (cardinality(allowed_sensitivities) BETWEEN 1 AND 4),
-    CHECK (allowed_sensitivities <@ ARRAY[
-        'standard', 'private', 'intimate', 'restricted'
-    ]::TEXT[])
+    closed_at TIMESTAMPTZ
 );
 
 CREATE INDEX realtime_sessions_owner_idx
@@ -186,30 +146,6 @@ CREATE INDEX messages_conversation_idx ON messages (conversation_id, created_at,
 ALTER TABLE memories
     ADD CONSTRAINT memories_source_message_fk
     FOREIGN KEY (source_message_id) REFERENCES messages(id) DEFERRABLE INITIALLY DEFERRED;
-
-CREATE TABLE interview_sessions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    owner_id UUID NOT NULL REFERENCES owners(id) ON DELETE CASCADE,
-    conversation_id UUID NOT NULL UNIQUE REFERENCES conversations(id) ON DELETE CASCADE,
-    theme TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'completed')),
-    questions_answered INTEGER NOT NULL DEFAULT 0 CHECK (questions_answered >= 0),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    completed_at TIMESTAMPTZ
-);
-
-CREATE TABLE interview_questions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    owner_id UUID NOT NULL REFERENCES owners(id) ON DELETE CASCADE,
-    interview_id UUID NOT NULL REFERENCES interview_sessions(id) ON DELETE CASCADE,
-    question TEXT NOT NULL,
-    rationale TEXT NOT NULL,
-    status TEXT NOT NULL DEFAULT 'asked' CHECK (status IN ('asked', 'answered', 'skipped')),
-    assistant_message_id UUID NOT NULL REFERENCES messages(id) ON DELETE CASCADE,
-    answer_message_id UUID REFERENCES messages(id) ON DELETE SET NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    answered_at TIMESTAMPTZ
-);
 
 CREATE TABLE connectors (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -2,7 +2,6 @@ import { z } from 'zod';
 import {
   CONNECTOR_PROVIDERS,
   CONNECTOR_STATUSES,
-  CONTRADICTION_STATUSES,
   CONVERSATION_MODES,
   CONVERSATION_STATUSES,
   EPISTEMIC_STATUSES,
@@ -11,7 +10,6 @@ import {
   MESSAGE_MODALITIES,
   MESSAGE_ROLES,
   REALTIME_SESSION_STATUSES,
-  SENSITIVITIES,
   TEMPORAL_PRECISIONS,
 } from './constants';
 
@@ -38,13 +36,13 @@ export const uuidSchema = z.string().uuid();
 export const isoDateTimeSchema = z.string().datetime({ offset: true });
 export const memoryKindSchema = z.enum(MEMORY_KINDS);
 export const epistemicStatusSchema = z.enum(EPISTEMIC_STATUSES);
-export const sensitivitySchema = z.enum(SENSITIVITIES);
 export const temporalPrecisionSchema = z.enum(TEMPORAL_PRECISIONS);
 
 export const ownerSchema = z
   .object({
     id: uuidSchema,
     display_name: z.string(),
+    email: z.string().email().optional(),
     timezone: z.string().min(1),
     locale: z.string().min(1),
     profile_markdown: z.string(),
@@ -90,7 +88,6 @@ export const memorySchema = z
     predicate: z.string().nullable(),
     object_value: jsonValueSchema.nullable(),
     epistemic_status: epistemicStatusSchema,
-    sensitivity: sensitivitySchema,
     confidence: z.number().min(0).max(1),
     importance: z.number().int().min(0).max(10),
     occurred_start: nullableDateTimeSchema,
@@ -118,7 +115,6 @@ export const memoryInputSchema = z
     predicate: z.string().trim().min(1).max(500).nullable().optional(),
     object_value: jsonValueSchema.nullable().optional(),
     epistemic_status: epistemicStatusSchema.default('user_stated'),
-    sensitivity: sensitivitySchema.default('private'),
     confidence: z.number().min(0).max(1).default(1),
     importance: z.number().int().min(0).max(10).default(5),
     occurred_start: nullableDateTimeSchema.optional(),
@@ -171,13 +167,8 @@ export const searchRequestSchema = z
   .object({
     query: z.string().trim().min(1).max(2_000),
     limit: z.number().int().min(1).max(50).default(12),
-    sensitivities: z.array(sensitivitySchema).min(1).max(4),
   })
-  .strict()
-  .refine((value) => new Set(value.sensitivities).size === value.sensitivities.length, {
-    message: 'Sensitivities must be unique.',
-    path: ['sensitivities'],
-  });
+  .strict();
 
 export const searchHitSchema = z
   .object({
@@ -186,7 +177,6 @@ export const searchHitSchema = z
     title: z.string(),
     body_markdown: z.string(),
     domain: z.string(),
-    sensitivity: sensitivitySchema,
     occurred_start: nullableDateTimeSchema,
     epistemic_status: epistemicStatusSchema,
     source_id: nullableUuidSchema,
@@ -239,7 +229,6 @@ export const messageSchema = z
 export const conversationTurnRequestSchema = z
   .object({
     content: z.string().trim().min(1).max(50_000),
-    sensitivities: z.array(sensitivitySchema).min(1).max(4),
   })
   .strict();
 
@@ -259,7 +248,6 @@ export const realtimeSessionSchema = z
     owner_id: uuidSchema,
     conversation_id: uuidSchema,
     openai_session_id: z.string(),
-    allowed_sensitivities: z.array(sensitivitySchema).min(1).max(4),
     status: z.enum(REALTIME_SESSION_STATUSES),
     expires_at: isoDateTimeSchema,
     created_at: isoDateTimeSchema,
@@ -281,17 +269,30 @@ export const createRealtimeSessionResponseSchema = z
 export const createRealtimeSessionRequestSchema = z
   .object({
     title: z.string().trim().min(1).max(300),
-    sensitivities: z.array(sensitivitySchema).min(1).max(4),
   })
-  .strict()
-  .refine((value) => new Set(value.sensitivities).size === value.sensitivities.length, {
-    message: 'Sensitivities must be unique.',
-    path: ['sensitivities'],
-  });
+  .strict();
 
 export const realtimeMemorySearchRequestSchema = z
   .object({
     query: z.string().trim().min(1).max(2_000),
+    limit: z.number().int().min(1).max(20),
+  })
+  .strict();
+
+export const realtimeMemoryRecordRequestSchema = z
+  .object({
+    kind: memoryKindSchema,
+    title: z.string().trim().min(1).max(300),
+    body_markdown: z.string().trim().min(1).max(100_000),
+    domain: z.string().trim().min(1).max(200),
+    occurred_start: nullableDateTimeSchema,
+  })
+  .strict();
+
+export const realtimeMemoryExploreRequestSchema = z
+  .object({
+    kind: memoryKindSchema.nullable(),
+    domain: z.string().trim().min(1).max(200).nullable(),
     limit: z.number().int().min(1).max(20),
   })
   .strict();
@@ -327,7 +328,6 @@ export const researchCitationSchema = z
 export const researchRequestSchema = z
   .object({
     query: z.string().trim().min(1).max(2_000),
-    sensitivity: sensitivitySchema.default('standard'),
   })
   .strict();
 export const researchResponseSchema = z
@@ -411,40 +411,6 @@ export const oauthStartResponseSchema = z
   })
   .strict();
 
-export const memoryEdgeSchema = z
-  .object({
-    id: uuidSchema,
-    owner_id: uuidSchema,
-    from_memory_id: uuidSchema,
-    relation: z.string(),
-    to_memory_id: uuidSchema,
-    confidence: z.number().min(0).max(1),
-    source_id: nullableUuidSchema,
-    created_at: isoDateTimeSchema,
-  })
-  .strict();
-
-export const contradictionSchema = z
-  .object({
-    id: uuidSchema,
-    owner_id: uuidSchema,
-    left_memory_id: uuidSchema,
-    right_memory_id: uuidSchema,
-    explanation: z.string(),
-    status: z.enum(CONTRADICTION_STATUSES),
-    resolution_markdown: z.string().nullable(),
-    detected_at: isoDateTimeSchema,
-    resolved_at: nullableDateTimeSchema,
-  })
-  .strict();
-
-export const resolveContradictionRequestSchema = z
-  .object({
-    status: z.enum(['confirmed', 'not_a_contradiction', 'resolved']),
-    resolution_markdown: z.string().trim().min(1).max(50_000),
-  })
-  .strict();
-
 export const healthMeasurementSchema = z
   .object({
     id: uuidSchema,
@@ -475,59 +441,6 @@ export const healthMeasurementInputSchema = z
     (value) => !value.ended_at || Date.parse(value.ended_at) > Date.parse(value.measured_at),
     { message: 'The end time must be after the measurement time.', path: ['ended_at'] }
   );
-
-export const reflectionRequestSchema = z
-  .object({
-    prompt: z.string().trim().min(1).max(10_000),
-    sensitivities: z.array(sensitivitySchema).min(1).max(4),
-    sensitivity: sensitivitySchema.default('private'),
-  })
-  .strict()
-  .refine((value) => new Set(value.sensitivities).size === value.sensitivities.length, {
-    message: 'Sensitivities must be unique.',
-    path: ['sensitivities'],
-  });
-
-export const reflectionResponseSchema = z
-  .object({ memory: memorySchema, cited_memory_ids: z.array(uuidSchema) })
-  .strict();
-
-export const createInterviewRequestSchema = z
-  .object({
-    theme: z.string().trim().min(1).max(1_000),
-    title: z.string().trim().min(1).max(300),
-  })
-  .strict();
-
-export const interviewSessionSchema = z
-  .object({
-    id: uuidSchema,
-    owner_id: uuidSchema,
-    conversation_id: uuidSchema,
-    theme: z.string(),
-    status: z.string(),
-    questions_answered: z.number().int().min(0),
-    created_at: isoDateTimeSchema,
-    completed_at: nullableDateTimeSchema,
-  })
-  .strict();
-
-export const createInterviewResponseSchema = z
-  .object({
-    conversation: conversationSchema,
-    interview: interviewSessionSchema,
-    opening_message: messageSchema,
-    question: z.string(),
-  })
-  .strict();
-
-export const deleteOwnerRequestSchema = z
-  .object({
-    confirm_display_name: z.string().min(1).max(300),
-    password: z.string().min(1).max(1_024),
-    confirmed: z.literal(true),
-  })
-  .strict();
 
 export const auditEventSchema = z
   .object({
@@ -570,8 +483,6 @@ export const searchHitListSchema = z.array(searchHitSchema);
 export const conversationListSchema = z.array(conversationSchema);
 export const messageListSchema = z.array(messageSchema);
 export const connectorListSchema = z.array(connectorSchema);
-export const memoryEdgeListSchema = z.array(memoryEdgeSchema);
-export const contradictionListSchema = z.array(contradictionSchema);
 export const healthMeasurementListSchema = z.array(healthMeasurementSchema);
 export const auditEventListSchema = z.array(auditEventSchema);
 
@@ -587,13 +498,13 @@ export type RealtimeSession = z.infer<typeof realtimeSessionSchema>;
 export type CreateRealtimeSessionRequest = z.infer<typeof createRealtimeSessionRequestSchema>;
 export type CreateRealtimeSessionResponse = z.infer<typeof createRealtimeSessionResponseSchema>;
 export type RealtimeMemorySearchRequest = z.infer<typeof realtimeMemorySearchRequestSchema>;
+export type RealtimeMemoryRecordRequest = z.infer<typeof realtimeMemoryRecordRequestSchema>;
+export type RealtimeMemoryExploreRequest = z.infer<typeof realtimeMemoryExploreRequestSchema>;
 export type RealtimeTurnRequest = z.infer<typeof realtimeTurnRequestSchema>;
 export type Connector = z.infer<typeof connectorSchema>;
 export type IngestionJob = z.infer<typeof ingestionJobSchema>;
 export type IngestionJobView = z.infer<typeof ingestionJobViewSchema>;
 export type ConnectorView = z.infer<typeof connectorViewSchema>;
-export type MemoryEdge = z.infer<typeof memoryEdgeSchema>;
-export type Contradiction = z.infer<typeof contradictionSchema>;
 export type HealthMeasurement = z.infer<typeof healthMeasurementSchema>;
 export type AuditEvent = z.infer<typeof auditEventSchema>;
 export type ResearchResponse = z.infer<typeof researchResponseSchema>;

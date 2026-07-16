@@ -3,26 +3,17 @@ import type React from 'react';
 import {
   BookOpen,
   Clock3,
-  FlaskConical,
-  HeartPulse,
-  LayoutDashboard,
-  LockKeyhole,
   MessagesSquare,
   Mic,
   Settings,
-  ShieldAlert,
 } from 'lucide-react';
 import { LifeLogoutButton } from './logout-button';
 
 const links = [
-  { href: '/life', label: 'Overview', icon: LayoutDashboard },
   { href: '/life/voice', label: 'Voice', icon: Mic },
   { href: '/life/memories', label: 'Memories', icon: BookOpen },
   { href: '/life/timeline', label: 'Timeline', icon: Clock3 },
   { href: '/life/conversations', label: 'Conversations', icon: MessagesSquare },
-  { href: '/life/research', label: 'Research', icon: FlaskConical },
-  { href: '/life/health', label: 'Health', icon: HeartPulse },
-  { href: '/life/contradictions', label: 'Review', icon: ShieldAlert },
   { href: '/life/settings', label: 'Settings', icon: Settings },
 ];
 
@@ -31,11 +22,8 @@ export function LifeShell({ children }: Readonly<{ children: React.ReactNode }>)
     <div className="min-h-screen lg:grid lg:grid-cols-[230px_minmax(0,1fr)]">
       <header className="border-b border-dashed border-border bg-background lg:min-h-screen lg:border-r lg:border-b-0">
         <div className="flex h-16 items-center justify-between px-5 lg:h-auto lg:items-start lg:px-6 lg:py-8">
-          <Link href="/life" className="no-underline" prefetch={false}>
+          <Link href="/life/voice" className="no-underline" prefetch={false}>
             <span className="display-heading text-2xl normal-case">Life</span>
-            <span className="ml-3 inline-flex items-center gap-1 text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-              <LockKeyhole className="h-3 w-3" aria-hidden="true" /> Private
-            </span>
           </Link>
           <div className="lg:hidden">
             <LifeLogoutButton compact />

@@ -114,7 +114,7 @@ export function ConnectorCard({
     }
   }
 
-  async function confirmSensitiveAction() {
+  async function confirmDestructiveAction() {
     if (!connector || !confirmAction) return;
     const action = confirmAction;
     setConfirmAction(null);
@@ -129,7 +129,7 @@ export function ConnectorCard({
           : await jsonMutation(`/api/life/connectors/${connector.id}`, 'DELETE', {
               confirm: 'revoke',
             });
-      if (!response.ok) throw new Error('sensitive_action_failed');
+      if (!response.ok) throw new Error('destructive_action_failed');
       setJobId(null);
       router.refresh();
     } catch {
@@ -275,7 +275,7 @@ export function ConnectorCard({
               <Button type="button" variant="outline" onClick={() => setConfirmAction(null)}>
                 Cancel
               </Button>
-              <Button type="button" variant="destructive" onClick={confirmSensitiveAction}>
+              <Button type="button" variant="destructive" onClick={confirmDestructiveAction}>
                 {confirmAction === 'reset' ? 'Reset cursor' : 'Revoke connector'}
               </Button>
             </div>

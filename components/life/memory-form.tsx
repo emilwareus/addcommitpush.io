@@ -4,27 +4,12 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import {
-  EPISTEMIC_STATUSES,
-  MEMORY_KINDS,
-  SENSITIVITIES,
-  TEMPORAL_PRECISIONS,
-} from '@/lib/life/constants';
-import { memoryInputSchema, memorySchema, type JsonValue, type Memory } from '@/lib/life/contracts';
+import { MEMORY_KINDS } from '@/lib/life/constants';
+import { memoryInputSchema, memorySchema, type Memory } from '@/lib/life/contracts';
 import { enumLabel, isoToOwnerDateTime, ownerLocalDateTimeToIso } from '@/lib/life/formatting';
 
 const fieldClass =
   'h-10 w-full border border-dashed border-border bg-input px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-ring/30';
-
-function nullableText(form: FormData, name: string): string | null {
-  const value = String(form.get(name) ?? '').trim();
-  return value || null;
-}
-
-function parseObjectValue(value: string): JsonValue | null {
-  if (!value.trim()) return null;
-  return JSON.parse(value) as unknown as JsonValue;
-}
 
 export function MemoryForm({
   timezone,
@@ -45,28 +30,29 @@ export function MemoryForm({
     setError(null);
     try {
       const form = new FormData(event.currentTarget);
-      const occurredStart = nullableText(form, 'occurred_start');
-      const occurredEnd = nullableText(form, 'occurred_end');
+      const occurredLocal = String(form.get('occurred_start') ?? '').trim();
+      const occurredStart = occurredLocal
+        ? ownerLocalDateTimeToIso(occurredLocal, timezone)
+        : null;
       const input = memoryInputSchema.parse({
         kind: String(form.get('kind')),
         title: String(form.get('title')),
         body_markdown: String(form.get('body_markdown')),
-        document_path: nullableText(form, 'document_path'),
         domain: String(form.get('domain')),
-        subject: nullableText(form, 'subject'),
-        predicate: nullableText(form, 'predicate'),
-        object_value: parseObjectValue(String(form.get('object_value') ?? '')),
-        epistemic_status: String(form.get('epistemic_status')),
-        sensitivity: String(form.get('sensitivity')),
-        confidence: Number(form.get('confidence')),
-        importance: Number(form.get('importance')),
-        occurred_start: occurredStart ? ownerLocalDateTimeToIso(occurredStart, timezone) : null,
-        occurred_end: occurredEnd ? ownerLocalDateTimeToIso(occurredEnd, timezone) : null,
-        temporal_precision: String(form.get('temporal_precision')),
-        source_id: nullableText(form, 'source_id'),
-        source_message_id: nullableText(form, 'source_message_id'),
-        evidence_excerpt: nullableText(form, 'evidence_excerpt'),
-        derived_from_id: nullableText(form, 'derived_from_id'),
+        occurred_start: occurredStart,
+        occurred_end: null,
+        temporal_precision: occurredStart ? 'minute' : 'unknown',
+        epistemic_status: memory?.epistemic_status ?? 'user_stated',
+        confidence: memory?.confidence ?? 1,
+        importance: memory?.importance ?? 5,
+        document_path: memory?.document_path ?? null,
+        subject: memory?.subject ?? null,
+        predicate: memory?.predicate ?? null,
+        object_value: memory?.object_value ?? null,
+        source_id: memory?.source_id ?? null,
+        source_message_id: memory?.source_message_id ?? null,
+        evidence_excerpt: memory?.evidence_excerpt ?? null,
+        derived_from_id: memory?.derived_from_id ?? null,
       });
       const response = await fetch(
         memory ? `/api/life/memories/${memory.id}` : '/api/life/memories',
@@ -81,7 +67,7 @@ export function MemoryForm({
       router.push(`/life/memories/${saved.id}`);
       router.refresh();
     } catch {
-      setError('Check every field, including JSON and time bounds, then try again.');
+      setError('Check the memory details and try again.');
       setPending(false);
     }
   }
@@ -92,7 +78,13 @@ export function MemoryForm({
         <input className={fieldClass} name="title" required defaultValue={memory?.title} />
       </Field>
       <Field label="Kind">
-        <Select name="kind" values={MEMORY_KINDS} defaultValue={memory?.kind ?? 'fact'} />
+        <select className={fieldClass} name="kind" defaultValue={memory?.kind ?? 'fact'}>
+          {MEMORY_KINDS.map((kind) => (
+            <option key={kind} value={kind}>
+              {enumLabel(kind)}
+            </option>
+          ))}
+        </select>
       </Field>
       <Field label="Domain">
         <input
@@ -102,48 +94,10 @@ export function MemoryForm({
           defaultValue={memory?.domain ?? 'personal'}
         />
       </Field>
-      <Field label="Body (Markdown)" className="sm:col-span-2">
+      <Field label="Memory" className="sm:col-span-2">
         <Textarea name="body_markdown" required rows={8} defaultValue={memory?.body_markdown} />
       </Field>
-      <Field label="Sensitivity">
-        <Select
-          name="sensitivity"
-          values={SENSITIVITIES}
-          defaultValue={memory?.sensitivity ?? 'private'}
-        />
-      </Field>
-      <Field label="Epistemic status">
-        <Select
-          name="epistemic_status"
-          values={EPISTEMIC_STATUSES}
-          defaultValue={memory?.epistemic_status ?? 'user_stated'}
-        />
-      </Field>
-      <Field label="Confidence (0–1)">
-        <input
-          className={fieldClass}
-          name="confidence"
-          type="number"
-          min="0"
-          max="1"
-          step="0.01"
-          required
-          defaultValue={memory?.confidence ?? 1}
-        />
-      </Field>
-      <Field label="Importance (0–10)">
-        <input
-          className={fieldClass}
-          name="importance"
-          type="number"
-          min="0"
-          max="10"
-          step="1"
-          required
-          defaultValue={memory?.importance ?? 5}
-        />
-      </Field>
-      <Field label={`Occurred start (${timezone})`}>
+      <Field label={`When (${timezone})`} className="sm:col-span-2">
         <input
           className={fieldClass}
           name="occurred_start"
@@ -153,79 +107,6 @@ export function MemoryForm({
           }
         />
       </Field>
-      <Field label={`Occurred end (${timezone})`}>
-        <input
-          className={fieldClass}
-          name="occurred_end"
-          type="datetime-local"
-          defaultValue={
-            memory?.occurred_end ? isoToOwnerDateTime(memory.occurred_end, timezone) : ''
-          }
-        />
-      </Field>
-      <Field label="Temporal precision">
-        <Select
-          name="temporal_precision"
-          values={TEMPORAL_PRECISIONS}
-          defaultValue={memory?.temporal_precision ?? 'unknown'}
-        />
-      </Field>
-      <Field label="Document path">
-        <input
-          className={fieldClass}
-          name="document_path"
-          placeholder="notes/example.md"
-          defaultValue={memory?.document_path ?? ''}
-        />
-      </Field>
-      <Field label="Subject">
-        <input className={fieldClass} name="subject" defaultValue={memory?.subject ?? ''} />
-      </Field>
-      <Field label="Predicate">
-        <input className={fieldClass} name="predicate" defaultValue={memory?.predicate ?? ''} />
-      </Field>
-      <Field label="Object value (JSON)" className="sm:col-span-2">
-        <Textarea
-          name="object_value"
-          rows={4}
-          defaultValue={
-            !memory || memory.object_value === null
-              ? ''
-              : JSON.stringify(memory.object_value, null, 2)
-          }
-        />
-      </Field>
-      <details className="border border-dashed border-border p-4 sm:col-span-2">
-        <summary className="cursor-pointer text-xs font-medium uppercase tracking-[0.1em] text-primary">
-          Provenance fields
-        </summary>
-        <div className="mt-5 grid gap-5 sm:grid-cols-2">
-          <Field label="Source UUID">
-            <input className={fieldClass} name="source_id" defaultValue={memory?.source_id ?? ''} />
-          </Field>
-          <Field label="Source message UUID">
-            <input
-              className={fieldClass}
-              name="source_message_id"
-              defaultValue={memory?.source_message_id ?? ''}
-            />
-          </Field>
-          <Field label="Derived-from UUID">
-            <input
-              className={fieldClass}
-              name="derived_from_id"
-              defaultValue={memory?.derived_from_id ?? ''}
-            />
-          </Field>
-          <Field label="Evidence excerpt">
-            <Textarea
-              name="evidence_excerpt"
-              rows={3}
-              defaultValue={memory?.evidence_excerpt ?? ''}
-            />
-          </Field>
-        </div>
-      </details>
       {error && (
         <p role="alert" className="text-sm text-danger sm:col-span-2">
           {error}
@@ -233,7 +114,7 @@ export function MemoryForm({
       )}
       <div className="flex gap-3 sm:col-span-2">
         <Button type="submit" disabled={pending}>
-          {pending ? 'Saving revision…' : memory ? 'Create revision' : 'Create memory'}
+          {pending ? 'Saving…' : memory ? 'Save revision' : 'Create memory'}
         </Button>
         {onCancel && (
           <Button type="button" variant="ghost" onClick={onCancel}>
@@ -261,25 +142,5 @@ function Field({
       </span>
       {children}
     </label>
-  );
-}
-
-function Select<T extends readonly string[]>({
-  name,
-  values,
-  defaultValue,
-}: {
-  name: string;
-  values: T;
-  defaultValue: T[number];
-}) {
-  return (
-    <select className={fieldClass} name={name} defaultValue={defaultValue}>
-      {values.map((value) => (
-        <option key={value} value={value}>
-          {enumLabel(value)}
-        </option>
-      ))}
-    </select>
   );
 }

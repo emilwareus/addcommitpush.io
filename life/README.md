@@ -1,40 +1,33 @@
 # Life
 
-`life` is the Rust/PostgreSQL backend for private personal knowledge agents. It
-supports multiple manually provisioned users while keeping every credential,
-query, relationship, job, and export scoped to one owner. It stores durable
-Markdown and structured, provenance-linked memories; supports conversation,
-interviews, real-time voice, hybrid retrieval, explicit online research, and
-activity ingestion.
+`life` is the Rust/PostgreSQL backend for a voice-first personal memory agent.
+The main interaction is a Realtime WebRTC conversation in which Life interviews
+the owner, records memories as they are shared, and searches or explores the
+owner's complete memory collection.
 
-Read [the requirements](docs/REQUIREMENTS.md) and
-[architecture](docs/ARCHITECTURE.md) before changing the data model. The
-[HTTP API](docs/API.md), [Cloud Run runbook](docs/DEPLOYMENT.md), and
-[threat model](docs/THREAT_MODEL.md) define its integration and privacy contract.
-See [user provisioning](docs/PROVISIONING.md) before making an API request and
-[the Realtime voice contract](docs/REALTIME_VOICE.md) before building a client.
+Every protected request is scoped to the owner resolved from a bearer token.
+PostgreSQL stores memories, transcripts, connector data, audit events, health
+measurements, and exports. It also provides full-text and pgvector retrieval and
+acts as the connector worker queue.
 
-## What is implemented
+## Core capabilities
 
-- Append-only typed memories, stable Markdown document paths, life timeline,
-  structured facts, relations, contradictions, provenance, and audit events.
-- PostgreSQL `tsvector` plus pgvector HNSW candidates fused with reciprocal-rank
-  fusion. PostgreSQL is also the only worker queue.
-- Per-user bearer credentials stored only as SHA-256 digests. There is no user
-  creation API; an operator provisions and rotates users directly in PostgreSQL.
-- Evidence-validated conversations, adaptive interviews, cited reflections,
-  transcription/speech voice turns, and owner-bound Realtime WebRTC sessions.
-- Explicit cited online research and encrypted OAuth for GitHub, Linear, and
-  Gmail, with idempotent source ingestion by a Rust worker.
-- Vendor-neutral future health measurements, complete JSON/Markdown export, and
-  deliberate owner deletion.
-- Non-root multi-stage image for the API and Cloud Run Job worker.
+- Typed Markdown memories with append-only revisions and a chronological view.
+- Hybrid full-text and vector search over every active memory for the owner.
+- Realtime voice with three tools: record, search, and explore memories.
+- Durable text and voice conversations.
+- Explicit cited online research.
+- Encrypted GitHub, Linear, and Gmail connectors with idempotent ingestion.
+- Health measurements, audit history, and JSON/Markdown export.
+
+Read the [API](docs/API.md), [architecture](docs/ARCHITECTURE.md),
+[Realtime voice contract](docs/REALTIME_VOICE.md), and
+[threat model](docs/THREAT_MODEL.md) before changing an integration boundary.
 
 ## Local setup
 
 ```bash
 cp .env.example .env
-# Replace every required secret, then export the file into your shell.
 set -a
 source .env
 set +a
@@ -42,35 +35,22 @@ docker compose up --detach --wait postgres
 cargo run --locked --bin life-api
 ```
 
-The service never reads `.env` itself. This makes the runtime contract identical
-on a developer machine and Cloud Run. Use your shell or a secrets tool to export
-the values.
+The service does not read `.env` itself. Configuration must be exported by the
+shell or a secrets manager. Startup validates configuration and applies the SQLx
+migrations.
 
-Run all quality gates:
+Run all backend quality gates:
 
 ```bash
 make check
 ```
 
-Run the connector worker continuously on a developer machine:
+Run the connector worker continuously:
 
 ```bash
 cargo run --locked --bin life-worker
 ```
 
-Drain queued jobs once, as the Cloud Run Job does:
-
-```bash
-cargo run --locked --bin life-worker -- --drain
-```
-
-The API starts only when required configuration is valid and migrations have
-completed. `OPENAI_API_KEY` is required even when only repository routes are in
-use because there is one configured reasoning/embedding/voice path and no
-provider downgrade.
-
-No frontend is included. The intended client keeps each Life bearer token in a
-server-side application session, requests a short-lived OpenAI client secret
-through `POST /v1/realtime/sessions`, and connects the browser microphone to
-OpenAI over WebRTC. Memory tool calls and completed transcripts return through
-the authenticated Life API. Wake-word detection remains a browser concern.
+The Next.js application proxies Life requests from its server so the browser
+never receives the Life bearer token. The browser receives only the short-lived
+OpenAI Realtime client secret needed for its WebRTC connection.

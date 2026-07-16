@@ -49,14 +49,6 @@ impl ResearchService {
                 "research query cannot be empty".to_owned(),
             ));
         }
-        if !matches!(
-            request.sensitivity.as_str(),
-            "standard" | "private" | "intimate" | "restricted"
-        ) {
-            return Err(AppError::InvalidInput(
-                "invalid research sensitivity".to_owned(),
-            ));
-        }
         let owner = self.repository.owner(owner_id).await?;
         let safety_identifier = hex::encode(Sha256::digest(owner_id.as_bytes()));
         let search_input = serde_json::to_string_pretty(&json!({
@@ -117,7 +109,6 @@ impl ResearchService {
                 &report.text,
                 &annotations,
                 &content_hash,
-                &request.sensitivity,
                 extraction.value.memories,
                 embeddings,
             )

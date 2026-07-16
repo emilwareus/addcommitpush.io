@@ -35,7 +35,6 @@ pub struct Memory {
     pub predicate: Option<String>,
     pub object_value: Option<Value>,
     pub epistemic_status: String,
-    pub sensitivity: String,
     pub confidence: f64,
     pub importance: i16,
     pub occurred_start: Option<DateTime<Utc>>,
@@ -63,8 +62,6 @@ pub struct MemoryInput {
     pub object_value: Option<Value>,
     #[serde(default = "default_user_stated")]
     pub epistemic_status: String,
-    #[serde(default = "default_sensitivity")]
-    pub sensitivity: String,
     #[serde(default = "default_confidence")]
     pub confidence: f64,
     #[serde(default = "default_importance")]
@@ -94,8 +91,6 @@ pub struct SearchRequest {
     pub query: String,
     #[serde(default = "default_search_limit")]
     pub limit: i64,
-    #[serde(default = "default_search_sensitivities")]
-    pub sensitivities: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -112,8 +107,6 @@ pub struct MarkdownDocumentInput {
     pub title: String,
     pub body_markdown: String,
     pub domain: String,
-    #[serde(default = "default_sensitivity")]
-    pub sensitivity: String,
     pub occurred_start: Option<DateTime<Utc>>,
     pub occurred_end: Option<DateTime<Utc>>,
     #[serde(default = "default_temporal_precision")]
@@ -127,7 +120,6 @@ pub struct SearchHit {
     pub title: String,
     pub body_markdown: String,
     pub domain: String,
-    pub sensitivity: String,
     pub occurred_start: Option<DateTime<Utc>>,
     pub epistemic_status: String,
     pub source_id: Option<Uuid>,
@@ -163,7 +155,6 @@ pub struct RealtimeSession {
     pub owner_id: Uuid,
     pub conversation_id: Uuid,
     pub openai_session_id: String,
-    pub allowed_sensitivities: Vec<String>,
     pub status: String,
     pub expires_at: DateTime<Utc>,
     pub created_at: DateTime<Utc>,
@@ -173,8 +164,6 @@ pub struct RealtimeSession {
 #[derive(Debug, Deserialize)]
 pub struct CreateRealtimeSessionRequest {
     pub title: String,
-    #[serde(default = "default_search_sensitivities")]
-    pub sensitivities: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -199,18 +188,29 @@ pub struct RealtimeMemorySearchRequest {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct RealtimeMemoryRecordRequest {
+    pub kind: String,
+    pub title: String,
+    pub body_markdown: String,
+    pub domain: String,
+    pub occurred_start: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RealtimeMemoryExploreRequest {
+    pub kind: Option<String>,
+    pub domain: Option<String>,
+    #[serde(default = "default_search_limit")]
+    pub limit: i64,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct RealtimeTurnRequest {
     pub user_transcript: String,
     pub assistant_transcript: String,
     pub provider_response_id: String,
     #[serde(default)]
     pub cited_memory_ids: Vec<Uuid>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RealtimeExtraction {
-    pub memory_candidates: Vec<AgentMemoryCandidate>,
-    pub contradictions: Vec<ContradictionCandidate>,
 }
 
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
@@ -229,8 +229,6 @@ pub struct Message {
 #[derive(Debug, Deserialize)]
 pub struct ConversationTurnRequest {
     pub content: String,
-    #[serde(default = "default_search_sensitivities")]
-    pub sensitivities: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -242,7 +240,6 @@ pub struct AgentMemoryCandidate {
     pub subject: Option<String>,
     pub predicate: Option<String>,
     pub object_value: Option<Value>,
-    pub sensitivity: String,
     pub confidence: f64,
     pub importance: i16,
     pub occurred_start: Option<DateTime<Utc>>,
@@ -263,7 +260,6 @@ impl AgentMemoryCandidate {
             predicate: self.predicate,
             object_value: self.object_value,
             epistemic_status: "user_stated".to_owned(),
-            sensitivity: self.sensitivity,
             confidence: self.confidence,
             importance: self.importance,
             occurred_start: self.occurred_start,
@@ -278,17 +274,9 @@ impl AgentMemoryCandidate {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ContradictionCandidate {
-    pub existing_memory_id: Uuid,
-    pub new_memory_index: usize,
-    pub explanation: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AgentResponse {
     pub answer: String,
     pub memory_candidates: Vec<AgentMemoryCandidate>,
-    pub contradictions: Vec<ContradictionCandidate>,
     pub cited_memory_ids: Vec<Uuid>,
     pub follow_up_question: Option<String>,
 }
@@ -302,57 +290,6 @@ pub struct ConversationTurnResponse {
     pub follow_up_question: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct CreateInterviewRequest {
-    pub theme: String,
-    pub title: String,
-}
-
-#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
-pub struct InterviewSession {
-    pub id: Uuid,
-    pub owner_id: Uuid,
-    pub conversation_id: Uuid,
-    pub theme: String,
-    pub status: String,
-    pub questions_answered: i32,
-    pub created_at: DateTime<Utc>,
-    pub completed_at: Option<DateTime<Utc>>,
-}
-
-#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
-pub struct InterviewQuestion {
-    pub id: Uuid,
-    pub interview_id: Uuid,
-    pub question: String,
-    pub rationale: String,
-    pub status: String,
-    pub assistant_message_id: Uuid,
-    pub answer_message_id: Option<Uuid>,
-    pub created_at: DateTime<Utc>,
-    pub answered_at: Option<DateTime<Utc>>,
-}
-
-#[derive(Debug, Serialize)]
-pub struct CreateInterviewResponse {
-    pub conversation: Conversation,
-    pub interview: InterviewSession,
-    pub opening_message: Message,
-    pub question: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct InterviewOpening {
-    pub question: String,
-    pub rationale: String,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct CompleteInterviewRequest {
-    #[serde(default)]
-    pub completion_note: String,
-}
-
 #[derive(Debug, Serialize)]
 pub struct VoiceTurnResponse {
     pub transcript: String,
@@ -364,8 +301,6 @@ pub struct VoiceTurnResponse {
 #[derive(Debug, Deserialize)]
 pub struct ResearchRequest {
     pub query: String,
-    #[serde(default = "default_sensitivity")]
-    pub sensitivity: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -401,30 +336,6 @@ pub struct ResearchResponse {
     pub report_markdown: String,
     pub citations: Vec<ResearchCitation>,
     pub memories: Vec<Memory>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct ReflectionRequest {
-    pub prompt: String,
-    #[serde(default = "default_search_sensitivities")]
-    pub sensitivities: Vec<String>,
-    #[serde(default = "default_sensitivity")]
-    pub sensitivity: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ReflectionOutput {
-    pub title: String,
-    pub reflection_markdown: String,
-    pub confidence: f64,
-    pub importance: i16,
-    pub cited_memory_ids: Vec<Uuid>,
-}
-
-#[derive(Debug, Serialize)]
-pub struct ReflectionResponse {
-    pub memory: Memory,
-    pub cited_memory_ids: Vec<Uuid>,
 }
 
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
@@ -483,47 +394,6 @@ pub struct IngestionJob {
 }
 
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]
-pub struct MemoryEdge {
-    pub id: Uuid,
-    pub owner_id: Uuid,
-    pub from_memory_id: Uuid,
-    pub relation: String,
-    pub to_memory_id: Uuid,
-    pub confidence: f64,
-    pub source_id: Option<Uuid>,
-    pub created_at: DateTime<Utc>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct CreateMemoryEdgeRequest {
-    pub from_memory_id: Uuid,
-    pub relation: String,
-    pub to_memory_id: Uuid,
-    #[serde(default = "default_confidence")]
-    pub confidence: f64,
-    pub source_id: Option<Uuid>,
-}
-
-#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
-pub struct Contradiction {
-    pub id: Uuid,
-    pub owner_id: Uuid,
-    pub left_memory_id: Uuid,
-    pub right_memory_id: Uuid,
-    pub explanation: String,
-    pub status: String,
-    pub resolution_markdown: Option<String>,
-    pub detected_at: DateTime<Utc>,
-    pub resolved_at: Option<DateTime<Utc>>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct ResolveContradictionRequest {
-    pub status: String,
-    pub resolution_markdown: String,
-}
-
-#[derive(Debug, Clone, Serialize, sqlx::FromRow)]
 pub struct AuditEvent {
     pub id: Uuid,
     pub owner_id: Option<Uuid>,
@@ -564,13 +434,9 @@ pub struct OwnerExport {
     pub owner: Owner,
     pub memories: Vec<Memory>,
     pub source_records: Vec<SourceRecord>,
-    pub memory_edges: Vec<MemoryEdge>,
-    pub contradictions: Vec<Contradiction>,
     pub conversations: Vec<Conversation>,
     pub realtime_sessions: Vec<RealtimeSession>,
     pub messages: Vec<Message>,
-    pub interviews: Vec<InterviewSession>,
-    pub interview_questions: Vec<InterviewQuestion>,
     pub connectors: Vec<Connector>,
     pub ingestion_jobs: Vec<IngestionJob>,
     pub health_measurements: Vec<HealthMeasurement>,
@@ -603,21 +469,12 @@ pub struct HealthMeasurementInput {
     pub dimensions: Value,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct DeleteOwnerRequest {
-    pub confirm_display_name: String,
-}
-
 fn empty_json_object() -> Value {
     Value::Object(serde_json::Map::new())
 }
 
 fn default_user_stated() -> String {
     "user_stated".to_owned()
-}
-
-fn default_sensitivity() -> String {
-    "private".to_owned()
 }
 
 const fn default_confidence() -> f64 {
@@ -638,10 +495,6 @@ const fn default_limit() -> i64 {
 
 const fn default_search_limit() -> i64 {
     12
-}
-
-fn default_search_sensitivities() -> Vec<String> {
-    vec!["standard".to_owned(), "private".to_owned()]
 }
 
 fn default_conversation_mode() -> String {

@@ -1,0 +1,17 @@
+{
+  "browser": {
+    "browserName": "chromium",
+    "isolated": true,
+    "launchOptions": {
+      "executablePath": "/opt/hermes/.playwright/chromium_headless_shell-1228/chrome-headless-shell-linux64/chrome-headless-shell",
+      "headless": true,
+      "chromiumSandbox": false
+    },
+    "contextOptions": {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+- generic [ref=f1e1]:
+  - main [ref=f1e3]:
+    - generic [ref=f1e4]:
+      - paragraph [ref=f1e5]: Private workspace
+      - heading "Life" [level=1] [ref=f1e6]
+      - generic [ref=f1e7]:
+        - generic [ref=f1e8]:
+          - generic [ref=f1e9]: Password
+          - textbox "Password" [active] [ref=f1e10]
+        - button "Unlock Life" [ref=f1e11]
+  - alert [ref=f1e12]

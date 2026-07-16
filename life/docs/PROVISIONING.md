@@ -63,7 +63,7 @@ database. A request authenticates as this owner with:
 Authorization: Bearer <raw token>
 ```
 
-`POST /v1/owner` does not exist. `GET`, `PUT`, and `DELETE /v1/owner` operate only
+`POST /v1/owner` does not exist. `GET` and `PUT /v1/owner` operate only
 on the owner resolved from this credential.
 
 ## Rotate or revoke a credential

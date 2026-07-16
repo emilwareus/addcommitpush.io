@@ -2,7 +2,6 @@ import fixtures from '@/lib/life/fixtures/contract-fixtures.json';
 import {
   auditEventSchema,
   connectorSchema,
-  contradictionSchema,
   conversationSchema,
   createRealtimeSessionResponseSchema,
   errorEnvelopeSchema,
@@ -27,7 +26,6 @@ researchResponseSchema.parse(fixtures.research_response);
 connectorSchema.parse(fixtures.connector);
 ingestionJobSchema.parse(fixtures.job);
 healthMeasurementSchema.parse(fixtures.health);
-contradictionSchema.parse(fixtures.contradiction);
 auditEventSchema.parse(fixtures.audit);
 errorEnvelopeSchema.parse(fixtures.error);
 

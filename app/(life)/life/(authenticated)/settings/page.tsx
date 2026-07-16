@@ -26,8 +26,8 @@ export default async function SettingsPage() {
         />
         <SettingsLink
           href="/life/settings/data"
-          title="Data and privacy"
-          description="Export data or delete the owner graph."
+          title="Data export"
+          description="Download your memories and conversations."
           icon={Database}
         />
       </nav>

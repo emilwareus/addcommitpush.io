@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { Memory, SearchHit } from '@/lib/life/contracts';
 import { enumLabel, formatMemoryTime } from '@/lib/life/formatting';
-import { EpistemicBadge, SensitivityBadge } from './badges';
+import { EpistemicBadge } from './badges';
 
 export function MemoryCard({
   memory,
@@ -27,7 +27,6 @@ export function MemoryCard({
         <span className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
           {enumLabel(memory.kind)} · {memory.domain}
         </span>
-        <SensitivityBadge sensitivity={memory.sensitivity} />
         <EpistemicBadge status={memory.epistemic_status} />
       </div>
       <h3 className="mt-3 font-serif text-xl font-semibold text-primary">

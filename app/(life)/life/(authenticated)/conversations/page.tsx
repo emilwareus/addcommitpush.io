@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { LifePageHeader } from '@/components/life/page-header';
-import { Badge } from '@/components/ui/badge';
-import { enumLabel, formatInOwnerTimezone } from '@/lib/life/formatting';
+import { formatInOwnerTimezone } from '@/lib/life/formatting';
 import { getOwner, listConversations } from '@/lib/life/queries.server';
 
 export const dynamic = 'force-dynamic';
@@ -14,7 +13,7 @@ export default async function ConversationsPage() {
       <LifePageHeader
         kicker="Durable transcripts"
         title="Conversations"
-        description="Owner-scoped text, interview, research, and future Realtime conversation records."
+        description="Return to conversations you have had with Life."
       />
       <div className="space-y-4">
         {conversations.map((conversation) => (
@@ -24,15 +23,9 @@ export default async function ConversationsPage() {
             prefetch={false}
             className="block border border-dashed border-border bg-card p-5 no-underline hover:border-primary"
           >
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className="section-kicker">{enumLabel(conversation.mode)}</p>
-                <h2 className="mt-2 font-serif text-xl font-semibold text-primary">
-                  {conversation.title}
-                </h2>
-              </div>
-              <Badge variant="outline">{enumLabel(conversation.status)}</Badge>
-            </div>
+            <h2 className="font-serif text-xl font-semibold text-primary">
+              {conversation.title}
+            </h2>
             <p className="mt-4 text-xs text-muted-foreground">
               Created {formatInOwnerTimezone(conversation.created_at, owner.timezone)} · Updated{' '}
               {formatInOwnerTimezone(conversation.updated_at, owner.timezone)}

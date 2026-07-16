@@ -7,19 +7,17 @@ use uuid::Uuid;
 use crate::crypto::EncryptedSecret;
 use crate::error::AppError;
 use crate::models::{
-    AgentResponse, AuditEvent, Connector, ConnectorCredentials, Contradiction, Conversation,
-    ConversationTurnResponse, CreateConversationRequest, CreateInterviewRequest,
-    CreateInterviewResponse, CreateMemoryEdgeRequest, HealthMeasurement, HealthMeasurementInput,
-    ImportedRecord, IngestionJob, InterviewOpening, InterviewQuestion, InterviewSession,
-    ListMemoriesQuery, Memory, MemoryEdge, MemoryInput, Message, Owner, OwnerExport,
-    RealtimeSession, ResearchMemoryCandidate, ResolveContradictionRequest, SearchHit, SourceRecord,
-    TimelineQuery, UpdateOwnerRequest,
+    AgentResponse, AuditEvent, Connector, ConnectorCredentials, Conversation,
+    ConversationTurnResponse, CreateConversationRequest, HealthMeasurement, HealthMeasurementInput,
+    ImportedRecord, IngestionJob, ListMemoriesQuery, Memory, MemoryInput, Message, Owner,
+    OwnerExport, RealtimeSession, ResearchMemoryCandidate, SearchHit, SourceRecord, TimelineQuery,
+    UpdateOwnerRequest,
 };
 
 const GET_MEMORY_SQL: &str = r#"
     SELECT id, owner_id, kind, title, body_markdown, document_path, domain,
-           subject, predicate, object_value, epistemic_status, sensitivity,
-           confidence, importance, occurred_start, occurred_end,
+           subject, predicate, object_value, epistemic_status, confidence,
+           importance, occurred_start, occurred_end,
            temporal_precision, source_id, source_message_id, evidence_excerpt,
            derived_from_id, supersedes_id, superseded_at, recorded_at, updated_at
     FROM memories
@@ -28,8 +26,8 @@ const GET_MEMORY_SQL: &str = r#"
 
 const LIST_MEMORIES_SQL: &str = r#"
     SELECT id, owner_id, kind, title, body_markdown, document_path, domain,
-           subject, predicate, object_value, epistemic_status, sensitivity,
-           confidence, importance, occurred_start, occurred_end,
+           subject, predicate, object_value, epistemic_status, confidence,
+           importance, occurred_start, occurred_end,
            temporal_precision, source_id, source_message_id, evidence_excerpt,
            derived_from_id, supersedes_id, superseded_at, recorded_at, updated_at
     FROM memories
@@ -45,18 +43,18 @@ const LIST_MEMORIES_SQL: &str = r#"
 const INSERT_MEMORY_SQL: &str = r#"
     INSERT INTO memories (
         owner_id, kind, title, body_markdown, document_path, domain,
-        subject, predicate, object_value, epistemic_status, sensitivity,
-        confidence, importance, occurred_start, occurred_end,
+        subject, predicate, object_value, epistemic_status, confidence,
+        importance, occurred_start, occurred_end,
         temporal_precision, source_id, source_message_id, evidence_excerpt,
         derived_from_id, supersedes_id, embedding
     )
     VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
-        $14, $15, $16, $17, $18, $19, $20, $21, $22::vector
+        $14, $15, $16, $17, $18, $19, $20, $21::vector
     )
     RETURNING id, owner_id, kind, title, body_markdown, document_path, domain,
-              subject, predicate, object_value, epistemic_status, sensitivity,
-              confidence, importance, occurred_start, occurred_end,
+              subject, predicate, object_value, epistemic_status, confidence,
+              importance, occurred_start, occurred_end,
               temporal_precision, source_id, source_message_id,
               evidence_excerpt, derived_from_id, supersedes_id, superseded_at,
               recorded_at, updated_at
@@ -173,7 +171,7 @@ impl Repository {
             "memory.created",
             "memory",
             Some(memory.id),
-            &serde_json::json!({"kind": memory.kind, "sensitivity": memory.sensitivity}),
+            &serde_json::json!({"kind": memory.kind}),
         )
         .await?;
         transaction.commit().await?;
@@ -235,8 +233,8 @@ impl Repository {
         sqlx::query_as::<_, Memory>(
             r"
             SELECT id, owner_id, kind, title, body_markdown, document_path, domain,
-                   subject, predicate, object_value, epistemic_status, sensitivity,
-                   confidence, importance, occurred_start, occurred_end,
+                   subject, predicate, object_value, epistemic_status, confidence,
+                   importance, occurred_start, occurred_end,
                    temporal_precision, source_id, source_message_id, evidence_excerpt,
                    derived_from_id, supersedes_id, superseded_at, recorded_at, updated_at
             FROM memories
@@ -268,8 +266,8 @@ impl Repository {
         sqlx::query_as::<_, Memory>(
             r"
             SELECT id, owner_id, kind, title, body_markdown, document_path, domain,
-                   subject, predicate, object_value, epistemic_status, sensitivity,
-                   confidence, importance, occurred_start, occurred_end,
+                   subject, predicate, object_value, epistemic_status, confidence,
+                   importance, occurred_start, occurred_end,
                    temporal_precision, source_id, source_message_id, evidence_excerpt,
                    derived_from_id, supersedes_id, superseded_at, recorded_at, updated_at
             FROM memories
@@ -360,7 +358,6 @@ impl Repository {
             predicate: current.predicate,
             object_value: current.object_value,
             epistemic_status: "retracted".to_owned(),
-            sensitivity: current.sensitivity,
             confidence: current.confidence,
             importance: current.importance,
             occurred_start: current.occurred_start,
@@ -380,7 +377,6 @@ impl Repository {
         owner_id: Uuid,
         query_text: &str,
         embedding: &[f32],
-        sensitivities: &[String],
         limit: i64,
     ) -> Result<Vec<SearchHit>, AppError> {
         validate_nonempty("query", query_text)?;
@@ -390,8 +386,6 @@ impl Repository {
                 "limit must be between 1 and 50".to_owned(),
             ));
         }
-        validate_search_sensitivities(sensitivities)?;
-
         let vector = crate::openai::vector_literal(embedding);
         let candidate_limit = limit * 4;
         let mut transaction = self.pool.begin().await?;
@@ -413,27 +407,25 @@ impl Repository {
                 WHERE owner_id = $1
                   AND superseded_at IS NULL
                   AND epistemic_status <> 'retracted'
-                  AND sensitivity = ANY($3)
                   AND search_document @@ websearch_to_tsquery('simple', $2)
                 ORDER BY ts_rank_cd(
                     search_document,
                     websearch_to_tsquery('simple', $2)
                 ) DESC, id
-                LIMIT $5
+                LIMIT $4
             ),
             vector_candidates AS MATERIALIZED (
                 SELECT id,
                        row_number() OVER (ORDER BY distance, id)::float8 AS rank
                 FROM (
-                    SELECT id, embedding <=> $4::vector AS distance
+                    SELECT id, embedding <=> $3::vector AS distance
                     FROM memories
                     WHERE owner_id = $1
                       AND superseded_at IS NULL
                       AND epistemic_status <> 'retracted'
-                      AND sensitivity = ANY($3)
                       AND embedding IS NOT NULL
-                    ORDER BY embedding <=> $4::vector, id
-                    LIMIT $5
+                    ORDER BY embedding <=> $3::vector, id
+                    LIMIT $4
                 ) nearest
             ),
             fused AS (
@@ -450,19 +442,18 @@ impl Repository {
                 LEFT JOIN vector_candidates USING (id)
             )
             SELECT memories.id, memories.kind, memories.title,
-                   memories.body_markdown, memories.domain, memories.sensitivity,
-                   memories.occurred_start, memories.epistemic_status,
+                   memories.body_markdown, memories.domain, memories.occurred_start,
+                   memories.epistemic_status,
                    memories.source_id, fused.score
             FROM fused
             JOIN memories USING (id)
             ORDER BY fused.score DESC, memories.importance DESC,
                      memories.recorded_at DESC
-            LIMIT $6
+            LIMIT $5
             "#,
         )
         .bind(owner_id)
         .bind(query_text)
-        .bind(sensitivities)
         .bind(vector)
         .bind(candidate_limit)
         .bind(limit)
@@ -476,9 +467,7 @@ impl Repository {
         &self,
         owner_id: Uuid,
         memory_ids: &[Uuid],
-        sensitivities: &[String],
     ) -> Result<Vec<SearchHit>, AppError> {
-        validate_search_sensitivities(sensitivities)?;
         if memory_ids.is_empty() {
             return Ok(Vec::new());
         }
@@ -489,12 +478,11 @@ impl Repository {
         }
         sqlx::query_as::<_, SearchHit>(
             r"
-            SELECT id, kind, title, body_markdown, domain, sensitivity,
-                   occurred_start, epistemic_status, source_id, 1.0::float8 AS score
+            SELECT id, kind, title, body_markdown, domain, occurred_start,
+                   epistemic_status, source_id, 1.0::float8 AS score
             FROM memories
             WHERE owner_id = $1
               AND id = ANY($2)
-              AND sensitivity = ANY($3)
               AND superseded_at IS NULL
               AND epistemic_status <> 'retracted'
             ORDER BY recorded_at DESC, id
@@ -502,7 +490,6 @@ impl Repository {
         )
         .bind(owner_id)
         .bind(memory_ids)
-        .bind(sensitivities)
         .fetch_all(&self.pool)
         .await
         .map_err(AppError::from)
@@ -512,11 +499,9 @@ impl Repository {
         &self,
         owner_id: Uuid,
         embedding: &[f32],
-        sensitivities: &[String],
         limit: i64,
     ) -> Result<Vec<SearchHit>, AppError> {
         validate_embedding(embedding)?;
-        validate_search_sensitivities(sensitivities)?;
         if !(1..=50).contains(&limit) {
             return Err(AppError::InvalidInput(
                 "limit must be between 1 and 50".to_owned(),
@@ -532,21 +517,19 @@ impl Repository {
             .await?;
         let hits = sqlx::query_as::<_, SearchHit>(
             r"
-            SELECT id, kind, title, body_markdown, domain, sensitivity,
-                   occurred_start, epistemic_status, source_id,
+            SELECT id, kind, title, body_markdown, domain, occurred_start,
+                   epistemic_status, source_id,
                    1.0 - (embedding <=> $2::vector) AS score
             FROM memories
             WHERE owner_id = $1 AND superseded_at IS NULL
               AND epistemic_status <> 'retracted'
-              AND sensitivity = ANY($3)
               AND embedding IS NOT NULL
             ORDER BY embedding <=> $2::vector, id
-            LIMIT $4
+            LIMIT $3
             ",
         )
         .bind(owner_id)
         .bind(vector)
-        .bind(sensitivities)
         .bind(limit)
         .fetch_all(&mut *transaction)
         .await?;
@@ -563,7 +546,6 @@ impl Repository {
         report_markdown: &str,
         annotations: &serde_json::Value,
         content_hash: &str,
-        sensitivity: &str,
         candidates: Vec<ResearchMemoryCandidate>,
         embeddings: Vec<Vec<f32>>,
     ) -> Result<Vec<Memory>, AppError> {
@@ -575,14 +557,6 @@ impl Repository {
                 candidates.len(),
                 embeddings.len()
             )));
-        }
-        if !matches!(
-            sensitivity,
-            "standard" | "private" | "intimate" | "restricted"
-        ) {
-            return Err(AppError::InvalidInput(
-                "invalid research sensitivity".to_owned(),
-            ));
         }
         let mut transaction = self.pool.begin().await?;
         let source_id = sqlx::query_scalar::<_, Uuid>(
@@ -627,7 +601,6 @@ impl Repository {
                 predicate: candidate.predicate,
                 object_value: candidate.object_value,
                 epistemic_status: "researched".to_owned(),
-                sensitivity: sensitivity.to_owned(),
                 confidence: candidate.confidence,
                 importance: candidate.importance,
                 occurred_start: candidate.occurred_start,
@@ -661,12 +634,9 @@ impl Repository {
         request: &CreateConversationRequest,
     ) -> Result<Conversation, AppError> {
         validate_nonempty("title", &request.title)?;
-        if !matches!(
-            request.mode.as_str(),
-            "conversation" | "interview" | "research"
-        ) {
+        if !matches!(request.mode.as_str(), "conversation" | "research") {
             return Err(AppError::InvalidInput(
-                "conversation mode must be conversation, interview, or research".to_owned(),
+                "conversation mode must be conversation or research".to_owned(),
             ));
         }
         let mut transaction = self.pool.begin().await?;
@@ -700,12 +670,10 @@ impl Repository {
         owner_id: Uuid,
         title: &str,
         openai_session_id: &str,
-        allowed_sensitivities: &[String],
         expires_at: DateTime<Utc>,
     ) -> Result<(Conversation, RealtimeSession), AppError> {
         validate_nonempty("realtime session title", title)?;
         validate_nonempty("OpenAI session ID", openai_session_id)?;
-        validate_search_sensitivities(allowed_sensitivities)?;
         if expires_at <= Utc::now() {
             return Err(AppError::InvalidProviderResponse(
                 "Realtime session expiry must be in the future".to_owned(),
@@ -727,19 +695,16 @@ impl Repository {
         let session = sqlx::query_as::<_, RealtimeSession>(
             r"
             INSERT INTO realtime_sessions (
-                owner_id, conversation_id, openai_session_id,
-                allowed_sensitivities, expires_at
+                owner_id, conversation_id, openai_session_id, expires_at
             )
-            VALUES ($1, $2, $3, $4, $5)
+            VALUES ($1, $2, $3, $4)
             RETURNING id, owner_id, conversation_id, openai_session_id,
-                      allowed_sensitivities, status, expires_at, created_at,
-                      closed_at
+                      status, expires_at, created_at, closed_at
             ",
         )
         .bind(owner_id)
         .bind(conversation.id)
         .bind(openai_session_id)
-        .bind(allowed_sensitivities)
         .bind(expires_at)
         .fetch_one(&mut *transaction)
         .await?;
@@ -766,9 +731,8 @@ impl Repository {
     ) -> Result<RealtimeSession, AppError> {
         sqlx::query_as::<_, RealtimeSession>(
             r"
-            SELECT id, owner_id, conversation_id, openai_session_id,
-                   allowed_sensitivities, status, expires_at, created_at,
-                   closed_at
+            SELECT id, owner_id, conversation_id, openai_session_id, status,
+                   expires_at, created_at, closed_at
             FROM realtime_sessions
             WHERE owner_id = $1 AND id = $2
             ",
@@ -807,9 +771,8 @@ impl Repository {
             UPDATE realtime_sessions
             SET status = 'closed', closed_at = now()
             WHERE owner_id = $1 AND id = $2 AND status = 'active'
-            RETURNING id, owner_id, conversation_id, openai_session_id,
-                      allowed_sensitivities, status, expires_at, created_at,
-                      closed_at
+            RETURNING id, owner_id, conversation_id, openai_session_id, status,
+                      expires_at, created_at, closed_at
             ",
         )
         .bind(owner_id)
@@ -853,185 +816,6 @@ impl Repository {
         .fetch_all(&self.pool)
         .await
         .map_err(AppError::from)
-    }
-
-    pub async fn create_interview(
-        &self,
-        owner_id: Uuid,
-        request: &CreateInterviewRequest,
-        opening: &InterviewOpening,
-        provider_response_id: &str,
-    ) -> Result<CreateInterviewResponse, AppError> {
-        validate_nonempty("interview title", &request.title)?;
-        validate_nonempty("interview theme", &request.theme)?;
-        validate_nonempty("interview question", &opening.question)?;
-        let mut transaction = self.pool.begin().await?;
-        let conversation = sqlx::query_as::<_, Conversation>(
-            r"
-            INSERT INTO conversations (owner_id, mode, title)
-            VALUES ($1, 'interview', $2)
-            RETURNING id, owner_id, mode, title, status, created_at, updated_at
-            ",
-        )
-        .bind(owner_id)
-        .bind(request.title.trim())
-        .fetch_one(&mut *transaction)
-        .await?;
-        let opening_message = insert_message(
-            &mut transaction,
-            owner_id,
-            conversation.id,
-            "assistant",
-            &opening.question,
-            "system",
-            Some(provider_response_id),
-            &[],
-        )
-        .await?;
-        let interview = sqlx::query_as::<_, InterviewSession>(
-            r"
-            INSERT INTO interview_sessions (owner_id, conversation_id, theme)
-            VALUES ($1, $2, $3)
-            RETURNING id, owner_id, conversation_id, theme, status,
-                      questions_answered, created_at, completed_at
-            ",
-        )
-        .bind(owner_id)
-        .bind(conversation.id)
-        .bind(request.theme.trim())
-        .fetch_one(&mut *transaction)
-        .await?;
-        sqlx::query(
-            r"
-            INSERT INTO interview_questions (
-                owner_id, interview_id, question, rationale, assistant_message_id
-            )
-            VALUES ($1, $2, $3, $4, $5)
-            ",
-        )
-        .bind(owner_id)
-        .bind(interview.id)
-        .bind(opening.question.trim())
-        .bind(opening.rationale.trim())
-        .bind(opening_message.id)
-        .execute(&mut *transaction)
-        .await?;
-        audit(
-            &mut transaction,
-            Some(owner_id),
-            "interview.started",
-            "interview",
-            Some(interview.id),
-            &serde_json::json!({"conversation_id": conversation.id}),
-        )
-        .await?;
-        transaction.commit().await?;
-        Ok(CreateInterviewResponse {
-            conversation,
-            interview,
-            opening_message,
-            question: opening.question.clone(),
-        })
-    }
-
-    pub async fn interview(
-        &self,
-        owner_id: Uuid,
-        interview_id: Uuid,
-    ) -> Result<InterviewSession, AppError> {
-        sqlx::query_as::<_, InterviewSession>(
-            r"
-            SELECT id, owner_id, conversation_id, theme, status,
-                   questions_answered, created_at, completed_at
-            FROM interview_sessions
-            WHERE owner_id = $1 AND id = $2
-            ",
-        )
-        .bind(owner_id)
-        .bind(interview_id)
-        .fetch_optional(&self.pool)
-        .await?
-        .ok_or(AppError::NotFound {
-            resource: "interview",
-        })
-    }
-
-    pub async fn interview_questions(
-        &self,
-        owner_id: Uuid,
-        interview_id: Uuid,
-    ) -> Result<Vec<InterviewQuestion>, AppError> {
-        self.interview(owner_id, interview_id).await?;
-        sqlx::query_as::<_, InterviewQuestion>(
-            r"
-            SELECT id, interview_id, question, rationale, status,
-                   assistant_message_id, answer_message_id, created_at, answered_at
-            FROM interview_questions
-            WHERE owner_id = $1 AND interview_id = $2
-            ORDER BY created_at, id
-            ",
-        )
-        .bind(owner_id)
-        .bind(interview_id)
-        .fetch_all(&self.pool)
-        .await
-        .map_err(AppError::from)
-    }
-
-    pub async fn complete_interview(
-        &self,
-        owner_id: Uuid,
-        interview_id: Uuid,
-        completion_note: &str,
-    ) -> Result<InterviewSession, AppError> {
-        let mut transaction = self.pool.begin().await?;
-        let interview = sqlx::query_as::<_, InterviewSession>(
-            r"
-            UPDATE interview_sessions
-            SET status = 'completed', completed_at = now()
-            WHERE owner_id = $1 AND id = $2 AND status = 'active'
-            RETURNING id, owner_id, conversation_id, theme, status,
-                      questions_answered, created_at, completed_at
-            ",
-        )
-        .bind(owner_id)
-        .bind(interview_id)
-        .fetch_optional(&mut *transaction)
-        .await?
-        .ok_or(AppError::NotFound {
-            resource: "active interview",
-        })?;
-        if !completion_note.trim().is_empty() {
-            insert_message(
-                &mut transaction,
-                owner_id,
-                interview.conversation_id,
-                "system",
-                completion_note.trim(),
-                "system",
-                None,
-                &[],
-            )
-            .await?;
-        }
-        sqlx::query(
-            "UPDATE conversations SET status = 'completed', updated_at = now() WHERE owner_id = $1 AND id = $2",
-        )
-        .bind(owner_id)
-        .bind(interview.conversation_id)
-        .execute(&mut *transaction)
-        .await?;
-        audit(
-            &mut transaction,
-            Some(owner_id),
-            "interview.completed",
-            "interview",
-            Some(interview.id),
-            &serde_json::json!({"questions_answered": interview.questions_answered}),
-        )
-        .await?;
-        transaction.commit().await?;
-        Ok(interview)
     }
 
     pub async fn conversation(
@@ -1105,7 +889,6 @@ impl Repository {
                 candidate_embeddings.len()
             )));
         }
-        let contradiction_count = output.contradictions.len();
         let mut transaction = self.pool.begin().await?;
         let conversation_status = sqlx::query_scalar::<_, String>(
             r"
@@ -1195,76 +978,6 @@ impl Repository {
         )
         .await?;
 
-        if conversation_status == "active" {
-            let interview_id = sqlx::query_scalar::<_, Uuid>(
-                r"
-                SELECT id
-                FROM interview_sessions
-                WHERE owner_id = $1 AND conversation_id = $2 AND status = 'active'
-                FOR UPDATE
-                ",
-            )
-            .bind(owner_id)
-            .bind(conversation_id)
-            .fetch_optional(&mut *transaction)
-            .await?;
-            if let Some(interview_id) = interview_id {
-                let answered_question_id = sqlx::query_scalar::<_, Uuid>(
-                    r"
-                    UPDATE interview_questions
-                    SET status = 'answered', answer_message_id = $3, answered_at = now()
-                    WHERE id = (
-                        SELECT id FROM interview_questions
-                        WHERE owner_id = $1 AND interview_id = $2
-                          AND status = 'asked'
-                        ORDER BY created_at DESC, id DESC
-                        LIMIT 1
-                    )
-                      AND owner_id = $1
-                    RETURNING id
-                    ",
-                )
-                .bind(owner_id)
-                .bind(interview_id)
-                .bind(user_message.id)
-                .fetch_optional(&mut *transaction)
-                .await?;
-                if answered_question_id.is_none() {
-                    return Err(AppError::Conflict(
-                        "the interview has no pending question".to_owned(),
-                    ));
-                }
-                let follow_up = output.follow_up_question.as_deref().ok_or_else(|| {
-                    AppError::InvalidProviderResponse(
-                        "an interview turn requires a follow-up question".to_owned(),
-                    )
-                })?;
-                sqlx::query(
-                    r"
-                    INSERT INTO interview_questions (
-                        owner_id, interview_id, question, rationale,
-                        assistant_message_id
-                    )
-                    VALUES ($1, $2, $3, $4, $5)
-                    ",
-                )
-                .bind(owner_id)
-                .bind(interview_id)
-                .bind(follow_up)
-                .bind("Generated from the preceding interview answer and known gaps.")
-                .bind(assistant_message.id)
-                .execute(&mut *transaction)
-                .await?;
-                sqlx::query(
-                    "UPDATE interview_sessions SET questions_answered = questions_answered + 1 WHERE owner_id = $1 AND id = $2",
-                )
-                .bind(owner_id)
-                .bind(interview_id)
-                .execute(&mut *transaction)
-                .await?;
-            }
-        }
-
         let mut created_memories = Vec::with_capacity(output.memory_candidates.len());
         for (candidate, embedding) in output
             .memory_candidates
@@ -1277,46 +990,6 @@ impl Repository {
             let vector = crate::openai::vector_literal(&embedding);
             let memory = insert_memory(&mut *transaction, owner_id, &input, &vector, None).await?;
             created_memories.push(memory);
-        }
-
-        for contradiction in output.contradictions {
-            let Some(new_memory) = created_memories.get(contradiction.new_memory_index) else {
-                return Err(AppError::InvalidProviderResponse(format!(
-                    "contradiction references missing memory candidate {}",
-                    contradiction.new_memory_index
-                )));
-            };
-            let existing_belongs_to_owner = sqlx::query_scalar::<_, bool>(
-                r"
-                SELECT EXISTS(
-                    SELECT 1 FROM memories
-                    WHERE owner_id = $1 AND id = $2 AND superseded_at IS NULL
-                )
-                ",
-            )
-            .bind(owner_id)
-            .bind(contradiction.existing_memory_id)
-            .fetch_one(&mut *transaction)
-            .await?;
-            if !existing_belongs_to_owner {
-                return Err(AppError::InvalidProviderResponse(
-                    "contradiction references an unavailable memory".to_owned(),
-                ));
-            }
-            sqlx::query(
-                r"
-                INSERT INTO contradictions (
-                    owner_id, left_memory_id, right_memory_id, explanation
-                )
-                VALUES ($1, $2, $3, $4)
-                ",
-            )
-            .bind(owner_id)
-            .bind(contradiction.existing_memory_id)
-            .bind(new_memory.id)
-            .bind(contradiction.explanation)
-            .execute(&mut *transaction)
-            .await?;
         }
 
         sqlx::query("UPDATE conversations SET updated_at = now() WHERE owner_id = $1 AND id = $2")
@@ -1332,7 +1005,6 @@ impl Repository {
             Some(conversation_id),
             &serde_json::json!({
                 "assistant_message_id": assistant_message.id,
-                "contradictions_detected": contradiction_count,
                 "input_modality": input_modality,
                 "memories_created": created_memories.len(),
                 "user_message_id": user_message.id
@@ -1348,182 +1020,6 @@ impl Repository {
             answer: output.answer,
             follow_up_question: output.follow_up_question,
         })
-    }
-
-    pub async fn create_memory_edge(
-        &self,
-        owner_id: Uuid,
-        request: &CreateMemoryEdgeRequest,
-    ) -> Result<MemoryEdge, AppError> {
-        validate_nonempty("memory relation", &request.relation)?;
-        if request.from_memory_id == request.to_memory_id {
-            return Err(AppError::InvalidInput(
-                "a memory cannot link to itself".to_owned(),
-            ));
-        }
-        if !(0.0..=1.0).contains(&request.confidence) {
-            return Err(AppError::InvalidInput(
-                "edge confidence must be between 0 and 1".to_owned(),
-            ));
-        }
-        let both_owned = sqlx::query_scalar::<_, bool>(
-            r"
-            SELECT count(*) = 2
-            FROM memories
-            WHERE owner_id = $1 AND id = ANY($2)
-            ",
-        )
-        .bind(owner_id)
-        .bind([request.from_memory_id, request.to_memory_id])
-        .fetch_one(&self.pool)
-        .await?;
-        if !both_owned {
-            return Err(AppError::NotFound {
-                resource: "linked memory",
-            });
-        }
-        let mut transaction = self.pool.begin().await?;
-        let edge = sqlx::query_as::<_, MemoryEdge>(
-            r"
-            INSERT INTO memory_edges (
-                owner_id, from_memory_id, relation, to_memory_id, confidence,
-                source_id
-            )
-            VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id, owner_id, from_memory_id, relation, to_memory_id,
-                      confidence, source_id, created_at
-            ",
-        )
-        .bind(owner_id)
-        .bind(request.from_memory_id)
-        .bind(request.relation.trim())
-        .bind(request.to_memory_id)
-        .bind(request.confidence)
-        .bind(request.source_id)
-        .fetch_one(&mut *transaction)
-        .await?;
-        audit(
-            &mut transaction,
-            Some(owner_id),
-            "memory_edge.created",
-            "memory_edge",
-            Some(edge.id),
-            &serde_json::json!({"relation": edge.relation}),
-        )
-        .await?;
-        transaction.commit().await?;
-        Ok(edge)
-    }
-
-    pub async fn memory_edges(
-        &self,
-        owner_id: Uuid,
-        memory_id: Uuid,
-    ) -> Result<Vec<MemoryEdge>, AppError> {
-        self.memory(owner_id, memory_id).await?;
-        sqlx::query_as::<_, MemoryEdge>(
-            r"
-            SELECT id, owner_id, from_memory_id, relation, to_memory_id,
-                   confidence, source_id, created_at
-            FROM memory_edges
-            WHERE owner_id = $1 AND (from_memory_id = $2 OR to_memory_id = $2)
-            ORDER BY created_at, id
-            ",
-        )
-        .bind(owner_id)
-        .bind(memory_id)
-        .fetch_all(&self.pool)
-        .await
-        .map_err(AppError::from)
-    }
-
-    pub async fn list_contradictions(
-        &self,
-        owner_id: Uuid,
-    ) -> Result<Vec<Contradiction>, AppError> {
-        sqlx::query_as::<_, Contradiction>(
-            r"
-            SELECT id, owner_id, left_memory_id, right_memory_id, explanation,
-                   status, resolution_markdown, detected_at, resolved_at
-            FROM contradictions
-            WHERE owner_id = $1
-            ORDER BY (status = 'pending') DESC, detected_at DESC
-            LIMIT 500
-            ",
-        )
-        .bind(owner_id)
-        .fetch_all(&self.pool)
-        .await
-        .map_err(AppError::from)
-    }
-
-    pub async fn contradiction(
-        &self,
-        owner_id: Uuid,
-        contradiction_id: Uuid,
-    ) -> Result<Contradiction, AppError> {
-        sqlx::query_as::<_, Contradiction>(
-            r"
-            SELECT id, owner_id, left_memory_id, right_memory_id, explanation,
-                   status, resolution_markdown, detected_at, resolved_at
-            FROM contradictions
-            WHERE owner_id = $1 AND id = $2
-            ",
-        )
-        .bind(owner_id)
-        .bind(contradiction_id)
-        .fetch_optional(&self.pool)
-        .await?
-        .ok_or(AppError::NotFound {
-            resource: "contradiction",
-        })
-    }
-
-    pub async fn resolve_contradiction(
-        &self,
-        owner_id: Uuid,
-        contradiction_id: Uuid,
-        request: &ResolveContradictionRequest,
-    ) -> Result<Contradiction, AppError> {
-        if !matches!(
-            request.status.as_str(),
-            "confirmed" | "not_a_contradiction" | "resolved"
-        ) {
-            return Err(AppError::InvalidInput(
-                "contradiction resolution status is invalid".to_owned(),
-            ));
-        }
-        validate_nonempty("contradiction resolution", &request.resolution_markdown)?;
-        let mut transaction = self.pool.begin().await?;
-        let contradiction = sqlx::query_as::<_, Contradiction>(
-            r"
-            UPDATE contradictions
-            SET status = $3, resolution_markdown = $4, resolved_at = now()
-            WHERE owner_id = $1 AND id = $2
-            RETURNING id, owner_id, left_memory_id, right_memory_id, explanation,
-                      status, resolution_markdown, detected_at, resolved_at
-            ",
-        )
-        .bind(owner_id)
-        .bind(contradiction_id)
-        .bind(&request.status)
-        .bind(&request.resolution_markdown)
-        .fetch_optional(&mut *transaction)
-        .await?
-        .ok_or(AppError::NotFound {
-            resource: "contradiction",
-        })?;
-        audit(
-            &mut transaction,
-            Some(owner_id),
-            "contradiction.resolved",
-            "contradiction",
-            Some(contradiction.id),
-            &serde_json::json!({"status": contradiction.status}),
-        )
-        .await?;
-        transaction.commit().await?;
-        Ok(contradiction)
     }
 
     pub async fn audit_events(&self, owner_id: Uuid) -> Result<Vec<AuditEvent>, AppError> {
@@ -2211,7 +1707,6 @@ impl Repository {
                 predicate: None,
                 object_value: None,
                 epistemic_status: "imported".to_owned(),
-                sensitivity: "private".to_owned(),
                 confidence: 1.0,
                 importance: 4,
                 occurred_start: record.observed_at,
@@ -2357,8 +1852,8 @@ impl Repository {
         let memories = sqlx::query_as::<_, Memory>(
             r"
             SELECT id, owner_id, kind, title, body_markdown, document_path, domain,
-                   subject, predicate, object_value, epistemic_status, sensitivity,
-                   confidence, importance, occurred_start, occurred_end,
+                   subject, predicate, object_value, epistemic_status, confidence,
+                   importance, occurred_start, occurred_end,
                    temporal_precision, source_id, source_message_id, evidence_excerpt,
                    derived_from_id, supersedes_id, superseded_at, recorded_at, updated_at
             FROM memories WHERE owner_id = $1 ORDER BY recorded_at, id
@@ -2377,17 +1872,6 @@ impl Repository {
         .bind(owner_id)
         .fetch_all(&self.pool)
         .await?;
-        let memory_edges = sqlx::query_as::<_, MemoryEdge>(
-            r"
-            SELECT id, owner_id, from_memory_id, relation, to_memory_id,
-                   confidence, source_id, created_at
-            FROM memory_edges WHERE owner_id = $1 ORDER BY created_at, id
-            ",
-        )
-        .bind(owner_id)
-        .fetch_all(&self.pool)
-        .await?;
-        let contradictions = self.list_contradictions(owner_id).await?;
         let conversations = sqlx::query_as::<_, Conversation>(
             r"
             SELECT id, owner_id, mode, title, status, created_at, updated_at
@@ -2399,9 +1883,8 @@ impl Repository {
         .await?;
         let realtime_sessions = sqlx::query_as::<_, RealtimeSession>(
             r"
-            SELECT id, owner_id, conversation_id, openai_session_id,
-                   allowed_sensitivities, status, expires_at, created_at,
-                   closed_at
+            SELECT id, owner_id, conversation_id, openai_session_id, status,
+                   expires_at, created_at, closed_at
             FROM realtime_sessions
             WHERE owner_id = $1
             ORDER BY created_at, id
@@ -2415,31 +1898,6 @@ impl Repository {
             SELECT id, owner_id, conversation_id, role, content, input_modality,
                    provider_response_id, cited_memory_ids, created_at
             FROM messages WHERE owner_id = $1 ORDER BY created_at, id
-            ",
-        )
-        .bind(owner_id)
-        .fetch_all(&self.pool)
-        .await?;
-        let interviews = sqlx::query_as::<_, InterviewSession>(
-            r"
-            SELECT id, owner_id, conversation_id, theme, status,
-                   questions_answered, created_at, completed_at
-            FROM interview_sessions WHERE owner_id = $1 ORDER BY created_at, id
-            ",
-        )
-        .bind(owner_id)
-        .fetch_all(&self.pool)
-        .await?;
-        let interview_questions = sqlx::query_as::<_, InterviewQuestion>(
-            r"
-            SELECT questions.id, questions.interview_id, questions.question,
-                   questions.rationale, questions.status,
-                   questions.assistant_message_id, questions.answer_message_id,
-                   questions.created_at, questions.answered_at
-            FROM interview_questions questions
-            JOIN interview_sessions interviews ON interviews.id = questions.interview_id
-            WHERE interviews.owner_id = $1
-            ORDER BY questions.created_at, questions.id
             ",
         )
         .bind(owner_id)
@@ -2464,38 +1922,14 @@ impl Repository {
             owner,
             memories,
             source_records,
-            memory_edges,
-            contradictions,
             conversations,
             realtime_sessions,
             messages,
-            interviews,
-            interview_questions,
             connectors,
             ingestion_jobs,
             health_measurements,
             audit_events,
         })
-    }
-
-    pub async fn delete_owner(&self, owner_id: Uuid) -> Result<(), AppError> {
-        let mut transaction = self.pool.begin().await?;
-        sqlx::query_scalar::<_, Uuid>("SELECT id FROM owners WHERE id = $1 FOR UPDATE")
-            .bind(owner_id)
-            .fetch_optional(&mut *transaction)
-            .await?
-            .ok_or(AppError::NotFound { resource: "owner" })?;
-        let deleted = sqlx::query("DELETE FROM owners WHERE id = $1")
-            .bind(owner_id)
-            .execute(&mut *transaction)
-            .await?;
-        if deleted.rows_affected() != 1 {
-            return Err(AppError::Conflict(
-                "owner changed during deletion".to_owned(),
-            ));
-        }
-        transaction.commit().await?;
-        Ok(())
     }
 }
 
@@ -2601,7 +2035,6 @@ where
         .bind(input.predicate.as_deref())
         .bind(&input.object_value)
         .bind(&input.epistemic_status)
-        .bind(&input.sensitivity)
         .bind(input.confidence)
         .bind(input.importance)
         .bind(input.occurred_start)
@@ -2667,14 +2100,6 @@ fn validate_memory(input: &MemoryInput) -> Result<(), AppError> {
         ));
     }
     if !matches!(
-        input.sensitivity.as_str(),
-        "standard" | "private" | "intimate" | "restricted"
-    ) {
-        return Err(AppError::InvalidInput(
-            "invalid memory sensitivity".to_owned(),
-        ));
-    }
-    if !matches!(
         input.temporal_precision.as_str(),
         "unknown" | "year" | "month" | "day" | "minute" | "interval"
     ) {
@@ -2711,25 +2136,6 @@ fn validate_embedding(embedding: &[f32]) -> Result<(), AppError> {
     if embedding.len() != 1536 || embedding.iter().any(|value| !value.is_finite()) {
         return Err(AppError::InvalidProviderResponse(
             "embedding must contain exactly 1536 finite values".to_owned(),
-        ));
-    }
-    Ok(())
-}
-
-fn validate_search_sensitivities(sensitivities: &[String]) -> Result<(), AppError> {
-    if sensitivities.is_empty() {
-        return Err(AppError::InvalidInput(
-            "at least one sensitivity must be selected".to_owned(),
-        ));
-    }
-    if sensitivities.iter().any(|sensitivity| {
-        !matches!(
-            sensitivity.as_str(),
-            "standard" | "private" | "intimate" | "restricted"
-        )
-    }) {
-        return Err(AppError::InvalidInput(
-            "search contains an invalid sensitivity".to_owned(),
         ));
     }
     Ok(())

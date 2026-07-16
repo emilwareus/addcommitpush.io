@@ -1,7 +1,3 @@
-CREATE UNIQUE INDEX interview_questions_one_asked_idx
-    ON interview_questions (interview_id)
-    WHERE status = 'asked';
-
 CREATE INDEX ingestion_jobs_connector_idx
     ON ingestion_jobs (connector_id, created_at DESC)
     WHERE connector_id IS NOT NULL;
@@ -21,8 +17,6 @@ ALTER TABLE conversations
     ADD CONSTRAINT conversations_owner_id_id_key UNIQUE (owner_id, id);
 ALTER TABLE messages
     ADD CONSTRAINT messages_owner_id_id_key UNIQUE (owner_id, id);
-ALTER TABLE interview_sessions
-    ADD CONSTRAINT interview_sessions_owner_id_id_key UNIQUE (owner_id, id);
 ALTER TABLE connectors
     ADD CONSTRAINT connectors_owner_id_id_key UNIQUE (owner_id, id);
 
@@ -40,45 +34,10 @@ ALTER TABLE memories
         FOREIGN KEY (owner_id, supersedes_id)
         REFERENCES memories (owner_id, id);
 
-ALTER TABLE memory_edges
-    ADD CONSTRAINT memory_edges_owner_from_fk
-        FOREIGN KEY (owner_id, from_memory_id)
-        REFERENCES memories (owner_id, id),
-    ADD CONSTRAINT memory_edges_owner_to_fk
-        FOREIGN KEY (owner_id, to_memory_id)
-        REFERENCES memories (owner_id, id),
-    ADD CONSTRAINT memory_edges_owner_source_fk
-        FOREIGN KEY (owner_id, source_id)
-        REFERENCES source_records (owner_id, id);
-
-ALTER TABLE contradictions
-    ADD CONSTRAINT contradictions_owner_left_fk
-        FOREIGN KEY (owner_id, left_memory_id)
-        REFERENCES memories (owner_id, id),
-    ADD CONSTRAINT contradictions_owner_right_fk
-        FOREIGN KEY (owner_id, right_memory_id)
-        REFERENCES memories (owner_id, id);
-
 ALTER TABLE messages
     ADD CONSTRAINT messages_owner_conversation_fk
         FOREIGN KEY (owner_id, conversation_id)
         REFERENCES conversations (owner_id, id);
-
-ALTER TABLE interview_sessions
-    ADD CONSTRAINT interview_sessions_owner_conversation_fk
-        FOREIGN KEY (owner_id, conversation_id)
-        REFERENCES conversations (owner_id, id);
-
-ALTER TABLE interview_questions
-    ADD CONSTRAINT interview_questions_owner_interview_fk
-        FOREIGN KEY (owner_id, interview_id)
-        REFERENCES interview_sessions (owner_id, id),
-    ADD CONSTRAINT interview_questions_owner_assistant_message_fk
-        FOREIGN KEY (owner_id, assistant_message_id)
-        REFERENCES messages (owner_id, id),
-    ADD CONSTRAINT interview_questions_owner_answer_message_fk
-        FOREIGN KEY (owner_id, answer_message_id)
-        REFERENCES messages (owner_id, id);
 
 ALTER TABLE realtime_sessions
     ADD CONSTRAINT realtime_sessions_owner_conversation_fk

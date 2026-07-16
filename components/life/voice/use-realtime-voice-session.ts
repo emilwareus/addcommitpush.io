@@ -26,13 +26,11 @@ export type VoicePhase =
 interface ActiveSessionView {
   id: string;
   conversationId: string;
-  allowedSensitivities: string[];
   expiresAt: string;
 }
 
 interface StartVoiceInput {
   title: string;
-  sensitivities: string[];
 }
 
 const EMPTY_SNAPSHOT: TurnAssemblerSnapshot = { turns: [], provisionalInputs: [] };
@@ -40,15 +38,12 @@ const EMPTY_SNAPSHOT: TurnAssemblerSnapshot = { turns: [], provisionalInputs: []
 export function useRealtimeVoiceSession() {
   const [phase, setPhase] = useState<VoicePhase>('idle');
   const [error, setError] = useState<string | null>(null);
-  const [controlError, setControlError] = useState<string | null>(null);
   const [session, setSession] = useState<ActiveSessionView | null>(null);
   const [snapshot, setSnapshot] = useState<TurnAssemblerSnapshot>(EMPTY_SNAPSHOT);
   const [muted, setMuted] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [toolSearchCount, setToolSearchCount] = useState(0);
+  const [activeToolCount, setActiveToolCount] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
-  const [selectedDeviceId, setSelectedDeviceId] = useState('');
 
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const dataChannelRef = useRef<RTCDataChannel | null>(null);
@@ -65,11 +60,6 @@ export function useRealtimeVoiceSession() {
 
   const refreshSnapshot = useCallback(() => {
     setSnapshot(assemblerRef.current.snapshot());
-  }, []);
-
-  const refreshDevices = useCallback(async () => {
-    const availableDevices = await navigator.mediaDevices.enumerateDevices();
-    setDevices(availableDevices.filter((device) => device.kind === 'audioinput'));
   }, []);
 
   const cleanupLocalResources = useCallback(() => {
@@ -106,7 +96,7 @@ export function useRealtimeVoiceSession() {
       closingRef.current = true;
       cleanupLocalResources();
       setIsSpeaking(false);
-      setToolSearchCount(0);
+      setActiveToolCount(0);
       setError(errorMessage(failure));
       setPhase('error');
     },
@@ -231,7 +221,12 @@ export function useRealtimeVoiceSession() {
               { type: 'function_call' }
             > => output.type === 'function_call'
           );
-          const unknownFunction = functionCalls.find((call) => call.name !== 'search_life_memory');
+          const knownFunctions = new Set([
+            'record_life_memory',
+            'search_life_memory',
+            'explore_life_memories',
+          ]);
+          const unknownFunction = functionCalls.find((call) => !knownFunctions.has(call.name));
           if (unknownFunction) {
             throw new RealtimeProtocolError(
               `OpenAI requested an unknown function: ${unknownFunction.name}.`
@@ -255,7 +250,7 @@ export function useRealtimeVoiceSession() {
             if (!sessionId || !dataChannel) {
               throw new RealtimeProtocolError('The memory tool ran without an active session.');
             }
-            setToolSearchCount(newFunctionCalls.length);
+            setActiveToolCount(newFunctionCalls.length);
             try {
               const results = await forwardMemoryToolCalls({
                 calls: newFunctionCalls,
@@ -265,7 +260,7 @@ export function useRealtimeVoiceSession() {
               });
               for (const result of results) assembler.recordToolResult(result);
             } finally {
-              setToolSearchCount(0);
+              setActiveToolCount(0);
             }
           }
           break;
@@ -293,27 +288,20 @@ export function useRealtimeVoiceSession() {
       if (phase === 'error' && sessionIdRef.current) return;
       closingRef.current = false;
       setError(null);
-      setControlError(null);
       setSession(null);
       setSnapshot(EMPTY_SNAPSHOT);
       setElapsedSeconds(0);
       setIsSpeaking(false);
-      setToolSearchCount(0);
+      setActiveToolCount(0);
       assemblerRef.current = new RealtimeTurnAssembler();
       handledToolCallsRef.current = new Map();
 
       try {
         setPhase('requesting_microphone');
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: selectedDeviceId ? { deviceId: { exact: selectedDeviceId } } : true,
-        });
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaStreamRef.current = stream;
         const audioTrack = stream.getAudioTracks()[0];
         if (!audioTrack) throw new Error('The selected media stream has no microphone track.');
-        const activeDeviceId = audioTrack.getSettings().deviceId;
-        if (activeDeviceId) setSelectedDeviceId(activeDeviceId);
-        await refreshDevices();
-
         setPhase('creating_session');
         const sessionResponse = await fetch('/api/life/realtime/sessions', {
           method: 'POST',
@@ -341,7 +329,6 @@ export function useRealtimeVoiceSession() {
         setSession({
           id: realtimeSession.id,
           conversationId: conversation.id,
-          allowedSensitivities: realtimeSession.allowed_sensitivities,
           expiresAt: realtimeSession.expires_at,
         });
 
@@ -403,7 +390,7 @@ export function useRealtimeVoiceSession() {
         failSession(failure);
       }
     },
-    [failSession, phase, processRealtimeEvent, refreshDevices, selectedDeviceId]
+    [failSession, phase, processRealtimeEvent]
   );
 
   const toggleMute = useCallback(() => {
@@ -415,56 +402,11 @@ export function useRealtimeVoiceSession() {
     }
   }, []);
 
-  const changeInputDevice = useCallback(
-    async (deviceId: string) => {
-      setControlError(null);
-      if (phase !== 'connected') {
-        setSelectedDeviceId(deviceId);
-        return;
-      }
-      try {
-        const replacementStream = await navigator.mediaDevices.getUserMedia({
-          audio: { deviceId: { exact: deviceId } },
-        });
-        const replacementTrack = replacementStream.getAudioTracks()[0];
-        if (!replacementTrack) throw new Error('The selected device has no microphone track.');
-        replacementTrack.enabled = !mutedRef.current;
-        const sender = peerConnectionRef.current
-          ?.getSenders()
-          .find((candidate) => candidate.track?.kind === 'audio');
-        if (!sender) {
-          replacementTrack.stop();
-          throw new Error('The active connection has no microphone sender.');
-        }
-        await sender.replaceTrack(replacementTrack);
-        const oldStream = mediaStreamRef.current;
-        mediaStreamRef.current = replacementStream;
-        for (const track of oldStream?.getTracks() ?? []) track.stop();
-        setSelectedDeviceId(deviceId);
-        await refreshDevices();
-      } catch (failure) {
-        setControlError(errorMessage(failure));
-      }
-    },
-    [phase, refreshDevices]
-  );
-
-  const retryCommit = useCallback(
-    (responseId: string) => {
-      const payload = assemblerRef.current.beginRetry(responseId);
-      if (!payload) return;
-      refreshSnapshot();
-      void persistTurn(payload);
-    },
-    [persistTurn, refreshSnapshot]
-  );
-
   const end = useCallback(async () => {
     if (!sessionIdRef.current || !['connected', 'error'].includes(phase)) return;
     closingRef.current = true;
     setPhase('closing');
     setError(null);
-    setControlError(null);
     cleanupLocalResources();
 
     const sessionId = sessionIdRef.current;
@@ -516,20 +458,15 @@ export function useRealtimeVoiceSession() {
   return {
     phase,
     error,
-    controlError,
     session,
     snapshot,
     muted,
     isSpeaking,
-    toolSearchCount,
+    activeToolCount,
     elapsedSeconds,
-    devices,
-    selectedDeviceId,
     remoteAudioRef,
     start,
     toggleMute,
-    changeInputDevice,
-    retryCommit,
     end,
   };
 }

@@ -1,6 +1,5 @@
 import type { Memory } from '@/lib/life/contracts';
 import { enumLabel, formatMemoryTime, timelineGroupLabel } from '@/lib/life/formatting';
-import { SensitivityBadge } from './badges';
 
 export function TimelineRail({ memories, timezone }: { memories: Memory[]; timezone: string }) {
   const groups = new Map<string, Memory[]>();
@@ -25,7 +24,6 @@ export function TimelineRail({ memories, timezone }: { memories: Memory[]; timez
                   <span>
                     {enumLabel(memory.kind)} · {memory.domain}
                   </span>
-                  <SensitivityBadge sensitivity={memory.sensitivity} />
                 </div>
                 <a
                   href={`/life/memories/${memory.id}`}

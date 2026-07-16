@@ -2,7 +2,6 @@ import 'server-only';
 import {
   auditEventListSchema,
   connectorListSchema,
-  contradictionListSchema,
   conversationListSchema,
   conversationSchema,
   conversationTurnRequestSchema,
@@ -10,42 +9,39 @@ import {
   createRealtimeSessionRequestSchema,
   createRealtimeSessionResponseSchema,
   createConversationRequestSchema,
-  createInterviewRequestSchema,
-  createInterviewResponseSchema,
   healthMeasurementListSchema,
   healthMeasurementInputSchema,
   healthMeasurementSchema,
   ingestionJobSchema,
-  memoryEdgeListSchema,
   memoryInputSchema,
   memoryListSchema,
   memorySchema,
   messageListSchema,
   ownerSchema,
   oauthStartResponseSchema,
+  realtimeMemoryExploreRequestSchema,
+  realtimeMemoryRecordRequestSchema,
   realtimeMemorySearchRequestSchema,
   realtimeSessionSchema,
   realtimeTurnRequestSchema,
-  reflectionRequestSchema,
-  reflectionResponseSchema,
   researchRequestSchema,
   researchResponseSchema,
-  resolveContradictionRequestSchema,
   searchHitListSchema,
   searchRequestSchema,
   timelineQuerySchema,
   type Conversation,
   type CreateRealtimeSessionRequest,
   type HealthMeasurementInput,
-  type Memory,
   type MemoryInput,
+  type RealtimeMemoryExploreRequest,
+  type RealtimeMemoryRecordRequest,
   type RealtimeMemorySearchRequest,
   type RealtimeTurnRequest,
   type SearchRequest,
   updateOwnerRequestSchema,
   uuidSchema,
 } from './contracts';
-import { lifeDownloadRequest, lifeRequest, lifeVoidRequest } from './client.server';
+import { lifeDownloadRequest, lifeRequest } from './client.server';
 
 function queryPath(path: string, parameters: URLSearchParams): `/v1/${string}` {
   const query = parameters.toString();
@@ -59,14 +55,6 @@ export function getOwner() {
 export function updateOwner(input: unknown) {
   const body = updateOwnerRequestSchema.parse(input);
   return lifeRequest({ method: 'PUT', path: '/v1/owner', schema: ownerSchema, body });
-}
-
-export function deleteOwner(confirmDisplayName: string) {
-  return lifeVoidRequest({
-    method: 'DELETE',
-    path: '/v1/owner',
-    body: { confirm_display_name: confirmDisplayName },
-  });
 }
 
 export function listMemories(
@@ -115,14 +103,6 @@ export function reviseMemory(id: string, input: MemoryInput) {
 
 export function retractMemory(id: string) {
   return lifeRequest({ method: 'DELETE', path: `/v1/memories/${id}`, schema: memorySchema });
-}
-
-export function getMemoryEdges(id: string) {
-  return lifeRequest({
-    method: 'GET',
-    path: `/v1/memories/${id}/edges`,
-    schema: memoryEdgeListSchema,
-  });
 }
 
 export function getTimeline(
@@ -180,10 +160,7 @@ export function createConversation(input: { mode: Conversation['mode']; title: s
   });
 }
 
-export function sendConversationTurn(
-  id: string,
-  input: { content: string; sensitivities: SearchRequest['sensitivities'] }
-) {
+export function sendConversationTurn(id: string, input: { content: string }) {
   const body = conversationTurnRequestSchema.parse(input);
   return lifeRequest({
     method: 'POST',
@@ -226,6 +203,28 @@ export function searchRealtimeMemory(id: string, input: RealtimeMemorySearchRequ
     method: 'POST',
     path: `/v1/realtime/sessions/${id}/tools/search-memory`,
     schema: searchHitListSchema,
+    body,
+    timeoutMs: 30_000,
+  });
+}
+
+export function recordRealtimeMemory(id: string, input: RealtimeMemoryRecordRequest) {
+  const body = realtimeMemoryRecordRequestSchema.parse(input);
+  return lifeRequest({
+    method: 'POST',
+    path: `/v1/realtime/sessions/${id}/tools/record-memory`,
+    schema: memorySchema,
+    body,
+    timeoutMs: 30_000,
+  });
+}
+
+export function exploreRealtimeMemories(id: string, input: RealtimeMemoryExploreRequest) {
+  const body = realtimeMemoryExploreRequestSchema.parse(input);
+  return lifeRequest({
+    method: 'POST',
+    path: `/v1/realtime/sessions/${id}/tools/explore-memories`,
+    schema: memoryListSchema,
     body,
     timeoutMs: 30_000,
   });
@@ -322,34 +321,6 @@ export function createHealthMeasurement(input: HealthMeasurementInput) {
   });
 }
 
-export function listContradictions() {
-  return lifeRequest({
-    method: 'GET',
-    path: '/v1/contradictions',
-    schema: contradictionListSchema,
-  });
-}
-
-export function getContradiction(id: string) {
-  const contradictionId = uuidSchema.parse(id);
-  return lifeRequest({
-    method: 'GET',
-    path: `/v1/contradictions/${contradictionId}`,
-    schema: contradictionListSchema.element,
-  });
-}
-
-export function resolveContradiction(id: string, input: unknown) {
-  const contradictionId = uuidSchema.parse(id);
-  const body = resolveContradictionRequestSchema.parse(input);
-  return lifeRequest({
-    method: 'PUT',
-    path: `/v1/contradictions/${contradictionId}`,
-    schema: contradictionListSchema.element,
-    body,
-  });
-}
-
 export function runResearch(input: unknown) {
   const body = researchRequestSchema.parse(input);
   return lifeRequest({
@@ -361,78 +332,8 @@ export function runResearch(input: unknown) {
   });
 }
 
-export function createReflection(input: unknown) {
-  const body = reflectionRequestSchema.parse(input);
-  return lifeRequest({
-    method: 'POST',
-    path: '/v1/reflections',
-    schema: reflectionResponseSchema,
-    body,
-    timeoutMs: 120_000,
-  });
-}
-
-export function createInterview(input: unknown) {
-  const body = createInterviewRequestSchema.parse(input);
-  return lifeRequest({
-    method: 'POST',
-    path: '/v1/interviews',
-    schema: createInterviewResponseSchema,
-    body,
-    timeoutMs: 120_000,
-  });
-}
-
 export function downloadOwnerExport(format: 'json' | 'markdown') {
   return lifeDownloadRequest(format === 'json' ? '/v1/export' : '/v1/export/markdown');
-}
-
-export async function getDashboardData() {
-  const [owner, memories, timeline, conversations, connectors, audit, health, contradictions] =
-    await Promise.all([
-      getOwner(),
-      listMemories({ limit: 8 }),
-      getTimeline({ limit: 12 }),
-      listConversations(),
-      listConnectors(),
-      listAuditEvents(),
-      listHealthMeasurements(),
-      listContradictions(),
-    ]);
-
-  const latestHealth = new Map<string, (typeof health)[number]>();
-  for (const measurement of health) {
-    if (!latestHealth.has(measurement.metric_code)) {
-      latestHealth.set(measurement.metric_code, measurement);
-    }
-  }
-
-  return {
-    owner,
-    memories,
-    timeline,
-    conversations: conversations.slice(0, 5),
-    connectors,
-    audit: audit.slice(0, 12),
-    health: [...latestHealth.values()],
-    pendingContradictions: contradictions.filter((item) => item.status === 'pending'),
-  };
-}
-
-export async function getMemoryDetail(id: string) {
-  const [memory, edges] = await Promise.all([getMemory(id), getMemoryEdges(id)]);
-  const relationIds = [
-    ...new Set(
-      edges.map((edge) =>
-        edge.from_memory_id === memory.id ? edge.to_memory_id : edge.from_memory_id
-      )
-    ),
-  ].slice(0, 40);
-  const [relatedMemories, priorRevision] = await Promise.all([
-    Promise.all(relationIds.map((relationId) => getMemory(relationId))),
-    memory.supersedes_id ? getMemory(memory.supersedes_id) : Promise.resolve<Memory | null>(null),
-  ]);
-  return { memory, edges, relatedMemories, priorRevision };
 }
 
 export async function getConversationDetail(id: string) {

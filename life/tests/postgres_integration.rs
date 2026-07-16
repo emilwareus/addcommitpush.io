@@ -35,13 +35,7 @@ async fn postgres_lifecycle_is_append_only_searchable_and_idempotent() {
         .await
         .unwrap();
     let hits = repository
-        .hybrid_search(
-            owner.id,
-            "physics Lund",
-            &zero_embedding(),
-            &["private".to_owned()],
-            10,
-        )
+        .hybrid_search(owner.id, "physics Lund", &zero_embedding(), 10)
         .await
         .unwrap();
     assert_eq!(hits.first().map(|hit| hit.id), Some(original.id));
@@ -108,7 +102,6 @@ async fn postgres_lifecycle_is_append_only_searchable_and_idempotent() {
                     subject: Some("owner".to_owned()),
                     predicate: Some("goal".to_owned()),
                     object_value: Some(json!("build a durable company")),
-                    sensitivity: "private".to_owned(),
                     confidence: 1.0,
                     importance: 8,
                     occurred_start: None,
@@ -116,7 +109,6 @@ async fn postgres_lifecycle_is_append_only_searchable_and_idempotent() {
                     temporal_precision: "unknown".to_owned(),
                     evidence_excerpt: "My goal is to build a durable company.".to_owned(),
                 }],
-                contradictions: Vec::new(),
                 cited_memory_ids: Vec::new(),
                 follow_up_question: None,
             },
@@ -136,7 +128,6 @@ async fn postgres_lifecycle_is_append_only_searchable_and_idempotent() {
                 AgentResponse {
                     answer: "A duplicate delivery must not be stored.".to_owned(),
                     memory_candidates: Vec::new(),
-                    contradictions: Vec::new(),
                     cited_memory_ids: Vec::new(),
                     follow_up_question: None,
                 },
@@ -199,7 +190,6 @@ async fn postgres_lifecycle_is_append_only_searchable_and_idempotent() {
             "The owner founded Example AB and spoke at RustConf.",
             &json!({"citations": [{"url": "https://example.com/profile"}]}),
             "research-content-hash",
-            "standard",
             vec![
                 research_candidate(
                     "Founded Example AB",
@@ -222,10 +212,14 @@ async fn postgres_lifecycle_is_append_only_searchable_and_idempotent() {
         researched_memories[1].source_id
     );
     let exact_hits = repository
-        .exact_vector_search(owner.id, &unit_embedding(), &["standard".to_owned()], 10)
+        .exact_vector_search(owner.id, &unit_embedding(), 10)
         .await
         .unwrap();
-    assert_eq!(exact_hits.len(), 2);
+    assert!(
+        researched_memories
+            .iter()
+            .all(|memory| exact_hits.iter().any(|hit| hit.id == memory.id))
+    );
 
     let state_hash = [11_u8; 32];
     let connector_id = repository
@@ -400,21 +394,6 @@ async fn postgres_lifecycle_is_append_only_searchable_and_idempotent() {
             .get(0);
     assert_eq!(extension_count, 1);
 
-    repository.delete_owner(owner.id).await.unwrap();
-    let remaining_owner_rows: i64 = sqlx::query_scalar(
-        r"
-        SELECT
-            (SELECT count(*) FROM owners)
-          + (SELECT count(*) FROM memories)
-          + (SELECT count(*) FROM audit_events)
-          + (SELECT count(*) FROM health_measurements)
-        ",
-    )
-    .fetch_one(&database.pool)
-    .await
-    .unwrap();
-    assert_eq!(remaining_owner_rows, 0);
-
     database.destroy().await;
 }
 
@@ -510,7 +489,6 @@ async fn postgres_credentials_and_data_are_isolated_by_owner() {
             second.id,
             "Second owner's voice session",
             "sess_second_owner",
-            &["standard".to_owned(), "private".to_owned()],
             Utc::now() + Duration::minutes(10),
         )
         .await
@@ -533,7 +511,6 @@ async fn postgres_credentials_and_data_are_isolated_by_owner() {
                 AgentResponse {
                     answer: "This must not be stored.".to_owned(),
                     memory_candidates: Vec::new(),
-                    contradictions: Vec::new(),
                     cited_memory_ids: Vec::new(),
                     follow_up_question: None,
                 },
@@ -554,7 +531,7 @@ async fn postgres_credentials_and_data_are_isolated_by_owner() {
             .is_err()
     );
 
-    repository.delete_owner(first.id).await.unwrap();
+    assert_eq!(repository.owner(first.id).await.unwrap().id, first.id);
     assert_eq!(repository.owner(second.id).await.unwrap().id, second.id);
     assert_eq!(
         repository
@@ -630,7 +607,6 @@ fn memory_input(title: &str, body_markdown: &str) -> MemoryInput {
         predicate: Some("studied".to_owned()),
         object_value: Some(json!("physics")),
         epistemic_status: "user_stated".to_owned(),
-        sensitivity: "private".to_owned(),
         confidence: 1.0,
         importance: 7,
         occurred_start: None,

@@ -1,166 +1,109 @@
 # Realtime Voice Client Contract
 
-Realtime WebRTC is Life's primary conversational interface. The browser carries
-audio directly to OpenAI, while the Life API remains authoritative for identity,
-memory access, sensitivity, and durable storage.
+Realtime WebRTC is Life's primary interface. Audio travels directly between the
+browser and OpenAI. Identity, memory tools, and durable transcripts go through
+the authenticated Life API.
 
 ```text
-browser -- application session --> frontend server -- Life token --> Life API
-browser ---------------- ephemeral WebRTC -----------------------> OpenAI
-OpenAI function call --> browser --> frontend server --> Life memory tool
-completed transcripts --> frontend server --> Life durable turn endpoint
+browser -- app session --> Next.js server -- Life token --> Life API
+browser ---------------- ephemeral WebRTC ----------------> OpenAI
+OpenAI tool call --> browser --> Next.js server --> Life memory tool
+completed transcript --> Next.js server --> Life turn endpoint
 ```
 
-The frontend server must map its authenticated user to exactly one Life bearer
-token. The browser must never receive that token or the standard OpenAI API key.
-It may receive the short-lived OpenAI client secret returned by Life.
+The browser must never receive the Life bearer token or standard OpenAI API key.
 
-## 1. Create the session
-
-The frontend server calls Life on behalf of its logged-in user:
+## 1. Create a session
 
 ```http
 POST /v1/realtime/sessions
-Authorization: Bearer <user's Life token>
+Authorization: Bearer <Life token>
 Content-Type: application/json
 
-{
-  "title": "Evening reflection",
-  "sensitivities": ["standard", "private"]
-}
+{"title":"Evening conversation"}
 ```
 
-The response contains:
-
-- `realtime_session`: the Life session ID, fixed sensitivity set, durable
-  conversation ID, and 60-minute expiry;
-- `conversation`: the durable transcript container;
-- `client_secret`: the OpenAI ephemeral `value`, its ten-minute connection
-  expiry, and effective Realtime session configuration.
-
-Life sends a stable hashed owner ID to OpenAI as the safety identifier. It stores
-the OpenAI session ID, never the ephemeral secret. The browser should establish
-WebRTC immediately; expiration of the client secret prevents a new connection,
-while the connected Realtime session has OpenAI's 60-minute maximum duration.
+The response contains the durable conversation, Life session, and short-lived
+OpenAI client secret. Life stores the OpenAI session ID, not the secret.
 
 ## 2. Connect WebRTC
 
-Use the returned `client_secret.value` to authenticate the browser's SDP offer
-directly to `POST https://api.openai.com/v1/realtime/calls`. Attach the microphone
-track, remote audio element, and an `oai-events` data channel before creating the
-offer. OpenAI's [WebRTC guide](https://developers.openai.com/api/docs/guides/realtime-webrtc)
-contains the canonical browser handshake.
+Attach the microphone, remote audio element, and an `oai-events` data channel to
+an `RTCPeerConnection`. Send the SDP offer to
+`https://api.openai.com/v1/realtime/calls` with `client_secret.value`, then apply
+the returned SDP answer.
 
-Life configures:
+Life configures transcription, semantic voice activity detection, interruption,
+one-question-at-a-time interview behavior, and these tools:
 
-- `gpt-realtime-2.1` by default with the `marin` voice;
-- input transcription using the configured transcription model;
-- low-eagerness semantic VAD, automatic responses, and interruption;
-- the `search_life_memory` function tool;
-- concise, one-question-at-a-time interview behavior.
+- `record_life_memory`
+- `search_life_memory`
+- `explore_life_memories`
 
-The client should not send `session.update` to replace Life's instructions or
-tools. This is a behavior contract, not the isolation boundary: the Life tool
-endpoint still fixes the owner and sensitivities from server-side state.
+## 3. Forward tool calls
 
-## 3. Forward memory function calls
+For each completed function call, parse its arguments and call the matching Life
+endpoint under `/v1/realtime/sessions/{id}/tools/`. Forward the JSON response as
+a `function_call_output` with the original `call_id`, then send
+`{"type":"response.create"}`.
 
-When a completed Realtime response output item has `type: "function_call"` and
-`name: "search_life_memory"`, parse its JSON arguments and call the frontend's
-authenticated proxy for:
+Search arguments:
 
-```http
-POST /v1/realtime/sessions/{life_session_id}/tools/search-memory
-Authorization: Bearer <user's Life token>
-Content-Type: application/json
-
-{
-  "query": "university studies and how they felt",
-  "limit": 12
-}
+```json
+{"query":"places I felt at home","limit":12}
 ```
 
-The request has no owner or sensitivity field. Life resolves both from the
-credential and stored session, verifies that the session is active, embeds the
-query, and runs PostgreSQL hybrid retrieval. A different user's token receives
-`404` for the session.
+Explore arguments:
 
-Return the JSON hits to Realtime through the data channel, preserving the
-function `call_id`:
+```json
+{"kind":null,"domain":"family","limit":12}
+```
+
+Record arguments:
 
 ```json
 {
-  "type": "conversation.item.create",
-  "item": {
-    "type": "function_call_output",
-    "call_id": "call_123",
-    "output": "<JSON-encoded Life search response>"
-  }
+  "kind":"preference",
+  "title":"Prefers quiet mornings",
+  "body_markdown":"The owner prefers quiet mornings for focused work.",
+  "domain":"daily life",
+  "occurred_start":null
 }
 ```
 
-Then send `{"type":"response.create"}`. Keep the IDs of every memory returned
-for that response; they form the allowed citation set when the durable turn is
-committed. OpenAI's [function-calling guide](https://developers.openai.com/api/docs/guides/realtime-conversations#function-calling)
-defines the event sequence.
+Keep every returned memory ID for the current response so the transcript can
+preserve citations.
 
-## 4. Assemble and commit a completed turn
+## 4. Commit completed transcripts
 
-Track input transcription completion events, output audio-transcript completion
-events, and `response.done` by item/response ID. Do not commit deltas. Once the
-exact user transcript and complete assistant transcript for one response are
-available, proxy this request to Life:
+Wait for complete input transcription, complete output audio transcript, and
+`response.done`. Do not commit deltas.
 
 ```http
-POST /v1/realtime/sessions/{life_session_id}/turns
-Authorization: Bearer <user's Life token>
+POST /v1/realtime/sessions/{id}/turns
+Authorization: Bearer <Life token>
 Content-Type: application/json
 
 {
-  "user_transcript": "I regret not taking that opportunity in 2019.",
-  "assistant_transcript": "That still sounds emotionally present for you. What made the choice difficult?",
-  "provider_response_id": "resp_123",
-  "cited_memory_ids": ["MEMORY_UUID_RETURNED_BY_THE_TOOL"]
+  "user_transcript":"I do my clearest thinking before breakfast.",
+  "assistant_transcript":"What makes that time feel different?",
+  "provider_response_id":"resp_123",
+  "cited_memory_ids":["MEMORY_UUID_FROM_A_TOOL"]
 }
 ```
 
-This endpoint does not regenerate the spoken answer. Outside the audio latency
-path, Life retrieves context, asks the Responses API only for structured memory
-and contradiction extraction, verifies every evidence excerpt against the exact
-user transcript, verifies every citation against this owner and sensitivity set,
-embeds accepted memories, and commits both messages and memories atomically.
+This endpoint stores the exact transcripts and citations. It does not regenerate
+the answer or run another memory-extraction model. Provider response IDs make
+the commit idempotent.
 
-`provider_response_id` is unique within the conversation. A retry after a
-successful commit returns `409` instead of duplicating the turn; the client can
-read `/v1/conversations/{conversation_id}/messages` to reconcile state.
+## 5. Close
 
-## 5. Close and clean up
-
-Stop microphone tracks, close the peer connection and data channel, then proxy:
+Stop microphone tracks, close WebRTC resources, and call:
 
 ```http
-DELETE /v1/realtime/sessions/{life_session_id}
-Authorization: Bearer <user's Life token>
+DELETE /v1/realtime/sessions/{id}
+Authorization: Bearer <Life token>
 ```
 
-Life marks both the Realtime session and its durable conversation complete. Tool
-calls and turn commits are rejected after close or the 60-minute expiry. Create a
-new Life session to continue talking.
-
-## Client state machine
-
-```text
-idle
-  -> creating_life_session
-  -> connecting_webrtc
-  -> listening <-> speaking
-  -> resolving_tool -> speaking
-  -> committing_turn -> listening
-  -> closing
-  -> closed
-```
-
-Surface provider and Life API errors explicitly. Do not silently switch to the
-multipart voice route, discard a failed durable commit, or reuse another user's
-session. Wake-word detection, push-to-talk, mute, device selection, and visual
-transcript presentation remain frontend responsibilities.
+Life closes the session and completes the durable conversation. Tool calls and
+turn commits fail after close or expiry.

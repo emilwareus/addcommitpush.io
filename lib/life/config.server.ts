@@ -1,11 +1,16 @@
 import 'server-only';
 import { z } from 'zod';
 
-const httpsUrlSchema = z
+const lifeOriginSchema = z
   .string()
   .url()
   .transform((value) => new URL(value))
-  .refine((value) => value.protocol === 'https:', 'URL must use HTTPS')
+  .refine(
+    (value) =>
+      value.protocol === 'https:' ||
+      (value.protocol === 'http:' && ['127.0.0.1', 'localhost'].includes(value.hostname)),
+    'URL must use HTTPS unless it targets the local loopback interface'
+  )
   .refine(
     (value) => value.href === `${value.origin}/`,
     'URL must be an origin without credentials, path, query, or fragment'
@@ -13,12 +18,12 @@ const httpsUrlSchema = z
 
 const lifeConfigSchema = z
   .object({
-    LIFE_API_BASE_URL: httpsUrlSchema,
+    LIFE_API_BASE_URL: lifeOriginSchema,
     LIFE_USER_TOKEN: z.string().min(32),
     LIFE_EXPECTED_OWNER_ID: z.string().uuid(),
     LIFE_UI_PASSWORD_HASH: z.string().min(64),
     LIFE_UI_SESSION_SECRET: z.string().min(32),
-    LIFE_UI_ORIGIN: httpsUrlSchema,
+    LIFE_UI_ORIGIN: lifeOriginSchema,
   })
   .strict();
 
