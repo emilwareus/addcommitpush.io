@@ -122,6 +122,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           references: <WriteCodeThatAiAgentsLoveReferences />,
         };
       }
+      case 'static-analysis-tutorial': {
+        const { StaticAnalysisTutorialContent } =
+          await import('@/components/blog-posts/static-analysis-tutorial');
+        return { content: <StaticAnalysisTutorialContent />, references: null };
+      }
       default:
         notFound();
     }
