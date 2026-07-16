@@ -1,9 +1,7 @@
-#!/usr/bin/env tsx
-
-import { mkdir, stat, writeFile } from 'node:fs/promises';
+import { stat } from 'node:fs/promises';
 import path from 'node:path';
-import { getAllPosts, type Post } from '../lib/posts';
-import { siteConfig } from '../lib/site';
+import { getAllPosts, type Post } from '@/lib/posts';
+import { siteConfig } from '@/lib/site';
 
 interface AudioEnclosure {
   url: string;
@@ -13,7 +11,6 @@ interface AudioEnclosure {
 
 interface FeedEntry {
   title: string;
-  slug: string;
   description: string;
   url: string;
   publishedAt: Date;
@@ -21,8 +18,6 @@ interface FeedEntry {
   tags: string[];
   audioEnclosure?: AudioEnclosure;
 }
-
-const outputDirectory = path.join(process.cwd(), 'public');
 
 function absoluteUrl(pathname: string): string {
   return new URL(pathname, siteConfig.url).toString();
@@ -39,11 +34,7 @@ function parsePostDate(value: string): Date {
 }
 
 function getPostUpdatedAt(post: Post): Date {
-  if (post.updatedAt) {
-    return parsePostDate(post.updatedAt);
-  }
-
-  return parsePostDate(post.publishedAt);
+  return parsePostDate(post.updatedAt ?? post.publishedAt);
 }
 
 function escapeXml(value: string): string {
@@ -64,8 +55,8 @@ async function getAudioEnclosure(post: Post): Promise<AudioEnclosure | undefined
     return undefined;
   }
 
-  const filePath = path.join(outputDirectory, post.audioUrl.replace(/^\//, ''));
-  const fileStats = await stat(filePath);
+  const relativeAudioPath = post.audioUrl.replace(/^\//, '');
+  const fileStats = await stat(path.join(process.cwd(), 'public', relativeAudioPath));
 
   return {
     url: absoluteUrl(post.audioUrl),
@@ -75,12 +66,9 @@ async function getAudioEnclosure(post: Post): Promise<AudioEnclosure | undefined
 }
 
 async function getFeedEntries(): Promise<FeedEntry[]> {
-  const posts = getAllPosts();
-
   return Promise.all(
-    posts.map(async (post) => ({
+    getAllPosts().map(async (post) => ({
       title: post.title,
-      slug: post.slug,
       description: post.description,
       url: absoluteUrl(`/blog/${post.slug}`),
       publishedAt: parsePostDate(post.publishedAt),
@@ -112,7 +100,8 @@ function renderRssItem(entry: FeedEntry): string {
     </item>`;
 }
 
-function renderRss(entries: FeedEntry[]): string {
+export async function generateRssFeed(): Promise<string> {
+  const entries = await getFeedEntries();
   const lastUpdatedAt = getLatestUpdatedAt(entries);
   const items = entries.map(renderRssItem).join('\n');
 
@@ -150,7 +139,8 @@ function renderAtomEntry(entry: FeedEntry): string {
   </entry>`;
 }
 
-function renderAtom(entries: FeedEntry[]): string {
+export async function generateAtomFeed(): Promise<string> {
+  const entries = await getFeedEntries();
   const lastUpdatedAt = getLatestUpdatedAt(entries);
   const atomEntries = entries.map(renderAtomEntry).join('\n');
 
@@ -170,18 +160,3 @@ ${atomEntries}
 </feed>
 `;
 }
-
-async function main() {
-  const entries = await getFeedEntries();
-
-  await mkdir(outputDirectory, { recursive: true });
-  await writeFile(path.join(outputDirectory, 'feed.xml'), renderRss(entries));
-  await writeFile(path.join(outputDirectory, 'feed.atom'), renderAtom(entries));
-
-  console.log(`Generated ${entries.length} posts in public/feed.xml and public/feed.atom`);
-}
-
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
