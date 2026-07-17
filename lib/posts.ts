@@ -27,7 +27,8 @@ const posts: Post[] = [
   {
     title: 'Write Code That AI Agents Love',
     slug: 'write-code-that-ai-agents-love',
-    description: 'A technical talk on making codebases easier for AI agents and humans to work in.',
+    description:
+      'A practical talk on making codebases easier for AI coding agents to orient, retrieve from, edit, and verify. Patterns, anti-patterns, and real examples.',
     publishedAt: '2026-06-09',
     tags: ['ai', 'agents', 'software'],
     readTime: '20 min read',
@@ -48,7 +49,7 @@ const posts: Post[] = [
     title: 'Building a SaaS Business, Zero to One in Hindsight',
     slug: 'saas-zero-to-one-hindsight',
     description:
-      'Lessons learned from building Debricked as a co-founder, covering customer validation, execution prioritization, data-driven culture, conviction-based building, and focus strategies.',
+      'Lessons from building Debricked: customer validation, execution priorities, a data-driven culture, conviction, and strategies for sustained focus.',
     publishedAt: '2022-12-27',
     updatedAt: '2022-12-27',
     tags: ['startup', 'saas', 'business'],
@@ -59,7 +60,7 @@ const posts: Post[] = [
     title: 'Advanced Context Engineering with Claude Code',
     slug: 'context-engineering-claude-code',
     description:
-      'How to structure, compact, and orchestrate information with commands, agents, and scripts.',
+      'A practical guide to structuring, compacting, and orchestrating context with commands, agents, and scripts for reliable Claude Code workflows.',
     publishedAt: '2025-11-07',
     tags: ['ai', 'agents', 'workflows', 'research'],
     cover: '/posts/context-engineering-claude-code/cover-optimized.webp',
@@ -69,7 +70,8 @@ const posts: Post[] = [
   {
     title: 'Diffusion Deep Research',
     slug: 'diffusion-deep-research',
-    description: 'How diffusion can be used to create a deep research report.',
+    description:
+      'Using diffusion models to generate deep research reports. A novel approach combining iterative denoising with multi-step reasoning for comprehensive analysis.',
     publishedAt: '2025-12-05',
     tags: ['ai', 'agents', 'research', 'deep-research'],
     cover: '/posts/diffusion-deep-research/cover-optimized.webp',

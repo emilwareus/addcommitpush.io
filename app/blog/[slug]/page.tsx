@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { getPostBySlug, getAllSlugs } from '@/lib/posts';
-import { feedAlternates } from '@/lib/site';
+import { feedAlternates, siteConfig } from '@/lib/site';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
@@ -26,9 +26,12 @@ export async function generateMetadata({
 
   if (!post) {
     return {
-      title: 'Post Not Found | addcommitpush.io',
+      title: 'Post Not Found',
     };
   }
+
+  const socialImage = post.ogImage ?? post.cover;
+  const socialImages = socialImage ? [{ url: socialImage }] : undefined;
 
   return {
     title: post.title,
@@ -42,8 +45,17 @@ export async function generateMetadata({
       description: post.description,
       type: 'article',
       publishedTime: new Date(post.publishedAt).toISOString(),
-      authors: ['Emil Wåreus'],
+      modifiedTime: new Date(post.updatedAt || post.publishedAt).toISOString(),
+      authors: [`${siteConfig.url}/about`],
       tags: post.tags,
+      ...(socialImages && { images: socialImages }),
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description: post.description,
+      creator: '@emilwareus',
+      ...(socialImages && { images: socialImages }),
     },
   };
 }
@@ -55,6 +67,27 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   if (!post) {
     notFound();
   }
+
+  const postUrl = new URL(`/blog/${post.slug}`, siteConfig.url).toString();
+  const blogPostingJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: post.description,
+    datePublished: new Date(post.publishedAt).toISOString(),
+    dateModified: new Date(post.updatedAt || post.publishedAt).toISOString(),
+    author: {
+      '@type': 'Person',
+      name: 'Emil Wåreus',
+      url: `${siteConfig.url}/about`,
+    },
+    ...(post.cover && { image: new URL(post.cover, siteConfig.url).toString() }),
+    url: postUrl,
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': postUrl,
+    },
+  };
 
   const postContent = await (async (): Promise<{
     content: ReactNode;
@@ -109,6 +142,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
       </Link>
 
       <article className="pt-8">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingJsonLd) }}
+        />
         <header>
           <h1 className="display-heading text-[clamp(2.35rem,6vw,3.75rem)]">{post.title}</h1>
 

@@ -1,50 +1,24 @@
 'use client';
 
-import { Highlight, type Language, type PrismTheme } from 'prism-react-renderer';
+import { Highlight, type Language, themes } from 'prism-react-renderer';
 import { ArticleCodePanel } from '@/components/blog-posts/article-code-panel';
-
-const articleCodeTheme: PrismTheme = {
-  plain: {
-    backgroundColor: 'transparent',
-    color: 'var(--foreground)',
-  },
-  styles: [
-    {
-      types: ['comment', 'prolog', 'doctype', 'cdata'],
-      style: { color: 'var(--muted-foreground)', fontStyle: 'italic' },
-    },
-    {
-      types: ['punctuation', 'operator'],
-      style: { color: 'var(--foreground)' },
-    },
-    {
-      types: ['property', 'tag', 'boolean', 'number', 'constant', 'symbol', 'deleted'],
-      style: { color: 'var(--primary)' },
-    },
-    {
-      types: ['selector', 'attr-name', 'string', 'char', 'builtin', 'inserted'],
-      style: { color: 'var(--success)' },
-    },
-    {
-      types: ['atrule', 'attr-value', 'keyword'],
-      style: { color: 'var(--warning)' },
-    },
-    {
-      types: ['function', 'class-name'],
-      style: { color: 'var(--info)' },
-    },
-    {
-      types: ['regex', 'important', 'variable'],
-      style: { color: 'var(--danger)' },
-    },
-  ],
-};
+import { useEffect, useState } from 'react';
 
 export function CodeBlock({ code, language }: { code: string; language: string }) {
   const trimmed = code.replace(/\n$/, '');
   const highlightLanguage = (
     language === 'text' || language === 'txt' ? 'plain' : language
   ) as Language;
+
+  const [isDark, setIsDark] = useState(false);
+  useEffect(() => {
+    const root = document.documentElement;
+    const update = () => setIsDark(root.classList.contains('dark'));
+    update();
+    const observer = new MutationObserver(update);
+    observer.observe(root, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
   if (highlightLanguage === 'plain') {
     return (
@@ -56,13 +30,15 @@ export function CodeBlock({ code, language }: { code: string; language: string }
     );
   }
 
+  const theme = isDark ? themes.vsDark : themes.vsLight;
+
   return (
     <ArticleCodePanel label={language}>
-      <Highlight theme={articleCodeTheme} code={trimmed} language={highlightLanguage}>
+      <Highlight theme={theme} code={trimmed} language={highlightLanguage}>
         {({ className, style, tokens, getLineProps, getTokenProps }) => (
           <pre
             className={`${className} m-0 overflow-x-auto whitespace-pre-wrap break-words font-mono text-sm leading-relaxed`}
-            style={style}
+            style={{ ...style, background: 'transparent' }}
           >
             {tokens.map((line, lineIndex) => {
               const lineProps = getLineProps({ line });
