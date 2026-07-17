@@ -19,34 +19,35 @@ function getPostLastModified(post: Post): Date {
 }
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  const buildTime = new Date();
   const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: absoluteUrl('/'),
-      lastModified: new Date('2026-07-07T00:00:00.000Z'),
+      lastModified: buildTime,
       changeFrequency: 'weekly',
       priority: 1,
     },
     {
       url: absoluteUrl('/brain'),
-      lastModified: new Date('2026-07-07T00:00:00.000Z'),
+      lastModified: buildTime,
       changeFrequency: 'weekly',
       priority: 0.6,
     },
     {
       url: absoluteUrl('/presentations'),
-      lastModified: new Date('2026-07-07T00:00:00.000Z'),
+      lastModified: buildTime,
       changeFrequency: 'monthly',
       priority: 0.5,
     },
     {
       url: absoluteUrl('/about'),
-      lastModified: new Date('2026-07-07T00:00:00.000Z'),
+      lastModified: buildTime,
       changeFrequency: 'monthly',
       priority: 0.5,
     },
     {
       url: absoluteUrl('/status'),
-      lastModified: new Date('2026-07-07T00:00:00.000Z'),
+      lastModified: buildTime,
       changeFrequency: 'daily',
       priority: 0.3,
     },

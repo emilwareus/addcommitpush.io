@@ -5,7 +5,7 @@
   "packageManager": "pnpm@10.33.2",
   "scripts": {
     "dev": "next dev --port 49237",
-    "build": "pnpm generate-feeds && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
@@ -16,7 +16,6 @@
     "check:life-contracts": "tsx scripts/check-life-contracts.ts",
     "check:life-realtime": "tsx scripts/check-life-realtime.ts",
     "optimize-images": "tsx scripts/optimize-images.ts",
-    "generate-feeds": "tsx scripts/generate-feeds.ts",
     "extract-text": "tsx scripts/extract-post-text.ts",
     "generate-audio": "tsx scripts/generate-audio.ts"
   },
