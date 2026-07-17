@@ -463,6 +463,53 @@ The article should leave the reader with a better operating model, not just a li
 
 ---
 
+## AI Slop Patterns (Structure, Not Words)
+
+Slop is rarely a banned word. It is a density problem: legitimate rhetorical
+devices deployed at a constant rate regardless of stakes. Every device below is
+fine once, at the right moment. The tell is clustering, uniformity, and
+decorative use.
+
+The universal test: **is the device load-bearing?** If you can delete the
+negative half, the fragment, or the third list item and no information is lost,
+it was slop.
+
+Hunt these in every draft:
+
+1. **Contrastive negation** — "It is not X. It is Y.", "not just X, but Y",
+   "X, not Y". This guide endorses the device, but budget it: a handful per
+   post, only where the reader genuinely believed X. Watch for five bullets in
+   one list sharing the "X, not Y" shape.
+2. **Anaphora / repeated openers** — three consecutive "That is..." or
+   "This is..." sentences, or every section ending on the same cadence.
+3. **Staccato punch fragments** — short dramatic sentences are great at the
+   actual climax. Fired at regular intervals they become a metronome.
+4. **Tricolon abuse** — triads of near-synonyms ("clear, concise, and
+   compelling"). Keep triads whose items each add distinct information.
+5. **Perfect section symmetry** — every section the same length and internal
+   shape. Human structure is lumpy; let one section run long because you care.
+6. **Fortune-cookie closers** — if the closing line could end a different
+   essay unchanged, cut it. End on something concrete: a caveat, a next step,
+   a command to run.
+7. **Signposting filler** — "Here's the thing", "Let's dive in", "It's worth
+   noting that X" (always improvable to "X").
+8. **Synonym cycling** — "the tool... the platform... the solution" for one
+   thing. Technical writing repeats the precise term.
+9. **Verbed abstractions** — "This unlocks/enables/transforms...". Rewrite
+   with a real subject, mechanism, and effect.
+10. **Vague attribution** — "studies show", "experts argue" without a link.
+    Name it or cut it.
+11. **Hedged balance** — every claim buffered, every criticism counterweighted.
+    Concede the one real counterargument with specifics; stand ground elsewhere.
+12. **Em-dash density** — a few per post is style; several per paragraph is a
+    tell, especially inside "It's not X — it's Y".
+
+Counter-signals that read as human: named sources, numbers, asymmetric
+opinions, admitted mistakes, irregular structure, and repeating the correct
+technical term without embarrassment.
+
+---
+
 ## What NOT to Do
 
 1. **Don't write in third person** — "The author believes..." Never.
