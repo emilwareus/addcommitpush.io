@@ -1062,6 +1062,16 @@ impl Repository {
         .await?;
         sqlx::query(
             r"
+            DELETE FROM oauth_states
+            WHERE owner_id = $1 AND provider = $2
+            ",
+        )
+        .bind(owner_id)
+        .bind(provider)
+        .execute(&mut *transaction)
+        .await?;
+        sqlx::query(
+            r"
             INSERT INTO oauth_states (state_hash, owner_id, provider, expires_at)
             VALUES ($1, $2, $3, now() + interval '10 minutes')
             ",
@@ -1084,7 +1094,7 @@ impl Repository {
         Ok(connector_id)
     }
 
-    pub async fn consume_oauth_state(
+    pub async fn oauth_state_owner(
         &self,
         provider: &str,
         state_hash: &[u8],
@@ -1092,9 +1102,9 @@ impl Repository {
         validate_provider(provider)?;
         sqlx::query_scalar::<_, Uuid>(
             r"
-            DELETE FROM oauth_states
+            SELECT owner_id
+            FROM oauth_states
             WHERE state_hash = $1 AND provider = $2 AND expires_at > now()
-            RETURNING owner_id
             ",
         )
         .bind(state_hash)
@@ -1115,10 +1125,40 @@ impl Repository {
         access: &EncryptedSecret,
         refresh: Option<&EncryptedSecret>,
         token_expires_at: Option<chrono::DateTime<chrono::Utc>>,
+        state_hash: &[u8],
     ) -> Result<Connector, AppError> {
         validate_provider(provider)?;
         validate_nonempty("external account ID", external_account_id)?;
         let mut transaction = self.pool.begin().await?;
+        sqlx::query_scalar::<_, Uuid>(
+            r"
+            SELECT id
+            FROM connectors
+            WHERE owner_id = $1 AND provider = $2
+            FOR UPDATE
+            ",
+        )
+        .bind(owner_id)
+        .bind(provider)
+        .fetch_optional(&mut *transaction)
+        .await?
+        .ok_or(AppError::NotFound {
+            resource: "pending connector",
+        })?;
+        sqlx::query_scalar::<_, Uuid>(
+            r"
+            DELETE FROM oauth_states
+            WHERE state_hash = $1 AND owner_id = $2 AND provider = $3
+              AND expires_at > now()
+            RETURNING owner_id
+            ",
+        )
+        .bind(state_hash)
+        .bind(owner_id)
+        .bind(provider)
+        .fetch_optional(&mut *transaction)
+        .await?
+        .ok_or_else(|| AppError::InvalidInput("OAuth state is invalid or expired".to_owned()))?;
         let connector = sqlx::query_as::<_, Connector>(
             r"
             UPDATE connectors
@@ -1169,6 +1209,7 @@ impl Repository {
 
     pub async fn connector_credentials(
         &self,
+        owner_id: Uuid,
         connector_id: Uuid,
     ) -> Result<ConnectorCredentials, AppError> {
         sqlx::query_as::<_, ConnectorCredentials>(
@@ -1177,9 +1218,10 @@ impl Repository {
                    access_token_nonce, refresh_token_ciphertext,
                    refresh_token_nonce, token_expires_at, sync_cursor
             FROM connectors
-            WHERE id = $1
+            WHERE owner_id = $1 AND id = $2
             ",
         )
+        .bind(owner_id)
         .bind(connector_id)
         .fetch_optional(&self.pool)
         .await?
@@ -1264,6 +1306,28 @@ impl Repository {
         .ok_or(AppError::NotFound {
             resource: "connector",
         })?;
+        sqlx::query(
+            r"
+            DELETE FROM oauth_states
+            WHERE owner_id = $1 AND provider = $2
+            ",
+        )
+        .bind(owner_id)
+        .bind(&connector.provider)
+        .execute(&mut *transaction)
+        .await?;
+        sqlx::query(
+            r"
+            UPDATE ingestion_jobs
+            SET status = 'failed', last_error = 'connector was revoked',
+                completed_at = now()
+            WHERE owner_id = $1 AND connector_id = $2 AND status = 'queued'
+            ",
+        )
+        .bind(owner_id)
+        .bind(connector_id)
+        .execute(&mut *transaction)
+        .await?;
         audit(
             &mut transaction,
             Some(owner_id),
@@ -1317,6 +1381,7 @@ impl Repository {
 
     pub async fn update_connector_tokens(
         &self,
+        owner_id: Uuid,
         connector_id: Uuid,
         access: &EncryptedSecret,
         refresh: Option<&EncryptedSecret>,
@@ -1331,7 +1396,8 @@ impl Repository {
                 refresh_token_nonce = coalesce($5, refresh_token_nonce),
                 token_expires_at = $6,
                 updated_at = now()
-            WHERE id = $1
+            WHERE id = $1 AND owner_id = $7
+              AND status IN ('connected', 'syncing', 'error')
             ",
         )
         .bind(connector_id)
@@ -1340,6 +1406,7 @@ impl Repository {
         .bind(refresh.map(|secret| &secret.ciphertext))
         .bind(refresh.map(|secret| &secret.nonce))
         .bind(token_expires_at)
+        .bind(owner_id)
         .execute(&self.pool)
         .await?;
         if updated.rows_affected() != 1 {
@@ -1356,23 +1423,21 @@ impl Repository {
         connector_id: Uuid,
     ) -> Result<IngestionJob, AppError> {
         let mut transaction = self.pool.begin().await?;
-        let connected = sqlx::query_scalar::<_, bool>(
+        sqlx::query_scalar::<_, Uuid>(
             r"
-            SELECT EXISTS(
-                SELECT 1 FROM connectors
-                WHERE id = $1 AND owner_id = $2 AND status IN ('connected', 'error')
-            )
+            SELECT id
+            FROM connectors
+            WHERE id = $1 AND owner_id = $2 AND status IN ('connected', 'error')
+            FOR UPDATE
             ",
         )
         .bind(connector_id)
         .bind(owner_id)
-        .fetch_one(&mut *transaction)
-        .await?;
-        if !connected {
-            return Err(AppError::NotFound {
-                resource: "connected connector",
-            });
-        }
+        .fetch_optional(&mut *transaction)
+        .await?
+        .ok_or(AppError::NotFound {
+            resource: "connected connector",
+        })?;
         let pending = sqlx::query_as::<_, IngestionJob>(
             r"
             SELECT id, owner_id, connector_id, job_kind, payload, status,
@@ -1468,7 +1533,7 @@ impl Repository {
                 SET status = 'error',
                     last_error = 'worker lease expired after 15 minutes',
                     updated_at = now()
-                WHERE id = $1
+                WHERE id = $1 AND status <> 'revoked'
                 ",
             )
             .bind(connector_id)
@@ -1501,6 +1566,44 @@ impl Repository {
 
     pub async fn retry_job(&self, owner_id: Uuid, job_id: Uuid) -> Result<IngestionJob, AppError> {
         let mut transaction = self.pool.begin().await?;
+        let connector_id = sqlx::query_scalar::<_, Uuid>(
+            r"
+            SELECT connectors.id
+            FROM connectors
+            JOIN ingestion_jobs ON ingestion_jobs.connector_id = connectors.id
+            WHERE ingestion_jobs.owner_id = $1 AND ingestion_jobs.id = $2
+              AND ingestion_jobs.status = 'failed'
+              AND connectors.owner_id = $1
+              AND connectors.status IN ('connected', 'error')
+            FOR UPDATE OF connectors
+            ",
+        )
+        .bind(owner_id)
+        .bind(job_id)
+        .fetch_optional(&mut *transaction)
+        .await?
+        .ok_or(AppError::NotFound {
+            resource: "retryable ingestion job",
+        })?;
+        let has_active_job = sqlx::query_scalar::<_, bool>(
+            r"
+            SELECT EXISTS(
+                SELECT 1
+                FROM ingestion_jobs
+                WHERE connector_id = $1 AND id <> $2
+                  AND status IN ('queued', 'running')
+            )
+            ",
+        )
+        .bind(connector_id)
+        .bind(job_id)
+        .fetch_one(&mut *transaction)
+        .await?;
+        if has_active_job {
+            return Err(AppError::Conflict(
+                "connector already has an active sync job".to_owned(),
+            ));
+        }
         let job = sqlx::query_as::<_, IngestionJob>(
             r"
             UPDATE ingestion_jobs
@@ -1517,7 +1620,7 @@ impl Repository {
         .fetch_optional(&mut *transaction)
         .await?
         .ok_or(AppError::NotFound {
-            resource: "failed ingestion job",
+            resource: "retryable ingestion job",
         })?;
         audit(
             &mut transaction,
@@ -1538,12 +1641,14 @@ impl Repository {
             r"
             UPDATE ingestion_jobs
             SET status = 'failed', last_error = $2, completed_at = now()
-            WHERE id = $1 AND status = 'running' AND locked_by = $3
+            WHERE id = $1 AND owner_id = $4
+              AND status = 'running' AND locked_by = $3
             ",
         )
         .bind(job.id)
         .bind(error)
         .bind(job.locked_by.as_deref())
+        .bind(job.owner_id)
         .execute(&mut *transaction)
         .await?;
         if job_update.rows_affected() != 1 {
@@ -1556,11 +1661,12 @@ impl Repository {
                 r"
                 UPDATE connectors
                 SET status = 'error', last_error = $2, updated_at = now()
-                WHERE id = $1
+                WHERE id = $1 AND owner_id = $3 AND status <> 'revoked'
                 ",
             )
             .bind(connector_id)
             .bind(error)
+            .bind(job.owner_id)
             .execute(&mut *transaction)
             .await?;
         }
@@ -1577,7 +1683,6 @@ impl Repository {
         Ok(())
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub async fn ingest_connector_records(
         &self,
         job: &IngestionJob,
@@ -1601,21 +1706,21 @@ impl Repository {
             ));
         }
         let mut transaction = self.pool.begin().await?;
-        let connector_matches_job = sqlx::query_scalar::<_, bool>(
+        let connector_matches_job = sqlx::query_scalar::<_, Uuid>(
             r"
-            SELECT EXISTS(
-                SELECT 1
-                FROM connectors
-                WHERE owner_id = $1 AND id = $2 AND provider = $3
-            )
+            SELECT id
+            FROM connectors
+            WHERE owner_id = $1 AND id = $2 AND provider = $3
+              AND status IN ('connected', 'syncing', 'error')
+            FOR UPDATE
             ",
         )
         .bind(job.owner_id)
         .bind(connector_id)
         .bind(provider)
-        .fetch_one(&mut *transaction)
+        .fetch_optional(&mut *transaction)
         .await?;
-        if !connector_matches_job {
+        if connector_matches_job.is_none() {
             return Err(AppError::Conflict(
                 "ingestion connector does not match the job owner and provider".to_owned(),
             ));
@@ -1639,8 +1744,11 @@ impl Repository {
             .await?;
             let (source_id, supersedes_id) = if let Some((source_id, existing_hash)) = existing {
                 if existing_hash == content_hash {
-                    sqlx::query("UPDATE source_records SET imported_at = now() WHERE id = $1")
+                    sqlx::query(
+                        "UPDATE source_records SET imported_at = now() WHERE id = $1 AND owner_id = $2",
+                    )
                         .bind(source_id)
+                        .bind(job.owner_id)
                         .execute(&mut *transaction)
                         .await?;
                     continue;
@@ -1650,7 +1758,7 @@ impl Repository {
                     UPDATE source_records
                     SET uri = $2, title = $3, payload = $4, content_hash = $5,
                         observed_at = $6, imported_at = now()
-                    WHERE id = $1
+                    WHERE id = $1 AND owner_id = $7
                     ",
                 )
                 .bind(source_id)
@@ -1659,6 +1767,7 @@ impl Repository {
                 .bind(&record.payload)
                 .bind(&content_hash)
                 .bind(record.observed_at)
+                .bind(job.owner_id)
                 .execute(&mut *transaction)
                 .await?;
                 let supersedes_id = sqlx::query_scalar::<_, Uuid>(
@@ -1737,11 +1846,13 @@ impl Repository {
             UPDATE connectors
             SET status = 'connected', sync_cursor = $2, last_synced_at = now(),
                 last_error = NULL, updated_at = now()
-            WHERE id = $1
+            WHERE id = $1 AND owner_id = $3
+              AND status IN ('connected', 'syncing', 'error')
             ",
         )
         .bind(connector_id)
         .bind(next_cursor)
+        .bind(job.owner_id)
         .execute(&mut *transaction)
         .await?;
         if connector_update.rows_affected() != 1 {
@@ -1753,11 +1864,13 @@ impl Repository {
             r"
             UPDATE ingestion_jobs
             SET status = 'completed', completed_at = now(), last_error = NULL
-            WHERE id = $1 AND status = 'running' AND locked_by = $2
+            WHERE id = $1 AND owner_id = $3
+              AND status = 'running' AND locked_by = $2
             ",
         )
         .bind(job.id)
         .bind(job.locked_by.as_deref())
+        .bind(job.owner_id)
         .execute(&mut *transaction)
         .await?;
         if job_update.rows_affected() != 1 {

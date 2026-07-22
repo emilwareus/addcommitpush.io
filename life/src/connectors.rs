@@ -143,7 +143,7 @@ impl ConnectorService {
         let state_hash = Sha256::digest(state.as_bytes());
         let owner_id = self
             .repository
-            .consume_oauth_state(provider.as_str(), state_hash.as_slice())
+            .oauth_state_owner(provider.as_str(), state_hash.as_slice())
             .await?;
         let connector_id = self
             .repository
@@ -182,6 +182,7 @@ impl ConnectorService {
                 &access,
                 refresh.as_ref(),
                 expires_at,
+                state_hash.as_slice(),
             )
             .await
     }
@@ -231,6 +232,7 @@ impl ConnectorService {
             .map(|seconds| Utc::now() + Duration::seconds(seconds));
         self.repository
             .update_connector_tokens(
+                credentials.owner_id,
                 credentials.id,
                 &encrypted_access,
                 encrypted_refresh.as_ref(),
@@ -433,12 +435,10 @@ impl IngestionWorker {
         let connector_id = job.connector_id.ok_or_else(|| {
             AppError::InvalidInput("connector sync job has no connector".to_owned())
         })?;
-        let credentials = self.repository.connector_credentials(connector_id).await?;
-        if credentials.owner_id != job.owner_id {
-            return Err(AppError::InvalidInput(
-                "job and connector owners do not match".to_owned(),
-            ));
-        }
+        let credentials = self
+            .repository
+            .connector_credentials(job.owner_id, connector_id)
+            .await?;
         let token = self.connectors.access_token(&credentials).await?;
         let provider = Provider::from_str(&credentials.provider)?;
         let (records, cursor) = self

@@ -228,16 +228,10 @@ async fn postgres_lifecycle_is_append_only_searchable_and_idempotent() {
         .unwrap();
     assert_eq!(
         repository
-            .consume_oauth_state("github", &state_hash)
+            .oauth_state_owner("github", &state_hash)
             .await
             .unwrap(),
         owner.id
-    );
-    assert!(
-        repository
-            .consume_oauth_state("github", &state_hash)
-            .await
-            .is_err()
     );
     let cipher = TokenCipher::new(&[9_u8; 32]).unwrap();
     let access = cipher
@@ -253,9 +247,16 @@ async fn postgres_lifecycle_is_append_only_searchable_and_idempotent() {
             &access,
             None,
             None,
+            &state_hash,
         )
         .await
         .unwrap();
+    assert!(
+        repository
+            .oauth_state_owner("github", &state_hash)
+            .await
+            .is_err()
+    );
     let queued = repository
         .enqueue_connector_sync(owner.id, connector_id)
         .await
@@ -393,6 +394,140 @@ async fn postgres_lifecycle_is_append_only_searchable_and_idempotent() {
             .unwrap()
             .get(0);
     assert_eq!(extension_count, 1);
+
+    database.destroy().await;
+}
+
+#[tokio::test]
+async fn connector_revocation_is_final_for_in_flight_work() {
+    let database = TestDatabase::create().await;
+    let repository = Repository::new(database.pool.clone());
+    let owner = provision_owner(
+        &database.pool,
+        "Revocation Owner",
+        "revocation-owner-token-00000000000000000000000000",
+    )
+    .await;
+    let cipher = TokenCipher::new(&[7_u8; 32]).unwrap();
+    let state_hash = [17_u8; 32];
+    let connector_id = repository
+        .create_oauth_state(owner.id, "github", &state_hash)
+        .await
+        .unwrap();
+    let access = cipher
+        .encrypt("github-access-token", connector_id.as_bytes())
+        .unwrap();
+    repository
+        .connect_connector(
+            owner.id,
+            "github",
+            "84",
+            "revocation-owner",
+            &["repo".to_owned()],
+            &access,
+            None,
+            None,
+            &state_hash,
+        )
+        .await
+        .unwrap();
+
+    let stale_state_hash = [18_u8; 32];
+    repository
+        .create_oauth_state(owner.id, "github", &stale_state_hash)
+        .await
+        .unwrap();
+    let (first_enqueue, second_enqueue) = tokio::join!(
+        repository.enqueue_connector_sync(owner.id, connector_id),
+        repository.enqueue_connector_sync(owner.id, connector_id),
+    );
+    let first_job = first_enqueue.unwrap();
+    let second_job = second_enqueue.unwrap();
+    assert_eq!(first_job.id, second_job.id);
+    let claimed = repository
+        .claim_next_job("revocation-worker")
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(claimed.id, first_job.id);
+
+    let revoked = repository
+        .revoke_connector(owner.id, connector_id)
+        .await
+        .unwrap();
+    assert_eq!(revoked.status, "revoked");
+    assert!(
+        repository
+            .oauth_state_owner("github", &stale_state_hash)
+            .await
+            .is_err()
+    );
+    let encrypted_token_count: i64 = sqlx::query_scalar(
+        r"
+        SELECT count(*)
+        FROM connectors
+        WHERE id = $1 AND owner_id = $2
+          AND (
+            access_token_ciphertext IS NOT NULL OR access_token_nonce IS NOT NULL
+            OR refresh_token_ciphertext IS NOT NULL OR refresh_token_nonce IS NOT NULL
+          )
+        ",
+    )
+    .bind(connector_id)
+    .bind(owner.id)
+    .fetch_one(&database.pool)
+    .await
+    .unwrap();
+    assert_eq!(encrypted_token_count, 0);
+
+    let replacement_access = cipher
+        .encrypt("replacement-token", connector_id.as_bytes())
+        .unwrap();
+    assert!(
+        repository
+            .update_connector_tokens(owner.id, connector_id, &replacement_access, None, None)
+            .await
+            .is_err()
+    );
+    assert!(
+        repository
+            .ingest_connector_records(
+                &claimed,
+                connector_id,
+                "github",
+                vec![ImportedRecord {
+                    external_id: "revoked-event".to_owned(),
+                    uri: None,
+                    title: "Revoked event".to_owned(),
+                    payload: json!({"type": "PushEvent"}),
+                    body_markdown: "This record must never be imported.".to_owned(),
+                    observed_at: Some(Utc::now()),
+                }],
+                vec![zero_embedding()],
+                &json!({"last_event_id": "revoked-event"}),
+            )
+            .await
+            .is_err()
+    );
+    repository
+        .fail_job(&claimed, "connector was revoked")
+        .await
+        .unwrap();
+    assert_eq!(
+        repository.job(owner.id, claimed.id).await.unwrap().status,
+        "failed"
+    );
+    assert_eq!(
+        repository
+            .list_connectors(owner.id)
+            .await
+            .unwrap()
+            .first()
+            .unwrap()
+            .status,
+        "revoked"
+    );
+    assert!(repository.retry_job(owner.id, claimed.id).await.is_err());
 
     database.destroy().await;
 }
