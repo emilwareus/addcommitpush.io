@@ -20,10 +20,7 @@ export default async function MemoriesPage({
   const parameters = await searchParams;
   const offsetValue = Number(first(parameters.offset) ?? '0');
   const offset = Number.isInteger(offsetValue) && offsetValue >= 0 ? offsetValue : 0;
-  const [owner, page] = await Promise.all([
-    getOwner(),
-    listMemories({ limit: 24, offset }),
-  ]);
+  const [owner, page] = await Promise.all([getOwner(), listMemories({ limit: 24, offset })]);
 
   return (
     <div className="mx-auto max-w-7xl">

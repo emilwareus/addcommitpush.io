@@ -23,9 +23,7 @@ export default async function ConversationsPage() {
             prefetch={false}
             className="block border border-dashed border-border bg-card p-5 no-underline hover:border-primary"
           >
-            <h2 className="font-serif text-xl font-semibold text-primary">
-              {conversation.title}
-            </h2>
+            <h2 className="font-serif text-xl font-semibold text-primary">{conversation.title}</h2>
             <p className="mt-4 text-xs text-muted-foreground">
               Created {formatInOwnerTimezone(conversation.created_at, owner.timezone)} · Updated{' '}
               {formatInOwnerTimezone(conversation.updated_at, owner.timezone)}

@@ -136,7 +136,8 @@ async function runMemoryTool(sessionId: string, parsed: ParsedToolCall) {
     };
   }
   const hits = searchHitListSchema.safeParse(decoded);
-  if (!hits.success) throw new RealtimeProtocolError('Life returned invalid memory search results.');
+  if (!hits.success)
+    throw new RealtimeProtocolError('Life returned invalid memory search results.');
   return {
     call: parsed.call,
     output: JSON.stringify(hits.data),

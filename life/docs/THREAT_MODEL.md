@@ -14,17 +14,17 @@ boundary.
 
 ## Principal threats and controls
 
-| Threat | Control | Residual risk |
-| --- | --- | --- |
-| Caller reads another owner's data | Bearer auth resolves one owner; every query binds that owner; composite foreign keys reject cross-owner links | The application database role remains trusted |
-| Browser leaks a Life token | The Next.js server proxies Life requests; the browser receives only a short-lived Realtime secret | A client implementation can violate the contract |
-| Database dump exposes memories | Private networking, IAM, encryption at rest, least privilege, and audit | Database administrators and runtime compromise can read plaintext |
-| Database dump exposes OAuth tokens | AES-256-GCM, random nonces, associated data, and a separate runtime key | Runtime compromise can access ciphertext and key |
-| Imported text injects instructions | Imported and retrieved text is treated as evidence; model output is schema constrained | Models can still reason incorrectly |
-| Model invents a fact | Text extraction requires evidence from the current message; voice records through an explicit tool | A false statement can still be faithfully recorded |
-| Replayed OAuth or webhooks | One-use expiring OAuth state and timestamped HMAC verification | A compromised browser session can authorize the wrong account |
-| Connector retry duplicates history | Provider IDs and content hashes provide idempotency; changed content appends a revision | Provider deletions are not mirrored automatically |
-| Accidental deletion | Exact display-name confirmation and bearer authentication | Backups have a separate lifecycle |
+| Threat                             | Control                                                                                                       | Residual risk                                                     |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Caller reads another owner's data  | Bearer auth resolves one owner; every query binds that owner; composite foreign keys reject cross-owner links | The application database role remains trusted                     |
+| Browser leaks a Life token         | The Next.js server proxies Life requests; the browser receives only a short-lived Realtime secret             | A client implementation can violate the contract                  |
+| Database dump exposes memories     | Private networking, IAM, encryption at rest, least privilege, and audit                                       | Database administrators and runtime compromise can read plaintext |
+| Database dump exposes OAuth tokens | AES-256-GCM, random nonces, associated data, and a separate runtime key                                       | Runtime compromise can access ciphertext and key                  |
+| Imported text injects instructions | Imported and retrieved text is treated as evidence; model output is schema constrained                        | Models can still reason incorrectly                               |
+| Model invents a fact               | Text extraction requires evidence from the current message; voice records through an explicit tool            | A false statement can still be faithfully recorded                |
+| Replayed OAuth or webhooks         | One-use expiring OAuth state and timestamped HMAC verification                                                | A compromised browser session can authorize the wrong account     |
+| Connector retry duplicates history | Provider IDs and content hashes provide idempotency; changed content appends a revision                       | Provider deletions are not mirrored automatically                 |
+| Accidental deletion                | Exact display-name confirmation and bearer authentication                                                     | Backups have a separate lifecycle                                 |
 
 ## Collection limits
 

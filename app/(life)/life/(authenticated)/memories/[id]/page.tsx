@@ -29,10 +29,7 @@ export default async function MemoryDetailPage({ params }: { params: Promise<{ i
       <dl className="mt-6 grid gap-4 border border-dashed border-border p-5 text-sm sm:grid-cols-3">
         <Meta label="Kind" value={enumLabel(memory.kind)} />
         <Meta label="Domain" value={memory.domain} />
-        <Meta
-          label="Recorded"
-          value={formatInOwnerTimezone(memory.recorded_at, owner.timezone)}
-        />
+        <Meta label="Recorded" value={formatInOwnerTimezone(memory.recorded_at, owner.timezone)} />
       </dl>
 
       <MemoryActions memory={memory} timezone={owner.timezone} />

@@ -1,12 +1,6 @@
 import Link from 'next/link';
 import type React from 'react';
-import {
-  BookOpen,
-  Clock3,
-  MessagesSquare,
-  Mic,
-  Settings,
-} from 'lucide-react';
+import { BookOpen, Clock3, MessagesSquare, Mic, Settings } from 'lucide-react';
 import { LifeLogoutButton } from './logout-button';
 
 const links = [

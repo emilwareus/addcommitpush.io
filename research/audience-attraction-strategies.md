@@ -22,33 +22,39 @@ Google's official guidance (last updated Dec 2025) prioritizes original, high-qu
 ### 1.3 Technical SEO Fundamentals
 
 **Indexability and Crawlability:**
+
 - Submit sitemap via Google Search Console
 - Use descriptive URLs (/posts/distributed-rate-limiting-redis not /posts/2024/01/15/post-37)
 - Don't block CSS/JS that affect rendering
 - Use canonical URLs; ensure HTTPS
 
 **Structured Data (Schema.org):**
+
 - Add BlogPosting or Article JSON-LD to every post
 - Include: headline, datePublished, dateModified, author (with URL to author page), image
 - Google's case studies show 25-82% higher CTR for pages with structured data
 - Enables rich results (better title display, image thumbnails, date info)
 
 **Content Quality Signals:**
+
 - Content must be: easy-to-read, well-organized, unique, up-to-date, "helpful, reliable, people-first"
 - Break long content into sections with descriptive headings
 - Update stale content; don't copy or rehash others' content
 
 **Page Experience:**
+
 - Core Web Vitals are ranking signals: LCP, INP, CLS
 - Fast page loads (minimal JS, optimized images), no layout shifts, responsive mobile
 - Avoid intrusive interstitials and excessive ads
 
 **Keyword Strategy:**
+
 - Use words people actually search for ("how to implement rate limiting in Go" not "throughput control mechanisms")
 - Place keywords in title, main heading, alt text, link text
 - Google's language matching is sophisticated; don't keyword-stuff
 
 **Link Strategy:**
+
 - Internal linking matters for discovery
 - Link to authoritative external sources
 - Write descriptive link text (not "click here")
@@ -71,12 +77,14 @@ Google's official guidance (last updated Dec 2025) prioritizes original, high-qu
 ### 2.1 Hacker News
 
 **Official Show HN Guidelines (fetched from HN):**
+
 - Show HN is for something you've made that people can play with — NOT blog posts
 - Blog posts should be regular submissions, not Show HNs
 - Don't ask friends to upvote or comment — against HN rules
 - Be respectful in comments; ask questions out of curiosity
 
 **How to use HN for a dev blog:**
+
 - Post blog posts as regular link submissions with clear, honest titles
 - Post during weekday mornings US time for best visibility
 - Title: straightforward and informative, not clickbait ("How we reduced our Kubernetes costs by 60%" beats "You won't believe what we did")
@@ -88,11 +96,13 @@ Google's official guidance (last updated Dec 2025) prioritizes original, high-qu
 ### 2.2 Reddit
 
 **Key Subreddits:**
+
 - r/programming, r/webdev, r/javascript, r/python, r/golang, r/rust
 - r/devops, r/kubernetes, r/aws
 - r/ExperiencedDevs (senior engineers), r/SideProject (project launches)
 
 **Best Practices:**
+
 - Read each subreddit's rules — many prohibit self-promotion over a certain ratio
 - 10:1 rule: 10x non-self-promotional contributions for every 1 self-promotion
 - Write substantive text posts, don't just dump links
@@ -175,6 +185,7 @@ Write deep, original content then cross-post to dev.to/Hashnode (canonical URL) 
 ### 3.5 What Actually Works
 
 **High-impact:**
+
 1. Deep technical tutorials with real code — #1 driver of organic search traffic
 2. Post-mortems and incident write-ups — highest engagement on HN/Reddit
 3. Open-source projects with blog posts — GitHub README links are powerful backlinks
@@ -183,6 +194,7 @@ Write deep, original content then cross-post to dev.to/Hashnode (canonical URL) 
 6. Consistent posting — Google rewards ongoing care and attention
 
 **Low-impact (avoid):**
+
 1. Chasing trending topics outside your expertise (Google explicitly flags this)
 2. Writing listicles ("10 JavaScript tricks") — saturated, low E-E-A-T
 3. SEO-first content targeting keywords rather than reader needs
@@ -203,6 +215,7 @@ Write deep, original content then cross-post to dev.to/Hashnode (canonical URL) 
 ### 4.2 The "Scaled Content Abuse" Policy (Direct from Google, updated 2026)
 
 Explicit violations:
+
 - Using generative AI tools to generate many pages without adding value for users
 - Scraping feeds, search results, or other content to generate many pages (including synonymizing, translating, obfuscation)
 - Stitching or combining content from different web pages without adding value
@@ -212,28 +225,33 @@ Explicit violations:
 ### 4.3 How AI Content Specifically Damages Developer Blogs
 
 **1. Lack of E-E-A-T (Experience dimension)**
+
 - Developer readers immediately detect when content lacks hands-on experience
 - AI-generated tutorials often have plausible-looking code that doesn't work, or describe APIs that don't exist
 - Google's E-E-A-T framework explicitly values "first-hand expertise" — AI content fails this test
 
 **2. Hallucinated Technical Details**
+
 - AI models hallucinate API signatures, library versions, configuration options, code behavior
 - In developer content, a single wrong code snippet destroys credibility
 - These are "easily-verified factual errors" which Google's quality guidelines explicitly flag as negative
 
 **3. The "Helpful Content" System Penalizes AI-First Content**
 Google's self-assessment questions explicitly flag:
+
 - "Are you using extensive automation to produce content on many topics?" = red flag
 - "Are you mainly summarizing what others have to say without adding much value?" = red flag
 - "Is the content mass-produced?" = red flag
 
 **4. Audience Trust Erosion in the Developer Community**
+
 - Developers are the most AI-skeptical audience
 - If they detect AI-generated content, trust is destroyed permanently
 - HN, Reddit, and X are actively hostile to AI-generated "content slop" — posts get downvoted, flagged, author reputation damaged
 - One AI-generated post with errors causes readers to question all your content
 
 **5. Duplicate Content / Unoriginality**
+
 - AI models trained on same data produce similar outputs — multiple dev blogs using AI on the same topic produce near-identical content
 - Google's systems detect this as duplicate/unoriginal
 - Google: "don't copy others' content in part or in its entirety: create the content yourself based on what you know"
@@ -241,12 +259,14 @@ Google's self-assessment questions explicitly flag:
 ### 4.4 Responsible AI Use in Technical Blogging
 
 **Acceptable (Google-aligned):**
+
 - AI for editing assistance (grammar, clarity, structure)
 - AI to brainstorm topics or outlines (then write content yourself)
 - AI to generate boilerplate code snippets that you verify and test
 - Disclose AI assistance (Google recommends transparency about "How" content was created)
 
 **Unacceptable (Google will penalize):**
+
 - AI to generate entire articles at scale
 - Publishing AI-generated content without human review, fact-checking, or testing
 - AI to produce content on topics you have no expertise in

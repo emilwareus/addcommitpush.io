@@ -6,10 +6,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function TimelinePage() {
-  const [owner, memories] = await Promise.all([
-    getOwner(),
-    getTimeline({ limit: 500 }),
-  ]);
+  const [owner, memories] = await Promise.all([getOwner(), getTimeline({ limit: 500 })]);
 
   return (
     <div className="mx-auto max-w-5xl">

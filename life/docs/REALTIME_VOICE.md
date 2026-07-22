@@ -50,24 +50,24 @@ a `function_call_output` with the original `call_id`, then send
 Search arguments:
 
 ```json
-{"query":"places I felt at home","limit":12}
+{ "query": "places I felt at home", "limit": 12 }
 ```
 
 Explore arguments:
 
 ```json
-{"kind":null,"domain":"family","limit":12}
+{ "kind": null, "domain": "family", "limit": 12 }
 ```
 
 Record arguments:
 
 ```json
 {
-  "kind":"preference",
-  "title":"Prefers quiet mornings",
-  "body_markdown":"The owner prefers quiet mornings for focused work.",
-  "domain":"daily life",
-  "occurred_start":null
+  "kind": "preference",
+  "title": "Prefers quiet mornings",
+  "body_markdown": "The owner prefers quiet mornings for focused work.",
+  "domain": "daily life",
+  "occurred_start": null
 }
 ```
 
