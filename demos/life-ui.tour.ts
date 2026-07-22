@@ -1,6 +1,9 @@
 import { defineTour } from 'demohunter';
 
-const DEMO_PASSWORD = 'LifeDemo2026!';
+const DEMO_PASSWORD = process.env.LIFE_DEMO_PASSWORD;
+if (!DEMO_PASSWORD) {
+  throw new Error('LIFE_DEMO_PASSWORD is required to record the Life demo.');
+}
 const FEATURE_MEMORY_ID = '10000000-0000-4000-8000-000000000001';
 const CONVERSATION_ID = '20000000-0000-4000-8000-000000000001';
 
