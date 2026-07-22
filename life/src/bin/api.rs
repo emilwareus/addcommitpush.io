@@ -2,6 +2,7 @@ use std::env;
 
 use anyhow::Context as _;
 use life_agent::config::Config;
+use life_agent::shutdown::shutdown_signal;
 use life_agent::{AppState, api};
 use tokio::net::TcpListener;
 use tracing::info;
@@ -22,9 +23,10 @@ async fn main() -> anyhow::Result<()> {
     let listener = TcpListener::bind(&address)
         .await
         .with_context(|| format!("bind HTTP listener to {address}"))?;
+    let shutdown = shutdown_signal().context("install shutdown signal handlers")?;
     info!(address, "life API listening");
     axum::serve(listener, api::router(state)?)
-        .with_graceful_shutdown(shutdown_signal())
+        .with_graceful_shutdown(shutdown)
         .await
         .context("serve HTTP API")?;
     Ok(())
@@ -37,10 +39,4 @@ fn init_tracing() -> anyhow::Result<()> {
         .with_env_filter(filter)
         .try_init()
         .map_err(|error| anyhow::anyhow!("initialize tracing: {error}"))
-}
-
-async fn shutdown_signal() {
-    if tokio::signal::ctrl_c().await.is_err() {
-        tracing::error!("failed to install shutdown signal handler");
-    }
 }

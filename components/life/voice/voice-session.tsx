@@ -34,14 +34,20 @@ export function VoiceSession({ defaultTitle }: { defaultTitle: string }) {
   } = useRealtimeVoiceSession();
   const canStart = ['idle', 'closed'].includes(phase) || (phase === 'error' && !session);
   const connected = phase === 'connected';
-  const busy = ['requesting_microphone', 'creating_session', 'connecting', 'closing'].includes(phase);
+  const busy = ['requesting_microphone', 'creating_session', 'connecting', 'closing'].includes(
+    phase
+  );
+  const savingTurn = snapshot.turns.some((turn) => turn.commitStatus === 'committing');
+  const hasPendingWork = activeToolCount > 0 || savingTurn;
   const status = activeToolCount
     ? 'Working with your memories'
-    : isSpeaking
-      ? 'Life is speaking'
-      : connected && muted
-        ? 'Microphone muted'
-        : PHASE_LABELS[phase];
+    : savingTurn
+      ? 'Saving conversation turn'
+      : isSpeaking
+        ? 'Life is speaking'
+        : connected && muted
+          ? 'Microphone muted'
+          : PHASE_LABELS[phase];
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -55,7 +61,7 @@ export function VoiceSession({ defaultTitle }: { defaultTitle: string }) {
               : 'border-border bg-background text-primary'
           }`}
         >
-          {busy || activeToolCount > 0 ? (
+          {busy || hasPendingWork ? (
             <Loader2 className="size-9 animate-spin" aria-hidden="true" />
           ) : muted ? (
             <MicOff className="size-9" aria-hidden="true" />
@@ -92,7 +98,7 @@ export function VoiceSession({ defaultTitle }: { defaultTitle: string }) {
                 type="button"
                 variant="destructive"
                 onClick={() => void end()}
-                disabled={!session || !['connected', 'error'].includes(phase)}
+                disabled={!session || !['connected', 'error'].includes(phase) || hasPendingWork}
               >
                 <Square aria-hidden="true" /> End
               </Button>

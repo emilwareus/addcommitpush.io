@@ -13,17 +13,18 @@ export function LifeLoginForm({ nextPath }: { nextPath: string }) {
     event.preventDefault();
     setPending(true);
     setError(null);
-    const response = await fetch('/api/life/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password, next: nextPath }),
-    });
-    if (!response.ok) {
+    try {
+      const response = await fetch('/api/life/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password, next: nextPath }),
+      });
+      if (!response.ok) throw new Error('Sign-in failed.');
+      window.location.assign(nextPath);
+    } catch {
       setPending(false);
       setError('Sign-in failed.');
-      return;
     }
-    window.location.assign(nextPath);
   }
 
   return (

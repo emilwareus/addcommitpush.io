@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import fixtures from '@/lib/life/fixtures/contract-fixtures.json';
 import {
   auditEventSchema,
@@ -14,6 +15,7 @@ import {
   researchResponseSchema,
   searchHitSchema,
 } from '@/lib/life/contracts';
+import { ownerLocalDateTimeToIso } from '@/lib/life/formatting';
 
 ownerSchema.parse(fixtures.owner);
 memorySchema.parse(fixtures.memory);
@@ -39,5 +41,18 @@ const malformedFixtures = [
 if (malformedFixtures.some((result) => result.success)) {
   throw new Error('A malformed Life contract fixture unexpectedly parsed.');
 }
+
+assert.equal(
+  ownerLocalDateTimeToIso('2026-01-15T12:30', 'Europe/Stockholm'),
+  '2026-01-15T11:30:00.000Z'
+);
+assert.throws(
+  () => ownerLocalDateTimeToIso('2026-02-30T12:00', 'Europe/Stockholm'),
+  /does not exist/
+);
+assert.throws(
+  () => ownerLocalDateTimeToIso('2026-03-29T02:30', 'Europe/Stockholm'),
+  /does not exist/
+);
 
 console.log('Life contract fixtures passed.');

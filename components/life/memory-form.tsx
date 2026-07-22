@@ -31,9 +31,7 @@ export function MemoryForm({
     try {
       const form = new FormData(event.currentTarget);
       const occurredLocal = String(form.get('occurred_start') ?? '').trim();
-      const occurredStart = occurredLocal
-        ? ownerLocalDateTimeToIso(occurredLocal, timezone)
-        : null;
+      const occurredStart = occurredLocal ? ownerLocalDateTimeToIso(occurredLocal, timezone) : null;
       const input = memoryInputSchema.parse({
         kind: String(form.get('kind')),
         title: String(form.get('title')),

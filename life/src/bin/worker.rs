@@ -3,6 +3,7 @@ use life_agent::AppState;
 use life_agent::config::Config;
 use life_agent::connectors::IngestionWorker;
 use life_agent::models::IngestionJob;
+use life_agent::shutdown::shutdown_signal;
 use reqwest::Client;
 use tokio::time::{Duration, MissedTickBehavior};
 use tracing::{error, info, warn};
@@ -45,6 +46,8 @@ async fn main() -> anyhow::Result<()> {
     }
     let mut interval = tokio::time::interval(Duration::from_secs(2));
     interval.set_missed_tick_behavior(MissedTickBehavior::Delay);
+    let shutdown = shutdown_signal().context("install shutdown signal handlers")?;
+    tokio::pin!(shutdown);
     info!(worker_id, "life worker started");
 
     loop {
@@ -55,8 +58,7 @@ async fn main() -> anyhow::Result<()> {
                 };
                 execute_job(&state, &worker, &job).await?;
             }
-            signal = tokio::signal::ctrl_c() => {
-                signal.context("listen for shutdown signal")?;
+            () = &mut shutdown => {
                 info!("life worker shutting down");
                 return Ok(());
             }

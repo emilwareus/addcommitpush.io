@@ -88,6 +88,23 @@ export function ownerLocalDateTimeToIso(value: string, timezone: string): string
     );
     candidate = target - (represented - candidate);
   }
+
+  const representedParts = Object.fromEntries(
+    formatter
+      .formatToParts(new Date(candidate))
+      .filter((part) => part.type !== 'literal')
+      .map((part) => [part.type, Number(part.value)])
+  );
+  if (
+    representedParts.year !== Number(yearValue) ||
+    representedParts.month !== Number(monthValue) ||
+    representedParts.day !== Number(dayValue) ||
+    representedParts.hour !== Number(hourValue) ||
+    representedParts.minute !== Number(minuteValue)
+  ) {
+    throw new Error('The owner-local date and time does not exist in the selected timezone.');
+  }
+
   return new Date(candidate).toISOString();
 }
 

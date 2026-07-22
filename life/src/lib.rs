@@ -10,6 +10,7 @@ pub mod error;
 pub mod models;
 pub mod openai;
 pub mod research;
+pub mod shutdown;
 
 use std::time::Duration;
 

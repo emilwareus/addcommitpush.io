@@ -22,26 +22,23 @@ export function ConversationComposer({ conversationId }: { conversationId: strin
     setPending(true);
     setError(null);
     setResult(null);
-    const response = await fetch(`/api/life/conversations/${conversationId}/turns`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content }),
-    });
-    if (!response.ok) {
+    try {
+      const response = await fetch(`/api/life/conversations/${conversationId}/turns`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      });
+      if (!response.ok) throw new Error('Life could not complete the turn.');
+      const parsed = conversationTurnResponseSchema.safeParse(await response.json());
+      if (!parsed.success) throw new Error('Life returned an invalid turn response.');
+      setContent('');
+      setResult(parsed.data);
+      router.refresh();
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : 'Life could not complete the turn.');
+    } finally {
       setPending(false);
-      setError('Life could not complete the turn.');
-      return;
     }
-    const parsed = conversationTurnResponseSchema.safeParse(await response.json());
-    if (!parsed.success) {
-      setPending(false);
-      setError('Life returned an invalid turn response.');
-      return;
-    }
-    setContent('');
-    setResult(parsed.data);
-    setPending(false);
-    router.refresh();
   }
 
   return (

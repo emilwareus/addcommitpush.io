@@ -16,24 +16,21 @@ export function MemorySearch({ timezone }: { timezone: string }) {
     event.preventDefault();
     setPending(true);
     setError(null);
-    const response = await fetch('/api/life/memories/search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, limit: 20 }),
-    });
-    if (!response.ok) {
+    try {
+      const response = await fetch('/api/life/memories/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, limit: 20 }),
+      });
+      if (!response.ok) throw new Error('Search could not be completed.');
+      const parsed = searchHitListSchema.safeParse(await response.json());
+      if (!parsed.success) throw new Error('Search returned an invalid response.');
+      setResults(parsed.data);
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : 'Search could not be completed.');
+    } finally {
       setPending(false);
-      setError('Search could not be completed.');
-      return;
     }
-    const parsed = searchHitListSchema.safeParse(await response.json());
-    if (!parsed.success) {
-      setPending(false);
-      setError('Search returned an invalid response.');
-      return;
-    }
-    setResults(parsed.data);
-    setPending(false);
   }
 
   return (

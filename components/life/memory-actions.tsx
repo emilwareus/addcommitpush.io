@@ -16,24 +16,24 @@ export function MemoryActions({ memory, timezone }: { memory: Memory; timezone: 
   async function retract() {
     setPending(true);
     setError(null);
-    const response = await fetch(`/api/life/memories/${memory.id}`, {
-      method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ confirm: 'retract' }),
-    });
-    if (!response.ok) {
+    try {
+      const response = await fetch(`/api/life/memories/${memory.id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: 'retract' }),
+      });
+      if (!response.ok) throw new Error('The retraction could not be appended.');
+      const revision = memorySchema.safeParse(await response.json());
+      if (!revision.success) throw new Error('Life returned an invalid retraction response.');
+      router.push(`/life/memories/${revision.data.id}`);
+      router.refresh();
+    } catch (failure) {
+      setError(
+        failure instanceof Error ? failure.message : 'The retraction could not be appended.'
+      );
+    } finally {
       setPending(false);
-      setError('The retraction could not be appended.');
-      return;
     }
-    const revision = memorySchema.safeParse(await response.json());
-    if (!revision.success) {
-      setPending(false);
-      setError('Life returned an invalid retraction response.');
-      return;
-    }
-    router.push(`/life/memories/${revision.data.id}`);
-    router.refresh();
   }
 
   return (
