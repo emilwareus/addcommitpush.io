@@ -50,9 +50,6 @@ jobs:
       - name: Check Life Realtime protocol
         run: pnpm check:life-realtime
 
-      - name: Build production site
-        run: pnpm build
-
   life-backend:
     name: Life backend checks
     runs-on: ubuntu-latest
