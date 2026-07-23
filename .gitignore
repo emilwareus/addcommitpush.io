@@ -25,6 +25,7 @@
 # misc
 .DS_Store
 *.pem
+gha-creds-*.json
 
 # debug
 npm-debug.log*

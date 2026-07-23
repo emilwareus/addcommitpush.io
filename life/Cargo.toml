@@ -19,6 +19,10 @@ path = "src/bin/api.rs"
 name = "life-worker"
 path = "src/bin/worker.rs"
 
+[[bin]]
+name = "life-provision"
+path = "src/bin/provision.rs"
+
 [dependencies]
 aes-gcm = "0.11.0"
 anyhow = "1.0.100"

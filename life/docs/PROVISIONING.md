@@ -1,96 +1,71 @@
-# Manual User Provisioning
+# Owner provisioning
 
-Life has no create-user or create-credential endpoint. An operator with direct
-PostgreSQL access creates the owner and initial bearer credential in one
-transaction. The API never accepts an owner ID from a user request.
+Life has no public create-owner or create-credential endpoint. Pulumi creates a
+random owner UUID, credential UUID, and 256-bit bearer token. The raw token is
+stored in Secret Manager; PostgreSQL stores only its SHA-256 digest.
 
-## Create an owner
+After every production infrastructure update, GitHub Actions executes
+`life-provision`. The binary:
 
-Generate a 256-bit token locally and pass only its digest to PostgreSQL:
+1. runs the checked-in SQLx migrations;
+2. upserts the fixed owner;
+3. upserts the fixed primary credential and its token digest;
+4. exits non-zero if configuration, migration, or provisioning fails.
+
+The operation is idempotent. It never prints the bearer token.
+
+## Run provisioning manually
+
+Use the managed Cloud Run job rather than connecting to PostgreSQL from a local
+machine:
 
 ```bash
-export LIFE_USER_TOKEN="$(openssl rand -hex 32)"
-export LIFE_USER_TOKEN_HASH="$({ printf %s "$LIFE_USER_TOKEN"; } \
-  | openssl dgst -sha256 -binary \
-  | openssl base64 -A)"
-
-psql "$DATABASE_URL" \
-  --set=display_name='Emil Wareus' \
-  --set=timezone='Europe/Stockholm' \
-  --set=locale='en' \
-  --set=credential_label='primary' \
-  --set=token_hash="$LIFE_USER_TOKEN_HASH" <<'SQL'
-\set ON_ERROR_STOP on
-BEGIN;
-
-INSERT INTO owners (
-    display_name, timezone, locale, profile_markdown
-)
-VALUES (
-    :'display_name', :'timezone', :'locale', ''
-)
-RETURNING id AS owner_id \gset
-
-INSERT INTO api_credentials (
-    owner_id, label, token_hash
-)
-VALUES (
-    :'owner_id', :'credential_label', decode(:'token_hash', 'base64')
-);
-
-INSERT INTO audit_events (
-    owner_id, action, resource_kind, resource_id, metadata
-)
-VALUES (
-    :'owner_id', 'owner.created', 'owner', :'owner_id',
-    '{"provisioned_by":"operator"}'::jsonb
-);
-
-COMMIT;
-\echo provisioned owner :owner_id
-SQL
-
-printf 'Save this bearer token now; it cannot be recovered: %s\n' \
-  "$LIFE_USER_TOKEN"
-unset LIFE_USER_TOKEN LIFE_USER_TOKEN_HASH
+gcloud run jobs execute life-provision \
+  --project=addcommitpush-life \
+  --region=europe-west1 \
+  --wait
 ```
 
-Store the raw token in the server-side secret store used by the frontend. Do not
-put it in browser storage, client JavaScript, logs, source control, or the Life
-database. A request authenticates as this owner with:
+Inspect recent executions:
+
+```bash
+gcloud run jobs executions list \
+  --job=life-provision \
+  --project=addcommitpush-life \
+  --region=europe-west1
+```
+
+## Retrieve server-only values
+
+Copy the UI password:
+
+```bash
+gcloud secrets versions access latest \
+  --project=addcommitpush-life \
+  --secret=life-ui-password |
+  pbcopy
+```
+
+The bearer token is synchronized automatically to the Vercel production
+environment as `LIFE_USER_TOKEN`. Do not put it in browser storage, client
+JavaScript, logs, source control, or the database.
+
+Authenticated backend requests use:
 
 ```http
 Authorization: Bearer <raw token>
 ```
 
-`POST /v1/owner` does not exist. `GET` and `PUT /v1/owner` operate only
-on the owner resolved from this credential.
+`POST /v1/owner` does not exist. `GET` and `PUT /v1/owner` operate only on the
+owner resolved from that credential.
 
-## Rotate or revoke a credential
+## Rotation
 
-Create a replacement digest with the same local commands, then insert it for the
-owner. Keep both credentials active only for the planned cutover window:
+Credential and UI secret rotation must be implemented as a Pulumi change so the
+new values, provisioning job, and Vercel configuration move together. Do not
+edit the generated secrets by hand: Pulumi would restore its recorded values on
+the next deployment.
 
-```sql
-BEGIN;
-
-INSERT INTO api_credentials (owner_id, label, token_hash, expires_at)
-VALUES (
-    'OWNER_UUID',
-    'primary-rotated-2026-07',
-    decode('BASE64_SHA256_DIGEST', 'base64'),
-    NULL
-);
-
-UPDATE api_credentials
-SET revoked_at = now()
-WHERE id = 'OLD_CREDENTIAL_UUID'
-  AND owner_id = 'OWNER_UUID'
-  AND revoked_at IS NULL;
-
-COMMIT;
-```
-
-Revocation takes effect on the next API request. Deleting an owner through the
-authenticated API or directly in PostgreSQL cascades through that owner's
-credentials and data without affecting other owners.
+Rotating `LIFE_ENCRYPTION_KEY` is separate and requires an explicit re-encryption
+migration before changing the secret. Existing connector credentials cannot be
+decrypted with a replacement key.
