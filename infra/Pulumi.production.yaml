@@ -1,0 +1,9 @@
+encryptionsalt: v1:1g6EyN14FXQ=:v1:x3426vJc2Mkz198I:4JtDdynkrQ4lAU9vHgJpcOBrVV6K9Q==
+config:
+  gcp:project: addcommitpush-life
+  gcp:region: europe-west1
+  addcommitpush-life:frontendOrigin: https://addcommitpush.io
+  addcommitpush-life:openaiApiKey:
+    secure: v1:73rK3pOSnpChY67/:kC2bXVUHRJQdwSQVU1FrmR8aT9fAFxY1WgdADIt8AIZKJtwsZ247Lhb2BM1sfpNFAqlJALirhbhDT5IV69ZDpusbPbFzFMRWP4IJ15BsLQS/QCt4956E2P3A31HgNjRPb5inbvre8E7HlpD+qYLhO0oHIQMD4ZhRp0HhrSDzsj6If5usuQV6gDvfNzcPpf5nez3jfC3IJMBGvTfxKwH1si2b+EbEy2OJ21YdcUp7IvsHOnsK
+  gcp:billingProject: addcommitpush-life
+  gcp:userProjectOverride: 'true'
