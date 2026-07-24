@@ -270,6 +270,13 @@ export function useRealtimeVoiceSession() {
           break;
         case 'input_audio_buffer.speech_stopped':
           break;
+        case 'output_audio_buffer.started':
+          setIsSpeaking(true);
+          break;
+        case 'output_audio_buffer.stopped':
+        case 'output_audio_buffer.cleared':
+          setIsSpeaking(false);
+          break;
         case 'error':
           throw new RealtimeProtocolError(`OpenAI Realtime error: ${event.error.message}`);
         default:

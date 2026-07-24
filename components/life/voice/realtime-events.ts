@@ -148,6 +148,18 @@ const speechStoppedSchema = z
   })
   .passthrough();
 
+const outputAudioBufferLifecycleSchema = z
+  .object({
+    ...eventBase,
+    type: z.enum([
+      'output_audio_buffer.started',
+      'output_audio_buffer.stopped',
+      'output_audio_buffer.cleared',
+    ]),
+    response_id: z.string(),
+  })
+  .passthrough();
+
 const ignoredEventSchema = z
   .object({
     ...eventBase,
@@ -186,6 +198,7 @@ export type RealtimeServerEvent =
   | z.infer<typeof errorEventSchema>
   | z.infer<typeof speechStartedSchema>
   | z.infer<typeof speechStoppedSchema>
+  | z.infer<typeof outputAudioBufferLifecycleSchema>
   | z.infer<typeof ignoredEventSchema>;
 
 export class RealtimeProtocolError extends Error {
@@ -240,6 +253,10 @@ function schemaForEventType(type: string): z.ZodType<RealtimeServerEvent> {
       return speechStartedSchema;
     case 'input_audio_buffer.speech_stopped':
       return speechStoppedSchema;
+    case 'output_audio_buffer.started':
+    case 'output_audio_buffer.stopped':
+    case 'output_audio_buffer.cleared':
+      return outputAudioBufferLifecycleSchema;
     case 'session.created':
     case 'session.updated':
     case 'conversation.created':

@@ -107,9 +107,39 @@ function checkUnknownEventsFailClosed(): void {
   );
 }
 
+function checkWebRtcOutputAudioLifecycleEvents(): void {
+  for (const type of [
+    'output_audio_buffer.started',
+    'output_audio_buffer.stopped',
+    'output_audio_buffer.cleared',
+  ]) {
+    assert.equal(
+      parseRealtimeEvent(
+        JSON.stringify({
+          type,
+          event_id: `event_${type}`,
+          response_id: 'response_1',
+        })
+      ).type,
+      type
+    );
+  }
+  assert.throws(
+    () =>
+      parseRealtimeEvent(
+        JSON.stringify({
+          type: 'output_audio_buffer.started',
+          event_id: 'event_without_response',
+        })
+      ),
+    RealtimeProtocolError
+  );
+}
+
 checkExactCommitAndRetry();
 checkCitationChainAndIsolation();
 checkInterruptedResponseDoesNotCommit();
 checkUnknownEventsFailClosed();
+checkWebRtcOutputAudioLifecycleEvents();
 
 process.stdout.write('Life Realtime state checks passed.\n');
