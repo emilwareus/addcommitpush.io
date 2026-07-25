@@ -35,6 +35,8 @@ function checkExactCommitAndRetry(): void {
   assert.equal(assembler.takeReadyCommits().length, 0);
 
   addUser(assembler, 'user_1', '  Exact user transcript.  ');
+  assert.equal(assembler.takeReadyCommits().length, 0);
+  assembler.completePlayback('resp_1');
   const [payload] = assembler.takeReadyCommits();
   assert.deepEqual(payload, {
     user_transcript: '  Exact user transcript.  ',
@@ -77,12 +79,14 @@ function checkCitationChainAndIsolation(): void {
     'I found one relevant memory.'
   );
   assembler.completeResponse('resp_answer_2', 'completed');
+  assembler.completePlayback('resp_answer_2');
   const [citedPayload] = assembler.takeReadyCommits();
   assert.deepEqual(citedPayload.cited_memory_ids, [MEMORY_ID]);
 
   addUser(assembler, 'user_3', 'A separate turn.');
   addAssistant(assembler, 'resp_3', 'assistant_3', 'user_3', 'A separate answer.');
   assembler.completeResponse('resp_3', 'completed');
+  assembler.completePlayback('resp_3');
   const [isolatedPayload] = assembler.takeReadyCommits();
   assert.deepEqual(isolatedPayload.cited_memory_ids, []);
 }
@@ -97,7 +101,29 @@ function checkInterruptedResponseDoesNotCommit(): void {
   addUser(assembler, 'user_5', 'Continue with this turn.');
   addAssistant(assembler, 'resp_5', 'assistant_5', 'user_5', 'A completed answer.');
   assembler.completeResponse('resp_5', 'completed');
+  assembler.completePlayback('resp_5');
   assert.equal(assembler.takeReadyCommits().length, 1);
+}
+
+function checkTruncatedPlaybackDoesNotCommit(): void {
+  const assembler = new RealtimeTurnAssembler();
+  addUser(assembler, 'user_6', 'Stop before finishing.');
+  addAssistant(
+    assembler,
+    'resp_6',
+    'assistant_6',
+    'user_6',
+    'This complete provider transcript includes audio the user never heard.'
+  );
+  assembler.completeResponse('resp_6', 'completed');
+  assert.equal(assembler.takeReadyCommits().length, 0);
+
+  assembler.truncateAssistantItem('assistant_6');
+  assembler.completePlayback('resp_6');
+  assert.equal(assembler.takeReadyCommits().length, 0);
+  const [turn] = assembler.snapshot().turns;
+  assert.equal(turn.assistantIsPartial, true);
+  assert.equal(turn.commitStatus, 'not_saved');
 }
 
 function checkUnknownEventsFailClosed(): void {
@@ -136,10 +162,39 @@ function checkWebRtcOutputAudioLifecycleEvents(): void {
   );
 }
 
+function checkConversationItemTruncatedEvent(): void {
+  assert.equal(
+    parseRealtimeEvent(
+      JSON.stringify({
+        type: 'conversation.item.truncated',
+        event_id: 'event_truncated',
+        item_id: 'assistant_6',
+        content_index: 0,
+        audio_end_ms: 1500,
+      })
+    ).type,
+    'conversation.item.truncated'
+  );
+  assert.throws(
+    () =>
+      parseRealtimeEvent(
+        JSON.stringify({
+          type: 'conversation.item.truncated',
+          event_id: 'event_malformed_truncated',
+          item_id: 'assistant_6',
+          content_index: 0,
+        })
+      ),
+    RealtimeProtocolError
+  );
+}
+
 checkExactCommitAndRetry();
 checkCitationChainAndIsolation();
 checkInterruptedResponseDoesNotCommit();
+checkTruncatedPlaybackDoesNotCommit();
 checkUnknownEventsFailClosed();
 checkWebRtcOutputAudioLifecycleEvents();
+checkConversationItemTruncatedEvent();
 
 process.stdout.write('Life Realtime state checks passed.\n');

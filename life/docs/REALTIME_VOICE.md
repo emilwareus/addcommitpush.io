@@ -74,10 +74,14 @@ Record arguments:
 Keep every returned memory ID for the current response so the transcript can
 preserve citations.
 
-## 4. Commit completed transcripts
+## 4. Commit fully played transcripts
 
 Wait for complete input transcription, complete output audio transcript, and
-`response.done`. Do not commit deltas.
+`response.done`. For WebRTC, also wait for `output_audio_buffer.stopped`, which
+confirms the response audio has completely drained after `response.done`. Do not
+commit deltas or responses followed by `output_audio_buffer.cleared` or
+`conversation.item.truncated`; those contain transcript text the user did not
+hear.
 
 ```http
 POST /v1/realtime/sessions/{id}/turns

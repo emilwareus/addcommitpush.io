@@ -4,6 +4,7 @@ import type { RealtimeTurnRequest } from '@/lib/life/contracts';
 import { RealtimeProtocolError } from './realtime-events';
 
 type ProviderResponseStatus = 'completed' | 'cancelled' | 'failed' | 'incomplete';
+type PlaybackStatus = 'pending' | 'completed' | 'interrupted';
 export type DurableCommitStatus = 'speaking' | 'committing' | 'saved' | 'not_saved' | 'conflict';
 
 interface ConversationNode {
@@ -20,6 +21,7 @@ interface ResponseLedger {
   assistantDelta: string;
   assistantTranscript?: string;
   providerStatus?: ProviderResponseStatus;
+  playbackStatus: PlaybackStatus;
   directCitationIds: Set<string>;
   commitStatus: DurableCommitStatus;
   commitPayload?: RealtimeTurnRequest;
@@ -139,6 +141,26 @@ export class RealtimeTurnAssembler {
     }
   }
 
+  completePlayback(responseId: string): void {
+    const response = this.getResponse(responseId);
+    if (response.playbackStatus === 'interrupted') return;
+    response.playbackStatus = 'completed';
+  }
+
+  interruptPlayback(responseId: string): void {
+    this.markInterrupted(this.getResponse(responseId));
+  }
+
+  truncateAssistantItem(itemId: string): void {
+    const responseId = this.responseIdsByOutputItem.get(itemId);
+    if (!responseId) {
+      throw new RealtimeProtocolError(
+        `Truncated conversation item ${itemId} is not linked to a response.`
+      );
+    }
+    this.markInterrupted(this.requireResponse(responseId));
+  }
+
   recordToolResult(input: {
     responseId: string;
     functionItemId: string;
@@ -215,7 +237,8 @@ export class RealtimeTurnAssembler {
           ? { userTranscript: this.inputTranscripts.get(origin.userItemId) }
           : {}),
         assistantTranscript: response.assistantTranscript ?? response.assistantDelta,
-        assistantIsPartial: response.assistantTranscript === undefined,
+        assistantIsPartial:
+          response.assistantTranscript === undefined || response.playbackStatus === 'interrupted',
         ...(response.providerStatus ? { providerStatus: response.providerStatus } : {}),
         citedMemoryIds: [...origin.citationIds].sort(),
         commitStatus: response.commitStatus,
@@ -245,6 +268,7 @@ export class RealtimeTurnAssembler {
       order: this.nextOrder++,
       outputItemIds: new Set(),
       assistantDelta: '',
+      playbackStatus: 'pending',
       directCitationIds: new Set(),
       commitStatus: 'speaking',
     };
@@ -268,7 +292,11 @@ export class RealtimeTurnAssembler {
   }
 
   private buildCommitPayload(response: ResponseLedger): RealtimeTurnRequest | null {
-    if (response.providerStatus !== 'completed' || response.assistantTranscript === undefined) {
+    if (
+      response.providerStatus !== 'completed' ||
+      response.playbackStatus !== 'completed' ||
+      response.assistantTranscript === undefined
+    ) {
       return null;
     }
     const origin = this.findOrigin(response);
@@ -281,6 +309,19 @@ export class RealtimeTurnAssembler {
       provider_response_id: response.responseId,
       cited_memory_ids: [...origin.citationIds].sort(),
     };
+  }
+
+  private markInterrupted(response: ResponseLedger): void {
+    if (response.playbackStatus === 'completed' && response.commitStatus !== 'speaking') {
+      throw new RealtimeProtocolError(
+        `Response ${response.responseId} was interrupted after its durable commit started.`
+      );
+    }
+    response.playbackStatus = 'interrupted';
+    if (response.commitStatus === 'saved') return;
+    response.commitStatus = 'not_saved';
+    response.commitError =
+      'The assistant audio was interrupted and its unheard transcript was not saved.';
   }
 
   private findOrigin(response: ResponseLedger): {

@@ -197,6 +197,9 @@ export function useRealtimeVoiceSession() {
               ? `Input transcription failed: ${event.error.message}`
               : 'Input transcription failed, so this turn cannot be saved.'
           );
+        case 'conversation.item.truncated':
+          assembler.truncateAssistantItem(event.item_id);
+          break;
         case 'response.output_item.added':
           assembler.linkOutputItem(event.response_id, event.item.id);
           break;
@@ -274,7 +277,11 @@ export function useRealtimeVoiceSession() {
           setIsSpeaking(true);
           break;
         case 'output_audio_buffer.stopped':
+          assembler.completePlayback(event.response_id);
+          setIsSpeaking(false);
+          break;
         case 'output_audio_buffer.cleared':
+          assembler.interruptPlayback(event.response_id);
           setIsSpeaking(false);
           break;
         case 'error':
