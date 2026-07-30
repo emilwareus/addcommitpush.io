@@ -18,14 +18,18 @@ import {
   RACEMetrics,
   DiffusionLoopStep,
 } from '@/components/animations/diffusion';
-import { Highlight, themes } from 'prism-react-renderer';
+import { Highlight } from 'prism-react-renderer';
+import { blogDark, blogLight } from '@/lib/prism-theme';
+import { useDarkMode } from '@/lib/use-dark-mode';
 
 function GoCode({ code }: { code: string }) {
+  const isDark = useDarkMode();
+
   return (
-    <Highlight theme={themes.vsDark} code={code.trim()} language="go">
+    <Highlight theme={isDark ? blogDark : blogLight} code={code.trim()} language="go">
       {({ className, style, tokens, getLineProps, getTokenProps }) => (
         <pre
-          className={`${className} mt-5 mb-7 rounded-lg border border-border/40 bg-muted/40 p-4 overflow-x-auto font-normal`}
+          className={`${className} mt-5 mb-7 overflow-x-auto rounded-lg border border-border/40 bg-[var(--code)] p-4 font-normal`}
           style={{ ...style, fontFamily: 'inherit', fontSize: 'inherit', lineHeight: 'inherit' }}
         >
           {tokens.map((line, lineIndex) => {
