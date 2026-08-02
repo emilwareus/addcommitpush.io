@@ -19,14 +19,14 @@ interface IncidentReport {
 const INCIDENTS: IncidentReport[] = [
   {
     title: 'Downtime',
-    startDate: '2024-10-31',
+    startDate: '2025-10-31',
     description: 'Camping with two friends and a dog.',
     severity: 'critical',
   },
   {
     title: 'Limited availability',
-    startDate: '2024-09-05',
-    endDate: '2024-09-18',
+    startDate: '2025-09-05',
+    endDate: '2025-09-18',
     description: 'Traveling Iceland and got engaged.',
     severity: 'major',
   },
