@@ -7,9 +7,6 @@ status: working
 publish: true
 tags:
   - learning science
-related:
-  - "[[spaced-repetition-scheduling-algorithms]]"
-  - "[[knowledge-tracing]]"
 ---
 
 # Long-Term Learning: Mechanisms, Evidence, and Failure Modes
