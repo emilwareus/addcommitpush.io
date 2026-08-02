@@ -50,7 +50,9 @@ export function ConnectorList({
   return (
     <div className="grid gap-8">
       {CONNECTOR_PROVIDERS.map((provider) => {
-        const providerConnectors = connectors.filter((connector) => connector.provider === provider);
+        const providerConnectors = connectors.filter(
+          (connector) => connector.provider === provider
+        );
         return (
           <section key={provider} className="grid gap-4">
             <header>
