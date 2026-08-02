@@ -4,7 +4,7 @@ title: "Long-Term Learning: Mechanisms, Evidence, and Failure Modes"
 slug: long-term-learning
 created: 2026-08-02
 status: working
-publish: false
+publish: true
 tags:
   - learning science
 related:
