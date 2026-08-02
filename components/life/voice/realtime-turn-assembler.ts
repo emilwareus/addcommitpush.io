@@ -37,6 +37,11 @@ export interface VoiceTurnView {
   citedMemoryIds: string[];
   commitStatus: DurableCommitStatus;
   commitError?: string;
+  /**
+   * True when a failed commit can be re-sent. Turns the person never heard are
+   * marked `not_saved` without a payload and must stay unsaved.
+   */
+  retryable: boolean;
 }
 
 export interface ProvisionalInputView {
@@ -243,6 +248,7 @@ export class RealtimeTurnAssembler {
         citedMemoryIds: [...origin.citationIds].sort(),
         commitStatus: response.commitStatus,
         ...(response.commitError ? { commitError: response.commitError } : {}),
+        retryable: response.commitStatus === 'not_saved' && response.commitPayload !== undefined,
       };
     });
 
@@ -312,11 +318,10 @@ export class RealtimeTurnAssembler {
   }
 
   private markInterrupted(response: ResponseLedger): void {
-    if (response.playbackStatus === 'completed' && response.commitStatus !== 'speaking') {
-      throw new RealtimeProtocolError(
-        `Response ${response.responseId} was interrupted after its durable commit started.`
-      );
-    }
+    // A clear that lands after the output buffer already drained is the race
+    // between a client-initiated interrupt and the natural end of playback. The
+    // person heard the whole response, so the completed playback stands.
+    if (response.playbackStatus === 'completed') return;
     response.playbackStatus = 'interrupted';
     if (response.commitStatus === 'saved') return;
     response.commitStatus = 'not_saved';

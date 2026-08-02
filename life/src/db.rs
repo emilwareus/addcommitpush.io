@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 use sha2::{Digest, Sha256};
 use sqlx::postgres::PgPool;
 use sqlx::{Postgres, Transaction};
@@ -1039,168 +1039,143 @@ impl Repository {
         .map_err(AppError::from)
     }
 
-    pub async fn create_oauth_state(
+    #[allow(clippy::too_many_arguments)]
+    pub async fn create_connector(
         &self,
         owner_id: Uuid,
+        connector_id: Uuid,
         provider: &str,
-        state_hash: &[u8],
-    ) -> Result<Uuid, AppError> {
+        label: &str,
+        external_account_id: &str,
+        external_account_name: &str,
+        credential: &EncryptedSecret,
+    ) -> Result<Connector, AppError> {
         validate_provider(provider)?;
+        validate_nonempty("label", label)?;
+        validate_nonempty("external account ID", external_account_id)?;
         let mut transaction = self.pool.begin().await?;
-        let connector_id = sqlx::query_scalar::<_, Uuid>(
+        let connector = sqlx::query_as::<_, Connector>(
             r"
-            INSERT INTO connectors (owner_id, provider, status)
-            VALUES ($1, $2, 'pending')
-            ON CONFLICT (owner_id, provider) DO UPDATE
-            SET last_error = NULL, updated_at = now()
-            RETURNING id
+            INSERT INTO connectors (
+                id, owner_id, provider, label, external_account_id,
+                external_account_name, status, credential_ciphertext, credential_nonce
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, 'connected', $7, $8)
+            RETURNING id, owner_id, provider, label, external_account_id,
+                      external_account_name, status, sync_cursor, last_synced_at,
+                      last_error, created_at, updated_at
             ",
         )
+        .bind(connector_id)
         .bind(owner_id)
         .bind(provider)
+        .bind(label.trim())
+        .bind(external_account_id)
+        .bind(external_account_name)
+        .bind(&credential.ciphertext)
+        .bind(&credential.nonce)
         .fetch_one(&mut *transaction)
-        .await?;
-        sqlx::query(
-            r"
-            DELETE FROM oauth_states
-            WHERE owner_id = $1 AND provider = $2
-            ",
-        )
-        .bind(owner_id)
-        .bind(provider)
-        .execute(&mut *transaction)
-        .await?;
-        sqlx::query(
-            r"
-            INSERT INTO oauth_states (state_hash, owner_id, provider, expires_at)
-            VALUES ($1, $2, $3, now() + interval '10 minutes')
-            ",
-        )
-        .bind(state_hash)
-        .bind(owner_id)
-        .bind(provider)
-        .execute(&mut *transaction)
-        .await?;
+        .await
+        .map_err(map_connector_conflict)?;
         audit(
             &mut transaction,
             Some(owner_id),
-            "oauth.started",
+            "connector.connected",
             "connector",
-            Some(connector_id),
+            Some(connector.id),
             &serde_json::json!({"provider": provider}),
         )
         .await?;
         transaction.commit().await?;
-        Ok(connector_id)
+        Ok(connector)
     }
 
-    pub async fn oauth_state_owner(
-        &self,
-        provider: &str,
-        state_hash: &[u8],
-    ) -> Result<Uuid, AppError> {
-        validate_provider(provider)?;
-        sqlx::query_scalar::<_, Uuid>(
-            r"
-            SELECT owner_id
-            FROM oauth_states
-            WHERE state_hash = $1 AND provider = $2 AND expires_at > now()
-            ",
-        )
-        .bind(state_hash)
-        .bind(provider)
-        .fetch_optional(&self.pool)
-        .await?
-        .ok_or_else(|| AppError::InvalidInput("OAuth state is invalid or expired".to_owned()))
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    pub async fn connect_connector(
+    pub async fn update_connector_credential(
         &self,
         owner_id: Uuid,
-        provider: &str,
+        connector_id: Uuid,
         external_account_id: &str,
         external_account_name: &str,
-        scopes: &[String],
-        access: &EncryptedSecret,
-        refresh: Option<&EncryptedSecret>,
-        token_expires_at: Option<chrono::DateTime<chrono::Utc>>,
-        state_hash: &[u8],
+        credential: &EncryptedSecret,
     ) -> Result<Connector, AppError> {
-        validate_provider(provider)?;
         validate_nonempty("external account ID", external_account_id)?;
         let mut transaction = self.pool.begin().await?;
-        sqlx::query_scalar::<_, Uuid>(
-            r"
-            SELECT id
-            FROM connectors
-            WHERE owner_id = $1 AND provider = $2
-            FOR UPDATE
-            ",
-        )
-        .bind(owner_id)
-        .bind(provider)
-        .fetch_optional(&mut *transaction)
-        .await?
-        .ok_or(AppError::NotFound {
-            resource: "pending connector",
-        })?;
-        sqlx::query_scalar::<_, Uuid>(
-            r"
-            DELETE FROM oauth_states
-            WHERE state_hash = $1 AND owner_id = $2 AND provider = $3
-              AND expires_at > now()
-            RETURNING owner_id
-            ",
-        )
-        .bind(state_hash)
-        .bind(owner_id)
-        .bind(provider)
-        .fetch_optional(&mut *transaction)
-        .await?
-        .ok_or_else(|| AppError::InvalidInput("OAuth state is invalid or expired".to_owned()))?;
         let connector = sqlx::query_as::<_, Connector>(
             r"
             UPDATE connectors
             SET external_account_id = $3,
                 external_account_name = $4,
+                credential_ciphertext = $5,
+                credential_nonce = $6,
                 status = 'connected',
-                scopes = $5,
-                access_token_ciphertext = $6,
-                access_token_nonce = $7,
-                refresh_token_ciphertext = $8,
-                refresh_token_nonce = $9,
-                token_expires_at = $10,
                 last_error = NULL,
                 updated_at = now()
-            WHERE owner_id = $1 AND provider = $2
-            RETURNING id, owner_id, provider, external_account_id,
-                      external_account_name, status, scopes, token_expires_at,
-                      sync_cursor, last_synced_at, last_error, created_at, updated_at
+            WHERE id = $1 AND owner_id = $2
+              AND status IN ('connected', 'error')
+            RETURNING id, owner_id, provider, label, external_account_id,
+                      external_account_name, status, sync_cursor, last_synced_at,
+                      last_error, created_at, updated_at
             ",
         )
+        .bind(connector_id)
         .bind(owner_id)
-        .bind(provider)
         .bind(external_account_id)
         .bind(external_account_name)
-        .bind(scopes)
-        .bind(&access.ciphertext)
-        .bind(&access.nonce)
-        .bind(refresh.map(|secret| &secret.ciphertext))
-        .bind(refresh.map(|secret| &secret.nonce))
-        .bind(token_expires_at)
+        .bind(&credential.ciphertext)
+        .bind(&credential.nonce)
         .fetch_optional(&mut *transaction)
-        .await?
+        .await
+        .map_err(map_connector_conflict)?
         .ok_or(AppError::NotFound {
-            resource: "pending connector",
+            resource: "connected connector",
         })?;
         audit(
             &mut transaction,
             Some(owner_id),
-            "oauth.connected",
+            "connector.credential_rotated",
             "connector",
             Some(connector.id),
-            &serde_json::json!({"provider": provider}),
+            &serde_json::json!({"provider": connector.provider}),
+        )
+        .await?;
+        transaction.commit().await?;
+        Ok(connector)
+    }
+
+    pub async fn update_connector_label(
+        &self,
+        owner_id: Uuid,
+        connector_id: Uuid,
+        label: &str,
+    ) -> Result<Connector, AppError> {
+        validate_nonempty("label", label)?;
+        let mut transaction = self.pool.begin().await?;
+        let connector = sqlx::query_as::<_, Connector>(
+            r"
+            UPDATE connectors
+            SET label = $3, updated_at = now()
+            WHERE id = $1 AND owner_id = $2
+              AND status IN ('connected', 'error')
+            RETURNING id, owner_id, provider, label, external_account_id,
+                      external_account_name, status, sync_cursor, last_synced_at,
+                      last_error, created_at, updated_at
+            ",
+        )
+        .bind(connector_id)
+        .bind(owner_id)
+        .bind(label.trim())
+        .fetch_optional(&mut *transaction)
+        .await?
+        .ok_or(AppError::NotFound {
+            resource: "connected connector",
+        })?;
+        audit(
+            &mut transaction,
+            Some(owner_id),
+            "connector.label_updated",
+            "connector",
+            Some(connector.id),
+            &serde_json::json!({"provider": connector.provider}),
         )
         .await?;
         transaction.commit().await?;
@@ -1214,9 +1189,8 @@ impl Repository {
     ) -> Result<ConnectorCredentials, AppError> {
         sqlx::query_as::<_, ConnectorCredentials>(
             r"
-            SELECT id, owner_id, provider, external_account_name, status, access_token_ciphertext,
-                   access_token_nonce, refresh_token_ciphertext,
-                   refresh_token_nonce, token_expires_at, sync_cursor
+            SELECT id, owner_id, provider, label, external_account_name, status,
+                   credential_ciphertext, credential_nonce, sync_cursor
             FROM connectors
             WHERE owner_id = $1 AND id = $2
             ",
@@ -1230,48 +1204,91 @@ impl Repository {
         })
     }
 
-    pub async fn connector_id(&self, owner_id: Uuid, provider: &str) -> Result<Uuid, AppError> {
-        validate_provider(provider)?;
-        sqlx::query_scalar::<_, Uuid>(
-            "SELECT id FROM connectors WHERE owner_id = $1 AND provider = $2",
-        )
-        .bind(owner_id)
-        .bind(provider)
-        .fetch_optional(&self.pool)
-        .await?
-        .ok_or(AppError::NotFound {
-            resource: "connector",
-        })
-    }
-
     pub async fn connected_connector_owners(
         &self,
         provider: &str,
+    ) -> Result<Vec<(Uuid, Uuid)>, AppError> {
+        self.connected_connectors_for_provider(provider, None).await
+    }
+
+    pub async fn connected_connectors_for_provider(
+        &self,
+        provider: &str,
+        external_account_id: Option<&str>,
     ) -> Result<Vec<(Uuid, Uuid)>, AppError> {
         validate_provider(provider)?;
         sqlx::query_as::<_, (Uuid, Uuid)>(
             r"
             SELECT owner_id, id
             FROM connectors
-            WHERE provider = $1 AND status IN ('connected', 'error')
+            WHERE provider = $1
+              AND status IN ('connected', 'error')
+              AND ($2::text IS NULL OR external_account_id = $2)
             ORDER BY owner_id, id
             ",
         )
         .bind(provider)
+        .bind(external_account_id)
         .fetch_all(&self.pool)
         .await
         .map_err(AppError::from)
     }
 
+    pub async fn enqueue_due_connectors(&self, older_than: Duration) -> Result<u64, AppError> {
+        let mut transaction = self.pool.begin().await?;
+        let connector_ids = sqlx::query_scalar::<_, Uuid>(
+            r"
+            SELECT c.id
+            FROM connectors c
+            WHERE c.status IN ('connected', 'error')
+              AND (
+                c.last_synced_at IS NULL
+                OR c.last_synced_at < now() - ($1::bigint * interval '1 second')
+              )
+              AND NOT EXISTS (
+                SELECT 1
+                FROM ingestion_jobs j
+                WHERE j.connector_id = c.id
+                  AND j.job_kind = 'connector_sync'
+                  AND j.status IN ('queued', 'running')
+              )
+            FOR UPDATE OF c SKIP LOCKED
+            ",
+        )
+        .bind(older_than.num_seconds())
+        .fetch_all(&mut *transaction)
+        .await?;
+        let mut enqueued = 0_u64;
+        for connector_id in connector_ids {
+            let inserted = sqlx::query_scalar::<_, Uuid>(
+                r"
+                INSERT INTO ingestion_jobs (owner_id, connector_id, job_kind)
+                SELECT owner_id, id, 'connector_sync'
+                FROM connectors
+                WHERE id = $1
+                RETURNING id
+                ",
+            )
+            .bind(connector_id)
+            .fetch_optional(&mut *transaction)
+            .await?;
+            if inserted.is_some() {
+                enqueued += 1;
+            }
+        }
+        transaction.commit().await?;
+        Ok(enqueued)
+    }
+
     pub async fn list_connectors(&self, owner_id: Uuid) -> Result<Vec<Connector>, AppError> {
         sqlx::query_as::<_, Connector>(
             r"
-            SELECT id, owner_id, provider, external_account_id,
-                   external_account_name, status, scopes, token_expires_at,
-                   sync_cursor, last_synced_at, last_error, created_at, updated_at
+            SELECT id, owner_id, provider, label, external_account_id,
+                   external_account_name, status, sync_cursor, last_synced_at,
+                   last_error, created_at, updated_at
             FROM connectors
             WHERE owner_id = $1
-            ORDER BY provider
+            ORDER BY provider, label
             ",
         )
         .bind(owner_id)
@@ -1289,14 +1306,14 @@ impl Repository {
         let connector = sqlx::query_as::<_, Connector>(
             r"
             UPDATE connectors
-            SET status = 'revoked', access_token_ciphertext = NULL,
-                access_token_nonce = NULL, refresh_token_ciphertext = NULL,
-                refresh_token_nonce = NULL, token_expires_at = NULL,
+            SET status = 'revoked',
+                credential_ciphertext = NULL,
+                credential_nonce = NULL,
                 updated_at = now()
             WHERE id = $1 AND owner_id = $2
-            RETURNING id, owner_id, provider, external_account_id,
-                      external_account_name, status, scopes, token_expires_at,
-                      sync_cursor, last_synced_at, last_error, created_at, updated_at
+            RETURNING id, owner_id, provider, label, external_account_id,
+                      external_account_name, status, sync_cursor, last_synced_at,
+                      last_error, created_at, updated_at
             ",
         )
         .bind(connector_id)
@@ -1306,16 +1323,6 @@ impl Repository {
         .ok_or(AppError::NotFound {
             resource: "connector",
         })?;
-        sqlx::query(
-            r"
-            DELETE FROM oauth_states
-            WHERE owner_id = $1 AND provider = $2
-            ",
-        )
-        .bind(owner_id)
-        .bind(&connector.provider)
-        .execute(&mut *transaction)
-        .await?;
         sqlx::query(
             r"
             UPDATE ingestion_jobs
@@ -1354,9 +1361,9 @@ impl Repository {
                 last_error = NULL, updated_at = now()
             WHERE id = $1 AND owner_id = $2
               AND status IN ('connected', 'error')
-            RETURNING id, owner_id, provider, external_account_id,
-                      external_account_name, status, scopes, token_expires_at,
-                      sync_cursor, last_synced_at, last_error, created_at, updated_at
+            RETURNING id, owner_id, provider, label, external_account_id,
+                      external_account_name, status, sync_cursor, last_synced_at,
+                      last_error, created_at, updated_at
             ",
         )
         .bind(connector_id)
@@ -1377,44 +1384,6 @@ impl Repository {
         .await?;
         transaction.commit().await?;
         Ok(connector)
-    }
-
-    pub async fn update_connector_tokens(
-        &self,
-        owner_id: Uuid,
-        connector_id: Uuid,
-        access: &EncryptedSecret,
-        refresh: Option<&EncryptedSecret>,
-        token_expires_at: Option<chrono::DateTime<chrono::Utc>>,
-    ) -> Result<(), AppError> {
-        let updated = sqlx::query(
-            r"
-            UPDATE connectors
-            SET access_token_ciphertext = $2,
-                access_token_nonce = $3,
-                refresh_token_ciphertext = coalesce($4, refresh_token_ciphertext),
-                refresh_token_nonce = coalesce($5, refresh_token_nonce),
-                token_expires_at = $6,
-                updated_at = now()
-            WHERE id = $1 AND owner_id = $7
-              AND status IN ('connected', 'syncing', 'error')
-            ",
-        )
-        .bind(connector_id)
-        .bind(&access.ciphertext)
-        .bind(&access.nonce)
-        .bind(refresh.map(|secret| &secret.ciphertext))
-        .bind(refresh.map(|secret| &secret.nonce))
-        .bind(token_expires_at)
-        .bind(owner_id)
-        .execute(&self.pool)
-        .await?;
-        if updated.rows_affected() != 1 {
-            return Err(AppError::NotFound {
-                resource: "connector",
-            });
-        }
-        Ok(())
     }
 
     pub async fn enqueue_connector_sync(
@@ -1711,7 +1680,7 @@ impl Repository {
             SELECT id
             FROM connectors
             WHERE owner_id = $1 AND id = $2 AND provider = $3
-              AND status IN ('connected', 'syncing', 'error')
+              AND status IN ('connected', 'error')
             FOR UPDATE
             ",
         )
@@ -1847,7 +1816,7 @@ impl Repository {
             SET status = 'connected', sync_cursor = $2, last_synced_at = now(),
                 last_error = NULL, updated_at = now()
             WHERE id = $1 AND owner_id = $3
-              AND status IN ('connected', 'syncing', 'error')
+              AND status IN ('connected', 'error')
             ",
         )
         .bind(connector_id)
@@ -2085,12 +2054,23 @@ fn imported_content_hash(record: &ImportedRecord) -> Result<String, AppError> {
 }
 
 fn validate_provider(provider: &str) -> Result<(), AppError> {
-    if matches!(provider, "github" | "linear" | "gmail") {
+    if matches!(provider, "github" | "linear" | "slack" | "email") {
         return Ok(());
     }
     Err(AppError::InvalidInput(format!(
         "unsupported connector provider: {provider}"
     )))
+}
+
+fn map_connector_conflict(error: sqlx::Error) -> AppError {
+    if let sqlx::Error::Database(database) = &error
+        && database.constraint() == Some("connectors_owner_provider_account_uidx")
+    {
+        return AppError::Conflict(
+            "a connected connector already exists for this provider account".to_owned(),
+        );
+    }
+    AppError::from(error)
 }
 
 #[allow(clippy::too_many_arguments)]

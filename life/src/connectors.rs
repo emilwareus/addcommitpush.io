@@ -1,21 +1,22 @@
 use std::str::FromStr;
 
-use chrono::{Duration, Utc};
+use chrono::Utc;
 use hmac::{Hmac, Mac};
+use imap::types::Fetch;
 use reqwest::{Client, RequestBuilder, Response, StatusCode};
-use serde::Deserialize;
+use rustls_connector::RustlsConnector;
 use serde::de::DeserializeOwned;
 use serde_json::{Value, json};
-use sha2::{Digest, Sha256};
-use url::Url;
+use sha2::Sha256;
 use uuid::Uuid;
 
-use crate::config::{Config, OAuthClientConfig};
+use crate::config::Config;
 use crate::crypto::{EncryptedSecret, TokenCipher};
 use crate::db::Repository;
 use crate::error::AppError;
 use crate::models::{
-    Connector, ConnectorCredentials, ImportedRecord, IngestionJob, OAuthStartResponse,
+    ConnectConnectorRequest, Connector, ConnectorCredential, ConnectorCredentials, ImportedRecord,
+    IngestionJob, UpdateConnectorRequest,
 };
 use crate::openai::OpenAiClient;
 
@@ -23,7 +24,8 @@ use crate::openai::OpenAiClient;
 pub enum Provider {
     GitHub,
     Linear,
-    Gmail,
+    Slack,
+    Email,
 }
 
 impl Provider {
@@ -31,23 +33,8 @@ impl Provider {
         match self {
             Self::GitHub => "github",
             Self::Linear => "linear",
-            Self::Gmail => "gmail",
-        }
-    }
-
-    const fn oauth_config(self, config: &Config) -> Option<&OAuthClientConfig> {
-        match self {
-            Self::GitHub => config.github(),
-            Self::Linear => config.linear(),
-            Self::Gmail => config.google(),
-        }
-    }
-
-    const fn token_endpoint(self) -> &'static str {
-        match self {
-            Self::GitHub => "https://github.com/login/oauth/access_token",
-            Self::Linear => "https://api.linear.app/oauth/token",
-            Self::Gmail => "https://oauth2.googleapis.com/token",
+            Self::Slack => "slack",
+            Self::Email => "email",
         }
     }
 }
@@ -59,21 +46,13 @@ impl FromStr for Provider {
         match value {
             "github" => Ok(Self::GitHub),
             "linear" => Ok(Self::Linear),
-            "gmail" => Ok(Self::Gmail),
+            "slack" => Ok(Self::Slack),
+            "email" => Ok(Self::Email),
             _ => Err(AppError::InvalidInput(format!(
                 "unsupported connector provider: {value}"
             ))),
         }
     }
-}
-
-#[derive(Debug, Deserialize)]
-struct OAuthTokenResponse {
-    access_token: String,
-    refresh_token: Option<String>,
-    expires_in: Option<i64>,
-    #[serde(default)]
-    scope: String,
 }
 
 #[derive(Debug)]
@@ -105,141 +84,102 @@ impl ConnectorService {
         }
     }
 
-    pub async fn start_oauth(
+    pub async fn connect(
         &self,
         owner_id: Uuid,
-        provider: Provider,
-    ) -> Result<OAuthStartResponse, AppError> {
-        let client =
-            provider
-                .oauth_config(&self.config)
-                .ok_or(AppError::ProviderNotConfigured {
-                    provider: provider.as_str(),
-                })?;
-        let state = format!("{}{}", Uuid::new_v4().simple(), Uuid::new_v4().simple());
-        let state_hash = Sha256::digest(state.as_bytes());
-        self.repository
-            .create_oauth_state(owner_id, provider.as_str(), state_hash.as_slice())
+        request: ConnectConnectorRequest,
+    ) -> Result<Connector, AppError> {
+        validate_label(&request.label)?;
+        let provider = Provider::from_str(request.provider.trim())?;
+        validate_credential_for_provider(provider, &request.credential)?;
+        let identity = self
+            .validate_credential_live(provider, &request.credential)
             .await?;
-        let redirect_uri = self.redirect_uri(provider);
-        let authorization_url = authorization_url(provider, client, &redirect_uri, &state)?;
-        Ok(OAuthStartResponse {
-            provider: provider.as_str().to_owned(),
-            authorization_url: authorization_url.to_string(),
+        let connector_id = Uuid::new_v4();
+        let encrypted = self.encrypt_credential(connector_id, &request.credential)?;
+        let connector = self
+            .repository
+            .create_connector(
+                owner_id,
+                connector_id,
+                provider.as_str(),
+                &request.label,
+                &identity.id,
+                &identity.name,
+                &encrypted,
+            )
+            .await?;
+        self.repository
+            .enqueue_connector_sync(owner_id, connector.id)
+            .await?;
+        Ok(connector)
+    }
+
+    pub async fn update(
+        &self,
+        owner_id: Uuid,
+        connector_id: Uuid,
+        request: UpdateConnectorRequest,
+    ) -> Result<Connector, AppError> {
+        if request.label.is_none() && request.credential.is_none() {
+            return Err(AppError::InvalidInput(
+                "at least one of label or credential must be provided".to_owned(),
+            ));
+        }
+        let mut connector = if let Some(label) = request.label.as_ref() {
+            validate_label(label)?;
+            Some(
+                self.repository
+                    .update_connector_label(owner_id, connector_id, label)
+                    .await?,
+            )
+        } else {
+            None
+        };
+        if let Some(credential) = request.credential {
+            let existing = self
+                .repository
+                .connector_credentials(owner_id, connector_id)
+                .await?;
+            let provider = Provider::from_str(&existing.provider)?;
+            validate_credential_for_provider(provider, &credential)?;
+            let identity = self.validate_credential_live(provider, &credential).await?;
+            let encrypted = self.encrypt_credential(connector_id, &credential)?;
+            connector = Some(
+                self.repository
+                    .update_connector_credential(
+                        owner_id,
+                        connector_id,
+                        &identity.id,
+                        &identity.name,
+                        &encrypted,
+                    )
+                    .await?,
+            );
+            self.repository
+                .enqueue_connector_sync(owner_id, connector_id)
+                .await?;
+        }
+        connector.ok_or(AppError::NotFound {
+            resource: "connector",
         })
     }
 
-    pub async fn finish_oauth(
-        &self,
-        provider: Provider,
-        code: &str,
-        state: &str,
-    ) -> Result<Connector, AppError> {
-        if code.trim().is_empty() || state.trim().is_empty() {
-            return Err(AppError::InvalidInput(
-                "OAuth code and state cannot be empty".to_owned(),
-            ));
-        }
-        let state_hash = Sha256::digest(state.as_bytes());
-        let owner_id = self
-            .repository
-            .oauth_state_owner(provider.as_str(), state_hash.as_slice())
-            .await?;
-        let connector_id = self
-            .repository
-            .connector_id(owner_id, provider.as_str())
-            .await?;
-        let token = self
-            .exchange_authorization_code(provider, code, &self.redirect_uri(provider))
-            .await?;
-        if token.access_token.trim().is_empty() {
-            return Err(AppError::InvalidProviderResponse(
-                "OAuth access token was empty".to_owned(),
-            ));
-        }
-        let identity = self
-            .external_identity(provider, &token.access_token)
-            .await?;
-        let access = self
-            .cipher
-            .encrypt(&token.access_token, connector_id.as_bytes())?;
-        let refresh = token
-            .refresh_token
-            .as_deref()
-            .map(|secret| self.cipher.encrypt(secret, connector_id.as_bytes()))
-            .transpose()?;
-        let expires_at = token
-            .expires_in
-            .map(|seconds| Utc::now() + Duration::seconds(seconds));
-        let scopes = parse_scopes(&token.scope);
-        self.repository
-            .connect_connector(
-                owner_id,
-                provider.as_str(),
-                &identity.id,
-                &identity.name,
-                &scopes,
-                &access,
-                refresh.as_ref(),
-                expires_at,
-                state_hash.as_slice(),
-            )
-            .await
-    }
-
-    pub async fn access_token(
+    pub fn credential(
         &self,
         credentials: &ConnectorCredentials,
-    ) -> Result<String, AppError> {
-        let provider = Provider::from_str(&credentials.provider)?;
-        if !matches!(
-            credentials.status.as_str(),
-            "connected" | "syncing" | "error"
-        ) {
+    ) -> Result<ConnectorCredential, AppError> {
+        if !matches!(credentials.status.as_str(), "connected" | "error") {
             return Err(AppError::Conflict("connector is not connected".to_owned()));
         }
-        let access = encrypted_secret(
-            credentials.access_token_ciphertext.as_ref(),
-            credentials.access_token_nonce.as_ref(),
-            "access token",
+        let encrypted = encrypted_secret(
+            credentials.credential_ciphertext.as_ref(),
+            credentials.credential_nonce.as_ref(),
+            "credential",
         )?;
-        if credentials
-            .token_expires_at
-            .is_none_or(|expires_at| expires_at > Utc::now() + Duration::seconds(90))
-        {
-            return self
-                .cipher
-                .decrypt(&access, credentials.id.as_bytes())
-                .map_err(AppError::from);
-        }
-        let refresh = encrypted_secret(
-            credentials.refresh_token_ciphertext.as_ref(),
-            credentials.refresh_token_nonce.as_ref(),
-            "refresh token",
-        )?;
-        let refresh = self.cipher.decrypt(&refresh, credentials.id.as_bytes())?;
-        let token = self.exchange_refresh_token(provider, &refresh).await?;
-        let encrypted_access = self
-            .cipher
-            .encrypt(&token.access_token, credentials.id.as_bytes())?;
-        let encrypted_refresh = token
-            .refresh_token
-            .as_deref()
-            .map(|secret| self.cipher.encrypt(secret, credentials.id.as_bytes()))
-            .transpose()?;
-        let expires_at = token
-            .expires_in
-            .map(|seconds| Utc::now() + Duration::seconds(seconds));
-        self.repository
-            .update_connector_tokens(
-                credentials.owner_id,
-                credentials.id,
-                &encrypted_access,
-                encrypted_refresh.as_ref(),
-                expires_at,
-            )
-            .await?;
-        Ok(token.access_token)
+        let plaintext = self.cipher.decrypt(&encrypted, credentials.id.as_bytes())?;
+        serde_json::from_str(&plaintext)
+            .map_err(|error| AppError::InvalidProviderResponse(error.to_string()))
     }
 
     pub async fn accept_linear_webhook(
@@ -272,7 +212,18 @@ impl ConnectorService {
         if age_millis > 60_000 {
             return Err(AppError::Unauthorized);
         }
-        let connectors = self.repository.connected_connector_owners("linear").await?;
+        let organization_id = payload
+            .get("organizationId")
+            .and_then(Value::as_str)
+            .or_else(|| {
+                payload
+                    .pointer("/data/organizationId")
+                    .and_then(Value::as_str)
+            });
+        let connectors = self
+            .repository
+            .connected_connectors_for_provider("linear", organization_id)
+            .await?;
         let mut jobs = Vec::with_capacity(connectors.len());
         for (owner_id, connector_id) in connectors {
             jobs.push(
@@ -284,121 +235,148 @@ impl ConnectorService {
         Ok(jobs)
     }
 
-    fn redirect_uri(&self, provider: Provider) -> String {
-        format!(
-            "{}/v1/oauth/{}/callback",
-            self.config.public_base_url().as_str().trim_end_matches('/'),
-            provider.as_str()
-        )
+    fn encrypt_credential(
+        &self,
+        connector_id: Uuid,
+        credential: &ConnectorCredential,
+    ) -> Result<EncryptedSecret, AppError> {
+        let plaintext = serde_json::to_string(credential)
+            .map_err(|error| AppError::InvalidProviderResponse(error.to_string()))?;
+        self.cipher
+            .encrypt(&plaintext, connector_id.as_bytes())
+            .map_err(AppError::from)
     }
 
-    async fn exchange_authorization_code(
+    async fn validate_credential_live(
         &self,
         provider: Provider,
-        code: &str,
-        redirect_uri: &str,
-    ) -> Result<OAuthTokenResponse, AppError> {
-        let client =
-            provider
-                .oauth_config(&self.config)
-                .ok_or(AppError::ProviderNotConfigured {
-                    provider: provider.as_str(),
-                })?;
-        provider_json(
-            provider.as_str(),
-            self.http
-                .post(provider.token_endpoint())
-                .header("Accept", "application/json")
-                .form(&[
-                    ("grant_type", "authorization_code"),
-                    ("client_id", client.client_id.as_str()),
-                    ("client_secret", client.client_secret.as_str()),
-                    ("code", code),
-                    ("redirect_uri", redirect_uri),
-                ]),
-        )
-        .await
-    }
-
-    async fn exchange_refresh_token(
-        &self,
-        provider: Provider,
-        refresh_token: &str,
-    ) -> Result<OAuthTokenResponse, AppError> {
-        let client =
-            provider
-                .oauth_config(&self.config)
-                .ok_or(AppError::ProviderNotConfigured {
-                    provider: provider.as_str(),
-                })?;
-        provider_json(
-            provider.as_str(),
-            self.http
-                .post(provider.token_endpoint())
-                .header("Accept", "application/json")
-                .form(&[
-                    ("grant_type", "refresh_token"),
-                    ("client_id", client.client_id.as_str()),
-                    ("client_secret", client.client_secret.as_str()),
-                    ("refresh_token", refresh_token),
-                ]),
-        )
-        .await
-    }
-
-    async fn external_identity(
-        &self,
-        provider: Provider,
-        access_token: &str,
+        credential: &ConnectorCredential,
     ) -> Result<ExternalIdentity, AppError> {
         match provider {
             Provider::GitHub => {
-                let value: Value = provider_json(
-                    "github",
-                    self.http
-                        .get("https://api.github.com/user")
-                        .bearer_auth(access_token)
-                        .header("Accept", "application/vnd.github+json")
-                        .header("X-GitHub-Api-Version", "2026-03-10"),
-                )
-                .await?;
-                Ok(ExternalIdentity {
-                    id: json_scalar_string(&value, "id")?,
-                    name: required_json_string(&value, "login")?.to_owned(),
-                })
+                let ConnectorCredential::ApiKey { api_key } = credential else {
+                    return Err(AppError::InvalidInput(
+                        "GitHub requires an API key credential".to_owned(),
+                    ));
+                };
+                self.github_identity(api_key).await
             }
             Provider::Linear => {
-                let value: Value = provider_json(
-                    "linear",
-                    self.http
-                        .post("https://api.linear.app/graphql")
-                        .bearer_auth(access_token)
-                        .json(&json!({"query": "query LifeViewer { viewer { id name email } }"})),
-                )
-                .await?;
-                let viewer = value
-                    .pointer("/data/viewer")
-                    .ok_or_else(|| invalid_provider("Linear response omitted viewer"))?;
-                Ok(ExternalIdentity {
-                    id: required_json_string(viewer, "id")?.to_owned(),
-                    name: required_json_string(viewer, "name")?.to_owned(),
-                })
+                let ConnectorCredential::ApiKey { api_key } = credential else {
+                    return Err(AppError::InvalidInput(
+                        "Linear requires an API key credential".to_owned(),
+                    ));
+                };
+                self.linear_identity(api_key).await
             }
-            Provider::Gmail => {
-                let value: Value = provider_json(
-                    "gmail",
-                    self.http
-                        .get("https://gmail.googleapis.com/gmail/v1/users/me/profile")
-                        .bearer_auth(access_token),
-                )
-                .await?;
-                let email = required_json_string(&value, "emailAddress")?;
-                Ok(ExternalIdentity {
-                    id: email.to_owned(),
-                    name: email.to_owned(),
-                })
+            Provider::Slack => {
+                let ConnectorCredential::ApiKey { api_key } = credential else {
+                    return Err(AppError::InvalidInput(
+                        "Slack requires a bot token credential".to_owned(),
+                    ));
+                };
+                self.slack_identity(api_key).await
+            }
+            Provider::Email => {
+                let ConnectorCredential::Imap {
+                    username,
+                    password,
+                    imap_host,
+                    imap_port,
+                } = credential
+                else {
+                    return Err(AppError::InvalidInput(
+                        "email requires an IMAP credential".to_owned(),
+                    ));
+                };
+                self.imap_identity(username, password, imap_host, *imap_port)
+                    .await
             }
         }
+    }
+
+    async fn github_identity(&self, token: &str) -> Result<ExternalIdentity, AppError> {
+        let value: Value = provider_json(
+            "github",
+            self.http
+                .get("https://api.github.com/user")
+                .bearer_auth(token)
+                .header("Accept", "application/vnd.github+json")
+                .header("X-GitHub-Api-Version", "2026-03-10"),
+        )
+        .await?;
+        Ok(ExternalIdentity {
+            id: json_scalar_string(&value, "id")?,
+            name: required_json_string(&value, "login")?.to_owned(),
+        })
+    }
+
+    async fn linear_identity(&self, token: &str) -> Result<ExternalIdentity, AppError> {
+        let value: Value = provider_json(
+            "linear",
+            self.http
+                .post("https://api.linear.app/graphql")
+                .bearer_auth(token)
+                .json(&json!({
+                    "query": "query LifeViewer { viewer { id name email organization { id name } } }"
+                })),
+        )
+        .await?;
+        reject_graphql_errors(&value, "linear")?;
+        let viewer = value
+            .pointer("/data/viewer")
+            .ok_or_else(|| invalid_provider("Linear response omitted viewer"))?;
+        let organization = viewer
+            .get("organization")
+            .ok_or_else(|| invalid_provider("Linear response omitted organization"))?;
+        Ok(ExternalIdentity {
+            id: required_json_string(organization, "id")?.to_owned(),
+            name: required_json_string(organization, "name")?.to_owned(),
+        })
+    }
+
+    async fn slack_identity(&self, token: &str) -> Result<ExternalIdentity, AppError> {
+        let value: Value = provider_json(
+            "slack",
+            self.http
+                .post("https://slack.com/api/auth.test")
+                .bearer_auth(token)
+                .header("Content-Type", "application/x-www-form-urlencoded"),
+        )
+        .await?;
+        ensure_slack_ok(&value)?;
+        Ok(ExternalIdentity {
+            id: required_json_string(&value, "team_id")?.to_owned(),
+            name: required_json_string(&value, "team")?.to_owned(),
+        })
+    }
+
+    async fn imap_identity(
+        &self,
+        username: &str,
+        password: &str,
+        imap_host: &str,
+        imap_port: u16,
+    ) -> Result<ExternalIdentity, AppError> {
+        let username = username.to_owned();
+        let password = password.to_owned();
+        let imap_host = imap_host.to_owned();
+        tokio::task::spawn_blocking(move || {
+            let client = imap_client(&imap_host, imap_port)?;
+            client
+                .login(&username, &password)
+                .map_err(|(error, _)| AppError::Upstream {
+                    provider: "email",
+                    status: StatusCode::UNAUTHORIZED,
+                    message: error.to_string(),
+                })?;
+            Ok(ExternalIdentity {
+                id: username.clone(),
+                name: username,
+            })
+        })
+        .await
+        .map_err(|error| AppError::InvalidProviderResponse(error.to_string()))?
     }
 }
 
@@ -439,12 +417,12 @@ impl IngestionWorker {
             .repository
             .connector_credentials(job.owner_id, connector_id)
             .await?;
-        let token = self.connectors.access_token(&credentials).await?;
+        let credential = self.connectors.credential(&credentials)?;
         let provider = Provider::from_str(&credentials.provider)?;
         let (records, cursor) = self
             .fetch_records(
                 provider,
-                &token,
+                &credential,
                 &credentials.sync_cursor,
                 credentials.external_account_name.as_deref(),
             )
@@ -473,19 +451,53 @@ impl IngestionWorker {
     async fn fetch_records(
         &self,
         provider: Provider,
-        access_token: &str,
+        credential: &ConnectorCredential,
         cursor: &Value,
         external_account_name: Option<&str>,
     ) -> Result<(Vec<ImportedRecord>, Value), AppError> {
         match provider {
             Provider::GitHub => {
+                let ConnectorCredential::ApiKey { api_key } = credential else {
+                    return Err(AppError::Conflict(
+                        "GitHub connector has no API key credential".to_owned(),
+                    ));
+                };
                 let login = external_account_name.ok_or_else(|| {
                     AppError::InvalidInput("GitHub connector has no account login".to_owned())
                 })?;
-                self.fetch_github(access_token, cursor, login).await
+                self.fetch_github(api_key, cursor, login).await
             }
-            Provider::Linear => self.fetch_linear(access_token, cursor).await,
-            Provider::Gmail => self.fetch_gmail(access_token, cursor).await,
+            Provider::Linear => {
+                let ConnectorCredential::ApiKey { api_key } = credential else {
+                    return Err(AppError::Conflict(
+                        "Linear connector has no API key credential".to_owned(),
+                    ));
+                };
+                self.fetch_linear(api_key, cursor).await
+            }
+            Provider::Slack => {
+                let ConnectorCredential::ApiKey { api_key } = credential else {
+                    return Err(AppError::Conflict(
+                        "Slack connector has no bot token credential".to_owned(),
+                    ));
+                };
+                self.fetch_slack(api_key, cursor).await
+            }
+            Provider::Email => {
+                let ConnectorCredential::Imap {
+                    username,
+                    password,
+                    imap_host,
+                    imap_port,
+                } = credential
+                else {
+                    return Err(AppError::Conflict(
+                        "email connector has no IMAP credential".to_owned(),
+                    ));
+                };
+                self.fetch_email(username, password, imap_host, *imap_port, cursor)
+                    .await
+            }
         }
     }
 
@@ -500,7 +512,7 @@ impl IngestionWorker {
         let mut records = Vec::new();
         let mut reached_prior = false;
         for page in 1..=3 {
-            let mut events_url = Url::parse("https://api.github.com/users/")
+            let mut events_url = url::Url::parse("https://api.github.com/users/")
                 .map_err(|error| AppError::InvalidInput(error.to_string()))?;
             events_url
                 .path_segments_mut()
@@ -638,162 +650,364 @@ impl IngestionWorker {
         Ok((records, json!({"updated_at": newest})))
     }
 
-    async fn fetch_gmail(
+    async fn fetch_slack(
         &self,
         token: &str,
         cursor: &Value,
     ) -> Result<(Vec<ImportedRecord>, Value), AppError> {
-        let profile: Value = provider_json(
-            "gmail",
-            self.http
-                .get("https://gmail.googleapis.com/gmail/v1/users/me/profile")
-                .bearer_auth(token),
-        )
-        .await?;
-        let next_history_id = required_json_string(&profile, "historyId")?.to_owned();
-        let message_ids = if let Some(history_id) = cursor.get("history_id").and_then(Value::as_str)
-        {
-            self.gmail_history_message_ids(token, history_id).await?
-        } else {
-            self.gmail_initial_message_ids(token).await?
-        };
-        let mut records = Vec::with_capacity(message_ids.len());
-        for message_id in message_ids {
-            let message: Value = provider_json(
-                "gmail",
-                self.http
-                    .get(format!(
-                        "https://gmail.googleapis.com/gmail/v1/users/me/messages/{message_id}"
-                    ))
-                    .query(&[
-                        ("format", "metadata"),
-                        ("metadataHeaders", "Subject"),
-                        ("metadataHeaders", "From"),
-                        ("metadataHeaders", "To"),
-                        ("metadataHeaders", "Date"),
-                    ])
-                    .bearer_auth(token),
-            )
-            .await?;
-            records.push(gmail_record(&message)?);
-        }
-        Ok((records, json!({"history_id": next_history_id})))
-    }
-
-    async fn gmail_initial_message_ids(&self, token: &str) -> Result<Vec<String>, AppError> {
-        let mut ids = Vec::new();
-        let mut page_token: Option<String> = None;
-        loop {
+        let prior_channels = cursor
+            .get("channels")
+            .and_then(Value::as_object)
+            .cloned()
+            .unwrap_or_default();
+        let mut next_channels = prior_channels.clone();
+        let mut records = Vec::new();
+        let mut channel_cursor: Option<String> = None;
+        for _ in 0..5 {
             let mut request = self
                 .http
-                .get("https://gmail.googleapis.com/gmail/v1/users/me/messages")
-                .query(&[("maxResults", "100"), ("q", "newer_than:30d")])
-                .bearer_auth(token);
-            if let Some(token) = &page_token {
-                request = request.query(&[("pageToken", token)]);
-            }
-            let response: Value = provider_json("gmail", request).await?;
-            if let Some(messages) = response.get("messages").and_then(Value::as_array) {
-                for message in messages {
-                    ids.push(required_json_string(message, "id")?.to_owned());
-                }
-            } else if response.get("resultSizeEstimate").and_then(Value::as_u64) != Some(0) {
-                return Err(invalid_provider(
-                    "Gmail list response omitted messages for a non-empty result",
-                ));
-            }
-            let Some(next) = response.get("nextPageToken").and_then(Value::as_str) else {
-                break;
-            };
-            page_token = Some(next.to_owned());
-        }
-        Ok(ids)
-    }
-
-    async fn gmail_history_message_ids(
-        &self,
-        token: &str,
-        history_id: &str,
-    ) -> Result<Vec<String>, AppError> {
-        let mut ids = Vec::new();
-        let mut page_token: Option<String> = None;
-        loop {
-            let mut request = self
-                .http
-                .get("https://gmail.googleapis.com/gmail/v1/users/me/history")
+                .get("https://slack.com/api/conversations.list")
+                .bearer_auth(token)
                 .query(&[
-                    ("startHistoryId", history_id),
-                    ("historyTypes", "messageAdded"),
-                    ("maxResults", "100"),
-                ])
-                .bearer_auth(token);
-            if let Some(token) = &page_token {
-                request = request.query(&[("pageToken", token)]);
+                    ("types", "public_channel,private_channel"),
+                    ("limit", "100"),
+                ]);
+            if let Some(cursor_value) = &channel_cursor {
+                request = request.query(&[("cursor", cursor_value.as_str())]);
             }
-            let response: Value = provider_json("gmail", request).await?;
-            for history in response
-                .get("history")
+            let response: Value = provider_json("slack", request).await?;
+            ensure_slack_ok(&response)?;
+            let channels = response
+                .get("channels")
                 .and_then(Value::as_array)
-                .into_iter()
-                .flatten()
-            {
-                for added in history
-                    .get("messagesAdded")
-                    .and_then(Value::as_array)
-                    .into_iter()
-                    .flatten()
-                {
-                    let id = added
-                        .pointer("/message/id")
+                .ok_or_else(|| invalid_provider("Slack response omitted channels"))?;
+            for channel in channels {
+                let channel_id = required_json_string(channel, "id")?.to_owned();
+                let channel_name = required_json_string(channel, "name")?.to_owned();
+                let prior_ts = prior_channels.get(&channel_id).and_then(Value::as_str);
+                let mut history_cursor: Option<String> = None;
+                let mut newest_ts = prior_ts.map(ToOwned::to_owned);
+                for _ in 0..3 {
+                    let mut history_request = self
+                        .http
+                        .get("https://slack.com/api/conversations.history")
+                        .bearer_auth(token)
+                        .query(&[("channel", channel_id.as_str()), ("limit", "100")]);
+                    if let Some(oldest) = prior_ts {
+                        history_request = history_request.query(&[("oldest", oldest)]);
+                    }
+                    if let Some(cursor_value) = &history_cursor {
+                        history_request =
+                            history_request.query(&[("cursor", cursor_value.as_str())]);
+                    }
+                    let history: Value = provider_json("slack", history_request).await?;
+                    ensure_slack_ok(&history)?;
+                    let messages = history
+                        .get("messages")
+                        .and_then(Value::as_array)
+                        .ok_or_else(|| invalid_provider("Slack history omitted messages"))?;
+                    for message in messages {
+                        let ts = required_json_string(message, "ts")?.to_owned();
+                        if prior_ts.is_some_and(|value| ts.as_str() <= value) {
+                            continue;
+                        }
+                        if newest_ts.as_deref().is_none_or(|value| ts.as_str() > value) {
+                            newest_ts = Some(ts.clone());
+                        }
+                        let text = message.get("text").and_then(Value::as_str).unwrap_or("");
+                        let user = message
+                            .get("user")
+                            .and_then(Value::as_str)
+                            .unwrap_or("unknown");
+                        records.push(ImportedRecord {
+                            external_id: format!("{channel_id}:{ts}"),
+                            uri: None,
+                            title: format!("Slack #{channel_name}"),
+                            body_markdown: format!("**{user}** in #{channel_name}: {text}"),
+                            payload: message.clone(),
+                            observed_at: parse_slack_timestamp(&ts)?,
+                        });
+                    }
+                    let next = history
+                        .pointer("/response_metadata/next_cursor")
                         .and_then(Value::as_str)
-                        .ok_or_else(|| invalid_provider("Gmail history item omitted message ID"))?;
-                    if !ids.iter().any(|existing| existing == id) {
-                        ids.push(id.to_owned());
+                        .filter(|value| !value.is_empty());
+                    history_cursor = next.map(ToOwned::to_owned);
+                    if history_cursor.is_none() {
+                        break;
                     }
                 }
+                if let Some(ts) = newest_ts.or_else(|| prior_ts.map(ToOwned::to_owned)) {
+                    next_channels.insert(channel_id, Value::String(ts));
+                }
             }
-            let Some(next) = response.get("nextPageToken").and_then(Value::as_str) else {
+            let next = response
+                .pointer("/response_metadata/next_cursor")
+                .and_then(Value::as_str)
+                .filter(|value| !value.is_empty());
+            channel_cursor = next.map(ToOwned::to_owned);
+            if channel_cursor.is_none() {
                 break;
-            };
-            page_token = Some(next.to_owned());
+            }
         }
-        Ok(ids)
+        Ok((records, json!({"channels": next_channels})))
+    }
+
+    async fn fetch_email(
+        &self,
+        username: &str,
+        password: &str,
+        imap_host: &str,
+        imap_port: u16,
+        cursor: &Value,
+    ) -> Result<(Vec<ImportedRecord>, Value), AppError> {
+        let prior_uidvalidity = cursor.get("uidvalidity").and_then(Value::as_u64);
+        let prior_uid = cursor.get("uid").and_then(Value::as_u64);
+        let username = username.to_owned();
+        let password = password.to_owned();
+        let imap_host = imap_host.to_owned();
+        let fetched = tokio::task::spawn_blocking(move || {
+            fetch_email_blocking(
+                &username,
+                &password,
+                &imap_host,
+                imap_port,
+                prior_uidvalidity,
+                prior_uid,
+            )
+        })
+        .await
+        .map_err(|error| AppError::InvalidProviderResponse(error.to_string()))??;
+        Ok(fetched)
     }
 }
 
-fn authorization_url(
-    provider: Provider,
-    client: &OAuthClientConfig,
-    redirect_uri: &str,
-    state: &str,
-) -> Result<Url, AppError> {
-    let (base, scope) = match provider {
-        Provider::GitHub => (
-            "https://github.com/login/oauth/authorize",
-            "read:user user:email repo",
-        ),
-        Provider::Linear => ("https://linear.app/oauth/authorize", "read"),
-        Provider::Gmail => (
-            "https://accounts.google.com/o/oauth2/v2/auth",
-            "openid email profile https://www.googleapis.com/auth/gmail.readonly",
-        ),
+fn imap_client(
+    imap_host: &str,
+    imap_port: u16,
+) -> Result<imap::Client<rustls_connector::TlsStream<std::net::TcpStream>>, AppError> {
+    use std::net::TcpStream;
+    let stream =
+        TcpStream::connect((imap_host, imap_port)).map_err(|error| AppError::Upstream {
+            provider: "email",
+            status: StatusCode::BAD_GATEWAY,
+            message: error.to_string(),
+        })?;
+    let tls =
+        RustlsConnector::new_with_platform_verifier().map_err(|error| AppError::Upstream {
+            provider: "email",
+            status: StatusCode::BAD_GATEWAY,
+            message: error.to_string(),
+        })?;
+    let tls_stream = tls
+        .connect(imap_host, stream)
+        .map_err(|error| AppError::Upstream {
+            provider: "email",
+            status: StatusCode::BAD_GATEWAY,
+            message: error.to_string(),
+        })?;
+    let mut client = imap::Client::new(tls_stream);
+    client.read_greeting().map_err(|error| AppError::Upstream {
+        provider: "email",
+        status: StatusCode::BAD_GATEWAY,
+        message: error.to_string(),
+    })?;
+    Ok(client)
+}
+
+fn fetch_email_blocking(
+    username: &str,
+    password: &str,
+    imap_host: &str,
+    imap_port: u16,
+    prior_uidvalidity: Option<u64>,
+    prior_uid: Option<u64>,
+) -> Result<(Vec<ImportedRecord>, Value), AppError> {
+    let client = imap_client(imap_host, imap_port)?;
+    let mut session =
+        client
+            .login(username, password)
+            .map_err(|(error, _)| AppError::Upstream {
+                provider: "email",
+                status: StatusCode::UNAUTHORIZED,
+                message: error.to_string(),
+            })?;
+    let mailbox = session
+        .select("INBOX")
+        .map_err(|error| AppError::Upstream {
+            provider: "email",
+            status: StatusCode::BAD_GATEWAY,
+            message: error.to_string(),
+        })?;
+    let uidvalidity = u64::from(
+        mailbox
+            .uid_validity
+            .ok_or_else(|| invalid_provider("IMAP mailbox omitted UIDVALIDITY"))?,
+    );
+    let search_from_uid = if prior_uidvalidity == Some(uidvalidity) {
+        prior_uid.map_or(1, |uid| uid.saturating_add(1))
+    } else {
+        1_u64
     };
-    let mut url = Url::parse(base).map_err(|error| AppError::InvalidInput(error.to_string()))?;
-    url.query_pairs_mut()
-        .append_pair("client_id", &client.client_id)
-        .append_pair("redirect_uri", redirect_uri)
-        .append_pair("response_type", "code")
-        .append_pair("scope", scope)
-        .append_pair("state", state);
-    if provider == Provider::Linear {
-        url.query_pairs_mut().append_pair("prompt", "consent");
+    let uid_set = if search_from_uid == 1 {
+        "1:*".to_owned()
+    } else {
+        format!("{search_from_uid}:*")
+    };
+    let messages = session
+        .fetch(
+            uid_set,
+            "(UID BODY.PEEK[HEADER.FIELDS (SUBJECT FROM TO DATE)] BODY.PEEK[TEXT]<0.512>)",
+        )
+        .map_err(|error| AppError::Upstream {
+            provider: "email",
+            status: StatusCode::BAD_GATEWAY,
+            message: error.to_string(),
+        })?;
+    let mut records = Vec::new();
+    let mut highest_uid = prior_uid.unwrap_or(0);
+    for message in messages.iter() {
+        let uid = message
+            .uid
+            .ok_or_else(|| invalid_provider("IMAP message omitted UID"))?;
+        highest_uid = highest_uid.max(u64::from(uid));
+        records.push(imap_record(message, uid)?);
     }
-    if provider == Provider::Gmail {
-        url.query_pairs_mut()
-            .append_pair("access_type", "offline")
-            .append_pair("prompt", "consent");
+    let _ = session.logout();
+    Ok((
+        records,
+        json!({"uidvalidity": uidvalidity, "uid": highest_uid}),
+    ))
+}
+
+fn imap_record(message: &Fetch, uid: u32) -> Result<ImportedRecord, AppError> {
+    let header = message.header().unwrap_or_default();
+    let header_text = std::str::from_utf8(header).unwrap_or_default();
+    let subject = header_field(header_text, "Subject");
+    let from = header_field(header_text, "From");
+    let to = header_field(header_text, "To");
+    let date = header_field(header_text, "Date");
+    let snippet = message
+        .body()
+        .map(|bytes| std::str::from_utf8(bytes).unwrap_or_default().trim())
+        .filter(|value| !value.is_empty());
+    let external_id = format!("{uid}");
+    let title = subject
+        .as_deref()
+        .map(|value| format!("Email: {value}"))
+        .unwrap_or_else(|| format!("Email UID {uid}"));
+    let mut body_markdown = String::new();
+    for (label, value) in [
+        ("From", from.as_deref()),
+        ("To", to.as_deref()),
+        ("Subject", subject.as_deref()),
+        ("Date", date.as_deref()),
+    ] {
+        if let Some(value) = value {
+            body_markdown.push_str(&format!("**{label}:** {value}\n\n"));
+        }
     }
-    Ok(url)
+    if let Some(snippet) = snippet {
+        body_markdown.push_str(snippet);
+    }
+    Ok(ImportedRecord {
+        external_id,
+        uri: None,
+        title,
+        body_markdown,
+        payload: json!({
+            "uid": uid,
+            "subject": subject,
+            "from": from,
+            "to": to,
+            "date": date,
+            "snippet": snippet,
+        }),
+        observed_at: date.as_deref().and_then(parse_email_date),
+    })
+}
+
+fn header_field(headers: &str, name: &str) -> Option<String> {
+    headers.lines().find_map(|line| {
+        let (field, value) = line.split_once(':')?;
+        (field.trim().eq_ignore_ascii_case(name)).then(|| value.trim().to_owned())
+    })
+}
+
+fn parse_email_date(value: &str) -> Option<chrono::DateTime<Utc>> {
+    chrono::DateTime::parse_from_rfc2822(value)
+        .ok()
+        .map(|date| date.with_timezone(&Utc))
+        .or_else(|| {
+            chrono::DateTime::parse_from_rfc3339(value)
+                .ok()
+                .map(|date| date.with_timezone(&Utc))
+        })
+}
+
+fn validate_label(label: &str) -> Result<(), AppError> {
+    if label.trim().is_empty() {
+        return Err(AppError::InvalidInput("label cannot be empty".to_owned()));
+    }
+    Ok(())
+}
+
+fn validate_credential_for_provider(
+    provider: Provider,
+    credential: &ConnectorCredential,
+) -> Result<(), AppError> {
+    match provider {
+        Provider::GitHub | Provider::Linear => {
+            let ConnectorCredential::ApiKey { api_key } = credential else {
+                return Err(AppError::InvalidInput(format!(
+                    "{} requires an API key credential",
+                    provider.as_str()
+                )));
+            };
+            if api_key.trim().is_empty() {
+                return Err(AppError::InvalidInput("api_key cannot be empty".to_owned()));
+            }
+        }
+        Provider::Slack => {
+            let ConnectorCredential::ApiKey { api_key } = credential else {
+                return Err(AppError::InvalidInput(
+                    "slack requires a bot token credential".to_owned(),
+                ));
+            };
+            if !api_key.starts_with("xoxb-") {
+                return Err(AppError::InvalidInput(
+                    "slack bot token must start with xoxb-".to_owned(),
+                ));
+            }
+        }
+        Provider::Email => {
+            let ConnectorCredential::Imap {
+                username,
+                password,
+                imap_host,
+                imap_port,
+            } = credential
+            else {
+                return Err(AppError::InvalidInput(
+                    "email requires an IMAP credential".to_owned(),
+                ));
+            };
+            if username.trim().is_empty()
+                || password.trim().is_empty()
+                || imap_host.trim().is_empty()
+            {
+                return Err(AppError::InvalidInput(
+                    "IMAP username, password, and host cannot be empty".to_owned(),
+                ));
+            }
+            if *imap_port == 0 {
+                return Err(AppError::InvalidInput(
+                    "IMAP port must be greater than zero".to_owned(),
+                ));
+            }
+        }
+    }
+    Ok(())
 }
 
 async fn provider_json<T: DeserializeOwned>(
@@ -840,14 +1054,6 @@ fn encrypted_secret(
     })
 }
 
-fn parse_scopes(scope: &str) -> Vec<String> {
-    scope
-        .split([',', ' '])
-        .filter(|value| !value.is_empty())
-        .map(ToOwned::to_owned)
-        .collect()
-}
-
 fn required_json_string<'a>(value: &'a Value, field: &str) -> Result<&'a str, AppError> {
     value
         .get(field)
@@ -885,6 +1091,16 @@ fn parse_optional_timestamp(
         .transpose()
 }
 
+fn parse_slack_timestamp(ts: &str) -> Result<Option<chrono::DateTime<Utc>>, AppError> {
+    let seconds = ts
+        .split('.')
+        .next()
+        .ok_or_else(|| invalid_provider("Slack timestamp was empty"))?
+        .parse::<i64>()
+        .map_err(|error| invalid_provider(&error.to_string()))?;
+    Ok(chrono::DateTime::from_timestamp(seconds, 0))
+}
+
 fn reject_graphql_errors(value: &Value, provider: &'static str) -> Result<(), AppError> {
     if let Some(errors) = value.get("errors") {
         return Err(AppError::Upstream {
@@ -896,105 +1112,50 @@ fn reject_graphql_errors(value: &Value, provider: &'static str) -> Result<(), Ap
     Ok(())
 }
 
-fn gmail_record(message: &Value) -> Result<ImportedRecord, AppError> {
-    let id = required_json_string(message, "id")?;
-    let headers = message
-        .pointer("/payload/headers")
-        .and_then(Value::as_array)
-        .ok_or_else(|| invalid_provider("Gmail message omitted metadata headers"))?;
-    let header = |name: &str| {
-        headers.iter().find_map(|header| {
-            (header.get("name").and_then(Value::as_str) == Some(name))
-                .then(|| header.get("value").and_then(Value::as_str))
-                .flatten()
-        })
-    };
-    let subject = header("Subject");
-    let from = header("From");
-    let to = header("To");
-    let snippet = message.get("snippet").and_then(Value::as_str);
-    let observed_at = message
-        .get("internalDate")
-        .and_then(Value::as_str)
-        .map(|milliseconds| {
-            milliseconds
-                .parse::<i64>()
-                .map_err(|error| invalid_provider(&error.to_string()))
-                .and_then(|value| {
-                    chrono::DateTime::from_timestamp_millis(value).ok_or_else(|| {
-                        invalid_provider("Gmail internalDate is outside the timestamp range")
-                    })
-                })
-        })
-        .transpose()?;
-    let title = subject.map_or_else(|| format!("Email {id}"), |value| format!("Email: {value}"));
-    let mut body_markdown = String::new();
-    for (label, value) in [("From", from), ("To", to), ("Subject", subject)] {
-        if let Some(value) = value {
-            body_markdown.push_str(&format!("**{label}:** {value}\n\n"));
-        }
+fn ensure_slack_ok(value: &Value) -> Result<(), AppError> {
+    if value.get("ok").and_then(Value::as_bool) != Some(true) {
+        let message = value
+            .get("error")
+            .and_then(Value::as_str)
+            .unwrap_or("unknown Slack error");
+        return Err(AppError::Upstream {
+            provider: "slack",
+            status: StatusCode::BAD_GATEWAY,
+            message: message.to_owned(),
+        });
     }
-    if let Some(snippet) = snippet {
-        body_markdown.push_str(snippet);
-    }
-    Ok(ImportedRecord {
-        external_id: id.to_owned(),
-        uri: Some(format!("https://mail.google.com/mail/u/0/#all/{id}")),
-        title,
-        body_markdown,
-        payload: message.clone(),
-        observed_at,
-    })
+    Ok(())
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Provider, authorization_url, gmail_record, parse_scopes};
-    use crate::config::OAuthClientConfig;
+    use super::{Provider, validate_credential_for_provider};
+    use crate::models::ConnectorCredential;
 
     #[test]
-    fn google_authorization_requests_offline_readonly_access() {
-        let client = OAuthClientConfig {
-            client_id: "client".to_owned(),
-            client_secret: "secret".to_owned(),
-        };
-
-        let url = authorization_url(
-            Provider::Gmail,
-            &client,
-            "https://life.test/v1/oauth/gmail/callback",
-            "state",
-        )
-        .unwrap();
-
-        assert!(url.as_str().contains("gmail.readonly"));
-        assert!(url.as_str().contains("access_type=offline"));
-    }
-
-    #[test]
-    fn scopes_support_space_and_comma_delimiters() {
-        assert_eq!(
-            parse_scopes("read:user,repo email"),
-            ["read:user", "repo", "email"]
+    fn slack_requires_bot_token_prefix() {
+        let result = validate_credential_for_provider(
+            Provider::Slack,
+            &ConnectorCredential::ApiKey {
+                api_key: "xoxp-not-a-bot".to_owned(),
+            },
         );
+
+        assert!(result.is_err());
     }
 
     #[test]
-    fn gmail_metadata_becomes_a_provenance_record() {
-        let message = serde_json::json!({
-            "id": "abc",
-            "internalDate": "1700000000000",
-            "snippet": "Hello Emil",
-            "payload": {"headers": [
-                {"name": "Subject", "value": "Planning"},
-                {"name": "From", "value": "Ada <ada@example.com>"},
-                {"name": "To", "value": "Emil <emil@example.com>"}
-            ]}
-        });
+    fn email_requires_imap_fields() {
+        let result = validate_credential_for_provider(
+            Provider::Email,
+            &ConnectorCredential::Imap {
+                username: "user".to_owned(),
+                password: "pass".to_owned(),
+                imap_host: "imap.example.com".to_owned(),
+                imap_port: 993,
+            },
+        );
 
-        let record = gmail_record(&message).unwrap();
-
-        assert_eq!(record.external_id, "abc");
-        assert!(record.body_markdown.contains("Hello Emil"));
+        assert!(result.is_ok());
     }
 }

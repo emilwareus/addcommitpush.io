@@ -10,7 +10,8 @@
   durable transcript.
 - Text conversations and complete-turn audio processing.
 - Explicit cited research.
-- Encrypted GitHub, Linear, and Gmail connectors with a PostgreSQL worker queue.
+- Encrypted GitHub, Linear, Slack, and email (IMAP) connectors with API keys /
+  app passwords, multiple accounts per provider, and a PostgreSQL worker queue.
 - Vendor-neutral health measurements.
 - Next.js views for voice, memories, timeline, conversations, owner settings,
   connectors, and data export.

@@ -33,12 +33,92 @@ an `RTCPeerConnection`. Send the SDP offer to
 `https://api.openai.com/v1/realtime/calls` with `client_secret.value`, then apply
 the returned SDP answer.
 
-Life configures transcription, semantic voice activity detection, interruption,
-one-question-at-a-time interview behavior, and these tools:
+Request the microphone with echo cancellation, noise suppression, and automatic
+gain control. Echo cancellation is what makes barge-in work on laptop speakers:
+without it the assistant's own voice re-enters the microphone and trips server
+voice activity detection.
+
+Life configures transcription pinned to the owner's language, `near_field` input
+noise reduction, semantic voice activity detection at `medium` eagerness,
+interruption, one-question-at-a-time interview behavior, and these tools:
 
 - `record_life_memory`
 - `search_life_memory`
 - `explore_life_memories`
+
+Noise reduction runs before turn detection, so it reduces false turn ends in a
+noisy room. Eagerness sets how long a pause may run before the model answers:
+`low` allows 8 seconds, `medium` 4, `high` 2.
+
+## 2a. Input transcription is a separate model
+
+The Realtime model consumes audio directly. Input transcription is a second,
+asynchronous model whose output is guidance about what was said, not what the
+model heard. The two can disagree.
+
+`audio.input.transcription.language` is therefore required, derived from the
+owner's `locale`. Left unset, the transcriber auto-detects a language per
+utterance, and on a wrong guess it _translates_ rather than transcribes. The
+visible symptom is an assistant that answers your English correctly while the
+transcript records your turn in Norwegian or Swedish — and because the durable
+turn commit stores that transcript, the person's own words enter their permanent
+life record in a language they never spoke.
+
+A misdetection is silent. Nothing in the event stream reports it.
+
+## 2b. Retune turn taking mid-session
+
+`session.update` changes any field except `model` and `voice`. Send it over the
+data channel to re-tune turn taking without reconnecting, then read the effective
+value back from `session.updated`.
+
+Echo the whole `audio.input` object the server reported in `session.created`,
+with only `eagerness` changed. A partial `audio.input` risks dropping the
+transcription model and noise reduction Life minted, and losing input
+transcription silently stops every later turn from being saved.
+
+```json
+{
+  "type": "session.update",
+  "session": {
+    "type": "realtime",
+    "audio": {
+      "input": {
+        "noise_reduction": { "type": "near_field" },
+        "transcription": { "model": "gpt-4o-transcribe", "language": "en" },
+        "turn_detection": {
+          "type": "semantic_vad",
+          "eagerness": "low",
+          "create_response": true,
+          "interrupt_response": true
+        }
+      }
+    }
+  }
+}
+```
+
+`eagerness` may also come back as `auto`, the provider default, which behaves as
+`medium`. Accept it.
+
+## 2c. Interrupt the assistant
+
+Speaking over the assistant interrupts it automatically because
+`interrupt_response` is set.
+
+To interrupt from the UI, send `output_audio_buffer.clear`, which discards the
+audio the server already buffered for WebRTC playback. Precede it with
+`response.cancel` **only while a response is still being generated**. Generation
+usually finishes seconds before playback does, and cancelling when there is
+nothing to cancel makes the server emit an `error` event.
+
+The server then emits `output_audio_buffer.cleared`. Treat a `cleared` that
+arrives after `output_audio_buffer.stopped` for the same response as a no-op: the
+audio had already drained, so the person heard the whole answer and the turn
+stays saveable.
+
+On WebRTC the server truncates unplayed audio itself, so the client never sends
+`conversation.item.truncate`.
 
 ## 3. Forward tool calls
 

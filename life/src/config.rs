@@ -15,7 +15,6 @@ pub struct Config {
     encryption_key: [u8; 32],
     allowed_origin: Url,
     public_base_url: Url,
-    frontend_base_url: Url,
     openai_api_key: String,
     openai_reasoning_model: String,
     openai_embedding_model: String,
@@ -23,17 +22,8 @@ pub struct Config {
     openai_speech_model: String,
     openai_realtime_model: String,
     openai_voice: String,
-    github: Option<OAuthClientConfig>,
-    linear: Option<OAuthClientConfig>,
     linear_webhook_secret: Option<String>,
-    google: Option<OAuthClientConfig>,
     port: u16,
-}
-
-#[derive(Clone)]
-pub struct OAuthClientConfig {
-    pub client_id: String,
-    pub client_secret: String,
 }
 
 #[derive(Debug, Error)]
@@ -42,8 +32,6 @@ pub enum ConfigError {
     Missing(&'static str),
     #[error("environment variable {name} is invalid: {reason}")]
     Invalid { name: &'static str, reason: String },
-    #[error("{0}_CLIENT_ID and {0}_CLIENT_SECRET must either both be set or both be absent")]
-    IncompleteOAuth(&'static str),
 }
 
 impl Config {
@@ -58,7 +46,6 @@ impl Config {
             encryption_key: decode_encryption_key(&required("LIFE_ENCRYPTION_KEY")?)?,
             allowed_origin: parse_url("LIFE_ALLOWED_ORIGIN")?,
             public_base_url: parse_url("LIFE_PUBLIC_BASE_URL")?,
-            frontend_base_url: parse_url("LIFE_FRONTEND_BASE_URL")?,
             openai_api_key: required("OPENAI_API_KEY")?,
             openai_reasoning_model: value_or("OPENAI_REASONING_MODEL", "gpt-5.6-sol"),
             openai_embedding_model: value_or("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small"),
@@ -66,10 +53,7 @@ impl Config {
             openai_speech_model: value_or("OPENAI_SPEECH_MODEL", "gpt-4o-mini-tts"),
             openai_realtime_model: value_or("OPENAI_REALTIME_MODEL", "gpt-realtime-2.1"),
             openai_voice: value_or("OPENAI_VOICE", "marin"),
-            github: oauth_config("GITHUB")?,
-            linear: oauth_config("LINEAR")?,
             linear_webhook_secret: optional("LINEAR_WEBHOOK_SECRET"),
-            google: oauth_config("GOOGLE")?,
             port: parse_or("PORT", 8080)?,
         };
         if config.database_max_connections == 0 {
@@ -86,7 +70,6 @@ impl Config {
         }
         validate_http_url("LIFE_ALLOWED_ORIGIN", &config.allowed_origin, true)?;
         validate_http_url("LIFE_PUBLIC_BASE_URL", &config.public_base_url, false)?;
-        validate_http_url("LIFE_FRONTEND_BASE_URL", &config.frontend_base_url, true)?;
         Ok(config)
     }
 
@@ -111,10 +94,6 @@ impl Config {
 
     pub const fn public_base_url(&self) -> &Url {
         &self.public_base_url
-    }
-
-    pub const fn frontend_base_url(&self) -> &Url {
-        &self.frontend_base_url
     }
 
     pub fn openai_api_key(&self) -> &str {
@@ -145,20 +124,8 @@ impl Config {
         &self.openai_voice
     }
 
-    pub const fn github(&self) -> Option<&OAuthClientConfig> {
-        self.github.as_ref()
-    }
-
-    pub const fn linear(&self) -> Option<&OAuthClientConfig> {
-        self.linear.as_ref()
-    }
-
     pub fn linear_webhook_secret(&self) -> Option<&str> {
         self.linear_webhook_secret.as_deref()
-    }
-
-    pub const fn google(&self) -> Option<&OAuthClientConfig> {
-        self.google.as_ref()
     }
 
     pub const fn port(&self) -> u16 {
@@ -245,25 +212,6 @@ fn validate_http_url(
     Ok(())
 }
 
-fn oauth_config(prefix: &'static str) -> Result<Option<OAuthClientConfig>, ConfigError> {
-    let client_id_name = format!("{prefix}_CLIENT_ID");
-    let client_secret_name = format!("{prefix}_CLIENT_SECRET");
-    let client_id = env::var(&client_id_name)
-        .ok()
-        .filter(|value| !value.trim().is_empty());
-    let client_secret = env::var(&client_secret_name)
-        .ok()
-        .filter(|value| !value.trim().is_empty());
-    match (client_id, client_secret) {
-        (Some(client_id), Some(client_secret)) => Ok(Some(OAuthClientConfig {
-            client_id,
-            client_secret,
-        })),
-        (None, None) => Ok(None),
-        _ => Err(ConfigError::IncompleteOAuth(prefix)),
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use url::Url;
@@ -282,12 +230,5 @@ mod tests {
         let url = Url::parse("https://life.example/backend").unwrap();
 
         assert!(validate_http_url("LIFE_PUBLIC_BASE_URL", &url, false).is_ok());
-    }
-
-    #[test]
-    fn frontend_base_url_rejects_a_path() {
-        let url = Url::parse("https://life-ui.example/app").unwrap();
-
-        assert!(validate_http_url("LIFE_FRONTEND_BASE_URL", &url, true).is_err());
     }
 }

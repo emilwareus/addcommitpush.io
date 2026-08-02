@@ -17,7 +17,8 @@ acts as the connector worker queue.
 - Realtime voice with three tools: record, search, and explore memories.
 - Durable text and voice conversations.
 - Explicit cited online research.
-- Encrypted GitHub, Linear, and Gmail connectors with idempotent ingestion.
+- Encrypted GitHub, Linear, Slack, and email (IMAP) connectors with API keys /
+  app passwords, multiple accounts per provider, and idempotent ingestion.
 - Health measurements, audit history, and JSON/Markdown export.
 
 Read the [API](docs/API.md), [architecture](docs/ARCHITECTURE.md),

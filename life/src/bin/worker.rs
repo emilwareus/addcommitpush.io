@@ -1,4 +1,5 @@
 use anyhow::Context as _;
+use chrono::Duration as ChronoDuration;
 use life_agent::AppState;
 use life_agent::config::Config;
 use life_agent::connectors::IngestionWorker;
@@ -23,6 +24,13 @@ async fn main() -> anyhow::Result<()> {
     let stale_jobs = state.repository.fail_stale_jobs().await?;
     if stale_jobs > 0 {
         warn!(stale_jobs, "marked expired worker leases as failed");
+    }
+    let enqueued = state
+        .repository
+        .enqueue_due_connectors(ChronoDuration::minutes(15))
+        .await?;
+    if enqueued > 0 {
+        info!(enqueued, "queued due connector sync jobs");
     }
     let http = Client::builder()
         .connect_timeout(Duration::from_secs(10))
@@ -53,6 +61,13 @@ async fn main() -> anyhow::Result<()> {
     loop {
         tokio::select! {
             _ = interval.tick() => {
+                let enqueued = state
+                    .repository
+                    .enqueue_due_connectors(ChronoDuration::minutes(15))
+                    .await?;
+                if enqueued > 0 {
+                    info!(enqueued, "queued due connector sync jobs");
+                }
                 let Some(job) = state.repository.claim_next_job(&worker_id).await? else {
                     continue;
                 };

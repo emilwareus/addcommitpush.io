@@ -118,6 +118,47 @@ const responseDoneSchema = z
   })
   .passthrough();
 
+const responseCreatedSchema = z
+  .object({
+    ...eventBase,
+    type: z.literal('response.created'),
+    response: z.object({ id: z.string() }).passthrough(),
+  })
+  .passthrough();
+
+/** The pacings Life offers. `auto` is also valid on the wire and means `medium`. */
+export const TURN_PACINGS = ['low', 'medium', 'high'] as const;
+export type TurnPacing = (typeof TURN_PACINGS)[number];
+const TURN_EAGERNESS = ['low', 'medium', 'high', 'auto'] as const;
+
+/**
+ * The server's effective `audio.input` config. Unknown keys are preserved so the
+ * client can echo the whole object back on `session.update`.
+ */
+const audioInputSchema = z
+  .object({
+    turn_detection: z
+      .object({ eagerness: z.enum(TURN_EAGERNESS).optional() })
+      .passthrough()
+      .nullable()
+      .optional(),
+  })
+  .passthrough();
+
+export type RealtimeAudioInput = z.infer<typeof audioInputSchema>;
+
+const sessionConfigSchema = z
+  .object({
+    ...eventBase,
+    type: z.enum(['session.created', 'session.updated']),
+    session: z
+      .object({
+        audio: z.object({ input: audioInputSchema.optional() }).passthrough().optional(),
+      })
+      .passthrough(),
+  })
+  .passthrough();
+
 const errorEventSchema = z
   .object({
     ...eventBase,
@@ -174,13 +215,10 @@ const ignoredEventSchema = z
   .object({
     ...eventBase,
     type: z.enum([
-      'session.created',
-      'session.updated',
       'conversation.created',
       'conversation.item.done',
       'input_audio_buffer.committed',
       'input_audio_buffer.cleared',
-      'response.created',
       'response.output_item.done',
       'response.content_part.added',
       'response.content_part.done',
@@ -204,6 +242,8 @@ export type RealtimeServerEvent =
   | z.infer<typeof outputItemAddedSchema>
   | z.infer<typeof outputAudioTranscriptDeltaSchema>
   | z.infer<typeof outputAudioTranscriptDoneSchema>
+  | z.infer<typeof responseCreatedSchema>
+  | z.infer<typeof sessionConfigSchema>
   | z.infer<typeof responseDoneSchema>
   | z.infer<typeof errorEventSchema>
   | z.infer<typeof speechStartedSchema>
@@ -256,6 +296,11 @@ function schemaForEventType(type: string): z.ZodType<RealtimeServerEvent> {
       return outputAudioTranscriptDeltaSchema;
     case 'response.output_audio_transcript.done':
       return outputAudioTranscriptDoneSchema;
+    case 'response.created':
+      return responseCreatedSchema;
+    case 'session.created':
+    case 'session.updated':
+      return sessionConfigSchema;
     case 'response.done':
       return responseDoneSchema;
     case 'error':
@@ -270,13 +315,10 @@ function schemaForEventType(type: string): z.ZodType<RealtimeServerEvent> {
       return outputAudioBufferLifecycleSchema;
     case 'conversation.item.truncated':
       return conversationItemTruncatedSchema;
-    case 'session.created':
-    case 'session.updated':
     case 'conversation.created':
     case 'conversation.item.done':
     case 'input_audio_buffer.committed':
     case 'input_audio_buffer.cleared':
-    case 'response.created':
     case 'response.output_item.done':
     case 'response.content_part.added':
     case 'response.content_part.done':

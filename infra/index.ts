@@ -350,7 +350,6 @@ function jobSecretEnvironment(
 const commonLiteralEnvironment = [
   { name: 'DATABASE_MAX_CONNECTIONS', value: '5' },
   { name: 'LIFE_ALLOWED_ORIGIN', value: frontendOrigin },
-  { name: 'LIFE_FRONTEND_BASE_URL', value: frontendOrigin },
   { name: 'LIFE_PUBLIC_BASE_URL', value: apiUrl },
   { name: 'RUST_LOG', value: 'info' },
 ];
@@ -547,9 +546,9 @@ const workerSchedule = new gcp.cloudscheduler.Job(
   {
     project: projectId,
     region,
-    name: 'life-worker-hourly',
-    description: 'Drain queued Life connector jobs once per hour',
-    schedule: '0 * * * *',
+    name: 'life-worker-every-fifteen-minutes',
+    description: 'Enqueue due Life connector syncs and drain the ingestion queue',
+    schedule: '*/15 * * * *',
     timeZone: 'Europe/Stockholm',
     attemptDeadline: '320s',
     retryConfig: {

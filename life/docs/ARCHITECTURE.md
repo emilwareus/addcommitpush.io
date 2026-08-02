@@ -54,11 +54,22 @@ evaluation route.
 - PostgreSQL stores only SHA-256 digests of Life bearer tokens.
 - Every repository query binds the authenticated owner.
 - Composite owner foreign keys prevent cross-owner links.
-- OAuth tokens are encrypted with AES-256-GCM before storage.
+- Connector credentials (API keys and IMAP app passwords) are encrypted with
+  AES-256-GCM before storage; the associated data is the connector UUID.
+- Many connectors per provider are allowed; the same remote account cannot be
+  linked twice while connected.
 - Model requests set `store: false`; content still crosses the model-provider
   boundary and deployment policy must account for that.
 - Imported and retrieved content is treated as evidence, never instructions.
 - Online research is explicit and preserves its source URLs.
+
+## Connector sync
+
+Owners paste provider credentials in the Life UI. The API validates them live,
+encrypts them, and enqueues an initial sync. The Cloud Run worker runs about
+every fifteen minutes: it enqueues due connectors, then drains the job queue.
+GitHub, Linear, Slack, and email (IMAP) each have one fetch path. There is no
+OAuth callback surface.
 
 ## Failure semantics
 

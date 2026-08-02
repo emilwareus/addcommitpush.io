@@ -343,11 +343,10 @@ pub struct Connector {
     pub id: Uuid,
     pub owner_id: Uuid,
     pub provider: String,
+    pub label: String,
     pub external_account_id: Option<String>,
     pub external_account_name: Option<String>,
     pub status: String,
-    pub scopes: Vec<String>,
-    pub token_expires_at: Option<DateTime<Utc>>,
     pub sync_cursor: Value,
     pub last_synced_at: Option<DateTime<Utc>>,
     pub last_error: Option<String>,
@@ -360,20 +359,39 @@ pub struct ConnectorCredentials {
     pub id: Uuid,
     pub owner_id: Uuid,
     pub provider: String,
+    pub label: String,
     pub external_account_name: Option<String>,
     pub status: String,
-    pub access_token_ciphertext: Option<Vec<u8>>,
-    pub access_token_nonce: Option<Vec<u8>>,
-    pub refresh_token_ciphertext: Option<Vec<u8>>,
-    pub refresh_token_nonce: Option<Vec<u8>>,
-    pub token_expires_at: Option<DateTime<Utc>>,
+    pub credential_ciphertext: Option<Vec<u8>>,
+    pub credential_nonce: Option<Vec<u8>>,
     pub sync_cursor: Value,
 }
 
-#[derive(Debug, Serialize)]
-pub struct OAuthStartResponse {
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum ConnectorCredential {
+    ApiKey {
+        api_key: String,
+    },
+    Imap {
+        username: String,
+        password: String,
+        imap_host: String,
+        imap_port: u16,
+    },
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ConnectConnectorRequest {
     pub provider: String,
-    pub authorization_url: String,
+    pub label: String,
+    pub credential: ConnectorCredential,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateConnectorRequest {
+    pub label: Option<String>,
+    pub credential: Option<ConnectorCredential>,
 }
 
 #[derive(Debug, Clone, Serialize, sqlx::FromRow)]

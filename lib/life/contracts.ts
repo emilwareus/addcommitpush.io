@@ -342,16 +342,64 @@ export const researchResponseSchema = z
     path: ['memories'],
   });
 
+export const connectorCredentialSchema = z.discriminatedUnion('type', [
+  z
+    .object({
+      type: z.literal('api_key'),
+      api_key: z.string().trim().min(8).max(8_192),
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal('imap'),
+      username: z.string().trim().min(1).max(320),
+      password: z.string().min(1).max(8_192),
+      imap_host: z.string().trim().min(1).max(253),
+      imap_port: z.number().int().min(1).max(65_535),
+    })
+    .strict(),
+]);
+
+export const connectConnectorRequestSchema = z
+  .object({
+    provider: z.enum(CONNECTOR_PROVIDERS),
+    label: z.string().trim().min(1).max(120),
+    credential: connectorCredentialSchema,
+  })
+  .strict()
+  .superRefine((value, context) => {
+    const expectsImap = value.provider === 'email';
+    const isImap = value.credential.type === 'imap';
+    if (expectsImap !== isImap) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: expectsImap
+          ? 'Email connectors require IMAP credentials.'
+          : 'GitHub, Linear, and Slack connectors require an API key.',
+        path: ['credential'],
+      });
+    }
+  });
+
+export const updateConnectorRequestSchema = z
+  .object({
+    label: z.string().trim().min(1).max(120).optional(),
+    credential: connectorCredentialSchema.optional(),
+  })
+  .strict()
+  .refine((value) => value.label !== undefined || value.credential !== undefined, {
+    message: 'Provide a label and/or credential to update.',
+  });
+
 export const connectorSchema = z
   .object({
     id: uuidSchema,
     owner_id: uuidSchema,
     provider: z.enum(CONNECTOR_PROVIDERS),
+    label: z.string().min(1),
     external_account_id: z.string().nullable(),
     external_account_name: z.string().nullable(),
     status: z.enum(CONNECTOR_STATUSES),
-    scopes: z.array(z.string()),
-    token_expires_at: nullableDateTimeSchema,
     sync_cursor: jsonValueSchema,
     last_synced_at: nullableDateTimeSchema,
     last_error: z.string().nullable(),
@@ -392,22 +440,11 @@ export const connectorViewSchema = z
   .object({
     id: uuidSchema,
     provider: z.enum(CONNECTOR_PROVIDERS),
+    label: z.string().min(1),
     external_account_name: z.string().nullable(),
     status: z.enum(CONNECTOR_STATUSES),
-    scopes: z.array(z.string()),
-    token_expires_at: nullableDateTimeSchema,
     last_synced_at: nullableDateTimeSchema,
     has_error: z.boolean(),
-  })
-  .strict();
-
-export const oauthStartResponseSchema = z
-  .object({
-    provider: z.enum(CONNECTOR_PROVIDERS),
-    authorization_url: z
-      .string()
-      .url()
-      .refine((value) => new URL(value).protocol === 'https:', 'OAuth URLs must use HTTPS.'),
   })
   .strict();
 
@@ -502,6 +539,8 @@ export type RealtimeMemoryRecordRequest = z.infer<typeof realtimeMemoryRecordReq
 export type RealtimeMemoryExploreRequest = z.infer<typeof realtimeMemoryExploreRequestSchema>;
 export type RealtimeTurnRequest = z.infer<typeof realtimeTurnRequestSchema>;
 export type Connector = z.infer<typeof connectorSchema>;
+export type ConnectConnectorRequest = z.infer<typeof connectConnectorRequestSchema>;
+export type UpdateConnectorRequest = z.infer<typeof updateConnectorRequestSchema>;
 export type IngestionJob = z.infer<typeof ingestionJobSchema>;
 export type IngestionJobView = z.infer<typeof ingestionJobViewSchema>;
 export type ConnectorView = z.infer<typeof connectorViewSchema>;

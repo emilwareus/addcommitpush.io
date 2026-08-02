@@ -1,6 +1,6 @@
 # Life HTTP API
 
-All `/v1` routes except OAuth callbacks and the Linear webhook require
+All `/v1` routes except the Linear webhook require
 `Authorization: Bearer $LIFE_USER_TOKEN`. Authentication resolves one owner;
 handlers do not accept an owner ID from the caller.
 
@@ -59,8 +59,8 @@ See [Realtime voice](REALTIME_VOICE.md) for the WebRTC and event protocol.
 | Method        | Route                                     | Purpose                                 |
 | ------------- | ----------------------------------------- | --------------------------------------- |
 | `POST`        | `/v1/research`                            | Explicit online research with citations |
-| `GET`         | `/v1/connectors`                          | List connectors without credentials     |
-| `POST`        | `/v1/connectors/{provider}/oauth/start`   | Start OAuth                             |
+| `GET`, `POST` | `/v1/connectors`                          | List or connect with API key / IMAP     |
+| `PATCH`       | `/v1/connectors/{id}`                     | Rename label and/or rotate credential   |
 | `POST`        | `/v1/connectors/{id}/sync`                | Enqueue an import                       |
 | `POST`        | `/v1/connectors/{id}/reset-cursor`        | Reset the next import cursor            |
 | `DELETE`      | `/v1/connectors/{id}`                     | Remove local credentials                |

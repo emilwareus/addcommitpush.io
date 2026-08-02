@@ -1,7 +1,9 @@
 import 'server-only';
 import {
   auditEventListSchema,
+  connectConnectorRequestSchema,
   connectorListSchema,
+  connectorSchema,
   conversationListSchema,
   conversationSchema,
   conversationTurnRequestSchema,
@@ -18,7 +20,6 @@ import {
   memorySchema,
   messageListSchema,
   ownerSchema,
-  oauthStartResponseSchema,
   realtimeMemoryExploreRequestSchema,
   realtimeMemoryRecordRequestSchema,
   realtimeMemorySearchRequestSchema,
@@ -29,6 +30,7 @@ import {
   searchHitListSchema,
   searchRequestSchema,
   timelineQuerySchema,
+  type ConnectConnectorRequest,
   type Conversation,
   type CreateRealtimeSessionRequest,
   type HealthMeasurementInput,
@@ -38,6 +40,8 @@ import {
   type RealtimeMemorySearchRequest,
   type RealtimeTurnRequest,
   type SearchRequest,
+  type UpdateConnectorRequest,
+  updateConnectorRequestSchema,
   updateOwnerRequestSchema,
   uuidSchema,
 } from './contracts';
@@ -245,17 +249,27 @@ export function listConnectors() {
   return lifeRequest({ method: 'GET', path: '/v1/connectors', schema: connectorListSchema });
 }
 
-export function startConnectorOAuth(provider: string) {
-  const parsedProvider = zConnectorProvider(provider);
+export function connectConnector(input: ConnectConnectorRequest) {
+  const body = connectConnectorRequestSchema.parse(input);
   return lifeRequest({
     method: 'POST',
-    path: `/v1/connectors/${parsedProvider}/oauth/start`,
-    schema: oauthStartResponseSchema,
+    path: '/v1/connectors',
+    schema: connectorSchema,
+    body,
+    timeoutMs: 60_000,
   });
 }
 
-function zConnectorProvider(provider: string): 'github' | 'linear' | 'gmail' {
-  return oauthStartResponseSchema.shape.provider.parse(provider);
+export function updateConnector(id: string, input: UpdateConnectorRequest) {
+  const connectorId = uuidSchema.parse(id);
+  const body = updateConnectorRequestSchema.parse(input);
+  return lifeRequest({
+    method: 'PATCH',
+    path: `/v1/connectors/${connectorId}`,
+    schema: connectorSchema,
+    body,
+    timeoutMs: 60_000,
+  });
 }
 
 export function syncConnector(id: string) {

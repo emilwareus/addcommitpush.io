@@ -4,7 +4,7 @@ import { getLifeServerConfig } from './config.server';
 import { errorEnvelopeSchema } from './contracts';
 import { LifeApiError, mapLifeApiStatus } from './errors';
 
-type LifeMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
+type LifeMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 interface LifeRequestOptions<T> {
   method: LifeMethod;

@@ -17,8 +17,8 @@ continue the conversation.
 - Persist exact text and voice conversation transcripts.
 - Show memories as a searchable list, detail view, and timeline.
 - Research only after an explicit request and preserve supporting URLs.
-- Connect GitHub, Linear, and Gmail with encrypted OAuth credentials and
-  idempotent imports.
+- Connect GitHub, Linear, Slack, and email (IMAP) with encrypted credentials and
+  idempotent imports. Multiple connectors per provider are allowed.
 - Store vendor-neutral health measurements.
 - Expose audit history and complete JSON/Markdown export.
 - Support multiple owners without a public user-creation route.

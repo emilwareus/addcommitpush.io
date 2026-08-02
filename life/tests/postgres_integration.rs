@@ -221,42 +221,24 @@ async fn postgres_lifecycle_is_append_only_searchable_and_idempotent() {
             .all(|memory| exact_hits.iter().any(|hit| hit.id == memory.id))
     );
 
-    let state_hash = [11_u8; 32];
-    let connector_id = repository
-        .create_oauth_state(owner.id, "github", &state_hash)
-        .await
-        .unwrap();
-    assert_eq!(
-        repository
-            .oauth_state_owner("github", &state_hash)
-            .await
-            .unwrap(),
-        owner.id
-    );
+    let connector_id = Uuid::new_v4();
     let cipher = TokenCipher::new(&[9_u8; 32]).unwrap();
-    let access = cipher
-        .encrypt("github-access-token", connector_id.as_bytes())
+    let credential_json = r#"{"type":"api_key","api_key":"github-access-token"}"#;
+    let encrypted = cipher
+        .encrypt(credential_json, connector_id.as_bytes())
         .unwrap();
     repository
-        .connect_connector(
+        .create_connector(
             owner.id,
+            connector_id,
             "github",
+            "GitHub",
             "42",
             "test-owner",
-            &["repo".to_owned()],
-            &access,
-            None,
-            None,
-            &state_hash,
+            &encrypted,
         )
         .await
         .unwrap();
-    assert!(
-        repository
-            .oauth_state_owner("github", &state_hash)
-            .await
-            .is_err()
-    );
     let queued = repository
         .enqueue_connector_sync(owner.id, connector_id)
         .await
@@ -409,34 +391,24 @@ async fn connector_revocation_is_final_for_in_flight_work() {
     )
     .await;
     let cipher = TokenCipher::new(&[7_u8; 32]).unwrap();
-    let state_hash = [17_u8; 32];
-    let connector_id = repository
-        .create_oauth_state(owner.id, "github", &state_hash)
-        .await
-        .unwrap();
-    let access = cipher
-        .encrypt("github-access-token", connector_id.as_bytes())
+    let connector_id = Uuid::new_v4();
+    let credential_json = r#"{"type":"api_key","api_key":"github-access-token"}"#;
+    let encrypted = cipher
+        .encrypt(credential_json, connector_id.as_bytes())
         .unwrap();
     repository
-        .connect_connector(
+        .create_connector(
             owner.id,
+            connector_id,
             "github",
+            "GitHub",
             "84",
             "revocation-owner",
-            &["repo".to_owned()],
-            &access,
-            None,
-            None,
-            &state_hash,
+            &encrypted,
         )
         .await
         .unwrap();
 
-    let stale_state_hash = [18_u8; 32];
-    repository
-        .create_oauth_state(owner.id, "github", &stale_state_hash)
-        .await
-        .unwrap();
     let (first_enqueue, second_enqueue) = tokio::join!(
         repository.enqueue_connector_sync(owner.id, connector_id),
         repository.enqueue_connector_sync(owner.id, connector_id),
@@ -456,20 +428,13 @@ async fn connector_revocation_is_final_for_in_flight_work() {
         .await
         .unwrap();
     assert_eq!(revoked.status, "revoked");
-    assert!(
-        repository
-            .oauth_state_owner("github", &stale_state_hash)
-            .await
-            .is_err()
-    );
-    let encrypted_token_count: i64 = sqlx::query_scalar(
+    let encrypted_credential_count: i64 = sqlx::query_scalar(
         r"
         SELECT count(*)
         FROM connectors
         WHERE id = $1 AND owner_id = $2
           AND (
-            access_token_ciphertext IS NOT NULL OR access_token_nonce IS NOT NULL
-            OR refresh_token_ciphertext IS NOT NULL OR refresh_token_nonce IS NOT NULL
+            credential_ciphertext IS NOT NULL OR credential_nonce IS NOT NULL
           )
         ",
     )
@@ -478,14 +443,21 @@ async fn connector_revocation_is_final_for_in_flight_work() {
     .fetch_one(&database.pool)
     .await
     .unwrap();
-    assert_eq!(encrypted_token_count, 0);
+    assert_eq!(encrypted_credential_count, 0);
 
-    let replacement_access = cipher
-        .encrypt("replacement-token", connector_id.as_bytes())
+    let replacement_json = r#"{"type":"api_key","api_key":"replacement-token"}"#;
+    let replacement_encrypted = cipher
+        .encrypt(replacement_json, connector_id.as_bytes())
         .unwrap();
     assert!(
         repository
-            .update_connector_tokens(owner.id, connector_id, &replacement_access, None, None)
+            .update_connector_credential(
+                owner.id,
+                connector_id,
+                "84",
+                "revocation-owner",
+                &replacement_encrypted,
+            )
             .await
             .is_err()
     );

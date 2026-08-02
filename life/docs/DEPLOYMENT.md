@@ -9,7 +9,7 @@ configuration, and deploys the frontend.
 ## Runtime shape
 
 - `life-api` is a public Cloud Run service on `0.0.0.0:$PORT`.
-- `life-worker` is a Cloud Run job that runs `life-worker --drain` hourly.
+- `life-worker` is a Cloud Run job that runs `life-worker --drain` every 15 minutes.
 - `life-provision` runs migrations and idempotently provisions the fixed owner
   and bearer credential after each deployment.
 - `life-postgres` is a zonal Cloud SQL PostgreSQL 17 `db-f1-micro` instance.
@@ -17,10 +17,10 @@ configuration, and deploys the frontend.
   `life-provision` identity. Both reach PostgreSQL through the Cloud SQL
   connector and can read only their required Secret Manager values.
 
-Cloud Run is publicly invokable because OAuth providers and Linear must reach
-callback and webhook paths. Owner-data routes still require the generated bearer
-credential. The browser never receives that credential: Next.js route handlers
-hold it in a sensitive Vercel production variable.
+Cloud Run is publicly invokable because Linear webhooks must reach the API.
+Owner-data routes still require the generated bearer credential. The browser
+never receives that credential: Next.js route handlers hold it in a sensitive
+Vercel production variable.
 
 ## Deployment invariants
 
@@ -29,24 +29,14 @@ hold it in a sensitive Vercel production variable.
 - Each job runs one task with no automatic task retry.
 - `/healthz` proves the process can answer HTTP.
 - `/readyz` executes `SELECT 1` against PostgreSQL.
-- OAuth callback URLs use the deterministic API origin:
-
-  ```text
-  https://life-api-1011975881194.europe-west1.run.app/v1/oauth/github/callback
-  https://life-api-1011975881194.europe-west1.run.app/v1/oauth/linear/callback
-  https://life-api-1011975881194.europe-west1.run.app/v1/oauth/gmail/callback
-  ```
-
 - The Linear webhook target is:
 
   ```text
   https://life-api-1011975881194.europe-west1.run.app/v1/webhooks/linear
   ```
 
-Provider credentials are intentionally absent until a connector is enabled.
-Add each provider's client ID and secret as a pair to `infra/index.ts` and its
-Pulumi configuration before enabling it; do not create unmanaged runtime
-configuration with `gcloud`.
+Provider credentials are supplied by the owner when connecting an account.
+Configure `LINEAR_WEBHOOK_SECRET` in Secret Manager when enabling Linear webhooks.
 
 Operational commands, cost controls, bootstrap details, and recovery procedures
 live in the [infrastructure runbook](../../infra/README.md).

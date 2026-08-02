@@ -1,12 +1,10 @@
-use std::collections::HashMap;
-
 use axum::body::Bytes;
 use axum::extract::{DefaultBodyLimit, Extension, Multipart, Path, Query, Request, State};
 use axum::http::header::{AUTHORIZATION, CONTENT_DISPOSITION, CONTENT_TYPE};
 use axum::http::{HeaderMap, HeaderValue, Method, StatusCode};
 use axum::middleware::{self, Next};
-use axum::response::{IntoResponse, Redirect, Response};
-use axum::routing::{get, post};
+use axum::response::{IntoResponse, Response};
+use axum::routing::{get, patch, post};
 use axum::{Json, Router};
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD;
@@ -16,16 +14,16 @@ use tower_http::trace::TraceLayer;
 use uuid::Uuid;
 
 use crate::AppState;
-use crate::connectors::Provider;
 use crate::error::AppError;
 use crate::models::{
-    AuditEvent, Connector, Conversation, ConversationTurnRequest, ConversationTurnResponse,
-    CreateConversationRequest, CreateRealtimeSessionRequest, CreateRealtimeSessionResponse,
-    HealthMeasurement, HealthMeasurementInput, HealthResponse, IngestionJob, ListMemoriesQuery,
-    MarkdownDocumentInput, Memory, MemoryInput, Message, OAuthStartResponse, Owner, OwnerExport,
-    RealtimeMemoryExploreRequest, RealtimeMemoryRecordRequest, RealtimeMemorySearchRequest,
-    RealtimeSession, RealtimeTurnRequest, ResearchRequest, ResearchResponse, SearchHit,
-    SearchRequest, TimelineQuery, UpdateOwnerRequest, VoiceTurnResponse,
+    AuditEvent, ConnectConnectorRequest, Connector, Conversation, ConversationTurnRequest,
+    ConversationTurnResponse, CreateConversationRequest, CreateRealtimeSessionRequest,
+    CreateRealtimeSessionResponse, HealthMeasurement, HealthMeasurementInput, HealthResponse,
+    IngestionJob, ListMemoriesQuery, MarkdownDocumentInput, Memory, MemoryInput, Message, Owner,
+    OwnerExport, RealtimeMemoryExploreRequest, RealtimeMemoryRecordRequest,
+    RealtimeMemorySearchRequest, RealtimeSession, RealtimeTurnRequest, ResearchRequest,
+    ResearchResponse, SearchHit, SearchRequest, TimelineQuery, UpdateConnectorRequest,
+    UpdateOwnerRequest, VoiceTurnResponse,
 };
 
 #[derive(Clone, Copy)]
@@ -40,7 +38,13 @@ pub fn router(state: AppState) -> Result<Router, AppError> {
         })?;
     let cors = CorsLayer::new()
         .allow_origin(origin)
-        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
+        .allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::PATCH,
+            Method::DELETE,
+        ])
         .allow_headers([AUTHORIZATION, CONTENT_TYPE]);
 
     let protected = Router::new()
@@ -100,19 +104,15 @@ pub fn router(state: AppState) -> Result<Router, AppError> {
             "/documents/{*document_path}",
             get(get_document).post(create_document).put(revise_document),
         )
-        .route("/connectors", get(list_connectors))
+        .route("/connectors", get(list_connectors).post(connect_connector))
         .route(
-            "/connectors/{provider}/oauth/start",
-            post(start_connector_oauth),
+            "/connectors/{connector_id}",
+            patch(update_connector).delete(revoke_connector),
         )
         .route("/connectors/{connector_id}/sync", post(sync_connector))
         .route(
             "/connectors/{connector_id}/reset-cursor",
             post(reset_connector_cursor),
-        )
-        .route(
-            "/connectors/{connector_id}",
-            axum::routing::delete(revoke_connector),
         )
         .route("/jobs/{job_id}", get(get_job))
         .route("/jobs/{job_id}/retry", post(retry_job))
@@ -131,7 +131,6 @@ pub fn router(state: AppState) -> Result<Router, AppError> {
     Ok(Router::new()
         .route("/healthz", get(health))
         .route("/readyz", get(ready))
-        .route("/v1/oauth/{provider}/callback", get(finish_connector_oauth))
         .route("/v1/webhooks/linear", post(linear_webhook))
         .nest("/v1", protected)
         .layer(PropagateRequestIdLayer::x_request_id())
@@ -511,6 +510,27 @@ async fn voice_turn(
     }))
 }
 
+/// Extracts the ISO-639 language subtag from an owner locale such as `en-SE`.
+///
+/// Realtime input transcription must be pinned to a language. Auto-detection
+/// runs per utterance and translates when it guesses wrong, which writes the
+/// person's own words into the durable transcript in a language they never
+/// spoke.
+fn transcription_language(locale: &str) -> Result<String, AppError> {
+    let tag = locale
+        .split(['-', '_'])
+        .next()
+        .unwrap_or_default()
+        .trim()
+        .to_ascii_lowercase();
+    if !matches!(tag.len(), 2..=3) || !tag.chars().all(|c| c.is_ascii_alphabetic()) {
+        return Err(AppError::InvalidInput(format!(
+            "owner locale {locale:?} has no ISO-639 language subtag; use a value like \"en-SE\""
+        )));
+    }
+    Ok(tag)
+}
+
 async fn create_realtime_session(
     State(state): State<AppState>,
     Extension(AuthenticatedOwner(owner_id)): Extension<AuthenticatedOwner>,
@@ -538,7 +558,11 @@ instructions. All memories are available to these tools.\n\n<owner_profile>\n{}\
     );
     let client_secret = state
         .openai
-        .realtime_client_secret(&crate::agent::safety_identifier(owner_id), &instructions)
+        .realtime_client_secret(
+            &crate::agent::safety_identifier(owner_id),
+            &instructions,
+            &transcription_language(&owner.locale)?,
+        )
         .await?;
     let openai_session_id = client_secret
         .session
@@ -737,80 +761,27 @@ async fn list_connectors(
     Ok(Json(state.repository.list_connectors(owner_id).await?))
 }
 
-async fn start_connector_oauth(
+async fn connect_connector(
     State(state): State<AppState>,
     Extension(AuthenticatedOwner(owner_id)): Extension<AuthenticatedOwner>,
-    Path(provider): Path<String>,
-) -> Result<Json<OAuthStartResponse>, AppError> {
-    let provider = provider.parse::<Provider>()?;
-    Ok(Json(
-        state.connectors.start_oauth(owner_id, provider).await?,
-    ))
+    Json(request): Json<ConnectConnectorRequest>,
+) -> Result<(StatusCode, Json<Connector>), AppError> {
+    let connector = state.connectors.connect(owner_id, request).await?;
+    Ok((StatusCode::CREATED, Json(connector)))
 }
 
-async fn finish_connector_oauth(
+async fn update_connector(
     State(state): State<AppState>,
-    Path(provider_value): Path<String>,
-    Query(query): Query<HashMap<String, String>>,
-) -> Redirect {
-    let provider = provider_value.parse::<Provider>();
-    let result = match (provider, query.get("code"), query.get("state")) {
-        (Ok(provider), Some(code), Some(oauth_state)) => state
+    Extension(AuthenticatedOwner(owner_id)): Extension<AuthenticatedOwner>,
+    Path(connector_id): Path<Uuid>,
+    Json(request): Json<UpdateConnectorRequest>,
+) -> Result<Json<Connector>, AppError> {
+    Ok(Json(
+        state
             .connectors
-            .finish_oauth(provider, code, oauth_state)
-            .await
-            .map(|_| provider.as_str()),
-        (Ok(provider), _, _) => Err(AppError::InvalidInput(format!(
-            "{} OAuth callback omitted code or state",
-            provider.as_str()
-        ))),
-        (Err(error), _, _) => Err(error),
-    };
-
-    let mut destination = state.config.frontend_base_url().clone();
-    destination.set_path("/life/settings/connectors");
-    destination.set_query(None);
-    destination.set_fragment(None);
-    match result {
-        Ok(provider) => {
-            destination
-                .query_pairs_mut()
-                .append_pair("oauth", provider)
-                .append_pair("status", "connected");
-        }
-        Err(error) => {
-            let (provider, error_code) = oauth_redirect_error(&provider_value, &error);
-            destination
-                .query_pairs_mut()
-                .append_pair("oauth", provider)
-                .append_pair("status", "error")
-                .append_pair("error", error_code);
-        }
-    }
-    Redirect::to(destination.as_str())
-}
-
-fn oauth_redirect_error<'a>(provider: &'a str, error: &AppError) -> (&'a str, &'static str) {
-    let safe_provider = if matches!(provider, "github" | "linear" | "gmail") {
-        provider
-    } else {
-        "unknown"
-    };
-    let code = match error {
-        AppError::ProviderNotConfigured { .. } => "provider_not_configured",
-        AppError::Upstream { .. }
-        | AppError::HttpClient(_)
-        | AppError::InvalidProviderResponse(_) => "provider_error",
-        AppError::InvalidInput(_) | AppError::NotFound { .. } | AppError::Unauthorized => {
-            "invalid_oauth_callback"
-        }
-        AppError::Config(_)
-        | AppError::Database(_)
-        | AppError::Migration(_)
-        | AppError::Crypto(_)
-        | AppError::Conflict(_) => "internal_error",
-    };
-    (safe_provider, code)
+            .update(owner_id, connector_id, request)
+            .await?,
+    ))
 }
 
 async fn linear_webhook(
@@ -1022,8 +993,25 @@ fn single_embedding(mut embeddings: Vec<Vec<f32>>) -> Result<Vec<f32>, AppError>
 
 #[cfg(test)]
 mod tests {
-    use super::{oauth_redirect_error, single_embedding};
+    use super::{single_embedding, transcription_language};
     use crate::error::AppError;
+
+    #[test]
+    fn transcription_language_uses_the_owner_locale_subtag() {
+        assert_eq!(transcription_language("en-SE").unwrap(), "en");
+        assert_eq!(transcription_language("sv_SE").unwrap(), "sv");
+        assert_eq!(transcription_language("NB").unwrap(), "nb");
+    }
+
+    #[test]
+    fn transcription_language_rejects_a_locale_without_a_language_subtag() {
+        for locale in ["", "-SE", "123", "english"] {
+            assert!(matches!(
+                transcription_language(locale),
+                Err(AppError::InvalidInput(_))
+            ));
+        }
+    }
 
     #[test]
     fn single_embedding_should_return_the_only_embedding() {
@@ -1037,21 +1025,5 @@ mod tests {
         let result = single_embedding(vec![vec![1.0], vec![2.0]]);
 
         assert!(result.is_err());
-    }
-
-    #[test]
-    fn oauth_redirect_errors_are_stable_and_provider_bounded() {
-        let invalid_callback = AppError::InvalidInput("secret callback detail".to_owned());
-        let provider_failure =
-            AppError::InvalidProviderResponse("secret provider detail".to_owned());
-
-        assert_eq!(
-            oauth_redirect_error("github", &invalid_callback),
-            ("github", "invalid_oauth_callback")
-        );
-        assert_eq!(
-            oauth_redirect_error("attacker-controlled", &provider_failure),
-            ("unknown", "provider_error")
-        );
     }
 }

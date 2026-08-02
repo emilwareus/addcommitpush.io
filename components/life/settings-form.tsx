@@ -72,6 +72,10 @@ export function SettingsForm({ owner }: { owner: Owner }) {
           defaultValue={owner.locale}
           placeholder="en-SE"
         />
+        <p className="mt-2 text-xs leading-5 text-muted-foreground">
+          The language subtag pins voice transcription. Set the language you speak: left to
+          auto-detect, the transcriber translates your words instead of writing them down.
+        </p>
       </Field>
       <Field label="Profile Markdown" className="sm:col-span-2">
         <Textarea name="profile_markdown" rows={12} defaultValue={owner.profile_markdown} />

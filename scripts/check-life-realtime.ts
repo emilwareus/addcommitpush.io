@@ -126,6 +126,145 @@ function checkTruncatedPlaybackDoesNotCommit(): void {
   assert.equal(turn.commitStatus, 'not_saved');
 }
 
+function checkOnlyDeliverableTurnsAreRetryable(): void {
+  const assembler = new RealtimeTurnAssembler();
+  addUser(assembler, 'user_7', 'Save this one.');
+  addAssistant(assembler, 'resp_7', 'assistant_7', 'user_7', 'A completed answer.');
+  assembler.completeResponse('resp_7', 'completed');
+  assembler.completePlayback('resp_7');
+  assembler.takeReadyCommits();
+  assembler.markNotSaved('resp_7', 'Network failure.');
+  assert.equal(assembler.snapshot().turns[0].retryable, true);
+
+  const interrupted = new RealtimeTurnAssembler();
+  addUser(interrupted, 'user_8', 'Cut this off.');
+  addAssistant(interrupted, 'resp_8', 'assistant_8', 'user_8', 'Audio the user never heard.');
+  interrupted.interruptPlayback('resp_8');
+  const [turn] = interrupted.snapshot().turns;
+  assert.equal(turn.commitStatus, 'not_saved');
+  assert.equal(turn.retryable, false);
+  assert.equal(interrupted.beginRetry('resp_8'), null);
+}
+
+function checkLateClearAfterDrainedPlaybackIsTolerated(): void {
+  // A UI interrupt can race the natural end of playback: `stopped` promotes the
+  // turn to `committing`, then the server's `cleared` ack arrives. The person
+  // heard the whole answer, so the commit must stand rather than fail closed.
+  const assembler = new RealtimeTurnAssembler();
+  addUser(assembler, 'user_9', 'Answer this fully.');
+  addAssistant(assembler, 'resp_10', 'assistant_10', 'user_9', 'A fully played answer.');
+  assembler.completeResponse('resp_10', 'completed');
+  assembler.completePlayback('resp_10');
+  assert.equal(assembler.takeReadyCommits().length, 1);
+
+  assembler.interruptPlayback('resp_10');
+  const [turn] = assembler.snapshot().turns;
+  assert.equal(turn.commitStatus, 'committing');
+  assert.equal(turn.assistantIsPartial, false);
+
+  assembler.markSaved('resp_10');
+  assert.equal(assembler.snapshot().turns[0].commitStatus, 'saved');
+}
+
+function checkSessionConfigEventsCarryTurnPacing(): void {
+  const created = parseRealtimeEvent(
+    JSON.stringify({
+      type: 'session.created',
+      event_id: 'event_session_created',
+      session: {
+        audio: { input: { turn_detection: { type: 'semantic_vad', eagerness: 'medium' } } },
+      },
+    })
+  );
+  assert.equal(created.type, 'session.created');
+  assert.equal(
+    created.type === 'session.created'
+      ? created.session.audio?.input?.turn_detection?.eagerness
+      : null,
+    'medium'
+  );
+
+  // Push-to-talk clears turn detection; the schema must accept the null.
+  assert.equal(
+    parseRealtimeEvent(
+      JSON.stringify({
+        type: 'session.updated',
+        event_id: 'event_session_updated',
+        session: { audio: { input: { turn_detection: null } } },
+      })
+    ).type,
+    'session.updated'
+  );
+
+  // `auto` is the provider default, so rejecting it would kill every session
+  // whose effective config echoes it back on the very first event.
+  assert.equal(
+    parseRealtimeEvent(
+      JSON.stringify({
+        type: 'session.created',
+        event_id: 'event_auto_eagerness',
+        session: {
+          audio: { input: { turn_detection: { type: 'semantic_vad', eagerness: 'auto' } } },
+        },
+      })
+    ).type,
+    'session.created'
+  );
+
+  // Unknown input fields survive parsing so the client can echo the server's
+  // whole `audio.input` back on `session.update` instead of a partial object.
+  const echoed = parseRealtimeEvent(
+    JSON.stringify({
+      type: 'session.created',
+      event_id: 'event_passthrough',
+      session: {
+        audio: {
+          input: {
+            noise_reduction: { type: 'near_field' },
+            transcription: { model: 'gpt-4o-transcribe' },
+            turn_detection: { type: 'semantic_vad', eagerness: 'medium' },
+          },
+        },
+      },
+    })
+  );
+  const input = echoed.type === 'session.created' ? echoed.session.audio?.input : undefined;
+  assert.deepEqual(input?.noise_reduction, { type: 'near_field' });
+  assert.deepEqual(input?.transcription, { model: 'gpt-4o-transcribe' });
+
+  assert.throws(
+    () =>
+      parseRealtimeEvent(
+        JSON.stringify({
+          type: 'session.updated',
+          event_id: 'event_bad_eagerness',
+          session: {
+            audio: { input: { turn_detection: { type: 'semantic_vad', eagerness: 'instant' } } },
+          },
+        })
+      ),
+    RealtimeProtocolError
+  );
+}
+
+function checkResponseCreatedEvent(): void {
+  const event = parseRealtimeEvent(
+    JSON.stringify({
+      type: 'response.created',
+      event_id: 'event_response_created',
+      response: { id: 'resp_9', status: 'in_progress' },
+    })
+  );
+  assert.equal(event.type === 'response.created' ? event.response.id : null, 'resp_9');
+  assert.throws(
+    () =>
+      parseRealtimeEvent(
+        JSON.stringify({ type: 'response.created', event_id: 'event_without_response' })
+      ),
+    RealtimeProtocolError
+  );
+}
+
 function checkUnknownEventsFailClosed(): void {
   assert.throws(
     () => parseRealtimeEvent('{"type":"session.mystery","event_id":"event_1"}'),
@@ -193,6 +332,10 @@ checkExactCommitAndRetry();
 checkCitationChainAndIsolation();
 checkInterruptedResponseDoesNotCommit();
 checkTruncatedPlaybackDoesNotCommit();
+checkOnlyDeliverableTurnsAreRetryable();
+checkLateClearAfterDrainedPlaybackIsTolerated();
+checkSessionConfigEventsCarryTurnPacing();
+checkResponseCreatedEvent();
 checkUnknownEventsFailClosed();
 checkWebRtcOutputAudioLifecycleEvents();
 checkConversationItemTruncatedEvent();

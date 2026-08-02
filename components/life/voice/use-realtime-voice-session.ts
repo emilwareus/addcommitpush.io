@@ -9,9 +9,16 @@ import {
   realtimeSessionSchema,
   type RealtimeTurnRequest,
 } from '@/lib/life/contracts';
-import { parseRealtimeEvent, RealtimeProtocolError } from './realtime-events';
+import {
+  parseRealtimeEvent,
+  RealtimeProtocolError,
+  type RealtimeAudioInput,
+  type TurnPacing,
+} from './realtime-events';
+import { sendInterrupt, sendTurnPacing } from './realtime-commands';
 import { RealtimeTurnAssembler, type TurnAssemblerSnapshot } from './realtime-turn-assembler';
 import { forwardMemoryToolCalls } from './realtime-tool-handler';
+import { VoiceLevelMeter } from './voice-level-meter';
 
 export type VoicePhase =
   | 'idle'
@@ -22,6 +29,17 @@ export type VoicePhase =
   | 'closing'
   | 'closed'
   | 'error';
+
+/** What the conversation is doing right now, for status text and the visualizer. */
+export type VoiceActivity =
+  | 'idle'
+  | 'listening'
+  | 'user_speaking'
+  | 'thinking'
+  | 'assistant_speaking';
+
+/** Warn once the session has this long left before its hard 60-minute expiry. */
+const EXPIRY_WARNING_SECONDS = 5 * 60;
 
 interface ActiveSessionView {
   id: string;
@@ -35,20 +53,35 @@ interface StartVoiceInput {
 
 const EMPTY_SNAPSHOT: TurnAssemblerSnapshot = { turns: [], provisionalInputs: [] };
 
+const MICROPHONE_CONSTRAINTS: MediaTrackConstraints = {
+  // Echo cancellation is what makes barge-in work on laptop speakers: without it
+  // the assistant's own voice re-enters the microphone and trips server VAD.
+  echoCancellation: true,
+  noiseSuppression: true,
+  autoGainControl: true,
+  channelCount: 1,
+};
+
 export function useRealtimeVoiceSession() {
   const [phase, setPhase] = useState<VoicePhase>('idle');
   const [error, setError] = useState<string | null>(null);
   const [session, setSession] = useState<ActiveSessionView | null>(null);
   const [snapshot, setSnapshot] = useState<TurnAssemblerSnapshot>(EMPTY_SNAPSHOT);
   const [muted, setMuted] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [activity, setActivity] = useState<VoiceActivity>('idle');
   const [activeToolCount, setActiveToolCount] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [secondsRemaining, setSecondsRemaining] = useState<number | null>(null);
+  // Null until `session.created` reports what the Life API actually minted, so
+  // the browser never has to mirror a server-side default.
+  const [turnPacing, setTurnPacing] = useState<TurnPacing | null>(null);
+  const [turnPacingPending, setTurnPacingPending] = useState(false);
 
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const dataChannelRef = useRef<RTCDataChannel | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
+  const levelMeterRef = useRef<VoiceLevelMeter | null>(null);
   const sessionIdRef = useRef<string | null>(null);
   const conversationIdRef = useRef<string | null>(null);
   const startedAtRef = useRef<number | null>(null);
@@ -57,12 +90,53 @@ export function useRealtimeVoiceSession() {
   const mutedRef = useRef(false);
   const assemblerRef = useRef(new RealtimeTurnAssembler());
   const handledToolCallsRef = useRef(new Map<string, string>());
+  /** The server's effective `audio.input`, echoed back verbatim on re-tune. */
+  const audioInputRef = useRef<RealtimeAudioInput | null>(null);
+
+  // Activity trackers. Deriving the label from these three facts avoids the
+  // event-ordering traps of flipping a single boolean from six event handlers.
+  const userSpeakingRef = useRef(false);
+  const pendingResponsesRef = useRef(new Set<string>());
+  const audibleResponsesRef = useRef(new Set<string>());
+  const activeToolCountRef = useRef(0);
+
+  // Data-channel events are handled one at a time. Tool forwarding awaits the
+  // network, so without this chain a later event could overtake an earlier one.
+  const eventQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   const refreshSnapshot = useCallback(() => {
     setSnapshot(assemblerRef.current.snapshot());
   }, []);
 
+  const syncActivity = useCallback(() => {
+    if (userSpeakingRef.current) {
+      setActivity('user_speaking');
+      return;
+    }
+    if (audibleResponsesRef.current.size > 0) {
+      setActivity('assistant_speaking');
+      return;
+    }
+    if (pendingResponsesRef.current.size > 0 || activeToolCountRef.current > 0) {
+      setActivity('thinking');
+      return;
+    }
+    setActivity('listening');
+  }, []);
+
+  const setToolCount = useCallback(
+    (count: number) => {
+      activeToolCountRef.current = count;
+      setActiveToolCount(count);
+      syncActivity();
+    },
+    [syncActivity]
+  );
+
   const cleanupLocalResources = useCallback(() => {
+    levelMeterRef.current?.close();
+    levelMeterRef.current = null;
+
     const stream = mediaStreamRef.current;
     mediaStreamRef.current = null;
     for (const track of stream?.getTracks() ?? []) track.stop();
@@ -79,6 +153,11 @@ export function useRealtimeVoiceSession() {
       peerConnection.close();
     }
     if (remoteAudioRef.current) remoteAudioRef.current.srcObject = null;
+
+    userSpeakingRef.current = false;
+    pendingResponsesRef.current.clear();
+    audibleResponsesRef.current.clear();
+    activeToolCountRef.current = 0;
   }, []);
 
   const bestEffortServerClose = useCallback((sessionId: string) => {
@@ -95,8 +174,9 @@ export function useRealtimeVoiceSession() {
       if (closingRef.current) return;
       closingRef.current = true;
       cleanupLocalResources();
-      setIsSpeaking(false);
+      setActivity('idle');
       setActiveToolCount(0);
+      setTurnPacingPending(false);
       setError(errorMessage(failure));
       setPhase('error');
     },
@@ -170,12 +250,35 @@ export function useRealtimeVoiceSession() {
     for (const payload of payloads) void persistTurn(payload);
   }, [persistTurn, refreshSnapshot]);
 
+  /** Re-sends a turn Life failed to store, with the identical provider response ID. */
+  const retryCommit = useCallback(
+    (responseId: string) => {
+      const payload = assemblerRef.current.beginRetry(responseId);
+      if (!payload) return;
+      refreshSnapshot();
+      void persistTurn(payload);
+    },
+    [persistTurn, refreshSnapshot]
+  );
+
   const processRealtimeEvent = useCallback(
     async (serializedEvent: string) => {
+      if (closingRef.current) return;
       const event = parseRealtimeEvent(serializedEvent);
       const assembler = assemblerRef.current;
 
       switch (event.type) {
+        case 'session.created':
+        case 'session.updated': {
+          const audioInput = event.session.audio?.input;
+          audioInputRef.current = audioInput ?? null;
+          const eagerness = audioInput?.turn_detection?.eagerness;
+          // `auto` is the provider default and means `medium`; anything else
+          // leaves no pacing selected until the person picks one.
+          setTurnPacing(eagerness === 'auto' ? 'medium' : (eagerness ?? null));
+          setTurnPacingPending(false);
+          break;
+        }
         case 'conversation.item.added':
           assembler.addConversationItem({
             itemId: event.item.id,
@@ -200,18 +303,22 @@ export function useRealtimeVoiceSession() {
         case 'conversation.item.truncated':
           assembler.truncateAssistantItem(event.item_id);
           break;
+        case 'response.created':
+          pendingResponsesRef.current.add(event.response.id);
+          syncActivity();
+          break;
         case 'response.output_item.added':
           assembler.linkOutputItem(event.response_id, event.item.id);
           break;
         case 'response.output_audio_transcript.delta':
-          setIsSpeaking(true);
           assembler.addAssistantDelta(event.response_id, event.item_id, event.delta);
           break;
         case 'response.output_audio_transcript.done':
           assembler.completeAssistantTranscript(event.response_id, event.item_id, event.transcript);
           break;
         case 'response.done': {
-          setIsSpeaking(false);
+          pendingResponsesRef.current.delete(event.response.id);
+          syncActivity();
           for (const output of event.response.output) {
             assembler.linkOutputItem(event.response.id, output.id);
           }
@@ -253,7 +360,7 @@ export function useRealtimeVoiceSession() {
             if (!sessionId || !dataChannel) {
               throw new RealtimeProtocolError('The memory tool ran without an active session.');
             }
-            setActiveToolCount(newFunctionCalls.length);
+            setToolCount(newFunctionCalls.length);
             try {
               const results = await forwardMemoryToolCalls({
                 calls: newFunctionCalls,
@@ -263,26 +370,32 @@ export function useRealtimeVoiceSession() {
               });
               for (const result of results) assembler.recordToolResult(result);
             } finally {
-              setActiveToolCount(0);
+              setToolCount(0);
             }
           }
           break;
         }
         case 'input_audio_buffer.speech_started':
-          setIsSpeaking(false);
+          userSpeakingRef.current = true;
+          syncActivity();
           break;
         case 'input_audio_buffer.speech_stopped':
+          userSpeakingRef.current = false;
+          syncActivity();
           break;
         case 'output_audio_buffer.started':
-          setIsSpeaking(true);
+          audibleResponsesRef.current.add(event.response_id);
+          syncActivity();
           break;
         case 'output_audio_buffer.stopped':
+          audibleResponsesRef.current.delete(event.response_id);
           assembler.completePlayback(event.response_id);
-          setIsSpeaking(false);
+          syncActivity();
           break;
         case 'output_audio_buffer.cleared':
+          audibleResponsesRef.current.delete(event.response_id);
           assembler.interruptPlayback(event.response_id);
-          setIsSpeaking(false);
+          syncActivity();
           break;
         case 'error':
           throw new RealtimeProtocolError(`OpenAI Realtime error: ${event.error.message}`);
@@ -293,7 +406,7 @@ export function useRealtimeVoiceSession() {
       refreshSnapshot();
       commitReadyTurns();
     },
-    [commitReadyTurns, refreshSnapshot]
+    [commitReadyTurns, refreshSnapshot, setToolCount, syncActivity]
   );
 
   const start = useCallback(
@@ -305,17 +418,29 @@ export function useRealtimeVoiceSession() {
       setSession(null);
       setSnapshot(EMPTY_SNAPSHOT);
       setElapsedSeconds(0);
-      setIsSpeaking(false);
+      setSecondsRemaining(null);
+      setActivity('idle');
       setActiveToolCount(0);
+      setTurnPacing(null);
+      setTurnPacingPending(false);
       assemblerRef.current = new RealtimeTurnAssembler();
       handledToolCallsRef.current = new Map();
+      audioInputRef.current = null;
+      eventQueueRef.current = Promise.resolve();
 
       try {
         setPhase('requesting_microphone');
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: MICROPHONE_CONSTRAINTS,
+        });
         mediaStreamRef.current = stream;
         const audioTrack = stream.getAudioTracks()[0];
         if (!audioTrack) throw new Error('The selected media stream has no microphone track.');
+
+        const levelMeter = new VoiceLevelMeter();
+        levelMeterRef.current = levelMeter;
+        await levelMeter.attach('microphone', stream);
+
         setPhase('creating_session');
         const sessionResponse = await fetch('/api/life/realtime/sessions', {
           method: 'POST',
@@ -352,11 +477,19 @@ export function useRealtimeVoiceSession() {
         peerConnection.addTrack(audioTrack, stream);
         peerConnection.ontrack = (trackEvent) => {
           const [remoteStream] = trackEvent.streams;
+          const remoteAudio = remoteAudioRef.current;
           if (!remoteStream) {
             failSession(new RealtimeProtocolError('OpenAI sent an audio track without a stream.'));
             return;
           }
-          if (remoteAudioRef.current) remoteAudioRef.current.srcObject = remoteStream;
+          if (!remoteAudio) {
+            failSession(new Error('The voice player is missing from the page.'));
+            return;
+          }
+          // Attach to the element first: Chrome only feeds a remote WebRTC track
+          // into Web Audio while that stream is also bound to a media element.
+          remoteAudio.srcObject = remoteStream;
+          void levelMeter.attach('assistant', remoteStream).catch(failSession);
         };
         peerConnection.onconnectionstatechange = () => {
           if (
@@ -374,7 +507,10 @@ export function useRealtimeVoiceSession() {
             failSession(new RealtimeProtocolError('OpenAI sent a non-text data-channel event.'));
             return;
           }
-          void processRealtimeEvent(messageEvent.data).catch(failSession);
+          const serializedEvent = messageEvent.data;
+          eventQueueRef.current = eventQueueRef.current.then(() =>
+            processRealtimeEvent(serializedEvent).catch(failSession)
+          );
         });
         dataChannel.addEventListener('close', () => {
           if (!closingRef.current) failSession(new Error('The Realtime data channel closed.'));
@@ -400,6 +536,7 @@ export function useRealtimeVoiceSession() {
 
         startedAtRef.current = Date.now();
         setPhase('connected');
+        setActivity('listening');
       } catch (failure) {
         failSession(failure);
       }
@@ -416,11 +553,45 @@ export function useRealtimeVoiceSession() {
     }
   }, []);
 
+  /** Cuts the assistant off mid-sentence, the same way speaking over it would. */
+  const interrupt = useCallback(() => {
+    const dataChannel = dataChannelRef.current;
+    if (!dataChannel || audibleResponsesRef.current.size === 0) return;
+    try {
+      // Generation normally finishes well before playback does, so only cancel
+      // when a response is genuinely still being produced.
+      sendInterrupt(dataChannel, { responseInProgress: pendingResponsesRef.current.size > 0 });
+    } catch (failure) {
+      failSession(failure);
+    }
+  }, [failSession]);
+
+  /** Re-tunes how long the model waits for a pause before it answers. */
+  const changeTurnPacing = useCallback(
+    (pacing: TurnPacing) => {
+      const dataChannel = dataChannelRef.current;
+      const audioInput = audioInputRef.current;
+      if (!dataChannel || !audioInput || pacing === turnPacing) return;
+      try {
+        sendTurnPacing(dataChannel, audioInput, pacing);
+        setTurnPacingPending(true);
+      } catch (failure) {
+        failSession(failure);
+      }
+    },
+    [failSession, turnPacing]
+  );
+
   const end = useCallback(async () => {
     if (!sessionIdRef.current || !['connected', 'error'].includes(phase)) return;
-    closingRef.current = true;
     setPhase('closing');
     setError(null);
+    // Let already-delivered events finish first. The last response's
+    // `output_audio_buffer.stopped` is often still queued behind a tool call,
+    // and dropping it would silently lose that turn's durable commit.
+    await eventQueueRef.current;
+    closingRef.current = true;
+    setActivity('idle');
     cleanupLocalResources();
 
     const sessionId = sessionIdRef.current;
@@ -440,6 +611,7 @@ export function useRealtimeVoiceSession() {
       }
       sessionIdRef.current = null;
       expiresAtRef.current = null;
+      setSecondsRemaining(null);
       setPhase('closed');
     } catch (failure) {
       setError(errorMessage(failure));
@@ -453,7 +625,10 @@ export function useRealtimeVoiceSession() {
       const startedAt = startedAtRef.current;
       if (startedAt) setElapsedSeconds(Math.floor((Date.now() - startedAt) / 1_000));
       const expiresAt = expiresAtRef.current;
-      if (expiresAt && Date.now() >= expiresAt) {
+      if (!expiresAt) return;
+      const remaining = Math.floor((expiresAt - Date.now()) / 1_000);
+      setSecondsRemaining(remaining <= EXPIRY_WARNING_SECONDS ? Math.max(0, remaining) : null);
+      if (remaining <= 0) {
         failSession(new Error('The 60-minute Life Realtime session expired.'));
       }
     }, 1_000);
@@ -475,12 +650,19 @@ export function useRealtimeVoiceSession() {
     session,
     snapshot,
     muted,
-    isSpeaking,
+    activity,
     activeToolCount,
     elapsedSeconds,
+    secondsRemaining,
+    turnPacing,
+    turnPacingPending,
     remoteAudioRef,
+    levelMeterRef,
     start,
     toggleMute,
+    interrupt,
+    changeTurnPacing,
+    retryCommit,
     end,
   };
 }

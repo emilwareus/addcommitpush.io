@@ -130,13 +130,13 @@ INSERT INTO messages (
   );
 
 INSERT INTO connectors (
-  id, owner_id, provider, external_account_id, external_account_name, status, scopes,
+  id, owner_id, provider, label, external_account_id, external_account_name, status,
   sync_cursor, last_synced_at, last_error, created_at, updated_at
 ) VALUES
   (
     '50000000-0000-4000-8000-000000000001',
-    'b7ac3a03-9e30-41b0-b44e-82e5988546c6', 'github', 'emilwareus',
-    'emilwareus', 'connected', ARRAY['read:user', 'repo'], '{"page":4}',
+    'b7ac3a03-9e30-41b0-b44e-82e5988546c6', 'github', 'Personal GitHub', 'emilwareus',
+    'emilwareus', 'connected', '{"page":4}',
     '2026-07-15T07:50:00+02:00', NULL,
     '2026-06-01T10:00:00+02:00', '2026-07-15T07:50:00+02:00'
   );

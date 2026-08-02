@@ -11,6 +11,7 @@ import {
 } from '@/lib/life/contracts';
 import type { RealtimeFunctionCall } from './realtime-events';
 import { RealtimeProtocolError } from './realtime-events';
+import { sendFunctionCallOutput, sendResponseCreate } from './realtime-commands';
 
 export interface ToolResultRecord {
   responseId: string;
@@ -40,18 +41,10 @@ export async function forwardMemoryToolCalls(input: {
   );
 
   for (const { call, output } of outputs) {
-    if (input.dataChannel.readyState !== 'open') {
-      throw new RealtimeProtocolError('The Realtime data channel closed before tool output.');
-    }
-    input.dataChannel.send(
-      JSON.stringify({
-        type: 'conversation.item.create',
-        item: { type: 'function_call_output', call_id: call.call_id, output },
-      })
-    );
+    sendFunctionCallOutput(input.dataChannel, { callId: call.call_id, output });
   }
 
-  input.dataChannel.send(JSON.stringify({ type: 'response.create' }));
+  sendResponseCreate(input.dataChannel);
   return outputs.map(({ call, memoryIds }) => ({
     responseId: input.responseId,
     functionItemId: call.id,
@@ -103,6 +96,13 @@ function parseArguments<T>(
   return parsed.data;
 }
 
+/**
+ * Tool calls run inside the serialized Realtime event queue, so an unbounded
+ * request would stall every later event. The deadline turns a hung backend into
+ * a failed session instead of a frozen one.
+ */
+const TOOL_TIMEOUT_MS = 15_000;
+
 async function runMemoryTool(sessionId: string, parsed: ParsedToolCall) {
   const response = await fetch(
     `/api/life/realtime/sessions/${encodeURIComponent(sessionId)}/${parsed.route}`,
@@ -110,6 +110,7 @@ async function runMemoryTool(sessionId: string, parsed: ParsedToolCall) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(parsed.arguments),
+      signal: AbortSignal.timeout(TOOL_TIMEOUT_MS),
     }
   );
   const decoded: unknown = await response.json();

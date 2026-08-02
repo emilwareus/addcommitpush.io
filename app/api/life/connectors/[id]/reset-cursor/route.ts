@@ -10,10 +10,7 @@ type RouteContext = { params: Promise<{ id: string }> };
 
 export async function POST(request: Request, context: RouteContext) {
   try {
-    await readLifeMutation(
-      request,
-      z.object({ confirm: z.literal('reset Gmail cursor') }).strict()
-    );
+    await readLifeMutation(request, z.object({ confirm: z.literal('reset cursor') }).strict());
     const id = uuidSchema.parse((await context.params).id);
     return privateJson(await resetConnectorCursor(id));
   } catch (error) {

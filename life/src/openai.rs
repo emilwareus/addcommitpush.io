@@ -323,10 +323,12 @@ impl OpenAiClient {
         &self,
         safety_identifier: &str,
         instructions: &str,
+        transcription_language: &str,
     ) -> Result<RealtimeClientSecret, AppError> {
         let body = realtime_client_secret_request(
             &self.realtime_model,
             &self.transcription_model,
+            transcription_language,
             &self.voice,
             instructions,
         );
@@ -381,9 +383,18 @@ impl OpenAiClient {
     }
 }
 
+/// Builds the Realtime session config.
+///
+/// `transcription_language` is not optional in practice. Input transcription is
+/// a separate asynchronous model from the Realtime model, which consumes the
+/// audio directly. Left to auto-detect, the transcriber guesses a language per
+/// utterance and, when it guesses wrong, translates instead of transcribing —
+/// an accented English speaker sees their own words stored as Norwegian while
+/// the assistant answers the English it actually heard.
 fn realtime_client_secret_request(
     realtime_model: &str,
     transcription_model: &str,
+    transcription_language: &str,
     voice: &str,
     instructions: &str,
 ) -> Value {
@@ -398,10 +409,14 @@ fn realtime_client_secret_request(
             "instructions": instructions,
             "audio": {
                 "input": {
-                    "transcription": {"model": transcription_model},
+                    "noise_reduction": {"type": "near_field"},
+                    "transcription": {
+                        "model": transcription_model,
+                        "language": transcription_language
+                    },
                     "turn_detection": {
                         "type": "semantic_vad",
-                        "eagerness": "low",
+                        "eagerness": "medium",
                         "create_response": true,
                         "interrupt_response": true
                     }
@@ -643,6 +658,7 @@ mod tests {
         let request = realtime_client_secret_request(
             "gpt-realtime-2.1",
             "gpt-4o-transcribe",
+            "en",
             "marin",
             "owner-scoped instructions",
         );
@@ -653,9 +669,26 @@ mod tests {
             request["session"]["audio"]["input"]["transcription"]["model"],
             "gpt-4o-transcribe"
         );
+        // Without a pinned language the transcriber translates on a misdetect.
+        assert_eq!(
+            request["session"]["audio"]["input"]["transcription"]["language"],
+            "en"
+        );
+        assert_eq!(
+            request["session"]["audio"]["input"]["noise_reduction"]["type"],
+            "near_field"
+        );
         assert_eq!(
             request["session"]["audio"]["input"]["turn_detection"]["type"],
             "semantic_vad"
+        );
+        assert_eq!(
+            request["session"]["audio"]["input"]["turn_detection"]["eagerness"],
+            "medium"
+        );
+        assert_eq!(
+            request["session"]["audio"]["input"]["turn_detection"]["interrupt_response"],
+            true
         );
         assert_eq!(request["session"]["audio"]["output"]["voice"], "marin");
         let tool_names = request["session"]["tools"]
