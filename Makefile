@@ -107,7 +107,7 @@ check: format-check lint test build ## Run all checks (format, lint, test, build
 # Utility Commands
 # ============================================================================
 
-.PHONY: clean setup run-researcher start-blog install-dr
+.PHONY: clean setup life run-researcher start-blog install-dr
 
 clean: ## Clean build artifacts
 	cd $(RESEARCHER_DIR) && rm -f research research-* *.test
@@ -117,6 +117,9 @@ clean: ## Clean build artifacts
 setup: ## Set up the project (install dependencies)
 	pnpm install
 	cd $(RESEARCHER_DIR) && go mod download
+
+life: ## Run the Life UI locally against the live Cloud Run backend
+	bash scripts/run-life-local.sh
 
 run-researcher: ## Run researcher application
 	cd $(RESEARCHER_DIR) && go run ./cmd/research

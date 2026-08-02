@@ -38,7 +38,7 @@ const TEMP_DIR = '.tmp-audio';
 const ELEVENLABS_API_URL = 'https://api.elevenlabs.io/v1/text-to-speech';
 const DEFAULT_VOICE_ID = 'yEgFhS0YPTUisv6dA301'; // Protagonist Synthwave (custom voice)
 const DEFAULT_MODEL = 'eleven_v3'; // Most expressive model for blog narration
-const MAX_CHARS_PER_REQUEST = 3000; // eleven_v3 character limit
+const MAX_CHARS_PER_REQUEST = 5000; // eleven_v3 documented character limit
 
 interface ChunkInfo {
   index: number;
@@ -357,9 +357,8 @@ Arguments:
 
 Available Models:
   eleven_v3                    Most expressive, ideal for narration (default)
-  eleven_multilingual_v2       High quality for professional content
-  eleven_turbo_v2_5           Fast with good quality
-  eleven_flash_v2_5           Ultra-fast, lower latency
+  eleven_multilingual_v2       Most stable on long-form generations
+  eleven_flash_v2_5           Ultra-fast (~75ms), lower latency
 
 Environment Variables:
   ELEVENLABS_API_KEY   Required API key for ElevenLabs

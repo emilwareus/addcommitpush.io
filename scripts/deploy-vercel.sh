@@ -94,8 +94,9 @@ fi
 
 cd "$REPO_ROOT"
 
-log "Ensuring Vercel CLI is available (using pnpx)..."
-pnpx vercel@latest --version >/dev/null 2>&1 || true
+VERCEL_CLI_VERSION="56.5.0"
+log "Using Vercel CLI ${VERCEL_CLI_VERSION}."
+pnpx "vercel@${VERCEL_CLI_VERSION}" --version >/dev/null
 
 PULL_ENV="$ENVIRONMENT"
 if [[ "$ENVIRONMENT" == "production" ]]; then
@@ -105,21 +106,18 @@ else
 fi
 
 log "Preparing .vercel config via 'vercel pull' for environment: $PULL_ENV"
-pnpx vercel@latest pull \
+pnpx "vercel@${VERCEL_CLI_VERSION}" pull \
   --yes \
   --environment "$PULL_ENV" \
   --token "$VERCEL_TOKEN" \
   --scope "$VERCEL_ORG_ID" 1>/dev/null
 
-DEPLOY_CMD=(pnpx vercel@latest)
+DEPLOY_CMD=(pnpx "vercel@${VERCEL_CLI_VERSION}")
 
 if [[ "$USE_PREBUILT" == "true" ]]; then
   log "Building locally with 'vercel build'..."
-  pnpx vercel@latest build 1>/dev/null
+  pnpx "vercel@${VERCEL_CLI_VERSION}" build 1>/dev/null
   DEPLOY_CMD+=(deploy --prebuilt)
-else
-  # Deploy from source; Vercel will build remotely
-  DEPLOY_CMD+=()
 fi
 
 if [[ "$ENVIRONMENT" == "production" ]]; then
@@ -131,15 +129,19 @@ fi
 
 DEPLOY_CMD+=(--yes --token "$VERCEL_TOKEN" --scope "$VERCEL_ORG_ID")
 
-log "Running: ${DEPLOY_CMD[*]}"
+log "Running Vercel deployment for ${ENVIRONMENT}."
 set +e
-DEPLOYMENT_URL="$(${DEPLOY_CMD[@]})"
+DEPLOYMENT_URL="$("${DEPLOY_CMD[@]}")"
 STATUS=$?
 set -e
 
-if [[ $STATUS -ne 0 || -z "$DEPLOYMENT_URL" ]]; then
+if [[ $STATUS -ne 0 ]]; then
   echo "Vercel deployment failed with status $STATUS" >&2
-  exit ${STATUS:-1}
+  exit "$STATUS"
+fi
+if [[ -z "$DEPLOYMENT_URL" ]]; then
+  echo "Vercel deployment returned no URL." >&2
+  exit 1
 fi
 
 mkdir -p "$REPO_ROOT/.vercel"
@@ -151,5 +153,3 @@ if [[ -n "$OUTPUT_FILE" ]]; then
 fi
 
 echo "$DEPLOYMENT_URL"
-
-

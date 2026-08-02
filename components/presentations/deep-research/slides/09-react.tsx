@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useSlideStep } from '@/app/presentations/deep-research/layout';
+import { useSlideStep } from '@/app/(public)/presentations/deep-research/layout';
 
 const traceLines = [
   { phase: 'THINK', text: '"I need to find when WASM 2.0 was released"', color: 'text-primary' },

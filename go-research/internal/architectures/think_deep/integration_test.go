@@ -1113,7 +1113,7 @@ Additional content synthesized from research.
 func TestE2EFullAgentWorkflow(t *testing.T) {
 	// Comprehensive mock responses simulating a realistic research session
 	mockClient := &integrationMockClient{
-		model: "alibaba/tongyi-deepresearch-30b-a3b",
+		model: "z-ai/glm-5.2",
 		responses: []string{
 			// ========== PHASE 1: Research Brief Generation ==========
 			`## Research Objective
@@ -1401,7 +1401,7 @@ LLMs represent a transformative technology for software development, offering si
 	cfg := &config.Config{
 		OpenRouterAPIKey: "test-openrouter-key",
 		BraveAPIKey:      "test-brave-key",
-		Model:            "alibaba/tongyi-deepresearch-30b-a3b",
+		Model:            "z-ai/glm-5.2",
 	}
 
 	arch := New(Config{
