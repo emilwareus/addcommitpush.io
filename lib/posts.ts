@@ -18,11 +18,11 @@ const posts: Post[] = [
     title: 'Static Analysis: A Developer\'s Tutorial',
     slug: 'static-analysis-tutorial',
     description:
-      'A practical tutorial on static analysis: how parsers, control flow graphs, dataflow analysis, abstract interpretation, taint tracking, and type systems work together to find bugs without running code.',
+      'How static analysis actually works, from CFGs and call graphs to taint and symbolic execution, with honest expectations: what each technique finds, how accurate it is, and where it lies to you.',
     publishedAt: '2026-07-16',
     tags: ['static-analysis', 'software', 'tutorial'],
     cover: '/posts/static-analysis-tutorial/cover.svg',
-    readTime: '25 min read',
+    readTime: '30 min read',
   },
   {
     title: 'Write Code That AI Agents Love',
