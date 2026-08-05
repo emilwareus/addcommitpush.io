@@ -501,8 +501,11 @@ Hunt these in every draft:
     Name it or cut it.
 11. **Hedged balance** — every claim buffered, every criticism counterweighted.
     Concede the one real counterargument with specifics; stand ground elsewhere.
-12. **Em-dash density** — a few per post is style; several per paragraph is a
-    tell, especially inside "It's not X — it's Y".
+12. **Em-dashes**: do not use them. Not for asides, not for appositives, not
+    inside "It's not X, it's Y". They are the single most recognizable LLM
+    tell in published prose. Use a colon when the second half explains the
+    first, a period when it is a separate thought, commas for a short aside,
+    and parentheses for a real one.
 
 Counter-signals that read as human: named sources, numbers, asymmetric
 opinions, admitted mistakes, irregular structure, and repeating the correct

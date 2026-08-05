@@ -16,20 +16,6 @@ static-analysis internals: call graphs, control-flow graphs, fixed points. That
 is on purpose. Knowing what these engines can and cannot know is what separates
 a check you can trust from a check that lies to you.
 
-# Key takeaways
-
-- Vibe coding works better when the repo can answer back with deterministic
-  feedback.
-- The best rules start as local engineering conventions: boundaries, test
-  evidence, security guards, migration rules, and review obligations.
-- Static analysis is not one thing. Some rules only need files or syntax. Some
-  need resolved imports, symbols, test facts, call graphs, control flow, or data
-  flow.
-- Deep analysis should be used only when the policy needs it. A grep is enough
-  for some rules and a lie for others.
-- I built `polint` because many important rules are local to one repository.
-  The engine owns facts and diagnostics. The repository owns policy.
-
 # Release the vibes
 
 I like vibe coding. I also do not trust it by default.
@@ -61,8 +47,6 @@ That is what I mean by "release the vibes." Let agents and humans move quickly,
 but make the codebase executable enough to defend its own shape.
 
 # What rules do we want?
-
-Start with the policies, not the tool.
 
 Useful repo-local rules sound like this:
 
@@ -276,37 +260,64 @@ humans asking "did you add the access test?" over and over in review.
 
 # Some rules are review obligations
 
-Not every executable rule needs to be a semantic theorem. Some are process
-rules:
+Not every rule can end in a verdict. Some of the questions worth asking are not
+statically decidable at all.
+
+"Are the indexes right for these queries?" is one of them. Answering it takes
+the query shapes, the table sizes, the access patterns, and a judgment about
+what will hurt at scale. A static engine will not settle that. An LLM reviewer
+is genuinely good at it: hand it the diff and the schema and it will reason
+about predicates, ordering, and cardinality perfectly well. The failure mode is
+not capability. It is that nobody asked. The guideline lives in a document the
+model never read, and the model reviews the diff it was handed.
+
+So invert the rule. The engine does not answer the question. It decides when the
+question is owed and hands the reviewer the right one:
 
 ```text
-Changing persistence query shape requires an index/performance review note.
-Changing lifecycle-sensitive code requires retention/deletion test evidence.
-Changing generated API boundaries requires public contract tests.
+An ORM model or query shape changed
+  -> require an index and access-pattern review.
+Lifecycle-sensitive code changed
+  -> require retention and deletion evidence.
+A generated API boundary changed
+  -> require public contract tests.
 ```
 
-These rules need changed files, path ownership, and enough syntax to recognize
-the kind of change. They usually do not need whole-program analysis.
+The trigger is the statically checkable half: changed files, path ownership,
+touched symbols, and enough syntax to recognize the kind of change. The judgment
+stays with the reviewer, human or agent.
 
-This matters because architecture is not only "this import is forbidden."
-Architecture also includes where humans must slow down. A changed-file rule does
-not prove a query is slow. It says the change crossed a boundary where the team
-requires evidence.
+That trigger should be semantic, not only path-based. "Something under
+`adapters/` changed" is a crude proxy. "A query gained a filter column" or "an
+ORM model changed shape" is the condition the guideline actually cares about.
 
-The diagnostic should be blunt about that contract:
+The output is then not a violation. It is review context, injected only when it
+applies:
 
 ```json
 {
-  "rule_id": "local/query-change-needs-review",
+  "rule_id": "local/query-change-needs-index-review",
+  "trigger": "query predicate changed in a persistence adapter",
   "file": "adapters/profile_queries.ts",
-  "message": "Query shape changed. Add an index/performance review note.",
-  "precision": "changed-file"
+  "review_context": "Query predicate changed. Check that an index covers the new filter and sort columns, in that order. Flag scans on tables that grow with users.",
+  "precision": "changed-symbol"
 }
 ```
 
-This is useful with agents because agents are good at editing many files quickly
-and worse at noticing invisible review rituals. Encoding the ritual turns it
-from memory into a local contract.
+This is why review guidance cannot be one long document. A checklist that covers
+the whole application is either too long to read or too diluted to matter, and
+the three items that apply to today's diff are buried under the forty that do
+not. What a human does with a forty-item checklist, an agent does with a
+two-thousand-line `AGENTS.md`: skim it, then review the code in front of it.
+
+Selecting by semantic change fixes that ratio. `polint review` matches the
+change, injects the guidelines it triggered, and leaves the rest out of the
+context window.
+
+Architecture is not only "this import is forbidden." It is also where the team
+slows down and looks. Agents edit many files quickly and notice invisible review
+rituals poorly, which makes them exactly the reviewers that need the ritual
+triggered rather than remembered.
 
 # "Can reach" needs a call graph
 
@@ -335,22 +346,49 @@ The hard cases are interface calls, dependency injection, callbacks, route
 tables, reflection, dynamic imports, and framework hooks. A static analyzer has
 to approximate possible targets.
 
-Four call-graph ideas are worth knowing:
+Four strategies are worth knowing, and the interesting part is what each one
+costs.
 
-- **Direct calls** add edges only when the callee is obvious in the syntax. This
-  is precise but incomplete.
-- **Class hierarchy analysis (CHA)** looks at a method call and includes methods
-  that could respond based on the type hierarchy. This is conservative and can
-  be noisy.
-- **Rapid type analysis (RTA)** filters the CHA candidate set to types actually
-  instantiated in the program. This usually reduces noise but is still an
-  approximation.
-- **Variable type analysis (VTA)** propagates type information through values to
-  narrow receivers further. This improves precision when the flow facts are good.
+**Direct calls** add an edge only when the target is written in the code:
+`updateProfile()` calls `writeRecord()`. Cheap and obvious, and it misses every
+call that goes through an interface, a callback, or an injected dependency.
 
-The names come from object-oriented analysis, but the pressure is broader. In
-interface-heavy languages, the same problem appears as possible implementers,
-function values, and framework callbacks rather than classes.
+**Class hierarchy analysis (CHA)** asks the type system instead. If the code
+calls `save()` on a `Repository`, CHA adds an edge to every class that
+implements `Repository`. One lookup per call, fast, works on any codebase. It is
+also the noisiest option: forty implementations means forty edges, whether or
+not any of them can run there.
+
+**Rapid type analysis (RTA)** (Bacon and Sweeney, 1996) trims that list with one
+observation: a class nobody ever constructs cannot be the one you called. So it
+collects every type the program actually constructs and drops the candidates
+that never show up, repeating until nothing new appears. The cost grows with
+call sites times types, which sounds worse than it usually is.
+
+The catch is not the speed. RTA has to see the whole program to know what gets
+constructed, including your frameworks, libraries, and generated code, and it
+has to redo that work whenever any of it changes. That is a poor fit for a check
+running on a pull request. The trick also stops working when a DI container constructs every
+implementation at startup: if everything is constructed, nothing gets filtered.
+
+**Variable type analysis (VTA)** (Sundaresan et al., 2000) narrows it again by
+asking what can reach one variable rather than what exists in the program. It
+follows assignments backwards: this value came from there, which came from that
+constructor. A call then resolves against the few types that can actually arrive
+at that variable.
+More work than RTA, and worth it when the answer matters.
+
+Beyond that are analyses that track every value through the whole program. They
+are more precise and they get expensive fast: the useful ones cost more than
+linearly as the codebase grows, and the very precise ones grow exponentially.
+Precision rises, applicability falls, and somewhere on that curve sits the
+biggest repository you can actually analyze in CI.
+
+These names come from Java and C++ tooling, but the problem is not an
+object-oriented one. In any language it is the same question: which
+implementation, which callback, which handler registered at startup? When the
+wiring is dynamic, none of these algorithms answer it without a hand-written
+model of the framework, and every real analyzer quietly gives up on a few.
 
 The point is not that one of these is "the right" call graph. The point is that
 the algorithm is part of the diagnostic contract.
@@ -371,6 +409,19 @@ A call graph is not truth. It is a precision budget. If the engine says a public
 route can reach a dangerous API, the diagnostic should show the path and how the
 path was computed. If the engine cannot resolve a dynamic edge, it should report
 that gap instead of silently claiming the route is clean.
+
+I do not think a good call-graph algorithm exists. Every one I have used trades
+precision for recall or recall for precision, and the ones precise enough to
+trust do not survive contact with a large codebase or with the indirection real
+applications are actually built from. CHA over-reports until nobody reads the
+output. A direct-call graph under-reports and hands you a clean result that
+means nothing. You are picking which way to be wrong.
+
+Run them anyway. A call graph is a good coverage instrument: it narrows a whole
+program down to the few paths worth reading, and it will surface a
+route-to-dangerous-API chain you would never have thought to grep for. It is not
+an oracle. Almost all the false confidence in this field comes from treating it
+as one.
 
 For the longer version, see [Call Graphs Are Precision
 Budgets](/brain/call-graphs-are-precision-budgets).
@@ -517,6 +568,33 @@ So a good data-flow diagnostic needs evidence and uncertainty:
 
 Unknown is not failure. It is honesty. The failure is reporting clean while
 silently skipping the hard edge.
+
+Data flow is the layer I trust least. It is hard to grasp, hard to model, and
+hard to keep correct. Writing analysis general enough to answer real questions
+about your code also quietly constrains how you are allowed to write that code.
+It is possible. It is not free.
+
+The security tools are strongest at exactly the part I need least. They
+have spent years modeling propagation, how a value moves through assignments,
+calls, fields, and containers, and they are genuinely good at it. What ships
+generic is everything around it: the sources, the sinks, and the barriers. A
+list of ORMs. A list of API frameworks. A list of functions that count as
+sanitizers.
+
+Those are the parts that belong to your repository. Your user-controlled data
+arrives through your handlers, and your dangerous sink is your internal client
+or your billing call. Your barrier is a function you wrote, and whether it
+really sanitizes is a judgment about your threat model, not a lookup in a vendor
+list. Most tools do let you define your own; few teams do, because it means
+learning a query language to describe facts the codebase already knows.
+
+So the capability I want is not a bigger rule catalogue. It is access to the
+engine itself. If you can hand it facts (this is a source, this is a sink, this
+function is a barrier for this kind of value), the analysis knows your
+application instead of applications in general. Pair that with a model making
+the judgment calls that were never going to be mechanical, like whether that
+barrier actually validates, and the two halves together get much closer to
+accurate than either does alone.
 
 For more detail, see [Data-Flow Engines Are Fixed-Point
 Machines](/brain/data-flow-engines-are-fixed-point-machines) and [Taint Analysis
@@ -723,6 +801,13 @@ turn out to be wrong. That second part is a promise.
 - [Semgrep taint analysis overview](https://docs.semgrep.dev/writing-rules/data-flow/taint-mode/overview)
 - [SootUp call graph construction](https://soot-oss.github.io/SootUp/v1.1.2/call-graph-construction/)
 - [Go callgraph/vta package](https://pkg.go.dev/golang.org/x/tools/go/callgraph/vta)
+- [Bacon and Sweeney, Fast Static Analysis of C++ Virtual Function Calls
+  (RTA)](https://dl.acm.org/doi/10.1145/236337.236371)
+- [Sundaresan et al., Practical Virtual Method Call Resolution for Java
+  (VTA)](https://dl.acm.org/doi/10.1145/353171.353189)
+- [Van Horn and Mairson, Deciding kCFA Is Complete for
+  EXPTIME](https://dl.acm.org/doi/10.1145/1411204.1411243)
+- [In Defense of Soundiness: A Manifesto](http://soundiness.org/)
 - [LLVM MemorySSA](https://llvm.org/docs/MemorySSA.html)
 - [Kildall's lattice framework notes](https://pages.cs.wisc.edu/~horwitz/CS704-NOTES/DATAFLOW-AUX/lattice.html)
 - [SARIF 2.1.0](https://www.oasis-open.org/standard/sarifv2-1-os/)
