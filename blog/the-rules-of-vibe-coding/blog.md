@@ -3,11 +3,11 @@ hobby to pick in 2026 when the rest of the industry is busy asking agents to
 "please follow our conventions" in ever-growing markdown files. This post is my
 attempt to explain why I think the hobby is the saner response.
 
-I like vibe coding, and I want it to stay fast: sketch, ask for a refactor, try
-a design, let the model take a swing, keep moving. But I do not want the
-codebase to slowly forget its boundaries while I do. More prompt ceremony will
-not prevent that. Turning the rules that define the shape of the repo into
-executable checks will.
+The way I work now is fast: sketch, ask for a refactor, try a design, let the
+model take a swing, keep moving. I want to keep it that way. But I do not
+want the codebase to slowly forget its boundaries while I do. More prompt
+ceremony will not prevent that. Turning the rules that define the shape of
+the repo into executable checks will.
 
 Who is this for? You ship code with agents most days, your `AGENTS.md` keeps
 growing, and you have typed "remember: UI code does not import the database"

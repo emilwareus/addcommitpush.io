@@ -19,8 +19,7 @@ const posts: Post[] = [
     slug: 'the-rules-of-vibe-coding',
     description:
       'Vibe coding works when the repo can talk back. Repo-local static analysis explained: syntax rules, resolved imports, call graphs, CFGs, and data flow.',
-    publishedAt: '2026-06-30',
-    updatedAt: '2026-07-10',
+    publishedAt: '2026-08-05',
     tags: ['ai', 'agents', 'static-analysis', 'software'],
     readTime: '15 min read',
   },
