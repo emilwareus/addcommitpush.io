@@ -22,23 +22,25 @@ over a declared editable surface, gated by an evaluator that sits *outside* that
 Near-term self-improvement pressure is concentrating in this machinery — prompts, skills,
 tools, workflows, and harness code — rather than in models rewriting their own weights.
 Lilian Weng’s synthesis makes the case that the deployment system around a base model is now
-as decisive as raw post-training intelligence; the engineering question that follows is
-sharper: *what exactly updates, what stays frozen, and how is accept/reject decided?* This
-note answers that question with a nested-loop taxonomy, the concrete update rules from the
-primary papers, a propose–evaluate–accept template that a systems engineer can implement,
-and the failure modes that appear whenever those boundaries collapse.
+as decisive as raw intelligence measured right after pretraining; the engineering question
+that follows is sharper: *what exactly updates, what stays frozen, and how is accept/reject
+decided?* This note answers that question with a nested-loop taxonomy, the concrete update
+rules from the primary papers, a propose–evaluate–accept template that a systems engineer
+can implement, and the failure modes that appear whenever those boundaries collapse.
 
 ## What a harness is (and is not)
 
 Weng defines a harness as the system surrounding a base model that orchestrates execution
 and decides how the model thinks and plans, calls tools and acts, perceives and manages
-context, stores artifacts, and evaluates results. That product-broad sense matches how
-Anthropic and OpenAI talk about coding agents: loop, tools, context management, guardrails,
-and persistent state. Hugging Face’s glossary draws a stricter cut — *scaffolding* is what
-the model reads (system prompt, tool schemas, context rules); *harness* is the execution
-loop that calls the model, runs tools, and decides when to stop. Both cuts are useful. For
-learning-loop design, the important distinction is not naming; it is **which artifacts are
-allowed to change under the same scorekeeper**.
+context, stores artifacts, and evaluates results. Anthropic’s product framing is close:
+loop, tools, context management, and guardrails. OpenAI’s “Harness Engineering” writeup is
+about the same layer in practice — environments, feedback loops, and agent-facing maps like
+`AGENTS.md` — without restating that four-part definition. Hugging Face’s glossary draws a
+stricter cut — *scaffolding* is the behavior layer the model consumes (system prompt, tool
+descriptions, response parsing, context rules); *harness* is the execution loop that calls
+the model, runs tools, and decides when to stop. Both cuts are useful. For learning-loop
+design, the important distinction is not naming; it is **which artifacts are allowed to
+change under the same scorekeeper**.
 
 ## Nested loops with hard boundaries
 
@@ -96,7 +98,8 @@ files are outer-loop *state*, not documentation.
 
 **Meta loop.** State is harness version `h_t` plus a lineage or archive. The update is mine
 weaknesses → propose bounded `Δ` → evaluate → accept only if non-regressive. The evaluator
-is a fixed benchmark protocol with a held-out gate (and optionally a falsifiable manifesto).
+is a fixed benchmark protocol with a held-out gate (and optionally a falsifiable change
+manifest).
 Immutable: model `M`, evaluator `E`, verifier, held-out assignment, LLM config / budgets,
 runs directory. Failure modes: editing the scorekeeper; overfitting held-in failures;
 diversity collapse; disabling the verifier or raising budgets.
@@ -132,10 +135,12 @@ prompt blob.
 1. **Generator** runs tasks against the playbook.
 2. **Reflector** distills insights from successful and failed trajectories; tags bullets
    helpful / harmful / neutral.
-3. **Curator** emits *itemized* ADD/UPDATE deltas. Merge is **deterministic**, not another
-   free-form rewrite: new IDs append, counters update in place, and a periodic grow-and-refine
-   pass de-duplicates near-identical bullets (typically by embedding similarity) so the
-   playbook grows without collapsing into a single summary paragraph.
+3. **Curator** emits compact *delta entries* — in the public ACE prompts, the available
+   Curator operation is **ADD** (new bullets). Merge is **deterministic**, not another
+   free-form rewrite: new IDs append, helpful/harmful counters update in place from
+   Reflector tags, and a periodic grow-and-refine pass de-duplicates near-identical bullets
+   via semantic embeddings so the playbook grows without collapsing into a single summary
+   paragraph.
 
 The design target is to avoid *context collapse* and *brevity bias* — the failure modes of
 iteratively rewriting a single prompt. Reported gains: about **+10.6%** average on agent
@@ -168,8 +173,8 @@ changing the active harness.
 
 Terminal-Bench-2.0 Pass rates (same model proposes and solves; 64 of 89 tasks after
 dropping unstable web/multimodal items). Relative lift = `(after − before) / before`.
-Pass is averaged over repeated attempts in the paper; the accept gate should therefore
-also use aggregates, not a single noisy run.
+Pass is averaged over **two** repeated attempts per harness candidate in the paper; the
+accept gate should therefore also use aggregates, not a single noisy run.
 
 | Model | Held-out before → after | Relative | Held-in before → after |
 | --- | --- | --- | --- |
@@ -180,7 +185,7 @@ also use aggregates, not a single noisy run.
 The same loop learns *model-specific* harness instructions. That is a feature for
 deployment and a warning for transfer claims.
 
-### AHE: observability-driven edits with a manifesto
+### AHE: observability-driven edits with a change manifest
 
 Agentic Harness Engineering (Lin et al. 2026) argues that harness evolution fails when
 rollouts are opaque. Three observability pillars:
@@ -191,29 +196,33 @@ rollouts are opaque. Three observability pillars:
 2. **Experience observability.** An agent debugger compresses raw trajectories into layered
    reports (digest → per-task → raw) so the evolver is not forced to shove megatokens into
    one prompt.
-3. **Decision observability.** Every edit ships a **manifesto**: evidence name, inferred
-   root cause, targeted fix, predicted fixes *and* at-risk regressions. The next round
-   falsifies the prediction.
+3. **Decision observability.** Every edit ships a **change manifest** entry: evidence name,
+   inferred root cause, targeted fix, predicted fixes *and* at-risk regressions. The next
+   round falsifies the prediction and can roll back ineffective edits at file granularity.
 
 Anti-hack constraints are architectural, not prompt-based: the evolve agent writes only in
 the harness workspace; runs directory, tracer, verifier, and LLM configuration are
 read-only; the seed system prompt is non-deletable. On Terminal-Bench-2, AHE moved a seed
 harness from **69.7% → 77.0%** pass@1 (GPT-5.4), beating Codex-CLI (**71.9%**), Terminus-2
 (**62.9%**), and OpenCode (**47.2%**) on aggregate, while losing to Codex on the Hard tier
-(**53.3% vs 56.7%**). Without further evolution, the frozen harness transfers to
-SWE-bench Verified (highest aggregate among the compared self-evolve baselines, with
-**~12%** fewer tokens than the seed) and yields **+5.1 to +10.1 pp** pass@1 across
-alternate base-model families — larger gains on bases further from saturation. Component
-ablation is the transfer story: tools, middleware, and long-term memory each carry gains;
-system-prompt-only edits regress. Manifesto self-prediction is usable for fixes
-(precision **33.7%**, recall **51.4%**, ~5× random) but nearly blind to regressions
-(precision **11.8%**, recall **11.1%**) — which is why evolution curves are non-monotone.
+(**53.3% vs 56.7%**). AHE evolves on the **full 89-task** panel (no held-in/held-out split);
+acceptance is manifest attribution plus rollback, not the Self-Harness Δ rule. Without
+further evolution, the frozen harness transfers to SWE-bench Verified (highest aggregate
+among the compared self-evolve baselines, with **12%** fewer tokens than the seed). On
+Terminal-Bench-2 re-evals with alternate base models, the same frozen harness yields
+**+5.1 to +10.1 pp** pass@1 across cross-family bases (gemini +5.1, qwen +6.3, deepseek
++10.1) — larger gains on bases further from saturation. Component ablation is the transfer
+story: tools, middleware, and long-term memory each carry gains; system-prompt-only edits
+regress. Manifest self-prediction is usable for fixes (precision **33.7%**, recall
+**51.4%**, ~5× random) but nearly blind to regressions (precision **11.8%**, recall
+**11.1%**) — which is why evolution curves are non-monotone.
 
 ### DGM: evolutionary archive, not hill-climbing
 
 The Darwin Gödel Machine (Zhang et al. 2025) lets a coding agent modify its own harness
-codebase under a fixed foundation model (Claude 3.5 Sonnet New in the reported runs). The
-learning rule is evolutionary:
+codebase under a fixed foundation-model setup. Self-modification uses Claude 3.5 Sonnet
+(New) on both benchmarks; benchmark *evaluation* uses Claude 3.5 Sonnet (New) for SWE-bench
+and **o3-mini** for Polyglot. The learning rule is evolutionary:
 
 1. Keep an **archive** of functional agents, not only the current best.
 2. Sample parents from agents whose score is not yet perfect. For agent \(i\) with accuracy
@@ -226,24 +235,28 @@ w_i = s_i · h_i
 p_i = w_i / Σ_j w_j
 ```
 
-Typical hyperparameters: \(\lambda = 10\), \(\alpha_0 = 0.5\), \(k = 2\) parents per
-iteration on SWE-bench and \(k = 4\) on Polyglot.
+Paper settings: \(\lambda = 10\), \(\alpha_0 = 0.5\), \(k = 2\) parents per iteration on
+SWE-bench and \(k = 4\) on Polyglot.
 
-3. Parent reads its own eval logs, proposes a harness change, implements it with bash +
-   editor tools, and is evaluated.
+3. A **separate diagnostic model (o1)** reads the parent’s eval logs and proposes the next
+   improvement; the coding agent then implements that proposal with bash + editor tools and
+   is evaluated. (The paper notes nothing fundamental prevents the coding agent from doing
+   diagnosis itself; the reported runs use the split.)
 4. Add the child only if it compiles *and* retains codebase-editing ability — the hard
    gate that keeps the evolutionary chain self-modifiable.
 
 Reported results after 80 iterations: SWE-bench Verified **20.0% → 50.0%** under the
-staged subset protocol (10 → ~50/60 tasks, with 200-task follow-ups for top candidates —
-not a full Verified-500 endpoint); Polyglot subset progress **14.0% → 38.0%**, with full
-Polyglot re-eval **14.2% → 30.7%**. Staged eval saves compute but can bias which stepping
-stones survive. Parent-selection policy and archive-maintenance rules are *not* themselves
-editable — a frozen meta-meta kernel. Sakana’s writeup also documents reward-hacking and
-tool-hallucination cases, which is the correct attitude toward any self-editing loop.
+staged subset protocol — 10 tasks, then +50 ⇒ a **60-task** subset, then **200-task**
+follow-ups only for top SWE candidates (>40% and top-2 in the archive); not a full
+Verified-500 endpoint. Polyglot uses 10 → 50 (no 200-task stage), with subset progress
+**14.0% → 38.0%** and full Polyglot re-eval **14.2% → 30.7%**. Staged eval saves compute
+but can bias which stepping stones survive. Parent-selection policy and archive-maintenance
+rules are *not* themselves editable — a frozen meta-meta kernel. Sakana’s writeup also
+documents reward-hacking and tool-hallucination cases, which is the correct attitude toward
+any self-editing loop.
 
 Archive + novelty is the antidote to pure hill-climbing. Ablating open-ended archive
-exploration collapses SWE progress toward ~23%, and a greedy always-pick-best parent
+exploration collapses SWE progress to **23.0%**, and a greedy always-pick-best parent
 policy reaches only **39.7%** vs DGM’s **50.0%** on the same SWE setup. Stepping stones
 that look worse under the current evaluator can later unlock better agents — observed at
 iterations where temporary dips still led to new archive bests.
@@ -255,13 +268,15 @@ single solution. With seed improver `I_0` and meta-utility measured over a task
 distribution, the recursion is:
 
 ```text
-I_t = I_{t-1}(û, I_{t-1}; M)
+I_t = I_{t-1}(û, I_{t-1}, L)
 ```
 
-STOP discovered scaffolds resembling genetic algorithms, beam search, simulated annealing,
-and prompt bandits. The cautionary result is as important as the discovery: mean downstream
-performance improved across iterations with GPT-4 and **degraded** with GPT-3.5 and
-Mixtral. Recursive structure is not a free lunch. Lin et al. (2026) later disentangle
+where `L` is the frozen language model. STOP discovered scaffolds resembling genetic
+algorithms, beam search, simulated annealing, and prompt bandits. The cautionary result is
+as important as the discovery: mean downstream performance improved across iterations with
+GPT-4 and **degraded** on the mean curves for GPT-3.5 and Mixtral (Fig. 4) — though GPT-3.5
+is not uniformly failing (only about 12% of GPT-3.5 runs yielded at least a 3% improvement).
+Recursive structure is not a free lunch. Lin et al. (2026) later disentangle
 **harness-updating** (ability to propose useful edits — roughly flat from ~9B to Opus-class)
 from **harness-benefit** (ability to *use* an improved harness — non-monotonic; mid-tier
 models often benefit most). Designing a learning loop therefore includes choosing who
@@ -274,8 +289,8 @@ proposes versus who executes.
 | Reflexion (Shinn et al. 2023) | Inner / short outer | Verbal self-reflection stored in a bounded episodic buffer |
 | Voyager (Wang et al. 2023) | Outer | Automatic curriculum + verified skill library + embedding retrieval |
 | SWE-agent ACI (Yang et al. 2024) | Inner interface | LM-friendly tool/env design beats a raw shell for SWE tasks |
-| ADAS / AFlow (2025) | Meta (workflow) | Meta-agent search / MCTS over agent workflows represented as code or graphs |
-| AlphaEvolve (Novikov et al. 2025) | Meta (solution code) | `# EVOLVE-BLOCK` editable regions; frozen LLMs propose diffs; meta-prompt co-evolves |
+| AlphaEvolve (Novikov et al. 2025) | Meta (solution code) | `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` regions; LLM ensemble proposes SEARCH/REPLACE diffs; meta-prompt co-evolves |
+| ADAS / AFlow (2025) | Meta (workflow) | ADAS: Meta Agent Search over agents-as-code; AFlow: MCTS over code-represented workflows |
 
 Voyager’s ablation is still the cleanest outer-loop lesson: removing the skill library
 causes late plateau; removing the curriculum collapses item discovery. Progressive
@@ -285,8 +300,11 @@ the same design pressure that shows up in product skills systems and in
 
 ## Reusable propose–evaluate–accept loop
 
-The following template is the systems contract shared by Self-Harness and AHE, written so
-an engineer can implement it against a coding-agent harness. The invariants are the point.
+The following template is the Self-Harness systems contract (held-in/held-out Δ gate),
+written so an engineer can implement it against a coding-agent harness. AHE shares the
+editable-vs-frozen surface and filesystem receipts, but evolves on a full task panel and
+gates via change-manifest attribution plus rollback rather than a Din/Dho accept rule. The
+invariants are the point.
 
 ```text
 Inputs:
@@ -321,12 +339,12 @@ for t in 1..T:
     Δ ← propose(M, h, evidence, preserve, prior, editable, diversity_hint=j)
     assert Δ touches only editable
     assert Δ touches none of frozen
-    proposals.append(Δ with audit/manifesto)
+    proposals.append(Δ with audit/change-manifest)
 
   accepted ← []
   for Δ in proposals:
     h' ← apply(h, Δ)
-    pin', pho' ← evaluate(M, h', Din ∪ Dho, E)   # repeat trials; use means
+    pin', pho' ← evaluate(M, h', Din ∪ Dho, E)   # Self-Harness: mean over 2 attempts
     d_in ← pin' - pin
     d_ho ← pho' - pho
     ok ← (d_in ≥ 0) ∧ (d_ho ≥ 0) ∧ (max(d_in, d_ho) > 0)
@@ -338,11 +356,11 @@ for t in 1..T:
   if accepted nonempty:
     # Operator-defined merge. Safe defaults, in order of preference:
     #   (a) pick the single Δ with best d_ho (no conflict risk)
-    #   (b) apply non-overlapping file patches in manifesto order
+    #   (b) apply non-overlapping file patches in manifest order
     #   (c) if two Δ touch the same file, keep the better d_ho and reject the other
     h ← merge(h, accepted)
     lineage.append(h)
-    persist_receipts(t, h, accepted, rejects) # git commit + manifesto files
+    persist_receipts(t, h, accepted, rejects) # git commit + change-manifest files
 
 return h
 ```
@@ -350,7 +368,7 @@ return h
 **Worked accept/reject example.** Suppose weakness mining finds a recurrent cluster
 `missing_artifact × skipped_verification × no_post_edit_test`. Proposal Δ₁ adds a
 middleware hook that runs `pytest` after every `edit` tool call. Evaluation: `d_in = +4`
-tasks, `d_ho = +2`, no regressions → accept, commit manifesto
+tasks, `d_ho = +2`, no regressions → accept, commit change-manifest
 `{evidence: missing_artifact/…, predicted_fixes: [t12,t44], at_risk: [t7]}`. Proposal Δ₂
 extends the system prompt with “always verify carefully”: `d_in = +1`, `d_ho = −3` →
 reject and retain the receipt so the next round does not rediscover the same prose patch.
@@ -361,8 +379,8 @@ reject and retain the receipt so the next round does not rediscover the same pro
 2. Enumerate editable surfaces as an allowlist; mount frozen paths read-only at the OS or
    sandbox layer, not only in the system prompt.
 3. Require every proposal to name a primary failure cluster and a predicted behavioral
-   change (AHE manifesto). Treat the prediction as a falsifiable claim next round.
-4. Repeat stochastic evaluations (Self-Harness averages Pass over multiple attempts); gate
+   change (AHE change-manifest). Treat the prediction as a falsifiable claim next round.
+4. Repeat stochastic evaluations (Self-Harness averages Pass over **two** attempts); gate
    on aggregates, not a single noisy run.
 5. Persist every accept *and* reject as filesystem receipts under version control. Grep is
    the recovery protocol when context windows fail.
@@ -373,7 +391,7 @@ reject and retain the receipt so the next round does not rediscover the same pro
 
 | Principle | Mechanism | What it blocks |
 | --- | --- | --- |
-| Editable vs frozen surface | Allowlist writable files; mark eval/kernel read-only (`# EVOLVE-BLOCK`, AHE mounts) | Disabling verifier, swapping model, raising budget |
+| Editable vs frozen surface | Allowlist writable files; mark eval/kernel read-only (`# EVOLVE-BLOCK-START/END`, AHE mounts) | Disabling verifier, swapping model, raising budget |
 | Held-out eval gates | Fixed split; proposer sees only `Din`; Self-Harness accept rule | Overfitting diagnosed failures |
 | Negative-result preservation | Log rejects; keep archive stepping stones (DGM) | Amnesia that re-proposes known-bad edits |
 | Diversity pressure | Parallel distinct proposals; parent novelty bonus; embedding near-dupe reject | Population collapse to one prompt variant |
@@ -405,7 +423,7 @@ noisy vibes only accelerates confabulation.
 | Bullet deltas (ACE) vs full rewrite | No context collapse; cheap merge | Needs a strong Reflector; noisy without reliable feedback |
 | Held-out gate (Self-Harness) | Real generalization signal | Slower; rejects useful tradeoffs; needs enough tasks |
 | Archive + novelty (DGM) | Escapes local optima | Compute-heavy; stepping-stone eval noise |
-| Manifesto falsification (AHE) | Attribution + rollback | Fix-precision ~33.7%; regression-precision ~11.8% |
+| Manifest attribution (AHE) | Attribution + rollback | Fix-precision ~33.7%; regression-precision ~11.8% |
 | Recursive improver (STOP) | Discovers new search algorithms | Needs a strong base model; unsandboxing risk |
 | Joint H+θ | Full self-improvement path | Attribution hell; provisional evidence |
 
@@ -415,30 +433,37 @@ Weng’s challenge list is the correct threat model for anyone shipping a learni
 
 1. **Weak and fuzzy evaluators.** Self-improvement works where metrics are objective
    (tests, kernels, contest scores). Research taste, novelty, and long-term scientific
-   value do not have unit-test oracles. Auto-research systems can produce plausible papers
-   while drifting from the proposed method, fabricating citations, or declaring victory on
-   noise (Trehan & Chopra 2026; Bubeck et al. 2025 on “numerical duct tape”).
-2. **Memory lifecycle.** Memory that only grows becomes retrieval poison. Compaction,
-   forgetting, conflict resolution, and provenance are unsolved systems problems.
+   value do not have unit-test oracles. Auto-research systems can write plausible papers
+   while still drifting from the proposed method, losing critical details over long
+   horizons, or declaring victory on noise — Trehan & Chopra’s failure modes (including
+   implementation drift and over-optimism) and Bubeck et al.’s “numerical duct tape”
+   pattern. Separately, Weng notes that paper-production pipelines can also fabricate
+   citations; that is an AI-Scientist-line failure, not one of Trehan’s six modes.
+2. **Context and memory lifecycle.** Memory that only grows becomes retrieval poison.
+   Compaction, forgetting, conflict resolution, and provenance are unsolved systems
+   problems.
 3. **Negative-result culture.** Training data and publication incentives bias toward
    success. A research harness must make failed attempts first-class artifacts.
 4. **Diversity collapse.** Evolutionary and RL loops exploit known high-reward patterns.
    Open-ended domains need explicit novelty pressure.
 5. **Reward hacking.** Whatever sits inside the editable surface will eventually be gamed.
-   The evaluator and permission kernel must live outside. AHE’s manifesto numbers make the
-   asymmetry concrete: fix foresight is usable; regression foresight is near the floor —
-   so non-monotone evolution is expected until the loop can name what an edit will break.
-6. **Short-horizon success.** Sandbox pass rates miss maintainability, ownership
-   boundaries, migration cost, and future debugging burden — the same gap
-   [[tests-are-the-agent-feedback-loop]] notes when functional tests alone miss structural
-   failure. Staged eval protocols (DGM) save compute but also bias which stepping stones
-   survive.
-7. **Human oversight at the wrong altitude.** Humans should move up the stack — accept
-   gates, fuzzy evaluators, long-horizon repo health — not rubber-stamp every tool call.
+   The evaluator and permission kernel must live outside. AHE’s change-manifest numbers
+   make the asymmetry concrete: fix foresight is usable; regression foresight is near the
+   floor — so non-monotone evolution is expected until the loop can name what an edit will
+   break.
+6. **Long-term success (vs short-horizon metrics).** Sandbox pass rates miss
+   maintainability, ownership boundaries, migration cost, and future debugging burden —
+   the same gap [[tests-are-the-agent-feedback-loop]] notes when functional tests alone
+   miss structural failure. Staged eval protocols (DGM) save compute but also bias which
+   stepping stones survive.
+7. **The role of humans.** Humans should move up the stack — accept gates, fuzzy
+   evaluators, long-horizon repo health — not rubber-stamp every tool call.
 
 Benchmarks that stress these limits (PaperBench, CORE-Bench, ScienceAgentBench, RE-Bench,
-MLE-bench, KernelBench) consistently show that agent systems still lag humans on
-open-ended, long-horizon scientific work even when short-budget scores look competitive.
+MLE-bench, KernelBench) show large remaining gaps on open-ended scientific work. The
+horizon matters: on RE-Bench, best agents scored about **4×** higher than humans at a
+2-hour budget, while humans had better returns to longer budgets and exceeded agents at
+8-hour and 32-hour settings. Short-budget competitiveness is not long-horizon parity.
 
 ## Practical design implications
 
@@ -470,8 +495,8 @@ Primary synthesis:
 
 Definitions and industry framing:
 
-- Anthropic. “Harnessing Claude’s Intelligence: Designing Agent Harnesses.” Apr 2026.
-  https://claude.com/blog/harnessing-claudes-intelligence
+- Anthropic. “Agent Harness Design: 3 Patterns for Harnessing Claude’s Intelligence.” Apr
+  2026. https://claude.com/blog/harnessing-claudes-intelligence
 - OpenAI. “Harness Engineering.” Feb 2026.
   https://openai.com/index/harness-engineering/
 - Hugging Face. “Agent Glossary.” May 2026.
@@ -511,15 +536,19 @@ Learning-loop mechanisms (validated against abstracts / papers):
   2024. https://arxiv.org/abs/2405.15793
 - Trehan and Chopra. “Why LLMs Aren’t Scientists Yet.” 2026.
   https://arxiv.org/abs/2601.03315
+- Bubeck et al. “Early science acceleration experiments with GPT-5.” 2025.
+  https://arxiv.org/abs/2511.16072
 - Hebbar et al. “SIA: Self Improving AI with Harness & Weight Updates.” 2026.
   https://arxiv.org/abs/2605.27276
+- Karten et al. “Continual Harness: Online Adaptation for Self-Improving Foundation
+  Agents.” 2026. https://arxiv.org/abs/2605.09998
 
 ### Numbers validated for this note
 
 | System | Metric | Number | Caveat |
 | --- | --- | --- | --- |
-| DGM | SWE / Polyglot | 20.0%→50.0% / 14.2%→30.7% | Fixed Claude 3.5 Sonnet New; SWE is staged-subset endpoint (not full Verified-500); Polyglot 14.2→30.7 is full re-eval |
-| Self-Harness | TB-2.0 held-out Pass | 40.5→61.9 / 23.8→38.1 / 42.9→57.1 | 64/89 tasks; model-specific harnesses; Pass averaged over attempts |
-| AHE | TB-2 pass@1 | 69.7%→77.0% (vs Codex 71.9%) | Hard: Codex 56.7% > AHE 53.3%; cross-family +5.1–10.1 pp; fix-prec 33.7% / reg-prec 11.8% |
-| ACE | Agent / finance avg gain | +10.6% / +8.6% | Needs reliable execution feedback |
-| STOP | Model dependence | Improves with GPT-4; degrades with GPT-3.5 / Mixtral | Recursive structure ≠ free lunch |
+| DGM | SWE / Polyglot | 20.0%→50.0% / 14.2%→30.7% | Self-mod: Claude 3.5 Sonnet New; Polyglot eval: o3-mini; SWE staged 10→60→200 (not full Verified-500); Polyglot full re-eval is 14.2→30.7 |
+| Self-Harness | TB-2.0 held-out Pass | 40.5→61.9 / 23.8→38.1 / 42.9→57.1 | 64/89 tasks; model-specific harnesses; Pass mean over **2** attempts |
+| AHE | TB-2 pass@1 | 69.7%→77.0% (vs Codex 71.9%) | Hard: Codex 56.7% > AHE 53.3%; cross-family +5.1–10.1 pp on TB2 re-evals; SWE transfer separate; fix-prec 33.7% / reg-prec 11.8% |
+| ACE | Agent / finance avg gain | +10.6% / +8.6% | Needs reliable execution feedback; Curator ADD deltas + deterministic merge |
+| STOP | Model dependence | Improves with GPT-4; mean curves degrade for GPT-3.5 / Mixtral | Recursive structure ≠ free lunch |
