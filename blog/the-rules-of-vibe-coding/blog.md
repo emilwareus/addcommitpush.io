@@ -600,86 +600,47 @@ For more detail, see [Data-Flow Engines Are Fixed-Point
 Machines](/brain/data-flow-engines-are-fixed-point-machines) and [Taint Analysis
 Is Modeling, Not Magic](/brain/taint-analysis-is-modeling-not-magic).
 
-# A green check has a contract
+# The rules of vibe coding
 
-Every static-analysis result has a contract, even if the tool hides it.
+In the agentic era we write prompts, not code. So we need a way to inject our
+taste, our knowledge, and our architecture into the validation loop the agent
+runs against itself.
 
-```text
-clean under:
-  language: TypeScript
-  resolver: tsconfig paths loaded
-  call graph: direct + RTA
-  data flow: intraprocedural
-  max path depth: 24
-```
+I have not managed to do that through context alone. I have tried to steer
+agents deeply enough that they hold the architecture, respect the security
+rules, and write code at the standard I want, and it does not hold. Maybe that
+stops being true as the models get better. Today it is true.
 
-That may be enough for a local architecture rule. It is not enough for every
-security claim.
+An agent already has three ways to check its own work: the typechecker, the
+classical linters, and the tests. Give it a fourth that enforces the shape of
+the code, and what comes back is higher quality and more readable to me. That
+last part is the one I care about most. I review thousands of lines a day to
+keep up with product demand, and readable code is the difference between
+reviewing them and skimming them.
 
-The result state should be explicit:
+Adding that step to my agentic loop has increased velocity a lot, for me and for
+my teams. I trust the agents more, because the shape of the code is no longer
+something I have to check by hand. That frees the review for the questions worth
+my time:
 
-| Status            | Meaning                                                                       |
-| ----------------- | ----------------------------------------------------------------------------- |
-| `violation`       | The engine found a policy-breaking fact or path under the requested contract. |
-| `clean`           | The engine searched the requested capability space and found no violation.    |
-| `unknown`         | The engine hit a semantic gap, unresolved edge, or missing model.             |
-| `unsupported`     | The engine cannot compute the requested fact family.                          |
-| `budget_exceeded` | The query stopped before completing.                                          |
+- Does this solve the problem the user actually has?
+- Is this worth merging, because it is valuable to our users?
+- Which problem should we spend more time on to compete in the long run?
 
-This changes behavior. An exact syntax finding can usually be fixed directly. A
-heuristic data-flow finding needs inspection. An unknown result asks for a model,
-a bigger budget, or a human decision. If all three look the same in CI, the tool
-teaches the wrong behavior.
+I also think these tools should be open source. You need to edit and configure
+them deeply enough to fit your codebase, and that is hard to do with something
+you cannot open.
 
-# Agents need repair objects
+We already expect software to be personal. My grandmother and I can open the
+same URL and see different pages, and nobody finds that strange any more. Our
+tools should adapt to our codebases the same way.
 
-An agent mid-task has three deterministic oracles available: the typechecker,
-the test suite, and static policy. The first two you probably already have. The
-third is the one most repos are missing.
-
-An agent can use this:
-
-```json
-{
-  "rule_id": "local/no-request-data-to-shell",
-  "severity": "error",
-  "file": "routes/run-command.ts",
-  "range": { "line": 14, "column": 8 },
-  "message": "Request-controlled data reaches shell execution without validation.",
-  "evidence": {
-    "source": "request.query.command",
-    "sink": "shell.exec",
-    "required_barrier": "validateCommand",
-    "precision": "heuristic"
-  },
-  "rerun": "polint check --rule local/no-request-data-to-shell"
-}
-```
-
-It cannot use this with the same reliability:
-
-```text
-Maybe improve security here.
-```
-
-The first object gives the agent a rule, file, span, evidence, repair direction,
-and focused rerun command. The second is another vibe.
-
-The repair loop should stay small:
-
-```text
-run check
-parse JSON diagnostics
-choose one rule cluster
-load the files on the evidence path
-make the smallest policy-preserving edit
-rerun the focused check
-stop when clean, unknown, repeated, or over budget
-```
-
-The stop rule matters. Feedback loops help when the signal is deterministic and
-scoped. They hurt when the model optimizes vague feedback. The oracle has to
-live outside the model.
+That does not mean building a DSL. It means hooking into the language you
+already use and being able to change how the analysis underneath behaves. The
+old assumption was that nobody has time for that, so the tool ships a simplified
+configuration surface, usually a YAML file, to make it feasible at all. I do not
+think that assumption survives agents, so `polint` goes the other way: Rust is
+the configuration.
 
 See [Static Diagnostics Are Agent
 Interfaces](/brain/static-diagnostics-are-agent-interfaces) for the longer
@@ -743,29 +704,18 @@ mutation, can this source flow to that sink? The public API should let rules ask
 those questions while the engine owns the raw CFGs, call graphs, solvers,
 budgets, and evidence.
 
-`polint` is early. Some of its current design will turn out to be wrong, and I
-will find out the usual way: by running it against real repositories and
-watching a rule lie to me. For the design rationale so far, see [polint Is A
-Repo-Local Policy Engine](/brain/polint-is-a-repo-local-policy-engine) and
-[Policy APIs Should Hide Raw Graphs](/brain/policy-apis-should-hide-raw-graphs).
+`polint` has been a fun experiment: take what I learned at Debricked and encode
+it into what I think a modern static-analysis engine should look like. Pointing
+it at the codebases behind my own products, and watching my teams and my agents
+deliver value to users faster because of it, has been tremendously fun.
 
-# Where this goes wrong
+It is early, and it is still a side project I do for fun, so we will see whether
+I keep maintaining it. Use it if you want to. Do not put it in front of anything
+critical. Ping me if you have thoughts or questions.
 
-Static analysis fails in predictable ways.
-
-| Failure                          | What happens                                                | Better behavior                                            |
-| -------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------- |
-| Regex pretending to be semantics | The rule misses aliases, reexports, and generated paths.    | Use resolver and symbol facts.                             |
-| Silent unsupported facts         | The report says clean because the engine skipped hard code. | Emit `unknown` or `unsupported`.                           |
-| Unbounded graph traversal        | A local rule becomes a whole-program performance problem.   | Require budgets and query limits.                          |
-| False-positive churn             | Developers and agents learn to ignore the tool.             | Attach precision, evidence, and suppressions with reasons. |
-| Prompt-only policy               | The agent forgets the rule on the next task.                | Move checkable policy into repo-local rules.               |
-| Tool monoculture                 | One analyzer is forced to solve every problem.              | Use different tools for different fact layers.             |
-
-A repo-local policy engine should not become a religion. If a rule belongs
-upstream in ESLint, put it there. If it is a Semgrep pattern, use Semgrep. If it
-needs serious variant analysis, use CodeQL. If it is local architecture and
-local convention, put it next to the code it governs.
+For the design rationale so far, see [polint Is A Repo-Local Policy
+Engine](/brain/polint-is-a-repo-local-policy-engine) and [Policy APIs Should
+Hide Raw Graphs](/brain/policy-apis-should-hide-raw-graphs).
 
 # The rules
 
