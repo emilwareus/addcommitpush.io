@@ -15,6 +15,15 @@ export interface Post {
 
 const posts: Post[] = [
   {
+    title: 'The Rules of Vibe Coding',
+    slug: 'the-rules-of-vibe-coding',
+    description:
+      'Vibe coding works when the repo can talk back. Repo-local static analysis explained: syntax rules, resolved imports, call graphs, CFGs, and data flow.',
+    publishedAt: '2026-08-05',
+    tags: ['ai', 'agents', 'static-analysis', 'software'],
+    readTime: '15 min read',
+  },
+  {
     title: 'Static Analysis: A Developer\'s Tutorial',
     slug: 'static-analysis-tutorial',
     description:
