@@ -44,6 +44,13 @@ export function StaticAnalysisTutorialContent() {
           CI turns into a very expensive random number generator.
         </p>
         <p>
+          The short version: every technique in this post is a precision budget. The skill
+          is knowing what yours buys. If you want the <em>why</em>, I wrote the manifesto
+          version in{' '}
+          <BlogLink href="/blog/the-rules-of-vibe-coding">The Rules of Vibe Coding</BlogLink>.
+          This post is the how.
+        </p>
+        <p>
           <strong>Who is this for?</strong> You have been programming for 5+ years. You know
           what a type checker is, you have written a regex-based lint rule at some point,
           but the space between &quot;my linter complains&quot; and &quot;CodeQL found a
@@ -354,7 +361,11 @@ function refund(order: Order, actor: User): void {
           VTA docs say it plainly: sound modulo reflection and <code>unsafe</code>. That
           caveat should show up in your diagnostics, not just the paper. When a tool
           silently drops those edges and reports &quot;clean&quot;, it is lying to you with
-          confidence.
+          confidence. For the long version, see{' '}
+          <BlogLink href="/brain/call-graphs-are-precision-budgets">
+            Call Graphs Are Precision Budgets
+          </BlogLink>
+          .
         </p>
 
         <BlogHeading level={2}>Dataflow analysis is a fixed-point computation</BlogHeading>
@@ -363,6 +374,16 @@ function refund(order: Order, actor: User): void {
           which assignments may reach a use. Live-variable analysis asks which values may be
           read later. Definite assignment asks what must have happened on every incoming
           path. Different questions, same engine.
+        </p>
+        <p>
+          Before the machinery, the expectation. Within a single function, dataflow is
+          accurate. Across functions, accuracy is whatever your call graph and summaries
+          give you, and most tools draw the line lower than their landing page suggests.
+          Semgrep CE, for example, documents its data flow as intraprocedural, with default
+          guardrails like a 5 second timeout per rule per file and a 1 MB max target size.
+          That is a bounded product, not a proof that every path was analyzed. Know which
+          tier your tool actually runs at, then the machinery below tells you what that tier
+          means.
         </p>
         <BlogHeading level={3}>Lattices tell the engine how facts combine</BlogHeading>
         <p>
@@ -466,13 +487,12 @@ Line 3 defines tax, but tax is not live afterward. The assignment is dead.`}
         <p>
           <strong>What you can find with dataflow:</strong> use-before-initialization, dead
           stores, variables that stay alive longer than they should (think secrets lingering
-          in memory), and the local part of every taint rule. Within a single function,
-          expect high accuracy. Across functions, accuracy is whatever your call graph and
-          summaries give you, and most tools draw the line lower than their landing page
-          suggests. Semgrep CE, for example, documents its data flow as intraprocedural,
-          with default guardrails like a 5 second timeout per rule per file and a 1 MB max
-          target size. That is a bounded product, not a proof that every path was analyzed.
-          Know which tier your tool actually runs at.
+          in memory), and the local part of every taint rule. For the full engine treatment,
+          see{' '}
+          <BlogLink href="/brain/data-flow-engines-are-fixed-point-machines">
+            Data-Flow Engines Are Fixed-Point Machines
+          </BlogLink>
+          .
         </p>
 
         <BlogHeading level={2}>
@@ -506,22 +526,14 @@ Line 3 defines tax, but tax is not live afterward. The assignment is dead.`}
         </p>
         <BlogHeading level={3}>Galois connections without the ceremonial robes</BlogHeading>
         <p>
-          An abstraction function <code>alpha</code> maps concrete sets to abstract values.
-          A concretization function <code>gamma</code> maps an abstract value back to every
-          concrete state it stands for. A Galois connection says the two maps agree about
-          what is safely represented, which is what lets us prove that an abstract transfer
-          function covers its concrete counterpart. The names are scarier than the idea.
+          The theory has one idea worth keeping. An abstraction function <code>alpha</code>{' '}
+          maps concrete states to abstract values (<code>{'{0,1,2,3,4}'} -&gt; [0, 4]</code>
+          ). A concretization function <code>gamma</code> maps back. A Galois connection
+          says the two agree about what is safely represented, which is what makes an
+          abstract transfer function provably cover its concrete one. The names are scarier
+          than the idea, and the idea is why &quot;sound&quot; can ever be more than a
+          marketing word.
         </p>
-        <CodeBlock
-          code={`Concrete states C = {0, 1, 2, 3, 4}
-
-alpha(C)       = Interval(0, 4)
-gamma([0, 4])  = {0, 1, 2, 3, 4}
-
-Soundness obligation for a concrete step F and abstract step F#:
-alpha(F(C)) <= F#(alpha(C))`}
-          language="text"
-        />
         <BlogHeading level={3}>Soundness, completeness, and cost</BlogHeading>
         <p>
           For arbitrary programs and nontrivial semantic properties, a terminating analyzer
@@ -628,9 +640,17 @@ String(input)           // conversion, not validation`}
         <p>
           Field sensitivity, aliasing, access-path depth, implicit flows, and unknown
           callees decide whether the engine tracks the actual value or a vaguely related
-          object. Treating an unmodeled call as &quot;no flow&quot; is false confidence. A
-          serious analyzer propagates conservatively, applies a configured summary, or emits
-          an explicit unknown result. Silence is not evidence of sanitization.
+          object. Treating an unmodeled call as &quot;no flow&quot; is false confidence. I
+          have watched a customer celebrate a &quot;clean&quot; scan that turned out to mean
+          &quot;the analyzer never modeled their framework&apos;s entrypoints.&quot; Clean
+          and not-analyzed look identical behind a green CI badge. A serious analyzer
+          propagates conservatively, applies a configured summary, or emits an explicit
+          unknown result. Unknown is honesty. Silence is not evidence of sanitization. For
+          the long version, see{' '}
+          <BlogLink href="/brain/taint-analysis-is-modeling-not-magic">
+            Taint Analysis Is Modeling, Not Magic
+          </BlogLink>
+          .
         </p>
 
         <BlogHeading level={2}>Symbolic execution keeps paths separate</BlogHeading>
@@ -968,9 +988,10 @@ function exportReport(rawFormat: string): void {
         />
         <p>
           Rule identity, location, evidence, expected barrier, and a fingerprint for
-          baselines. The agent loads the files on the path, the local rule documentation,
-          and the relevant tests. It does not need the entire SARIF file, half the
-          repository, or a motivational speech from the linter.
+          baselines. That is a repair object, not a warning. The agent loads the files on
+          the path, the local rule documentation, and the relevant tests. It does not need
+          the entire SARIF file, half the repository, or a motivational speech from the
+          linter.
         </p>
         <CodeBlock
           code={`REPAIR_WITH_STATIC_FEEDBACK(goal, max_iterations = 3):
