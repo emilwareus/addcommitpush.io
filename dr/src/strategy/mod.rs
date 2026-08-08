@@ -23,6 +23,7 @@ pub struct ResearchRequest {
     pub models: ModelSelection,
     pub search_concurrency: usize,
     pub search_delay_ms: u64,
+    pub retry_attempts: usize,
 }
 
 impl ResearchRequest {
@@ -37,6 +38,7 @@ impl ResearchRequest {
             models: config.models,
             search_concurrency: config.search_concurrency,
             search_delay_ms: config.search_delay_ms,
+            retry_attempts: config.retry_attempts,
         }
     }
 }
