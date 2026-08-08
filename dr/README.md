@@ -38,9 +38,17 @@ Use `--env-file` to point at an existing file such as `../go-research/.env`. Rep
 
 Brave free plans are rate-limited, so `dr` defaults to `--search-concurrency 1` and `--search-delay-ms 1100`. Paid plans or internal search gateways can raise concurrency and set the delay to `0`.
 
-`dr` uses a 300-second per-request timeout by default because deep-research model
-calls can spend several minutes planning, writing, or verifying. Override it with
-`--timeout-seconds` when needed.
+`dr` uses a 300-second HTTP client timeout and a separate 300-second OpenRouter
+request timeout. Override them with `--timeout-seconds` and
+`--request-timeout-seconds`. Recoverable model/API operations retry once by
+default; use `--retry-attempts` to tune that pipeline-wide retry budget. Empty
+or malformed OpenRouter responses retry at most three times with 2/4/8-second
+backoff; timeout failures retry at most twice.
+
+Each model role can be selected independently with `--planner-model`,
+`--worker-model`, and `--writer-model`. `--fallback-model` defaults to
+`deepseek/deepseek-v4-flash` and is tried when a role's primary model exhausts
+its retries.
 
 ## Progress Output
 
@@ -66,6 +74,7 @@ parallel or staged reports and a separate INSIGHTS synthesis pass, see
 - Planner model: `z-ai/glm-5.2`
 - Evidence worker model: `deepseek/deepseek-v4-flash`
 - Writer model: `z-ai/glm-5.2`
+- Fallback model: `deepseek/deepseek-v4-flash`
 - Strategy: `deep-agent-v1`
 - Effort: `standard`
 
@@ -103,7 +112,7 @@ This is still deliberately small: no browser controller, no recursive subagent s
 11. Validate that every report citation uses a known admitted `[S#]` source marker.
 12. Extract material report claims and ask the worker model to verify both claim support and citation-source association, using evidence notes plus compact source excerpts.
 13. If verification rejects a claim or citation association, ask the writer model to refine the report and verify the revised report again. If unsupported claims remain after the refinement budget, run a final claim-pruning edit that deletes unsupported declarative claims rather than saving weak prose.
-14. Repair malformed model JSON once for structured planning/evidence/verification/evaluation stages, then validate the repaired object strictly.
+14. Retry empty responses and timeouts, repair malformed model JSON, and use the fallback model when the primary cannot complete a stage.
 15. Ask the worker model to score the final report on coverage, citation quality, factuality, analysis depth, presentation, and overall quality.
 16. Save the final Markdown report with source register, source-quality trace, evidence notes, claim audit, and final evaluation.
 
@@ -182,6 +191,12 @@ The strategy interface is intentionally separate from the OpenRouter and Brave c
 
 **Why:** Planning and final synthesis benefit from a long-context reasoning model suited to long-horizon agent workflows. Evidence extraction is repetitive, structured, and cost-sensitive, so it uses a cheaper high-throughput model with a 1M-token context window. This keeps the design capable without making every step pay for the strongest model.
 
+Transient empty responses, body-read timeouts, and malformed structured output
+are retried with bounded exponential backoff. When the primary model remains
+unusable, the configured fallback model gets the same stage prompt. Evidence
+extraction can also switch to a simpler JSON contract and then plain-text
+sections, allowing one bad source to be skipped without losing the full run.
+
 **References:**
 
 - GLM 5.2 on OpenRouter: <https://openrouter.ai/z-ai/glm-5.2>
@@ -215,7 +230,7 @@ The strategy interface is intentionally separate from the OpenRouter and Brave c
 
 ## Deliberate Non-Goals For v1
 
-- No hidden fallback model or search provider. If Brave or OpenRouter fails, fix the integration or configuration.
+- No hidden search provider. Model fallback is explicit in progress output and configurable with `--fallback-model`.
 - No browser automation yet. API retrieval is faster, cheaper, and easier to trace for the first strategy; browser exploration can become a later strategy.
 - No heavyweight multi-agent swarm yet. `deep-agent-v1` is one orchestrated pipeline, not an ensemble of isolated subagents.
 - No code sandbox yet. AI-Q and DeerFlow show why sandboxes matter, but this crate is currently a public-web research CLI.

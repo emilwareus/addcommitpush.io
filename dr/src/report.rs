@@ -20,6 +20,7 @@ pub struct ReportDocument {
     pub evidence: EvidenceBatch,
     pub claim_verification: Option<ClaimVerificationBatch>,
     pub evaluation: Option<ReportEvaluation>,
+    pub pipeline_warnings: Vec<String>,
     pub body: String,
 }
 
@@ -40,6 +41,10 @@ impl ReportDocument {
         ));
         markdown.push_str(&format!("worker_model: \"{}\"\n", self.models.worker_model));
         markdown.push_str(&format!("writer_model: \"{}\"\n", self.models.writer_model));
+        markdown.push_str(&format!(
+            "fallback_model: \"{}\"\n",
+            self.models.fallback_model
+        ));
         markdown.push_str("---\n\n");
         markdown.push_str(self.body.trim());
         markdown.push_str("\n\n## Source Register\n\n");
@@ -145,6 +150,13 @@ impl ReportDocument {
                 note.evidence.trim(),
                 note.limitations.trim()
             ));
+        }
+
+        if !self.pipeline_warnings.is_empty() {
+            markdown.push_str("\n### Pipeline Warnings\n\n");
+            for warning in &self.pipeline_warnings {
+                markdown.push_str(&format!("- {}\n", trace_text(warning)));
+            }
         }
 
         if let Some(verification) = &self.claim_verification {
@@ -411,6 +423,7 @@ mod tests {
                 planner_model: "planner".to_string(),
                 worker_model: "worker".to_string(),
                 writer_model: "writer".to_string(),
+                fallback_model: "fallback".to_string(),
                 temperature: 0.0,
             },
             plan: ResearchPlan {
@@ -429,6 +442,7 @@ mod tests {
             evidence: EvidenceBatch { notes: Vec::new() },
             claim_verification: None,
             evaluation: None,
+            pipeline_warnings: Vec::new(),
             body: "# Report\n\nClaim [S1].".to_string(),
         };
 

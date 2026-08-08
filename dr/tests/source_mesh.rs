@@ -30,10 +30,12 @@ async fn recursive_gap_strategy_should_write_verified_cited_markdown_report() {
             planner_model: "planner".to_string(),
             worker_model: "worker".to_string(),
             writer_model: "writer".to_string(),
+            fallback_model: "fallback".to_string(),
             temperature: 0.1,
         },
         search_concurrency: 4,
         search_delay_ms: 0,
+        retry_attempts: 0,
     };
     let llm = FakeLlm::new(vec![
         r#"{
@@ -198,10 +200,12 @@ async fn strategy_should_refine_report_when_claim_verifier_rejects_a_claim() {
             planner_model: "planner".to_string(),
             worker_model: "worker".to_string(),
             writer_model: "writer".to_string(),
+            fallback_model: "fallback".to_string(),
             temperature: 0.1,
         },
         search_concurrency: 4,
         search_delay_ms: 0,
+        retry_attempts: 0,
     };
     let llm = FakeLlm::new(vec![
         r#"{
@@ -333,10 +337,12 @@ async fn strategy_should_repair_malformed_source_quality_json() {
             planner_model: "planner".to_string(),
             worker_model: "worker".to_string(),
             writer_model: "writer".to_string(),
+            fallback_model: "fallback".to_string(),
             temperature: 0.1,
         },
         search_concurrency: 4,
         search_delay_ms: 0,
+        retry_attempts: 0,
     };
     let llm = FakeLlm::new(vec![
         r#"{

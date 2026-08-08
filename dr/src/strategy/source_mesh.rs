@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use async_trait::async_trait;
 use chrono::Utc;
-use futures::future::{join_all, try_join_all};
+use futures::future::join_all;
 use serde::de::DeserializeOwned;
 use tokio::time::{Duration, sleep};
 use url::Url;
@@ -50,6 +50,7 @@ impl ResearchStrategy for SourceMeshStrategy {
         document: &dyn DocumentClient,
     ) -> Result<ResearchOutcome> {
         let now = Utc::now();
+        let mut pipeline_warnings = Vec::new();
         progress_stage("01/11", "planning research brief");
         let plan = create_plan(request, llm).await?;
         progress_stage(
@@ -121,7 +122,14 @@ impl ResearchStrategy for SourceMeshStrategy {
                 initial_admitted_sources.len()
             ),
         );
-        let mut evidence = extract_evidence(request, llm, &plan, &initial_admitted_sources).await?;
+        let mut evidence = extract_evidence(request, llm, &plan, &initial_admitted_sources).await;
+        if evidence.notes.is_empty() {
+            record_warning(
+                &mut pipeline_warnings,
+                "evidence extraction returned no usable notes; writer received admitted source excerpts"
+                    .to_string(),
+            );
+        }
         progress_stage(
             "05/11",
             &format!("extracted {} evidence notes", evidence.notes.len()),
@@ -133,7 +141,12 @@ impl ResearchStrategy for SourceMeshStrategy {
                 seen_urls: &mut seen_urls,
                 evidence: &mut evidence,
             };
-            fill_evidence_gaps(request, &clients, &plan, &mut state).await?;
+            if let Err(error) = fill_evidence_gaps(request, &clients, &plan, &mut state).await {
+                record_warning(
+                    &mut pipeline_warnings,
+                    format!("gap analysis stopped early: {error}"),
+                );
+            }
         } else {
             progress_stage("06/11", "gap loop disabled for this strategy");
         }
@@ -148,20 +161,95 @@ impl ResearchStrategy for SourceMeshStrategy {
                 evidence.notes.len()
             ),
         );
-        let mut body = write_report(request, llm, &plan, &admitted_sources, &evidence).await?;
+        let mut body = write_report(
+            request,
+            llm,
+            &plan,
+            &admitted_sources,
+            &evidence,
+            &mut pipeline_warnings,
+        )
+        .await?;
         progress_stage("08/11", "validating citations and extracting claims");
         validate_report_citations(&body, &admitted_sources)?;
-        let mut claims = extract_report_claims(request, llm, &body, &admitted_sources).await?;
+        let mut claims = match extract_report_claims(request, llm, &body, &admitted_sources).await {
+            Ok(claims) => claims,
+            Err(error) => {
+                record_warning(
+                    &mut pipeline_warnings,
+                    format!("claim extraction required a citation repair: {error}"),
+                );
+                let repaired = match repair_report_citations(
+                    request,
+                    llm,
+                    &body,
+                    &admitted_sources,
+                    &evidence,
+                    &error.to_string(),
+                )
+                .await
+                {
+                    Ok(repaired) => repaired,
+                    Err(repair_error) => {
+                        record_warning(
+                            &mut pipeline_warnings,
+                            format!(
+                                "claim-level citation repair failed; using a partial evidence-backed report: {repair_error}"
+                            ),
+                        );
+                        build_partial_cited_report(request, &admitted_sources, &evidence)
+                    }
+                };
+                body = if validate_report_citations(&repaired, &admitted_sources).is_ok() {
+                    repaired
+                } else {
+                    record_warning(
+                        &mut pipeline_warnings,
+                        "claim-level citation repair remained invalid; using a partial evidence-backed report"
+                            .to_string(),
+                    );
+                    build_partial_cited_report(request, &admitted_sources, &evidence)
+                };
+                validate_report_citations(&body, &admitted_sources)?;
+                match extract_report_claims(request, llm, &body, &admitted_sources).await {
+                    Ok(claims) => claims,
+                    Err(second_error) => {
+                        record_warning(
+                            &mut pipeline_warnings,
+                            format!(
+                                "claim verification skipped after recovery failed: {second_error}"
+                            ),
+                        );
+                        ReportClaims { claims: Vec::new() }
+                    }
+                }
+            }
+        };
         progress_stage(
             "08/11",
             &format!("extracted {} material claims", claims.claims.len()),
         );
         progress_stage("09/11", "verifying claim support and citation association");
-        let mut claim_verification =
-            verify_claims(request, llm, &claims, &admitted_sources, &evidence).await?;
+        let mut claim_verification = if claims.claims.is_empty() {
+            None
+        } else {
+            match verify_claims(request, llm, &claims, &admitted_sources, &evidence).await {
+                Ok(verification) => Some(verification),
+                Err(error) => {
+                    record_warning(
+                        &mut pipeline_warnings,
+                        format!("claim verification skipped: {error}"),
+                    );
+                    None
+                }
+            }
+        };
 
         for refinement_pass in 0..MAX_REFINEMENT_PASSES {
-            if !has_unsupported_claims(&claim_verification) {
+            let Some(verification) = claim_verification.as_ref() else {
+                break;
+            };
+            if !has_unsupported_claims(verification) {
                 break;
             }
 
@@ -172,55 +260,164 @@ impl ResearchStrategy for SourceMeshStrategy {
                     refinement_pass + 1
                 ),
             );
-            body = refine_report(
+            body = match refine_report(
                 request,
                 llm,
                 &body,
-                &claim_verification,
+                verification,
                 &admitted_sources,
                 &evidence,
             )
+            .await
+            {
+                Ok(refined) => refined,
+                Err(error) => {
+                    record_warning(
+                        &mut pipeline_warnings,
+                        format!("report refinement stopped early: {error}"),
+                    );
+                    break;
+                }
+            };
+            body = ensure_report_citations(
+                request,
+                llm,
+                body,
+                &admitted_sources,
+                &evidence,
+                "refined report",
+            )
             .await?;
-            validate_report_citations(&body, &admitted_sources)?;
-            claims = extract_report_claims(request, llm, &body, &admitted_sources).await?;
+            claims = match extract_report_claims(request, llm, &body, &admitted_sources).await {
+                Ok(claims) => claims,
+                Err(error) => {
+                    record_warning(
+                        &mut pipeline_warnings,
+                        format!("claim extraction stopped after refinement: {error}"),
+                    );
+                    claim_verification = None;
+                    break;
+                }
+            };
             claim_verification =
-                verify_claims(request, llm, &claims, &admitted_sources, &evidence).await?;
+                match verify_claims(request, llm, &claims, &admitted_sources, &evidence).await {
+                    Ok(verification) => Some(verification),
+                    Err(error) => {
+                        record_warning(
+                            &mut pipeline_warnings,
+                            format!("claim verification stopped after refinement: {error}"),
+                        );
+                        None
+                    }
+                };
         }
 
-        if has_unsupported_claims(&claim_verification) {
+        if let Some(verification) = claim_verification.clone().filter(has_unsupported_claims) {
             progress_stage("09/11", "pruning unsupported claims after verifier");
-            body = prune_unsupported_claims(
+            body = match prune_unsupported_claims(
                 request,
                 llm,
                 &body,
-                &claim_verification,
+                &verification,
                 &admitted_sources,
                 &evidence,
             )
+            .await
+            {
+                Ok(pruned) => pruned,
+                Err(error) => {
+                    record_warning(
+                        &mut pipeline_warnings,
+                        format!("claim pruning skipped: {error}"),
+                    );
+                    body
+                }
+            };
+            body = ensure_report_citations(
+                request,
+                llm,
+                body,
+                &admitted_sources,
+                &evidence,
+                "claim-pruned report",
+            )
             .await?;
-            validate_report_citations(&body, &admitted_sources)?;
-            claims = extract_report_claims(request, llm, &body, &admitted_sources).await?;
-            claim_verification =
-                verify_claims(request, llm, &claims, &admitted_sources, &evidence).await?;
+            match extract_report_claims(request, llm, &body, &admitted_sources).await {
+                Ok(updated_claims) => {
+                    claims = updated_claims;
+                    claim_verification =
+                        match verify_claims(request, llm, &claims, &admitted_sources, &evidence)
+                            .await
+                        {
+                            Ok(verification) => Some(verification),
+                            Err(error) => {
+                                record_warning(
+                                    &mut pipeline_warnings,
+                                    format!("claim verification failed after pruning: {error}"),
+                                );
+                                None
+                            }
+                        };
+                }
+                Err(error) => record_warning(
+                    &mut pipeline_warnings,
+                    format!("claim extraction failed after pruning: {error}"),
+                ),
+            }
         }
 
-        validate_claim_verification(&claim_verification, &admitted_sources)?;
+        if let Some(verification) = &claim_verification
+            && let Err(error) = validate_claim_verification(verification, &admitted_sources)
+        {
+            record_warning(
+                &mut pipeline_warnings,
+                format!("final claim audit retained unresolved items: {error}"),
+            );
+        }
         progress_stage("10/11", "scoring final report");
-        let evaluation = evaluate_report(
-            request,
-            llm,
-            &body,
-            &plan,
-            &admitted_sources,
-            &evidence,
-            &claim_verification,
-        )
-        .await?;
-        validate_report_evaluation(&evaluation)?;
-        progress_stage(
-            "10/11",
-            &format!("final evaluator overall score {}/5", evaluation.overall),
-        );
+        let evaluation = if let Some(verification) = &claim_verification {
+            match evaluate_report(
+                request,
+                llm,
+                &body,
+                &plan,
+                &admitted_sources,
+                &evidence,
+                verification,
+            )
+            .await
+            {
+                Ok(evaluation) => match validate_report_evaluation(&evaluation) {
+                    Ok(()) => {
+                        progress_stage(
+                            "10/11",
+                            &format!("final evaluator overall score {}/5", evaluation.overall),
+                        );
+                        Some(evaluation)
+                    }
+                    Err(error) => {
+                        record_warning(
+                            &mut pipeline_warnings,
+                            format!("final evaluation was invalid: {error}"),
+                        );
+                        None
+                    }
+                },
+                Err(error) => {
+                    record_warning(
+                        &mut pipeline_warnings,
+                        format!("final evaluation skipped: {error}"),
+                    );
+                    None
+                }
+            }
+        } else {
+            record_warning(
+                &mut pipeline_warnings,
+                "final evaluation skipped because claim verification was unavailable".to_string(),
+            );
+            None
+        };
 
         let document = ReportDocument {
             topic: request.topic.clone(),
@@ -231,8 +428,9 @@ impl ResearchStrategy for SourceMeshStrategy {
             plan,
             sources,
             evidence,
-            claim_verification: Some(claim_verification),
-            evaluation: Some(evaluation),
+            claim_verification,
+            evaluation,
+            pipeline_warnings,
             body,
         };
         let markdown = document.to_markdown();
@@ -296,6 +494,7 @@ JSON shape:
         request.topic
     );
     let mut plan = complete_json_with_repair::<ResearchPlan>(
+        request,
         llm,
         CompletionRequest {
             model: request.models.planner_model.clone(),
@@ -312,7 +511,9 @@ JSON shape:
     plan.subquestions.truncate(request.limits.max_subquestions);
     augment_plan_queries(request, &mut plan);
     plan.search_queries.truncate(request.limits.max_searches);
-    validate_plan(&plan)?;
+    validate_plan(&plan).map_err(|source| {
+        stage_error("research planning", &request.models.planner_model, source)
+    })?;
     Ok(plan)
 }
 
@@ -369,10 +570,14 @@ async fn search_queries(
                 queries.len(),
                 truncate_for_progress(&query.query)
             ));
-            let hits = search
-                .search(&query.query, request.limits.results_per_search)
-                .await?;
-            results.push((query.clone(), hits));
+            match search_with_retries(search, query, request).await {
+                Ok(hits) => results.push((query.clone(), hits)),
+                Err(error) => progress_detail(&format!(
+                    "warning: skipping failed Brave search `{}`: {}",
+                    truncate_for_progress(&query.query),
+                    sanitize_trace_text(&error.to_string())
+                )),
+            }
         }
         return Ok(results);
     }
@@ -386,15 +591,53 @@ async fn search_queries(
             batch.len()
         ));
         let searches = batch.iter().map(|query| async move {
-            search
-                .search(&query.query, request.limits.results_per_search)
-                .await
-                .map(|hits| (query.clone(), hits))
+            (
+                query.clone(),
+                search_with_retries(search, query, request).await,
+            )
         });
-        results.extend(try_join_all(searches).await?);
+        for (query, outcome) in join_all(searches).await {
+            match outcome {
+                Ok(hits) => results.push((query, hits)),
+                Err(error) => progress_detail(&format!(
+                    "warning: skipping failed Brave search `{}`: {}",
+                    truncate_for_progress(&query.query),
+                    sanitize_trace_text(&error.to_string())
+                )),
+            }
+        }
     }
 
     Ok(results)
+}
+
+async fn search_with_retries(
+    search: &dyn SearchClient,
+    query: &PlannedSearchQuery,
+    request: &ResearchRequest,
+) -> Result<Vec<SearchHit>> {
+    let mut retry_index = 0;
+    loop {
+        match search
+            .search(&query.query, request.limits.results_per_search)
+            .await
+        {
+            Ok(hits) => return Ok(hits),
+            Err(error) if retry_index < request.retry_attempts => {
+                let delay = pipeline_backoff(retry_index);
+                progress_detail(&format!(
+                    "warning: Brave search failed; retrying in {}s ({}/{}): {}",
+                    delay.as_secs(),
+                    retry_index + 1,
+                    request.retry_attempts,
+                    sanitize_trace_text(&error.to_string())
+                ));
+                sleep(delay).await;
+                retry_index += 1;
+            }
+            Err(error) => return Err(error),
+        }
+    }
 }
 
 async fn fetch_source_contents(
@@ -485,7 +728,13 @@ JSON shape:
         max_completion_tokens: request.limits.max_evidence_tokens,
         json_mode: true,
     };
-    let text = llm.complete(completion_request.clone()).await?;
+    let text = complete_with_fallback(
+        request,
+        llm,
+        completion_request.clone(),
+        "source quality assessment",
+    )
+    .await?;
     let quality = match parse_and_validate_source_quality(&text, sources) {
         Ok(quality) => quality,
         Err(error) => {
@@ -493,8 +742,10 @@ JSON shape:
                 "repairing source-quality JSON after schema error: {}",
                 sanitize_trace_text(&error.to_string())
             ));
-            let repair_text = llm
-                .complete(CompletionRequest {
+            let repair_text = complete_with_fallback(
+                request,
+                llm,
+                CompletionRequest {
                     model: completion_request.model.clone(),
                     system_prompt: source_quality_repair_prompt(),
                     user_prompt: format!(
@@ -510,12 +761,26 @@ JSON shape:
                     temperature: 0.0,
                     max_completion_tokens: completion_request.max_completion_tokens,
                     json_mode: true,
-                })
-                .await?;
-            parse_and_validate_source_quality(&repair_text, sources)?
+                },
+                "source quality JSON repair",
+            )
+            .await?;
+            parse_and_validate_source_quality(&repair_text, sources).map_err(|source| {
+                stage_error(
+                    "source quality assessment",
+                    &request.models.worker_model,
+                    source,
+                )
+            })?
         }
     };
-    apply_source_quality(sources, quality)?;
+    apply_source_quality(sources, quality).map_err(|source| {
+        stage_error(
+            "source quality assessment",
+            &request.models.worker_model,
+            source,
+        )
+    })?;
     Ok(())
 }
 
@@ -573,8 +838,11 @@ async fn extract_evidence(
     llm: &dyn LlmClient,
     plan: &ResearchPlan,
     sources: &[Source],
-) -> Result<EvidenceBatch> {
-    ensure_sources(sources)?;
+) -> EvidenceBatch {
+    if sources.is_empty() {
+        progress_detail("warning: evidence extraction received no admitted sources");
+        return EvidenceBatch { notes: Vec::new() };
+    }
 
     let mut notes = Vec::new();
     let chunk_size = request.limits.evidence_chunk_size.max(1);
@@ -586,14 +854,38 @@ async fn extract_evidence(
             chunk_count,
             chunk.len()
         ));
-        let mut batch = extract_evidence_chunk(request, llm, plan, chunk).await?;
-        validate_evidence(&batch, chunk)?;
-        notes.append(&mut batch.notes);
+        match extract_evidence_chunk(request, llm, plan, chunk).await {
+            Ok(mut batch) => notes.append(&mut batch.notes),
+            Err(error) => {
+                progress_detail(&format!(
+                    "warning: evidence batch {}/{} failed; retrying each source separately: {}",
+                    index + 1,
+                    chunk_count,
+                    sanitize_trace_text(&error.to_string())
+                ));
+                for source in chunk {
+                    match extract_evidence_chunk(request, llm, plan, std::slice::from_ref(source))
+                        .await
+                    {
+                        Ok(mut batch) => notes.append(&mut batch.notes),
+                        Err(source_error) => progress_detail(&format!(
+                            "warning: skipping evidence for source {} after recovery failed: {}",
+                            source.id,
+                            sanitize_trace_text(&source_error.to_string())
+                        )),
+                    }
+                }
+            }
+        }
     }
 
     let evidence = EvidenceBatch { notes };
-    validate_evidence(&evidence, sources)?;
-    Ok(evidence)
+    if evidence.notes.is_empty() {
+        progress_detail(
+            "warning: evidence extraction produced no notes; continuing with admitted source excerpts",
+        );
+    }
+    evidence
 }
 
 async fn extract_evidence_chunk(
@@ -629,20 +921,170 @@ JSON shape:
         serde_json::to_string_pretty(plan)?,
         format_sources_for_prompt(sources)
     );
-    complete_json_with_repair::<EvidenceBatch>(
+    let initial_request = CompletionRequest {
+        model: request.models.worker_model.clone(),
+        system_prompt: system_prompt.to_string(),
+        user_prompt: user_prompt.clone(),
+        temperature: 0.0,
+        max_completion_tokens: request.limits.max_evidence_tokens,
+        json_mode: true,
+    };
+    let first_text =
+        complete_with_fallback(request, llm, initial_request, "evidence extraction").await?;
+    match parse_and_validate_evidence(&first_text, sources) {
+        Ok(batch) => return Ok(batch),
+        Err(error) => progress_detail(&format!(
+            "warning: evidence JSON was empty or invalid: {}",
+            sanitize_trace_text(&error.to_string())
+        )),
+    }
+
+    progress_detail("warning: retrying evidence extraction with the simple JSON contract");
+    let simple_json_prompt = r#"Extract evidence using only the supplied sources. Return one compact JSON object and nothing else.
+Use this exact shape: {"notes":[{"source_id":"S1","claim":"...","evidence":"...","relevance":"...","limitations":"..."}]}.
+Use only listed source IDs. Keep every value to one sentence. Return at least one note when the source contains relevant information."#;
+    let simple_text = complete_with_fallback(
+        request,
         llm,
         CompletionRequest {
             model: request.models.worker_model.clone(),
-            system_prompt: system_prompt.to_string(),
-            user_prompt,
+            system_prompt: simple_json_prompt.to_string(),
+            user_prompt: user_prompt.clone(),
             temperature: 0.0,
             max_completion_tokens: request.limits.max_evidence_tokens,
             json_mode: true,
         },
-        "evidence extraction",
-        system_prompt,
+        "evidence extraction simple JSON retry",
     )
-    .await
+    .await?;
+    match parse_and_validate_evidence(&simple_text, sources) {
+        Ok(batch) => return Ok(batch),
+        Err(error) => progress_detail(&format!(
+            "warning: simple evidence JSON was empty or invalid: {}",
+            sanitize_trace_text(&error.to_string())
+        )),
+    }
+
+    progress_detail(
+        "warning: structured evidence extraction failed twice; using plain-text sections",
+    );
+    let plain_prompt = r#"Extract source-grounded evidence as plain text, not JSON.
+Repeat this exact five-line block for each useful note:
+[S1]
+CLAIM: one factual claim
+EVIDENCE: a precise quote or paraphrase from that source
+RELEVANCE: why the note matters
+LIMITATIONS: uncertainty or scope limit
+
+Use only source IDs supplied by the user. Do not use model memory."#;
+    let plain_text = complete_with_fallback(
+        request,
+        llm,
+        CompletionRequest {
+            model: request.models.worker_model.clone(),
+            system_prompt: plain_prompt.to_string(),
+            user_prompt,
+            temperature: 0.0,
+            max_completion_tokens: request.limits.max_evidence_tokens,
+            json_mode: false,
+        },
+        "evidence extraction plain-text fallback",
+    )
+    .await?;
+    let batch = parse_plain_text_evidence(&plain_text, sources)?;
+    validate_evidence(&batch, sources)?;
+    Ok(batch)
+}
+
+fn parse_and_validate_evidence(text: &str, sources: &[Source]) -> Result<EvidenceBatch> {
+    let batch = parse_json::<EvidenceBatch>(text)?;
+    if batch.notes.is_empty() {
+        return Err(DrError::InvalidEvidence(
+            "evidence extraction returned no notes".to_string(),
+        ));
+    }
+    validate_evidence(&batch, sources)?;
+    Ok(batch)
+}
+
+fn parse_plain_text_evidence(text: &str, sources: &[Source]) -> Result<EvidenceBatch> {
+    let valid_ids = sources
+        .iter()
+        .map(|source| source.id.as_str())
+        .collect::<BTreeSet<_>>();
+    let mut notes = Vec::new();
+    let mut current_source_id: Option<String> = None;
+    let mut fields = BTreeMap::<String, String>::new();
+
+    for line in text.lines().chain(std::iter::once("[S0]")) {
+        let trimmed = line.trim();
+        if let Some(source_id) = parse_plain_source_header(trimmed) {
+            push_plain_evidence_note(&mut notes, current_source_id.take(), &mut fields);
+            if valid_ids.contains(source_id.as_str()) {
+                current_source_id = Some(source_id);
+            }
+            continue;
+        }
+
+        if let Some((key, value)) = trimmed.split_once(':') {
+            let normalized_key = key.trim().to_ascii_uppercase();
+            if ["CLAIM", "EVIDENCE", "RELEVANCE", "LIMITATIONS"].contains(&normalized_key.as_str())
+            {
+                fields.insert(normalized_key, value.trim().to_string());
+            }
+        }
+    }
+
+    let batch = EvidenceBatch { notes };
+    if batch.notes.is_empty() {
+        return Err(DrError::InvalidEvidence(
+            "plain-text evidence fallback returned no parseable sections".to_string(),
+        ));
+    }
+    Ok(batch)
+}
+
+fn parse_plain_source_header(line: &str) -> Option<String> {
+    let source_id = line.strip_prefix('[')?.strip_suffix(']')?;
+    if source_id.len() > 1
+        && source_id.starts_with('S')
+        && source_id[1..]
+            .chars()
+            .all(|character| character.is_ascii_digit())
+    {
+        return Some(source_id.to_string());
+    }
+    None
+}
+
+fn push_plain_evidence_note(
+    notes: &mut Vec<crate::types::EvidenceNote>,
+    source_id: Option<String>,
+    fields: &mut BTreeMap<String, String>,
+) {
+    let Some(source_id) = source_id else {
+        fields.clear();
+        return;
+    };
+    let claim = fields.remove("CLAIM").unwrap_or_default();
+    let evidence = fields.remove("EVIDENCE").unwrap_or_default();
+    if claim.trim().is_empty() || evidence.trim().is_empty() {
+        fields.clear();
+        return;
+    }
+
+    notes.push(crate::types::EvidenceNote {
+        source_id,
+        claim,
+        evidence,
+        relevance: fields
+            .remove("RELEVANCE")
+            .unwrap_or_else(|| "Relevant to the research goal.".to_string()),
+        limitations: fields
+            .remove("LIMITATIONS")
+            .unwrap_or_else(|| "Plain-text extraction; verify against the source.".to_string()),
+    });
+    fields.clear();
 }
 
 async fn fill_evidence_gaps(
@@ -716,10 +1158,15 @@ async fn fill_evidence_gaps(
             continue;
         }
 
-        let new_evidence = extract_evidence(request, clients.llm, plan, &new_admitted).await?;
+        let new_evidence = extract_evidence(request, clients.llm, plan, &new_admitted).await;
         state.evidence.notes.extend(new_evidence.notes);
         let all_admitted = admitted_sources(state.sources, request.limits.min_source_score);
-        validate_evidence(state.evidence, &all_admitted)?;
+        if let Err(error) = validate_evidence(state.evidence, &all_admitted) {
+            progress_detail(&format!(
+                "warning: gap evidence validation failed; keeping earlier notes: {}",
+                sanitize_trace_text(&error.to_string())
+            ));
+        }
     }
 
     Ok(())
@@ -737,6 +1184,15 @@ fn progress_stage(step: &str, message: &str) {
 
 fn progress_detail(message: &str) {
     eprintln!("dr:        {message}");
+}
+
+fn record_warning(warnings: &mut Vec<String>, warning: String) {
+    progress_detail(&format!("warning: {}", sanitize_trace_text(&warning)));
+    warnings.push(warning);
+}
+
+fn pipeline_backoff(retry_index: usize) -> Duration {
+    Duration::from_secs(2_u64.saturating_pow((retry_index + 1).min(3) as u32))
 }
 
 fn truncate_for_progress(value: &str) -> String {
@@ -787,6 +1243,7 @@ JSON shape:
         serde_json::to_string_pretty(evidence)?
     );
     let mut gap = complete_json_with_repair::<GapAnalysis>(
+        request,
         llm,
         CompletionRequest {
             model: request.models.planner_model.clone(),
@@ -801,7 +1258,8 @@ JSON shape:
     )
     .await?;
     gap.follow_up_queries.truncate(request.limits.max_searches);
-    validate_gap_analysis(&gap)?;
+    validate_gap_analysis(&gap)
+        .map_err(|source| stage_error("gap analysis", &request.models.planner_model, source))?;
     Ok(gap)
 }
 
@@ -811,6 +1269,7 @@ async fn write_report(
     plan: &ResearchPlan,
     sources: &[Source],
     evidence: &EvidenceBatch,
+    pipeline_warnings: &mut Vec<String>,
 ) -> Result<String> {
     let system_prompt = r#"You are the final writer for a deep research CLI used by autonomous coding agents.
 Write a source-grounded Markdown report that reads like a fantastic scientific short paper.
@@ -842,6 +1301,9 @@ Required writing style:
 
 Rules:
 - Cite claims inline with [S#] source markers from the admitted source register.
+- Every factual paragraph must contain at least one [S#] marker immediately after the supported claim.
+- Start using [S#] markers within the first 500 tokens. Never postpone citations to a references section.
+- A bare URL, linked title, footnote, or bibliography entry is not a citation; only [S#] is valid.
 - Do not cite source IDs that are absent from the admitted source register.
 - Use the evidence notes and admitted source register, not model memory.
 - Use the provided current date for temporal reasoning; do not call dates before it future dates.
@@ -852,33 +1314,215 @@ Rules:
 - Do not use dramatic headings, motivational endings, or stock phrases such as "delve", "unlock", "game changer", "robust", "seamless", or "cutting-edge"."#;
 
     let user_prompt = format!(
-        "Current date: {}\n\nTopic:\n{}\n\nPlan:\n{}\n\nEvidence:\n{}\n\nAdmitted source register:\n{}",
+        "Current date: {}\n\nTopic:\n{}\n\nPlan:\n{}\n\nEvidence:\n{}\n\nAdmitted source excerpts:\n{}\n\nAdmitted source register:\n{}",
         current_date(),
         request.topic,
         serde_json::to_string_pretty(plan)?,
         serde_json::to_string_pretty(evidence)?,
+        format_sources_for_verifier_prompt(sources),
         format_source_register(sources)
     );
 
-    let text = llm
-        .complete(CompletionRequest {
+    let text = complete_with_fallback(
+        request,
+        llm,
+        CompletionRequest {
             model: request.models.writer_model.clone(),
             system_prompt: system_prompt.to_string(),
             user_prompt,
             temperature: request.models.temperature,
             max_completion_tokens: request.limits.max_report_tokens,
             json_mode: false,
-        })
-        .await?;
+        },
+        "report writing",
+    )
+    .await?;
 
-    let body = text.trim().to_string();
+    let mut body = text.trim().to_string();
     if body.is_empty() {
         return Err(DrError::InvalidReport(
             "writer returned an empty report".to_string(),
         ));
     }
 
+    let citation_issue = report_citation_issue(&body, sources);
+    let prefix_has_citations = first_500_tokens_have_citations(&body, sources);
+    if citation_issue.is_some() || !prefix_has_citations {
+        let issue = citation_issue.unwrap_or_else(|| {
+            "the first 500 tokens did not contain a valid [S#] citation marker".to_string()
+        });
+        record_warning(
+            pipeline_warnings,
+            format!("writer citation preflight failed; retrying the draft: {issue}"),
+        );
+        body = match repair_report_citations(request, llm, &body, sources, evidence, &issue).await {
+            Ok(repaired) => repaired,
+            Err(error) => {
+                record_warning(
+                    pipeline_warnings,
+                    format!(
+                        "writer citation retry failed; emitting a partial evidence-backed report: {error}"
+                    ),
+                );
+                build_partial_cited_report(request, sources, evidence)
+            }
+        };
+    }
+
+    if let Some(issue) = report_citation_issue(&body, sources) {
+        record_warning(
+            pipeline_warnings,
+            format!(
+                "writer citation retry remained invalid; emitting a partial evidence-backed report: {issue}"
+            ),
+        );
+        body = build_partial_cited_report(request, sources, evidence);
+    }
+
+    validate_report_citations(&body, sources)?;
+
     Ok(body)
+}
+
+async fn repair_report_citations(
+    request: &ResearchRequest,
+    llm: &dyn LlmClient,
+    body: &str,
+    sources: &[Source],
+    evidence: &EvidenceBatch,
+    issue: &str,
+) -> Result<String> {
+    let system_prompt = r#"You are repairing citation placement in a deep research report.
+Return only complete revised Markdown.
+
+The previous draft failed citation validation. Rewrite it now under these hard rules:
+- Put one or more exact [S#] markers after every factual claim and in every factual paragraph.
+- Use a marker in the Abstract and within the first 500 tokens.
+- Use only source IDs from the admitted source register.
+- Do not use URLs, links, footnotes, or a bibliography as substitutes for [S#].
+- Delete or reframe any claim that the supplied evidence cannot support.
+- Preserve the required scientific short-paper sections and useful tables.
+- Do not invent facts, sources, quotes, names, dates, or benchmarks."#;
+    let user_prompt = format!(
+        "Citation failure:\n{}\n\nDraft to rewrite:\n{}\n\nEvidence:\n{}\n\nAdmitted source excerpts:\n{}\n\nAdmitted source register:\n{}",
+        issue,
+        body,
+        serde_json::to_string_pretty(evidence)?,
+        format_sources_for_verifier_prompt(sources),
+        format_source_register(sources)
+    );
+    let text = complete_with_fallback(
+        request,
+        llm,
+        CompletionRequest {
+            model: request.models.writer_model.clone(),
+            system_prompt: system_prompt.to_string(),
+            user_prompt,
+            temperature: 0.0,
+            max_completion_tokens: request.limits.max_report_tokens,
+            json_mode: false,
+        },
+        "report citation recovery",
+    )
+    .await?;
+    let repaired = text.trim().to_string();
+    if repaired.is_empty() {
+        return Err(DrError::InvalidReport(
+            "citation recovery returned an empty report".to_string(),
+        ));
+    }
+    Ok(repaired)
+}
+
+async fn ensure_report_citations(
+    request: &ResearchRequest,
+    llm: &dyn LlmClient,
+    body: String,
+    sources: &[Source],
+    evidence: &EvidenceBatch,
+    label: &str,
+) -> Result<String> {
+    let Some(issue) = report_citation_issue(&body, sources) else {
+        return Ok(body);
+    };
+    progress_detail(&format!(
+        "warning: {label} failed citation validation; repairing: {}",
+        sanitize_trace_text(&issue)
+    ));
+    let repaired = match repair_report_citations(request, llm, &body, sources, evidence, &issue)
+        .await
+    {
+        Ok(repaired) => repaired,
+        Err(error) => {
+            progress_detail(&format!(
+                "warning: {label} citation repair failed; using a partial evidence-backed report: {}",
+                sanitize_trace_text(&error.to_string())
+            ));
+            return Ok(build_partial_cited_report(request, sources, evidence));
+        }
+    };
+    if validate_report_citations(&repaired, sources).is_ok() {
+        return Ok(repaired);
+    }
+
+    progress_detail(&format!(
+        "warning: {label} citation repair remained invalid; using a partial evidence-backed report"
+    ));
+    Ok(build_partial_cited_report(request, sources, evidence))
+}
+
+fn report_citation_issue(body: &str, sources: &[Source]) -> Option<String> {
+    validate_report_citations(body, sources)
+        .err()
+        .map(|error| error.to_string())
+}
+
+fn first_500_tokens_have_citations(body: &str, sources: &[Source]) -> bool {
+    let prefix = body
+        .split_whitespace()
+        .take(500)
+        .collect::<Vec<_>>()
+        .join(" ");
+    validate_report_citations(&prefix, sources).is_ok()
+}
+
+fn build_partial_cited_report(
+    request: &ResearchRequest,
+    sources: &[Source],
+    evidence: &EvidenceBatch,
+) -> String {
+    let evidence_lines = if evidence.notes.is_empty() {
+        sources
+            .iter()
+            .map(|source| {
+                format!(
+                    "- {} [{}]",
+                    truncate_chars(&source.description, 400),
+                    source.id
+                )
+            })
+            .collect::<Vec<_>>()
+    } else {
+        evidence
+            .notes
+            .iter()
+            .map(|note| {
+                format!(
+                    "- {} Evidence: {} Limits: {} [{}]",
+                    note.claim.trim(),
+                    note.evidence.trim(),
+                    note.limitations.trim(),
+                    note.source_id
+                )
+            })
+            .collect::<Vec<_>>()
+    };
+    let evidence_text = evidence_lines.join("\n");
+    let first_source_id = &sources[0].id;
+    format!(
+        "# Partial Research Report: {topic}\n\n## Abstract\n\nThe writer could not produce a citation-valid full draft. This partial report preserves the admitted evidence for follow-up [{first_source_id}].\n\n## Research Question\n\n{topic}\n\n## Method\n\nThe pipeline searched, read, and admitted sources before extracting the evidence below [{first_source_id}].\n\n## Conceptual Background\n\nOnly source-grounded notes are retained in this recovery report [{first_source_id}].\n\n## Findings\n\n{evidence_text}\n\n## Design Implications\n\nReview the evidence notes before making implementation decisions [{first_source_id}].\n\n## Limitations and Threats to Validity\n\nThis is a partial recovery artifact, not a complete synthesis [{first_source_id}].\n\n## Open Questions\n\nWhich missing claims require another focused research pass? [{first_source_id}]\n\n## Recommended Next Experiments\n\nRetry report synthesis with a writer model that reliably emits inline [S#] markers [{first_source_id}].",
+        topic = request.topic
+    )
 }
 
 async fn extract_report_claims(
@@ -911,6 +1555,7 @@ JSON shape:
         format_source_register(sources)
     );
     let mut claims = complete_json_with_repair::<ReportClaims>(
+        request,
         llm,
         CompletionRequest {
             model: request.models.worker_model.clone(),
@@ -926,7 +1571,13 @@ JSON shape:
     .await?;
     claims.claims.truncate(request.limits.max_claims);
     normalize_report_claim_citations(&mut claims);
-    validate_report_claims(&claims, sources)?;
+    validate_report_claims(&claims, sources).map_err(|source| {
+        stage_error(
+            "report claim extraction",
+            &request.models.worker_model,
+            source,
+        )
+    })?;
     Ok(claims)
 }
 
@@ -964,16 +1615,20 @@ Do not add generic prose, motivational endings, or dramatic headings."#;
         serde_json::to_string_pretty(evidence)?,
         format_source_register(sources)
     );
-    let text = llm
-        .complete(CompletionRequest {
+    let text = complete_with_fallback(
+        request,
+        llm,
+        CompletionRequest {
             model: request.models.writer_model.clone(),
             system_prompt: system_prompt.to_string(),
             user_prompt,
             temperature: 0.0,
             max_completion_tokens: request.limits.max_report_tokens,
             json_mode: false,
-        })
-        .await?;
+        },
+        "report refinement",
+    )
+    .await?;
 
     let refined = text.trim().to_string();
     if refined.is_empty() {
@@ -1015,16 +1670,20 @@ Your job is deletion, not persuasion:
         serde_json::to_string_pretty(evidence)?,
         format_source_register(sources)
     );
-    let text = llm
-        .complete(CompletionRequest {
+    let text = complete_with_fallback(
+        request,
+        llm,
+        CompletionRequest {
             model: request.models.writer_model.clone(),
             system_prompt: system_prompt.to_string(),
             user_prompt,
             temperature: 0.0,
             max_completion_tokens: request.limits.max_report_tokens,
             json_mode: false,
-        })
-        .await?;
+        },
+        "unsupported claim pruning",
+    )
+    .await?;
 
     let pruned = text.trim().to_string();
     if pruned.is_empty() {
@@ -1071,6 +1730,7 @@ JSON shape:
         format_source_register(sources)
     );
     let verification = complete_json_with_repair::<ClaimVerificationBatch>(
+        request,
         llm,
         CompletionRequest {
             model: request.models.worker_model.clone(),
@@ -1085,11 +1745,15 @@ JSON shape:
     )
     .await?;
     if verification.verdicts.len() != claims.claims.len() {
-        return Err(DrError::InvalidReport(format!(
-            "claim verifier returned {} verdicts for {} claims",
-            verification.verdicts.len(),
-            claims.claims.len()
-        )));
+        return Err(stage_error(
+            "claim verification",
+            &request.models.worker_model,
+            DrError::InvalidReport(format!(
+                "claim verifier returned {} verdicts for {} claims",
+                verification.verdicts.len(),
+                claims.claims.len()
+            )),
+        ));
     }
     Ok(verification)
 }
@@ -1143,6 +1807,7 @@ JSON shape:
         format_source_register(sources)
     );
     complete_json_with_repair::<ReportEvaluation>(
+        request,
         llm,
         CompletionRequest {
             model: request.models.worker_model.clone(),
@@ -1262,12 +1927,6 @@ fn validate_source_quality(quality: &SourceQualityBatch, sources: &[Source]) -> 
 }
 
 fn validate_evidence(evidence: &EvidenceBatch, sources: &[Source]) -> Result<()> {
-    if evidence.notes.is_empty() {
-        return Err(DrError::InvalidEvidence(
-            "evidence extraction returned no notes".to_string(),
-        ));
-    }
-
     let source_ids = sources
         .iter()
         .map(|source| source.id.as_str())
@@ -1888,6 +2547,7 @@ where
 }
 
 async fn complete_json_with_repair<T>(
+    research_request: &ResearchRequest,
     llm: &dyn LlmClient,
     request: CompletionRequest,
     label: &str,
@@ -1896,7 +2556,7 @@ async fn complete_json_with_repair<T>(
 where
     T: DeserializeOwned,
 {
-    let text = llm.complete(request.clone()).await?;
+    let text = complete_with_fallback(research_request, llm, request.clone(), label).await?;
     match parse_json::<T>(&text) {
         Ok(value) => Ok(value),
         Err(error) => {
@@ -1904,8 +2564,10 @@ where
                 "repairing {label} JSON after parse error: {}",
                 sanitize_trace_text(&error.to_string())
             ));
-            let repair_text = llm
-                .complete(CompletionRequest {
+            let repair_text = complete_with_fallback(
+                research_request,
+                llm,
+                CompletionRequest {
                     model: request.model.clone(),
                     system_prompt: json_repair_prompt(label),
                     user_prompt: format!(
@@ -1917,10 +2579,112 @@ where
                     temperature: 0.0,
                     max_completion_tokens: request.max_completion_tokens,
                     json_mode: true,
-                })
-                .await?;
-            parse_json::<T>(&repair_text)
+                },
+                &format!("{label} JSON repair"),
+            )
+            .await?;
+            match parse_json::<T>(&repair_text) {
+                Ok(value) => Ok(value),
+                Err(repair_error) => {
+                    let fallback_model = research_request.models.fallback_model.trim();
+                    if fallback_model.is_empty() || fallback_model == request.model {
+                        return Err(DrError::PipelineStage {
+                            stage: label.to_string(),
+                            model: request.model,
+                            source: Box::new(repair_error),
+                        });
+                    }
+
+                    progress_detail(&format!(
+                        "warning: {label} remained malformed after JSON repair with {}; retrying the stage with fallback model {fallback_model}",
+                        request.model
+                    ));
+                    let mut fallback_request = request.clone();
+                    fallback_request.model = fallback_model.to_string();
+                    let fallback_max_completion_tokens = fallback_request.max_completion_tokens;
+                    let fallback_text = complete_on_model(llm, fallback_request, label).await?;
+                    match parse_json::<T>(&fallback_text) {
+                        Ok(value) => Ok(value),
+                        Err(fallback_parse_error) => {
+                            let fallback_repair = complete_on_model(
+                                llm,
+                                CompletionRequest {
+                                    model: fallback_model.to_string(),
+                                    system_prompt: json_repair_prompt(label),
+                                    user_prompt: format!(
+                                        "Expected JSON contract:\n{}\n\nParse error:\n{}\n\nInvalid JSON:\n{}\n\nReturn corrected JSON only.",
+                                        schema_contract,
+                                        sanitize_trace_text(&fallback_parse_error.to_string()),
+                                        truncate_chars(&fallback_text, 8_000)
+                                    ),
+                                    temperature: 0.0,
+                                    max_completion_tokens: fallback_max_completion_tokens,
+                                    json_mode: true,
+                                },
+                                &format!("{label} fallback JSON repair"),
+                            )
+                            .await?;
+                            parse_json::<T>(&fallback_repair).map_err(|source| {
+                                DrError::PipelineStage {
+                                    stage: label.to_string(),
+                                    model: fallback_model.to_string(),
+                                    source: Box::new(source),
+                                }
+                            })
+                        }
+                    }
+                }
+            }
         }
+    }
+}
+
+async fn complete_with_fallback(
+    research_request: &ResearchRequest,
+    llm: &dyn LlmClient,
+    request: CompletionRequest,
+    stage: &str,
+) -> Result<String> {
+    let primary_model = request.model.clone();
+    match complete_on_model(llm, request.clone(), stage).await {
+        Ok(text) => Ok(text),
+        Err(primary_error) => {
+            let fallback_model = research_request.models.fallback_model.trim();
+            if fallback_model.is_empty() || fallback_model == primary_model {
+                return Err(primary_error);
+            }
+
+            progress_detail(&format!(
+                "warning: stage {stage} failed with model {primary_model}; trying fallback model {fallback_model}: {}",
+                sanitize_trace_text(&primary_error.to_string())
+            ));
+            let mut fallback_request = request;
+            fallback_request.model = fallback_model.to_string();
+            complete_on_model(llm, fallback_request, stage).await
+        }
+    }
+}
+
+async fn complete_on_model(
+    llm: &dyn LlmClient,
+    request: CompletionRequest,
+    stage: &str,
+) -> Result<String> {
+    let model = request.model.clone();
+    llm.complete(request)
+        .await
+        .map_err(|source| DrError::PipelineStage {
+            stage: stage.to_string(),
+            model,
+            source: Box::new(source),
+        })
+}
+
+fn stage_error(stage: &str, model: &str, source: DrError) -> DrError {
+    DrError::PipelineStage {
+        stage: stage.to_string(),
+        model: model.to_string(),
+        source: Box::new(source),
     }
 }
 
@@ -1981,8 +2745,9 @@ mod tests {
     use std::collections::BTreeMap;
 
     use super::{
-        augment_plan_queries, dedupe_hits_for_tests, initial_source_cap, is_admitted_source,
-        is_missing_admitted_evidence_claim, sanitize_trace_text, validate_evidence, validate_plan,
+        augment_plan_queries, dedupe_hits_for_tests, first_500_tokens_have_citations,
+        initial_source_cap, is_admitted_source, is_missing_admitted_evidence_claim,
+        parse_plain_text_evidence, sanitize_trace_text, validate_evidence, validate_plan,
         validate_report_claims, validate_report_evaluation, validate_source_quality,
     };
     use crate::config::EffortLimits;
@@ -2144,6 +2909,32 @@ mod tests {
     }
 
     #[test]
+    fn plain_text_evidence_should_parse_source_sections() {
+        let evidence = parse_plain_text_evidence(
+            "[S1]\nCLAIM: Planning separates concerns.\nEVIDENCE: The source describes a planner.\nRELEVANCE: It defines the architecture.\nLIMITATIONS: One implementation.",
+            &[source("S1")],
+        )
+        .unwrap_or_else(|error| panic!("plain evidence should parse: {error}"));
+
+        assert_eq!(evidence.notes.len(), 1);
+        assert_eq!(evidence.notes[0].source_id, "S1");
+    }
+
+    #[test]
+    fn citation_preflight_should_require_known_marker_in_first_500_tokens() {
+        let sources = vec![source("S1")];
+
+        assert!(first_500_tokens_have_citations(
+            "Supported claim [S1].",
+            &sources
+        ));
+        assert!(!first_500_tokens_have_citations(
+            "An uncited opening paragraph.",
+            &sources
+        ));
+    }
+
+    #[test]
     fn validate_report_claims_should_reject_uncited_claims() {
         let claims = ReportClaims {
             claims: vec![ReportClaim {
@@ -2286,10 +3077,12 @@ mod tests {
                 planner_model: "planner".to_string(),
                 worker_model: "worker".to_string(),
                 writer_model: "writer".to_string(),
+                fallback_model: "fallback".to_string(),
                 temperature: 0.0,
             },
             search_concurrency: 1,
             search_delay_ms: 0,
+            retry_attempts: 0,
         }
     }
 }

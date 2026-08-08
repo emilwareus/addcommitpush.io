@@ -41,6 +41,7 @@ async fn run_command(cli: Cli) -> Result<()> {
             println!("planner\t{}", config::DEFAULT_PLANNER_MODEL);
             println!("worker\t{}", config::DEFAULT_WORKER_MODEL);
             println!("writer\t{}", config::DEFAULT_WRITER_MODEL);
+            println!("fallback\t{}", config::DEFAULT_FALLBACK_MODEL);
             Ok(())
         }
     }
@@ -51,20 +52,27 @@ async fn run_research(args: ResearchArgs) -> Result<()> {
     let config = ResearchConfig::from_args(args, api_keys)?;
 
     eprintln!(
-        "dr: strategy={} effort={} timeout={}s",
+        "dr: strategy={} effort={} client_timeout={}s request_timeout={}s retries={}",
         config.strategy,
         config.effort,
-        config.timeout.as_secs()
+        config.timeout.as_secs(),
+        config.request_timeout.as_secs(),
+        config.retry_attempts
     );
     eprintln!(
-        "dr: models planner={} worker={} writer={}",
-        config.models.planner_model, config.models.worker_model, config.models.writer_model
+        "dr: models planner={} worker={} writer={} fallback={}",
+        config.models.planner_model,
+        config.models.worker_model,
+        config.models.writer_model,
+        config.models.fallback_model
     );
 
-    let llm = OpenRouterClient::new(
+    let llm = OpenRouterClient::new_with_options(
         config.openrouter_base_url.clone(),
         config.api_keys.openrouter_api_key.clone(),
         config.timeout,
+        config.request_timeout,
+        config.retry_attempts,
     )?;
     let search = BraveSearchClient::new(
         config.brave_search_url.clone(),
