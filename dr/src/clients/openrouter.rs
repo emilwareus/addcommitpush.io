@@ -28,15 +28,27 @@ pub struct OpenRouterClient {
     base_url: Url,
     api_key: String,
     client: reqwest::Client,
+    request_timeout: Duration,
+    retry_attempts: usize,
 }
 
 impl OpenRouterClient {
     pub fn new(base_url: String, api_key: String, timeout: Duration) -> Result<Self> {
+        Self::new_with_options(base_url, api_key, timeout, timeout, 0)
+    }
+
+    pub fn new_with_options(
+        base_url: String,
+        api_key: String,
+        client_timeout: Duration,
+        request_timeout: Duration,
+        retry_attempts: usize,
+    ) -> Result<Self> {
         let normalized_base_url = format!("{}/", base_url.trim_end_matches('/'));
         let base_url = Url::parse(&normalized_base_url)
             .map_err(|error| DrError::InvalidCli(format!("invalid OpenRouter URL: {error}")))?;
         let client = reqwest::Client::builder()
-            .timeout(timeout)
+            .timeout(client_timeout)
             .http1_only()
             .build()?;
 
@@ -44,6 +56,8 @@ impl OpenRouterClient {
             base_url,
             api_key,
             client,
+            request_timeout,
+            retry_attempts,
         })
     }
 
@@ -52,11 +66,8 @@ impl OpenRouterClient {
             .join("chat/completions")
             .map_err(|error| DrError::InvalidCli(format!("invalid OpenRouter endpoint: {error}")))
     }
-}
 
-#[async_trait]
-impl LlmClient for OpenRouterClient {
-    async fn complete(&self, request: CompletionRequest) -> Result<String> {
+    async fn complete_once(&self, request: &CompletionRequest) -> Result<String> {
         let mut body = json!({
             "model": request.model,
             "messages": [
@@ -75,6 +86,7 @@ impl LlmClient for OpenRouterClient {
         let response = self
             .client
             .post(self.chat_completions_url()?)
+            .timeout(self.request_timeout)
             .bearer_auth(&self.api_key)
             .header("Content-Type", "application/json")
             .header("Accept", "application/json")
@@ -105,6 +117,52 @@ impl LlmClient for OpenRouterClient {
             })?;
         completion.into_text()
     }
+}
+
+#[async_trait]
+impl LlmClient for OpenRouterClient {
+    async fn complete(&self, request: CompletionRequest) -> Result<String> {
+        let mut retry_index = 0;
+        loop {
+            match self.complete_once(&request).await {
+                Ok(text) => return Ok(text),
+                Err(error) => {
+                    let retry_limit = retry_limit(&error, self.retry_attempts);
+                    if retry_index >= retry_limit {
+                        return Err(error);
+                    }
+
+                    let delay = retry_backoff(retry_index);
+                    eprintln!(
+                        "dr:        warning: OpenRouter model {} failed: {}; retrying in {}s ({}/{})",
+                        request.model,
+                        error,
+                        delay.as_secs(),
+                        retry_index + 1,
+                        retry_limit
+                    );
+                    tokio::time::sleep(delay).await;
+                    retry_index += 1;
+                }
+            }
+        }
+    }
+}
+
+fn retry_limit(error: &DrError, configured_retries: usize) -> usize {
+    if error.is_timeout() {
+        return configured_retries.min(2);
+    }
+
+    if error.is_retryable_openrouter_response() {
+        return configured_retries.min(3);
+    }
+
+    0
+}
+
+fn retry_backoff(retry_index: usize) -> Duration {
+    Duration::from_secs(2_u64.saturating_pow((retry_index + 1) as u32))
 }
 
 fn truncate_for_error(value: &str) -> String {

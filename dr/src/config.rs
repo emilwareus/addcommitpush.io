@@ -8,6 +8,7 @@ use crate::{DrError, Result};
 pub const DEFAULT_PLANNER_MODEL: &str = "z-ai/glm-5.2";
 pub const DEFAULT_WORKER_MODEL: &str = "deepseek/deepseek-v4-flash";
 pub const DEFAULT_WRITER_MODEL: &str = "z-ai/glm-5.2";
+pub const DEFAULT_FALLBACK_MODEL: &str = "deepseek/deepseek-v4-flash";
 pub const DEFAULT_OPENROUTER_BASE_URL: &str = "https://openrouter.ai/api/v1";
 pub const DEFAULT_BRAVE_SEARCH_URL: &str = "https://api.search.brave.com/res/v1/web/search";
 
@@ -86,7 +87,7 @@ impl EffortLimits {
                 max_sources: 40,
                 max_iterations: 3,
                 max_content_chars: 12_000,
-                evidence_chunk_size: 10,
+                evidence_chunk_size: 5,
                 max_claims: 32,
                 min_source_score: 11,
                 max_plan_tokens: 4_000,
@@ -100,7 +101,7 @@ impl EffortLimits {
                 max_sources: 64,
                 max_iterations: 4,
                 max_content_chars: 18_000,
-                evidence_chunk_size: 12,
+                evidence_chunk_size: 6,
                 max_claims: 48,
                 min_source_score: 12,
                 max_plan_tokens: 5_000,
@@ -194,6 +195,7 @@ pub struct ModelSelection {
     pub planner_model: String,
     pub worker_model: String,
     pub writer_model: String,
+    pub fallback_model: String,
     pub temperature: f64,
 }
 
@@ -211,7 +213,9 @@ pub struct ResearchConfig {
     pub brave_search_url: String,
     pub search_concurrency: usize,
     pub search_delay_ms: u64,
+    pub retry_attempts: usize,
     pub timeout: Duration,
+    pub request_timeout: Duration,
 }
 
 impl ResearchConfig {
@@ -227,7 +231,13 @@ impl ResearchConfig {
             ));
         }
 
+        validate_model_name("--planner-model", &args.planner_model)?;
+        validate_model_name("--worker-model", &args.worker_model)?;
+        validate_model_name("--writer-model", &args.writer_model)?;
+        validate_model_name("--fallback-model", &args.fallback_model)?;
+
         let timeout = args.timeout()?;
+        let request_timeout = args.request_timeout()?;
         let limits =
             EffortLimits::for_effort(args.effort).with_overrides(EffortLimitOverrides {
                 max_searches: args.max_searches,
@@ -250,6 +260,7 @@ impl ResearchConfig {
                 planner_model: args.planner_model,
                 worker_model: args.worker_model,
                 writer_model: args.writer_model,
+                fallback_model: args.fallback_model,
                 temperature: args.temperature,
             },
             api_keys,
@@ -257,9 +268,19 @@ impl ResearchConfig {
             brave_search_url: args.brave_search_url,
             search_concurrency: args.search_concurrency,
             search_delay_ms: args.search_delay_ms,
+            retry_attempts: args.retry_attempts,
             timeout,
+            request_timeout,
         })
     }
+}
+
+fn validate_model_name(flag: &str, model: &str) -> Result<()> {
+    if model.trim().is_empty() {
+        return Err(DrError::InvalidCli(format!("{flag} must not be empty")));
+    }
+
+    Ok(())
 }
 
 fn process_environment() -> BTreeMap<String, String> {

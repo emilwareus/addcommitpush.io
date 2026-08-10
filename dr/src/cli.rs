@@ -62,6 +62,14 @@ pub struct ResearchArgs {
     #[arg(long, default_value = crate::config::DEFAULT_WRITER_MODEL)]
     pub writer_model: String,
 
+    /// Model tried when a role's primary model cannot complete a stage.
+    #[arg(long, default_value = crate::config::DEFAULT_FALLBACK_MODEL)]
+    pub fallback_model: String,
+
+    /// Retries for recoverable API and model failures throughout the pipeline.
+    #[arg(long, default_value_t = 1)]
+    pub retry_attempts: usize,
+
     /// OpenRouter sampling temperature.
     #[arg(long, default_value_t = 0.2)]
     pub temperature: f64,
@@ -110,9 +118,13 @@ pub struct ResearchArgs {
     #[arg(long, default_value = crate::config::DEFAULT_BRAVE_SEARCH_URL)]
     pub brave_search_url: String,
 
-    /// Per-request timeout in seconds.
+    /// Default HTTP client timeout in seconds.
     #[arg(long, default_value_t = 300)]
     pub timeout_seconds: u64,
+
+    /// OpenRouter timeout for each individual model request in seconds.
+    #[arg(long, default_value_t = 300)]
+    pub request_timeout_seconds: u64,
 }
 
 impl ResearchArgs {
@@ -130,6 +142,16 @@ impl ResearchArgs {
         }
 
         Ok(Duration::from_secs(self.timeout_seconds))
+    }
+
+    pub fn request_timeout(&self) -> Result<Duration, DrError> {
+        if self.request_timeout_seconds == 0 {
+            return Err(DrError::InvalidCli(
+                "--request-timeout-seconds must be greater than zero".to_string(),
+            ));
+        }
+
+        Ok(Duration::from_secs(self.request_timeout_seconds))
     }
 }
 

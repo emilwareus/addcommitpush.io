@@ -122,6 +122,11 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           references: <WriteCodeThatAiAgentsLoveReferences />,
         };
       }
+      case 'the-rules-of-vibe-coding': {
+        const { TheRulesOfVibeCodingContent } =
+          await import('@/components/blog-posts/the-rules-of-vibe-coding');
+        return { content: <TheRulesOfVibeCodingContent />, references: null };
+      }
       default:
         notFound();
     }
