@@ -47,7 +47,7 @@ backoff; timeout failures retry at most twice.
 
 Each model role can be selected independently with `--planner-model`,
 `--worker-model`, and `--writer-model`. `--fallback-model` defaults to
-`deepseek/deepseek-v4-flash` and is tried when a role's primary model exhausts
+`deepseek/deepseek-v4-pro-0813` and is tried when a role's primary model exhausts
 its retries.
 
 ## Progress Output
@@ -72,9 +72,9 @@ parallel or staged reports and a separate INSIGHTS synthesis pass, see
 ## Defaults
 
 - Planner model: `z-ai/glm-5.2`
-- Evidence worker model: `deepseek/deepseek-v4-flash`
+- Evidence worker model: `deepseek/deepseek-v4-pro-0813`
 - Writer model: `z-ai/glm-5.2`
-- Fallback model: `deepseek/deepseek-v4-flash`
+- Fallback model: `deepseek/deepseek-v4-pro-0813`
 - Strategy: `deep-agent-v1`
 - Effort: `standard`
 
@@ -186,7 +186,7 @@ The strategy interface is intentionally separate from the OpenRouter and Brave c
 **Decision:** Defaults are:
 
 - Planner: `z-ai/glm-5.2`
-- Evidence worker: `deepseek/deepseek-v4-flash`
+- Evidence worker: `deepseek/deepseek-v4-pro-0813`
 - Writer: `z-ai/glm-5.2`
 
 **Why:** Planning and final synthesis benefit from a long-context reasoning model suited to long-horizon agent workflows. Evidence extraction is repetitive, structured, and cost-sensitive, so it uses a cheaper high-throughput model with a 1M-token context window. This keeps the design capable without making every step pay for the strongest model.
@@ -200,7 +200,7 @@ sections, allowing one bad source to be skipped without losing the full run.
 **References:**
 
 - GLM 5.2 on OpenRouter: <https://openrouter.ai/z-ai/glm-5.2>
-- DeepSeek V4 Flash on OpenRouter: <https://openrouter.ai/deepseek/deepseek-v4-flash>
+- DeepSeek V4 Pro 0813 on OpenRouter: <https://openrouter.ai/deepseek/deepseek-v4-pro-0813>
 - OpenRouter chat completions: <https://openrouter.ai/docs/api/api-reference/chat/send-chat-completion-request>
 
 ### 7. Keep strategy pluggability, but make deep-agent orchestration the default
@@ -260,7 +260,7 @@ Provider docs:
 - OpenRouter chat completions: <https://openrouter.ai/docs/api/api-reference/chat/send-chat-completion-request>
 - OpenRouter structured outputs: <https://openrouter.ai/docs/guides/features/structured-outputs>
 - GLM 5.2 model page: <https://openrouter.ai/z-ai/glm-5.2>
-- DeepSeek V4 Flash model page: <https://openrouter.ai/deepseek/deepseek-v4-flash>
+- DeepSeek V4 Pro 0813 model page: <https://openrouter.ai/deepseek/deepseek-v4-pro-0813>
 
 ## Development
 

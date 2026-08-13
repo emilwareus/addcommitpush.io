@@ -6,9 +6,9 @@ use crate::cli::{Effort, ResearchArgs, StrategyName};
 use crate::{DrError, Result};
 
 pub const DEFAULT_PLANNER_MODEL: &str = "z-ai/glm-5.2";
-pub const DEFAULT_WORKER_MODEL: &str = "deepseek/deepseek-v4-flash";
+pub const DEFAULT_WORKER_MODEL: &str = "deepseek/deepseek-v4-pro-0813";
 pub const DEFAULT_WRITER_MODEL: &str = "z-ai/glm-5.2";
-pub const DEFAULT_FALLBACK_MODEL: &str = "deepseek/deepseek-v4-flash";
+pub const DEFAULT_FALLBACK_MODEL: &str = "deepseek/deepseek-v4-pro-0813";
 pub const DEFAULT_OPENROUTER_BASE_URL: &str = "https://openrouter.ai/api/v1";
 pub const DEFAULT_BRAVE_SEARCH_URL: &str = "https://api.search.brave.com/res/v1/web/search";
 
