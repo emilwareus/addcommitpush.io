@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+/.context/
+/.playwright-cli/
 
 # next.js
 /.next/
@@ -23,6 +25,7 @@
 # misc
 .DS_Store
 *.pem
+gha-creds-*.json
 
 # debug
 npm-debug.log*
@@ -68,3 +71,5 @@ tmp
 
 # Rust build output
 dr/target/
+/life/target/
+/life/.env
