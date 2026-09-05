@@ -15,7 +15,8 @@
     "check-links": "tsx scripts/check-about-links.ts",
     "optimize-images": "tsx scripts/optimize-images.ts",
     "extract-text": "tsx scripts/extract-post-text.ts",
-    "generate-audio": "tsx scripts/generate-audio.ts"
+    "generate-audio": "tsx scripts/generate-audio.ts",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.64",

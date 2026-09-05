@@ -30,6 +30,7 @@ build
 # Testing
 coverage
 test-results
+playwright-report
 
 # Vercel
 .vercel
