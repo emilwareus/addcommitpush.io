@@ -24,6 +24,16 @@ const posts: Post[] = [
     readTime: '15 min read',
   },
   {
+    title: 'Static Analysis: A Developer\'s Tutorial',
+    slug: 'static-analysis-tutorial',
+    description:
+      'How static analysis actually works, from CFGs and call graphs to taint and symbolic execution, with honest expectations: what each technique finds, how accurate it is, and where it lies to you.',
+    publishedAt: '2026-07-16',
+    tags: ['static-analysis', 'software', 'tutorial'],
+    cover: '/posts/static-analysis-tutorial/cover.svg',
+    readTime: '30 min read',
+  },
+  {
     title: 'Write Code That AI Agents Love',
     slug: 'write-code-that-ai-agents-love',
     description:
