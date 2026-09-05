@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useSlideStep } from '@/app/presentations/deep-research/layout';
+import { useSlideStep } from '@/app/(public)/presentations/deep-research/layout';
 
 export function CotSlide() {
   const step = useSlideStep();

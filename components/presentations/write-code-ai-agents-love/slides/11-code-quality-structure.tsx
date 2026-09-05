@@ -12,7 +12,7 @@ import {
   Server,
   TestTubeDiagonal,
 } from 'lucide-react';
-import { useSlideStep } from '@/app/presentations/write-code-ai-agents-love/layout';
+import { useSlideStep } from '@/app/(public)/presentations/write-code-ai-agents-love/layout';
 import { Claim, SlideShell } from './shared';
 
 const modes = ['system', 'unit', 'adapter', 'component', 'e2e', 'matrix'] as const;

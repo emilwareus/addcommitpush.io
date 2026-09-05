@@ -1,0 +1,6 @@
+name: addcommitpush-life
+runtime:
+  name: nodejs
+  options:
+    typescript: true
+description: Low-cost Google Cloud infrastructure for the personal Life backend

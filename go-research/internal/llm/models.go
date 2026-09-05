@@ -2,7 +2,7 @@ package llm
 
 // Model configurations - centralized for easy changes
 const (
-	DefaultModel = "alibaba/tongyi-deepresearch-30b-a3b"
+	DefaultModel = "z-ai/glm-5.2"
 )
 
 // ModelConfig holds model-specific settings
@@ -28,14 +28,15 @@ type ModelPricing struct {
 }
 
 // modelPricing maps model IDs to their pricing
-// Prices from OpenRouter (as of 2024) - update as needed
+// Prices from OpenRouter (as of July 2026) - update as needed
 var modelPricing = map[string]ModelPricing{
-	"alibaba/tongyi-deepresearch-30b-a3b": {InputPer1M: 0.50, OutputPer1M: 0.50},
-	"openai/gpt-4o":                       {InputPer1M: 2.50, OutputPer1M: 10.00},
-	"openai/gpt-4o-mini":                  {InputPer1M: 0.15, OutputPer1M: 0.60},
-	"anthropic/claude-3.5-sonnet":         {InputPer1M: 3.00, OutputPer1M: 15.00},
-	"anthropic/claude-3-haiku":            {InputPer1M: 0.25, OutputPer1M: 1.25},
-	"google/gemini-pro-1.5":               {InputPer1M: 1.25, OutputPer1M: 5.00},
+	"z-ai/glm-5.2":                 {InputPer1M: 0.71, OutputPer1M: 2.24},
+	"deepseek/deepseek-v4-flash":   {InputPer1M: 0.09, OutputPer1M: 0.18},
+	"google/gemini-2.5-flash-lite": {InputPer1M: 0.10, OutputPer1M: 0.40},
+	"anthropic/claude-haiku-4.5":   {InputPer1M: 1.00, OutputPer1M: 5.00},
+	"anthropic/claude-sonnet-5":    {InputPer1M: 2.00, OutputPer1M: 10.00},
+	"openai/gpt-oss-120b":          {InputPer1M: 0.35, OutputPer1M: 0.95},
+	"openai/gpt-oss-20b":           {InputPer1M: 0.07, OutputPer1M: 0.30},
 }
 
 // defaultPricing used when model not found in pricing table

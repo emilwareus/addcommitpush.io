@@ -36,7 +36,7 @@
 //	└─────────────────────────────────────────────────────────────────────────┘
 //
 // Original model: OpenAI GPT-5
-// Our model: alibaba/tongyi-deepresearch-30b-a3b (via OpenRouter)
+// Our model: z-ai/glm-5.2 (via OpenRouter)
 package think_deep
 
 import (

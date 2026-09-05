@@ -31,7 +31,7 @@ type Config struct {
 
 	// Model
 	Model           string
-	ClassifierModel string // Fast model for query classification (e.g., claude-3-haiku)
+	ClassifierModel string // Fast model for query classification (e.g., gemini-2.5-flash-lite)
 
 	// Verbose mode
 	Verbose bool
@@ -60,8 +60,8 @@ func Load() *Config {
 		MaxTokens:     50000,
 		MaxWorkers:    5,
 
-		Model:           "alibaba/tongyi-deepresearch-30b-a3b",
-		ClassifierModel: getEnvOrDefault("CLASSIFIER_MODEL", "anthropic/claude-3-haiku"),
+		Model:           "z-ai/glm-5.2",
+		ClassifierModel: getEnvOrDefault("CLASSIFIER_MODEL", "google/gemini-2.5-flash-lite"),
 
 		Verbose: os.Getenv("RESEARCH_VERBOSE") == "true",
 	}

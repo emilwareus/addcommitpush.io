@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useSlideStep } from '@/app/presentations/deep-research/layout';
+import { useSlideStep } from '@/app/(public)/presentations/deep-research/layout';
 
 const warnings = ["Still can't see each other", 'Still one pass', 'Still no self-correction'];
 
