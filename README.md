@@ -35,6 +35,24 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Graph end-to-end tests
+
+Install the test browsers once, then run the suite:
+
+```bash
+pnpm exec playwright install chromium firefox webkit
+pnpm test:e2e
+```
+
+The suite builds the site and starts a production server on port 49300. It does
+not start or use the development server. It checks Chromium, Firefox, and WebKit
+with desktop and iPhone viewports. Tests cover rapid drag release, pointer cancellation,
+capture loss, multiple pointers, graph links, zoom, note navigation, filters,
+and motion controls. Any uncaught browser error fails the test.
+
+Run one browser with `pnpm test:e2e --project=firefox`. After a failure, run
+`pnpm exec playwright show-report` to inspect the screenshot and trace.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
