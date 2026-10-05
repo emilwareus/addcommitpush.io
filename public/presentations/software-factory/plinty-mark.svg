@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 24 24" fill="none">
+  <!-- Plinty BrandMark geometry and carrier colors from apps/web/src/components/BrandMark.tsx and docs/e-design/brand/design-tokens.css. -->
+  <path d="M12 22 C 12 16.5 12 14 12 11" stroke="#2f4c7a" stroke-width="1.7" stroke-linecap="round"/>
+  <path d="M12 13.6 C 7.2 13.6 4.2 10.4 4.1 6 C 9.2 5.8 12 9 12 13.6 Z" fill="#2f4c7a"/>
+  <path d="M12 11.6 C 16.4 11.2 19.4 8.2 19.8 3.8 C 14.6 4 12 7.2 12 11.6 Z" fill="#eef2f8"/>
+</svg>

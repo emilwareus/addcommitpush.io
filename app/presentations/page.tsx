@@ -22,6 +22,16 @@ interface PresentationEntry {
 
 const presentations: PresentationEntry[] = [
   {
+    title: 'The software factory 0.1',
+    description:
+      'The craft is not dead. Architecture, executable checks, AI-native workflows and product focus give engineering judgment more leverage.',
+    href: '/presentations/software-factory',
+    venue: 'Working draft',
+    date: '2026',
+    kind: 'Talk',
+    actions: [{ label: 'Slides →', href: '/presentations/software-factory' }],
+  },
+  {
     title: 'Write Code That AI Agents Love',
     description:
       'Making codebases legible to agents and humans. Naming, blast radius, and the signals you leave in the code.',
