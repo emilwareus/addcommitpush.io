@@ -36,7 +36,7 @@ export function LeverageSlide() {
               </ul>
 
               <Label className="px-[clamp(0.5rem,1.4vw,1.25rem)] pt-[clamp(1.5rem,4.5vh,2.5rem)]">
-                {region.part} / {region.chapter}
+                {region.part} / {region.topic}
               </Label>
             </div>
           );

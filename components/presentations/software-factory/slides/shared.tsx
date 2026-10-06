@@ -7,7 +7,6 @@ interface LeverageRegion {
   weight: string;
   part: string;
   topic: string;
-  chapter: string;
   levers: readonly string[];
 }
 
@@ -18,22 +17,25 @@ export const leverageRegions: Record<LeverageRegionId, LeverageRegion> = {
     weight: 'Most',
     part: 'Part 3',
     topic: 'Product',
-    chapter: 'Learn faster, decide precisely',
-    levers: ['What to build', 'Iteration speed', 'Speed of learning'],
+    levers: ['Where you wait', 'Build to learn', 'What not to build'],
   },
   more: {
     weight: 'More',
     part: 'Part 2',
     topic: 'Workflow',
-    chapter: 'Code in an AI-native way',
-    levers: ['Coding and feedback loops', 'Production visibility', 'SpecDD', 'Server'],
+    levers: [
+      'Feedback loops',
+      'Spec-driven development',
+      'Issue to merge',
+      'A server',
+      'Production visibility',
+    ],
   },
   'a-lot': {
     weight: 'A lot',
     part: 'Part 1',
     topic: 'Code',
-    chapter: 'Write code that AI agents love',
-    levers: ['Code quality', 'Architecture', 'Solution design'],
+    levers: ['Architecture', 'Code quality', 'Linting', 'Tests', 'Generated SDKs'],
   },
 };
 
@@ -48,7 +50,7 @@ function ChapterMarker({ chapter }: { chapter: LeverageRegionId }) {
   const region = leverageRegions[chapter];
 
   return (
-    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground">
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 font-mono text-[13px] uppercase tracking-[0.2em] text-muted-foreground">
       <div className="flex gap-1" aria-hidden="true">
         {leverageRegionOrder.map((id) => (
           <span
@@ -90,7 +92,7 @@ export function SlideFrame({
 }) {
   return (
     <div className="h-full w-full overflow-y-auto">
-      <div className="mx-auto flex min-h-full w-full max-w-[1280px] flex-col px-6 pt-10 pb-14 sm:px-10 lg:px-16">
+      <div className="mx-auto flex min-h-full w-full max-w-[1600px] flex-col px-6 pt-10 pb-14 sm:px-10 lg:px-16">
         <div className="flex min-h-8 shrink-0 flex-wrap items-center justify-between gap-x-6 gap-y-1">
           {chapter ? <ChapterMarker chapter={chapter} /> : null}
           {source ? <SourceNote href={source.href}>{source.label}</SourceNote> : null}
@@ -141,7 +143,7 @@ export function Label({
 
   return (
     <div
-      className={`font-mono text-[11px] uppercase tracking-[0.2em] sm:text-xs ${toneClasses} ${className}`}
+      className={`font-mono text-xs uppercase tracking-[0.2em] sm:text-[13px] ${toneClasses} ${className}`}
     >
       {children}
     </div>
@@ -162,7 +164,7 @@ export function SourceNote({ href, children }: { href: string; children: ReactNo
   return (
     <a
       href={href}
-      className="font-mono text-xs text-muted-foreground underline decoration-dashed underline-offset-4 hover:text-primary"
+      className="font-mono text-sm text-muted-foreground underline decoration-dashed underline-offset-4 hover:text-primary"
     >
       {children}
     </a>

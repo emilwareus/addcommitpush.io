@@ -62,6 +62,26 @@ export default async function SlidePage({ params }: { params: Promise<{ slide: s
           await import('@/components/presentations/software-factory/slides/03-leverage');
         return <LeverageSlide />;
       }
+      case '03b-question-code': {
+        const { CodeQuestionSlide } =
+          await import('@/components/presentations/software-factory/slides/part-questions');
+        return <CodeQuestionSlide />;
+      }
+      case '06b-generated-sdks': {
+        const { GeneratedSdksSlide } =
+          await import('@/components/presentations/software-factory/slides/06b-generated-sdks');
+        return <GeneratedSdksSlide />;
+      }
+      case '06c-question-workflow': {
+        const { WorkflowQuestionSlide } =
+          await import('@/components/presentations/software-factory/slides/part-questions');
+        return <WorkflowQuestionSlide />;
+      }
+      case '09b-question-product': {
+        const { ProductQuestionSlide } =
+          await import('@/components/presentations/software-factory/slides/part-questions');
+        return <ProductQuestionSlide />;
+      }
       case '04-architecture': {
         const { ArchitectureSlide } =
           await import('@/components/presentations/software-factory/slides/04-architecture');
@@ -87,11 +107,6 @@ export default async function SlidePage({ params }: { params: Promise<{ slide: s
           await import('@/components/presentations/software-factory/slides/06-test-hard');
         return <TestHardSlide />;
       }
-      case '06b-generated-sdks': {
-        const { GeneratedSdksSlide } =
-          await import('@/components/presentations/software-factory/slides/06b-generated-sdks');
-        return <GeneratedSdksSlide />;
-      }
       case '07a-feedback-loops': {
         const { FeedbackLoopsSlide } =
           await import('@/components/presentations/software-factory/slides/07a-feedback-loops');
@@ -101,6 +116,11 @@ export default async function SlidePage({ params }: { params: Promise<{ slide: s
         const { SpecDdSlide } =
           await import('@/components/presentations/software-factory/slides/07-specdd');
         return <SpecDdSlide />;
+      }
+      case '07b-specdd-loop': {
+        const { SpecddLoopSlide } =
+          await import('@/components/presentations/software-factory/slides/07b-specdd-loop');
+        return <SpecddLoopSlide />;
       }
       case '08-server': {
         const { ServerSlide } =

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Develop Issue"
+  short_description: "Take one issue to a merge-ready pull request"
+  default_prompt: "Use $develop-issue to take {{ISSUE_PREFIX}}-123 from research to a verified, merge-ready pull request."

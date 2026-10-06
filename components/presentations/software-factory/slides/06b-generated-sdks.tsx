@@ -7,8 +7,8 @@ export function GeneratedSdksSlide() {
       title="Generated SDKs"
       claim="If the contract matters, make it code the agent can import."
       source={{
-        href: 'https://addcommitpush.io/brain/generated-sdks-turn-api-contracts-into-code',
-        label: 'addcommitpush.io/brain/generated-sdks-turn-api-contracts-into-code',
+        href: 'https://github.com/oaiz-io/gnr8',
+        label: 'github.com/oaiz-io/gnr8',
       }}
       left={{
         heading: 'Contract in prose',

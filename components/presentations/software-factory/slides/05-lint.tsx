@@ -7,7 +7,7 @@ function ShortcutDiagram({ blocked }: { blocked: boolean }) {
   return (
     <svg
       viewBox="0 0 680 190"
-      className="h-auto w-full"
+      className="h-auto max-h-[19vh] w-full"
       role="img"
       aria-label={
         blocked

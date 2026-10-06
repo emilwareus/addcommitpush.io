@@ -58,7 +58,7 @@ export function OldWaySlide() {
         </p>
       </div>
 
-      <div className="mx-auto w-[min(100%,calc((100vh-21rem)*2.8235))] shrink-0">
+      <div className="mx-auto w-[min(100%,calc((100vh-31rem)*2.8235))] shrink-0">
         <div className="relative aspect-[1440/510] w-full">
           {screenshots.map((screenshot) => (
             <figure
