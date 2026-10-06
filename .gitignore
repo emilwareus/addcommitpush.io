@@ -70,3 +70,4 @@ tmp
 
 # Rust build output
 dr/target/
+.playwright-cli/
