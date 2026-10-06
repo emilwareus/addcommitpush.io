@@ -1,0 +1,338 @@
+/*
+ * OAIZ visual language (oaiz.io, October 2026) for the unlisted automate deck.
+ * The shared presentation surface squares corners, removes shadows and uppercases
+ * headings; this deck scopes its own classes (prefixed oz-) and overrides the
+ * surface only inside .oz-deck.
+ */
+
+.oz-deck {
+  --background: #ffffff;
+  --foreground: #222222;
+  --primary: #121212;
+  --muted-foreground: #737373;
+  --hair: #e5e5e5;
+  --border: #e5e5e5;
+}
+
+.oz-deck .presentation-slide-surface {
+  background: #ffffff;
+  color: #222222;
+  font-family: var(--font-oz-sans), system-ui, sans-serif;
+}
+
+.oz-deck .presentation-slide-surface h1,
+.oz-deck .presentation-slide-surface h2 {
+  font-family: var(--font-oz-serif), Georgia, serif !important;
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  text-transform: none;
+  color: #222222;
+}
+
+.oz-viewport {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.oz-canvas {
+  position: relative;
+  flex-shrink: 0;
+  width: 1600px;
+  height: 900px;
+  overflow: hidden;
+  transform-origin: center;
+}
+
+.oz-serif {
+  font-family: var(--font-oz-serif), Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.04em;
+  color: #222222;
+}
+
+.oz-card {
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 20px;
+}
+
+.oz-flow-card {
+  background: #fcfdff;
+  border: 4px solid #c8e7ff;
+  border-radius: 16px;
+}
+
+.oz-node {
+  background: #fcfcfc;
+  border: 4px solid #bdbdbd;
+  border-radius: 18px;
+}
+
+.oz-sand {
+  background: #f0f0e8;
+  border-radius: 24px;
+}
+
+.oz-lift {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.oz-blue {
+  background: #329cf5;
+  border-radius: 20px;
+}
+
+.oz-ink-panel {
+  background: #232323;
+  border-radius: 20px;
+}
+
+.oz-tag {
+  background: #121212;
+  color: #ffffff;
+  border-radius: 8px;
+}
+
+.oz-pill {
+  border-radius: 999px;
+}
+
+.oz-round {
+  border-radius: 12px;
+}
+
+.oz-dot {
+  border-radius: 999px;
+  background: #7bc900;
+}
+
+.oz-sunset {
+  background-color: #fdf8f0;
+  background-image: radial-gradient(
+    ellipse 48% 62% at 50% var(--oz-sun-y, 62%),
+    rgba(255, 196, 119, 0.85) 0%,
+    rgba(255, 196, 119, 0.55) 35%,
+    rgba(255, 196, 119, 0.2) 65%,
+    rgba(255, 196, 119, 0) 100%
+  );
+}
+
+/* Opening slides, matching the OAIZ sales deck. */
+.oz-dawn {
+  background: linear-gradient(
+    180deg,
+    #fdf8f0 0%,
+    #f9eee6 14%,
+    #f6ddd3 30%,
+    #f8c7bb 56%,
+    #fdb3a4 80%,
+    #fee7ae 100%
+  );
+}
+
+.oz-cream {
+  background: #fdf7f0;
+}
+
+/* Event queue slide: events arrive one by one. */
+@keyframes oz-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-56px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes oz-slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(56px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes oz-tile-pulse {
+  0%,
+  100% {
+    border-color: #e5e5e5;
+    box-shadow: 0 0 0 0 rgba(50, 156, 245, 0);
+  }
+  35% {
+    border-color: #329cf5;
+    box-shadow: 0 0 0 6px rgba(50, 156, 245, 0.25);
+  }
+}
+
+@keyframes oz-arrow-in {
+  0% {
+    stroke-dashoffset: 1;
+    stroke: #329cf5;
+  }
+  55% {
+    stroke-dashoffset: 0;
+    stroke: #329cf5;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    stroke: #bcbcbc;
+  }
+}
+
+/* OAIZ app recreation (oaiz-frontend builder, chat and test run). */
+.oz-app {
+  font-family: var(--font-oz-sans), ui-sans-serif, system-ui, sans-serif;
+  color: #09090b;
+  background: #ffffff;
+}
+
+.oz-app-dots {
+  background-color: #ffffff;
+  background-image: radial-gradient(#d4d4d8 1px, transparent 1px);
+  background-size: 12px 12px;
+}
+
+.oz-app-composer {
+  background: #f2eee4;
+  border-radius: 12px;
+}
+
+.oz-app-card {
+  background: #ffffff;
+  border: 1px solid #e4e4e7;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.oz-app-raised {
+  box-shadow:
+    0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+@keyframes oz-app-node-enter {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -32px, 0) scale(0.96);
+    animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  42% {
+    opacity: 1;
+    transform: translate3d(0, 12px, 0) scale(1.005);
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.oz-app-enter {
+  animation: oz-app-node-enter 650ms linear both;
+}
+
+@keyframes oz-app-shimmer {
+  from {
+    background-position: 140% 0;
+  }
+  to {
+    background-position: -40% 0;
+  }
+}
+
+.oz-app-shimmer {
+  color: color-mix(in srgb, currentColor 60%, transparent);
+  background: linear-gradient(110deg, transparent 35%, currentColor 50%, transparent 65%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: oz-app-shimmer 2s linear infinite;
+}
+
+@keyframes oz-app-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.oz-app-spin {
+  animation: oz-app-spin 1s linear infinite;
+}
+
+@keyframes oz-app-run-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 122, 230, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(0, 122, 230, 0.12);
+  }
+}
+
+.oz-app-running {
+  border: 2px solid #007ae6;
+  animation: oz-app-run-glow 1.4s ease-in-out infinite;
+}
+
+@keyframes oz-app-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+.oz-app-caret {
+  animation: oz-app-caret 1s step-end infinite;
+}
+
+/* Where we are slide: the website's sun rises out of the bottom edge. */
+.oz-sun-glow {
+  left: 50%;
+  bottom: -580px;
+  width: 1760px;
+  height: 1200px;
+  margin-left: -880px;
+  background: radial-gradient(
+    circle closest-side,
+    rgba(255, 196, 119, 0.85) 0%,
+    rgba(255, 196, 119, 0.45) 30%,
+    rgba(255, 196, 119, 0.15) 55%,
+    rgba(255, 196, 119, 0) 75%
+  );
+  animation: oz-sun-up 3200ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.oz-sun-rise {
+  left: 50%;
+  bottom: -500px;
+  width: 680px;
+  height: 680px;
+  margin-left: -340px;
+  border-radius: 999px;
+  background: radial-gradient(
+    circle closest-side,
+    #fdd752 0%,
+    #fdd752 94%,
+    rgba(253, 215, 82, 0) 100%
+  );
+  animation: oz-sun-up 3200ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@keyframes oz-sun-up {
+  from {
+    opacity: 0.4;
+    transform: translateY(220px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
