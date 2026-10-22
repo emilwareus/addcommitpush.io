@@ -1,6 +1,7 @@
 # Security floors for transitive dependencies. pnpm reads overrides from this file;
 # the old "pnpm" field in package.json is ignored.
 overrides:
+  undici: 6.29.1
   postcss: 8.5.29
   sharp: 0.35.5
   protobufjs: '>=7.6.1'
